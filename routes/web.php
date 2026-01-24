@@ -8,6 +8,7 @@ use App\Http\Controllers\Org\OfficerEntryController;
 use App\Http\Controllers\Org\OrgDashboardController;
 use App\Http\Controllers\Admin\OrganizationController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminOrgReviewController;
 use App\Http\Controllers\Org\ActivationStatusController;
 use App\Http\Controllers\Org\EncodeSchoolYearController;
 use App\Http\Controllers\Org\OrgRoleAssignmentController;
@@ -70,6 +71,11 @@ Route::prefix('admin')
         Route::resource('organizations', OrganizationController::class)
             ->except(['show'])
             ->names('admin.organizations');
+
+
+        Route::get('review', [AdminOrgReviewController::class, 'index'])->name('admin.review.index');
+
+        Route::get('review/show', [AdminOrgReviewController::class, 'show'])->name('admin.review.show');
     });
 
 

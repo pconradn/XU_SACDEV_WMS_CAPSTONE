@@ -49,6 +49,14 @@
                                     Organizations
                                 </a>
                             @endif
+
+                            @if (Route::has('admin.review.index'))
+                                <a href="{{ route('admin.review.index') }}"
+                                class="px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-100">
+                                    Review Submissions
+                                </a>
+                            @endif
+                            
                         @else
                             {{-- Org link --}}
                             @if (Route::has('org.home'))
