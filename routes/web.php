@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Org\ProjectController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\ForcedPasswordController;
 use App\Http\Controllers\Admin\SchoolYearController;
 use App\Http\Controllers\Org\OfficerEntryController;
@@ -76,6 +77,8 @@ Route::prefix('admin')
         Route::get('review', [AdminOrgReviewController::class, 'index'])->name('admin.review.index');
 
         Route::get('review/show', [AdminOrgReviewController::class, 'show'])->name('admin.review.show');
+        
+        Route::get('audit-logs', [AuditLogController::class, 'index'])->name('admin.audit-logs.index');
     });
 
 
