@@ -111,6 +111,10 @@
                             <a href="{{ route('org.assign-project-heads.index') }}" class="px-3 py-2 bg-gray-800 !text-white rounded text-sm">
                                 Assign Project Heads
                             </a>
+                            <a href="{{ route('org.activation-status.index') }}"class="px-3 py-2 bg-gray-800 !text-white rounded text-sm">
+                                Activation Status
+                            </a>
+
                         </div>
 
                     @endif
