@@ -1,59 +1,221 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
 
-## About Laravel
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+# SAcDev Project Workflow Management System
+## Development Cycle 1 (Sprint 1) – Foundation + Org Setup + Role Assignment
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+This repository contains the implementation for **Development Cycle 1** of the SAcDev Project Workflow Management System.  
+Cycle 1 focuses on building the **core backend foundation**, authentication flow, role access control, and the organization setup workflow (officers, projects, and assignments).  
+The goal for this cycle is to make the system functional enough for login + encoding + role assignment + admin viewing, before moving to the full proposal submission workflow in Cycle 2.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+##  Scope of Development Cycle 1
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+###  Functional Features Implemented
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+#### 1) User Authentication (Laravel Breeze)
+- Secure login using unique credentials
+- Uses Laravel’s built-in authentication scaffolding (Breeze)
 
-## Laravel Sponsors
+#### 2) Forced Password Change (Temporary Account Gate)
+- Users with **temporary passwords** are required to change password on first login
+- Uses the fields:
+  - `must_change_password`
+  - `password_changed_at`
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+#### 3) Role-Based Access Control (RBAC)
+Access to pages/features depends on role:
 
-### Premium Partners
+**System Role**
+- `sacdev_admin` (SAcDev staff)
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+**Organization Roles (Org Membership)**
+- `president`
+- `treasurer`
+- `moderator`
+- `member` (basic org portal access)
 
-## Contributing
+Middleware was added to restrict access properly:
+- `sacdev_admin`
+- `must_change_password`
+- `active_sy_access`
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+#### 4) Active School Year Filtering
+- Only **one school year can be active** at a time
+- Org-side encoding and views are based on the selected/active school year
+- Admin can manage school years and activate one
 
-## Code of Conduct
+#### 5) Organization Setup Workflow (President Encoding)
+Org President can encode:
+ **Officer List** (required first)  
+ **Project List**  
+ Assign:
+- Exactly **1 Treasurer**
+- Exactly **1 Moderator**
+- Exactly **1 Project Head per Project**
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Rules enforced:
+- No free typing random emails for assignment
+- Assignments must come from the officer list first
+- System overwrites old treasurer/moderator assignments when changed
+- System overwrites old project head when assigning a new one
 
-## Security Vulnerabilities
+#### 6) Auto Account Creation (Only When Needed)
+User accounts for students/officers are created only when they are assigned:
+- as **treasurer**
+- as **moderator**
+- as **project head**
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Accounts are created using `AccountProvisioner`:
+- Generates temporary password
+- Sends credentials through email (`MAIL_MAILER=log` during development)
+- Sets must-change-password flag
 
-## License
+#### 7) Officer Entry ↔ User Linking
+- Officer entries are linked to user accounts through:
+  - `officer_entries.user_id`
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This makes later features safe (email corrections, role checks, reassignments).
+
+#### 8) Invite Resend for Wrong Officer Email (Pending Invite Only)
+If an officer’s email was encoded incorrectly and the system already created an account,
+the invite can be resent safely ONLY when:
+- user is still pending (`must_change_password = 1`)
+- user has not activated yet (`password_changed_at = null`)
+
+Resend process:
+- updates the existing user email
+- resets temp password safely (pending only)
+- resends credentials
+
+---
+
+##  Database Tables / Core Models (Cycle 1)
+Development Cycle 1 includes the initial database structure with core relationships:
+
+- `users`
+- `school_years`
+- `organizations`
+- `organization_school_years`
+- `officer_entries`
+- `projects`
+- `org_memberships`
+- `project_assignments`
+
+---
+
+##  Seeder for Demo / Testing
+A ready-to-run seeder is included for Sprint 1 testing:
+
+Seeder:
+- `Database\Seeders\Sprint1Seeder`
+
+Creates:
+- 1 active school year
+- 2 organizations
+- 1 SacDev Admin user
+- 2 president users
+- officer lists for each org
+- projects for each org
+
+Test Accounts:
+- **Admin Login**
+  - Email: `sacdev.admin@xu.edu.ph`
+  - Password: `Admin1234!`
+
+- **President Login (XUCS)**
+  - Email: `president.xucs@xu.edu.ph`
+  - Password: `TempPass123!`
+
+- **President Login (XUTI)**
+  - Email: `president.xuti@xu.edu.ph`
+  - Password: `TempPass123!`
+
+---
+
+##  Setup Instructions
+
+### 1) Install dependencies
+```bash
+composer install
+npm install
+npm run dev
+````
+
+### 2) Configure `.env`
+
+Copy `.env.example` and generate key:
+
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+Update DB credentials in `.env`
+
+### 3) Run migrations + seed
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+### 4) Run server
+
+```bash
+php artisan serve
+```
+
+---
+
+##  What to Test (Cycle 1 Demo Flow)
+
+### Org President Flow
+
+1. Login as president
+2. Forced password change triggers
+3. Encode officer list
+4. Encode projects
+5. Assign treasurer + moderator
+6. Assign project heads
+7. Observe that assigned officers get accounts created automatically (invite logged)
+
+### SacDev Admin Flow
+
+1. Login as admin
+2. Manage school years (CRUD + activate)
+3. View organization entries (officers/projects/roles)
+
+---
+
+##  Next Development Cycle (Cycle 2 Preview)
+
+Cycle 2 will focus on the actual workflow features such as:
+
+* proposal submission forms
+* approval routing (president → treasurer → moderator → sacdev)
+* feedback and revision loop
+* document tracking statuses
+* project completion + archival logic
+
+---
+
+## Notes / Developer Reminders
+
+* Temporary accounts must always pass through the password change gate
+* Assignments should always use `users.id`, not `officer_entries.id`
+* Always link `officer_entries.user_id` after provisioning a user
+* Use `updateOrCreate()` for roles to prevent unique constraint errors
+* All org data must be filtered by active/selected school year
+
+---
+
+ Development Cycle 1 is considered complete once:
+
+* Authentication is stable
+* Org encoding works (officers/projects)
+* Assignment logic works without crashes
+* Admin can view data for monitoring
+
+```
+
