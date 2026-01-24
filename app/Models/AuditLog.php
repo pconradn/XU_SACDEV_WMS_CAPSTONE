@@ -4,15 +4,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class OfficerEntry extends Model
+class AuditLog extends Model
 {
     protected $fillable = [
+        'event',
+        'message',
+        'actor_user_id',
         'organization_id',
         'school_year_id',
-        'full_name',
-        'email',
-        'position',
+        'meta',
     ];
+
+    protected $casts = [
+        'meta' => 'array',
+    ];
+
+    public function actor()
+    {
+        return $this->belongsTo(User::class, 'actor_user_id');
+    }
 
     public function organization()
     {
@@ -22,9 +32,5 @@ class OfficerEntry extends Model
     public function schoolYear()
     {
         return $this->belongsTo(SchoolYear::class);
-    }
-    public function user()
-    {
-        return $this->belongsTo(\App\Models\User::class);
     }
 }

@@ -30,25 +30,37 @@
                         {{-- Admin links --}}
                         @if ($isAdmin)
                             @if (Route::has('admin.home'))
-                                <a href="{{ route('admin.home') }}"
-                                   class="px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-100">
+                                <a href="{{ route('admin.home') }}" class="px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-100">
                                     Admin Home
                                 </a>
                             @endif
 
                             @if (Route::has('admin.school-years.index'))
-                                <a href="{{ route('admin.school-years.index') }}"
-                                   class="px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-100">
+                                <a href="{{ route('admin.school-years.index') }}" class="px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-100">
                                     School Years
                                 </a>
                             @endif
 
                             @if (Route::has('admin.organizations.index'))
-                                <a href="{{ route('admin.organizations.index') }}"
-                                   class="px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-100">
+                                <a href="{{ route('admin.organizations.index') }}" class="px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-100">
                                     Organizations
                                 </a>
                             @endif
+
+                            @if (Route::has('admin.review.index'))
+                                <a href="{{ route('admin.review.index') }}" class="px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-100">
+                                    Review Submissions
+                                </a>
+                            @endif
+
+                            @if (Route::has('admin.audit-logs.index'))
+                                <a href="{{ route('admin.audit-logs.index') }}" class="px-3 py-2 bg-gray-800 !text-white rounded text-sm">
+                                    Audit Logs
+                                </a>
+
+                            @endif
+
+                            
                         @else
                             {{-- Org link --}}
                             @if (Route::has('org.home'))

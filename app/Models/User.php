@@ -36,4 +36,9 @@ class User extends Authenticatable
     {
         return $this->system_role === 'sacdev_admin';
     }
+    public function officerEntries()
+    {
+        return $this->hasMany(\App\Models\OfficerEntry::class);
+    }
+
 }

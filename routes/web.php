@@ -2,12 +2,15 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Org\ProjectController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\ForcedPasswordController;
 use App\Http\Controllers\Admin\SchoolYearController;
 use App\Http\Controllers\Org\OfficerEntryController;
 use App\Http\Controllers\Org\OrgDashboardController;
+use App\Http\Controllers\Org\OfficerInviteController;
 use App\Http\Controllers\Admin\OrganizationController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminOrgReviewController;
 use App\Http\Controllers\Org\ActivationStatusController;
 use App\Http\Controllers\Org\EncodeSchoolYearController;
 use App\Http\Controllers\Org\OrgRoleAssignmentController;
@@ -70,6 +73,13 @@ Route::prefix('admin')
         Route::resource('organizations', OrganizationController::class)
             ->except(['show'])
             ->names('admin.organizations');
+
+
+        Route::get('review', [AdminOrgReviewController::class, 'index'])->name('admin.review.index');
+
+        Route::get('review/show', [AdminOrgReviewController::class, 'show'])->name('admin.review.show');
+        
+        Route::get('audit-logs', [AuditLogController::class, 'index'])->name('admin.audit-logs.index');
     });
 
 
@@ -107,6 +117,8 @@ Route::prefix('org')
                 ->name('org.assign-project-heads.update');
             Route::get('activation-status', [ActivationStatusController::class, 'index'])
                 ->name('org.activation-status.index');
+
+            Route::post('officers/{officer}/resend-invite', [OfficerInviteController::class, 'resend'])->name('org.officers.resend-invite');    
         });
 
 
