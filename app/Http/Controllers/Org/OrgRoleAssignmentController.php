@@ -60,43 +60,95 @@ class OrgRoleAssignmentController extends Controller
 
         DB::transaction(function () use ($orgId, $syId, $treasurerOfficer, $moderatorOfficer) {
 
-            // Treasurer
-            [$treasurerUser] = AccountProvisioner::provisionUser($treasurerOfficer->full_name, $treasurerOfficer->email);
+            // -------------------
+            // TREASURER
+            // -------------------
+            [$treasurerUser] = AccountProvisioner::findOrCreateUser($treasurerOfficer->full_name, $treasurerOfficer->email);
 
-            // overwrite previous treasurer (exactly 1)
-            OrgMembership::query()
+            // ✅ Link officer -> user
+            if ((int) $treasurerOfficer->user_id !== (int) $treasurerUser->id) {
+                $treasurerOfficer->user_id = $treasurerUser->id;
+                $treasurerOfficer->save();
+            }
+
+            AccountProvisioner::ensureBasicOrgAccess($treasurerUser->id, $orgId, $syId);
+
+            $currentTreasurer = OrgMembership::query()
                 ->where('organization_id', $orgId)
                 ->where('school_year_id', $syId)
                 ->where('role', 'treasurer')
-                ->update(['archived_at' => now()]);
+                ->whereNull('archived_at')
+                ->first();
 
-            OrgMembership::query()->create([
-                'organization_id' => $orgId,
-                'school_year_id' => $syId,
-                'user_id' => $treasurerUser->id,
-                'role' => 'treasurer',
-                'archived_at' => null,
-            ]);
+            if (!($currentTreasurer && (int) $currentTreasurer->user_id === (int) $treasurerUser->id)) {
+                // archive existing active treasurer
+                OrgMembership::query()
+                    ->where('organization_id', $orgId)
+                    ->where('school_year_id', $syId)
+                    ->where('role', 'treasurer')
+                    ->whereNull('archived_at')
+                    ->update(['archived_at' => now()]);
 
-            // Moderator
-            [$moderatorUser] = AccountProvisioner::provisionUser($moderatorOfficer->full_name, $moderatorOfficer->email);
+                // upsert membership for selected treasurer user
+                OrgMembership::query()->updateOrCreate(
+                    [
+                        'organization_id' => $orgId,
+                        'school_year_id' => $syId,
+                        'user_id' => $treasurerUser->id,
+                        'role' => 'treasurer',
+                    ],
+                    [
+                        'archived_at' => null,
+                    ]
+                );
+            }
 
-            OrgMembership::query()
+            // -------------------
+            // MODERATOR
+            // -------------------
+            [$moderatorUser] = AccountProvisioner::findOrCreateUser($moderatorOfficer->full_name, $moderatorOfficer->email);
+
+            // ✅ Link officer -> user
+            if ((int) $moderatorOfficer->user_id !== (int) $moderatorUser->id) {
+                $moderatorOfficer->user_id = $moderatorUser->id;
+                $moderatorOfficer->save();
+            }
+
+            AccountProvisioner::ensureBasicOrgAccess($moderatorUser->id, $orgId, $syId);
+
+            $currentModerator = OrgMembership::query()
                 ->where('organization_id', $orgId)
                 ->where('school_year_id', $syId)
                 ->where('role', 'moderator')
-                ->update(['archived_at' => now()]);
+                ->whereNull('archived_at')
+                ->first();
 
-            OrgMembership::query()->create([
-                'organization_id' => $orgId,
-                'school_year_id' => $syId,
-                'user_id' => $moderatorUser->id,
-                'role' => 'moderator',
-                'archived_at' => null,
-            ]);
+            if (!($currentModerator && (int) $currentModerator->user_id === (int) $moderatorUser->id)) {
+                // archive existing active moderator
+                OrgMembership::query()
+                    ->where('organization_id', $orgId)
+                    ->where('school_year_id', $syId)
+                    ->where('role', 'moderator')
+                    ->whereNull('archived_at')
+                    ->update(['archived_at' => now()]);
+
+                // upsert membership for selected moderator user
+                OrgMembership::query()->updateOrCreate(
+                    [
+                        'organization_id' => $orgId,
+                        'school_year_id' => $syId,
+                        'user_id' => $moderatorUser->id,
+                        'role' => 'moderator',
+                    ],
+                    [
+                        'archived_at' => null,
+                    ]
+                );
+            }
         });
 
         return redirect()->route('org.assign-roles.edit')
-            ->with('status', 'Treasurer and Moderator assigned. Credentials sent/logged.');
+            ->with('status', 'Treasurer and Moderator assigned.');
     }
+
 }

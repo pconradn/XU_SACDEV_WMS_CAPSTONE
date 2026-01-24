@@ -6,6 +6,7 @@ use App\Support\Audit;
 use App\Models\SchoolYear;
 use App\Models\OfficerEntry;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Http\Controllers\Controller;
 
 class OfficerEntryController extends Controller
@@ -43,8 +44,14 @@ class OfficerEntryController extends Controller
 
         $data = $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
-            'email'     => ['required', 'email', 'max:255'],
-            'position'  => ['nullable', 'string', 'max:255'],
+            'email' => [
+                'required', 'email', 'max:255',
+                Rule::unique('officer_entries')->where(fn ($q) => $q
+                    ->where('organization_id', $orgId)
+                    ->where('school_year_id', $syId)
+                ),
+            ],
+            'position' => ['nullable', 'string', 'max:255'],
         ]);
 
         $officer=OfficerEntry::create([
@@ -78,25 +85,69 @@ class OfficerEntryController extends Controller
 
         $data = $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
-            'email'     => ['required', 'email', 'max:255'],
-            'position'  => ['nullable', 'string', 'max:255'],
+            'email' => [
+                'required', 'email',
+                Rule::unique('officer_entries')
+                    ->where(fn ($q) => $q->where('organization_id', $orgId)
+                                    ->where('school_year_id', $syId))
+                    ->ignore($officer->id),
+            ],
+            'position' => ['nullable', 'string', 'max:255'],
         ]);
-        $old = $officer->only(['full_name','email','position']);
+
+        $oldEmail = strtolower(trim($officer->email));
 
         $officer->update($data);
 
-        $this->logOfficerUpdateIfActiveSy($orgId, $syId, 'updated', $officer);
+        $newEmail = strtolower(trim($officer->email));
+        $emailChanged = $oldEmail !== $newEmail;
 
-        return redirect()->route('org.officers.index')
-            ->with('status', 'Officer updated.');
+        if (!$emailChanged) {
+            return redirect()->route('org.officers.index')->with('status', 'Officer updated.');
+        }
+
+        // ✅ If this officer is linked to a user account, handle login email too.
+        if ($officer->user_id) {
+            $user = \App\Models\User::find($officer->user_id);
+
+            if ($user) {
+                // If pending activation → show resend/relink banner
+                if ((int) $user->must_change_password === 1) {
+                    return redirect()
+                        ->route('org.officers.index')
+                        ->with('warning', 'This officer has a pending invite. Resend invite to the corrected email?')
+                        ->with('resend_invite_officer_id', $officer->id)
+                        ->with('resend_invite_old_user_id', $user->id) // ✅ use user_id now
+                        ->with('resend_invite_new_email', $newEmail);
+                }
+
+                // Activated user → update their login email too (safe-guarded)
+                $taken = \App\Models\User::query()
+                    ->whereRaw('LOWER(email) = ?', [$newEmail])
+                    ->where('id', '!=', $user->id)
+                    ->exists();
+
+                if ($taken) {
+                    return redirect()
+                        ->route('org.officers.index')
+                        ->with('warning', "Officer email updated, but login email could not be updated because '{$newEmail}' is already used by another account.");
+                }
+
+                $user->email = $newEmail;
+                $user->save();
+            }
+        }
+
+        return redirect()->route('org.officers.index')->with('status', 'Officer updated.');
     }
+
 
     public function destroy(Request $request, OfficerEntry $officer)
     {
         ['orgId' => $orgId, 'syId' => $syId] = $this->ctx($request);
 
         abort_unless($officer->organization_id === $orgId && $officer->school_year_id === $syId, 404);
-        
+
         $this->logOfficerUpdateIfActiveSy($orgId, $syId, 'deleted', $officer);
 
         $officer->delete();
@@ -138,6 +189,44 @@ class OfficerEntryController extends Controller
                 ],
             ]
         );
+    }
+
+    private function officerIsAssignedSomewhere($officer, int $orgId, int $syId): bool
+    {
+        // find old-user by officer email BEFORE change isn’t reliable here,
+        // so just check: is there an assigned user *matching officer email* OR officer email appears as user?
+        // Better: check via user record existence by email and links.
+
+        $user = \App\Models\User::where('email', $officer->email)->first();
+        if (!$user) {
+            // Could still be "assigned" if it used old email user; but we only show banner on email changed,
+            // so we can assume yes later. We'll do a broader check at resend time.
+            return true;
+        }
+
+        $hasOrgRole = \App\Models\OrgMembership::query()
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->whereIn('role', ['treasurer', 'moderator'])
+            ->where('user_id', $user->id)
+            ->whereNull('archived_at')
+            ->exists();
+
+        if ($hasOrgRole) return true;
+
+        $projectIds = \App\Models\Project::query()
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->pluck('id');
+
+        $hasHead = \App\Models\ProjectAssignment::query()
+            ->whereIn('project_id', $projectIds)
+            ->where('role', 'project_head')
+            ->where('user_id', $user->id)
+            ->whereNull('archived_at')
+            ->exists();
+
+        return $hasHead;
     }
 
 }

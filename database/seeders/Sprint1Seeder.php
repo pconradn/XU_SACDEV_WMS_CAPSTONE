@@ -19,7 +19,6 @@ class Sprint1Seeder extends Seeder
         // ---------------------------
         // 1) ACTIVE SCHOOL YEAR
         // ---------------------------
-        // Make sure only one active SY
         SchoolYear::query()->update(['is_active' => false]);
 
         $sy = SchoolYear::query()->firstOrCreate(
@@ -42,7 +41,7 @@ class Sprint1Seeder extends Seeder
                 'name' => 'SacDev Admin',
                 'password' => Hash::make('Admin1234!'),
                 'system_role' => 'sacdev_admin',
-                'must_change_password' => false, // admin can already access right away
+                'must_change_password' => false,
                 'password_changed_at' => now(),
             ]
         );
@@ -61,7 +60,7 @@ class Sprint1Seeder extends Seeder
         );
 
         // ---------------------------
-        // 4) Presidents (1 per org)
+        // 4) Presidents
         // ---------------------------
         $pres1 = User::query()->firstOrCreate(
             ['email' => 'president.xucs@xu.edu.ph'],
@@ -86,7 +85,7 @@ class Sprint1Seeder extends Seeder
         );
 
         // ---------------------------
-        // 5) organization_school_years setup
+        // 5) organization_school_years
         // ---------------------------
         OrganizationSchoolYear::query()->updateOrCreate(
             [
@@ -128,7 +127,23 @@ class Sprint1Seeder extends Seeder
         ]);
 
         // ---------------------------
-        // 7) Officers list (5 per org)
+        // Helper: Create user for officer email (for Sprint1)
+        // ---------------------------
+        $makeOfficerUser = function (string $name, string $email) {
+            return User::query()->firstOrCreate(
+                ['email' => $email],
+                [
+                    'name' => $name,
+                    'password' => Hash::make('TempPass123!'),
+                    'system_role' => null,
+                    'must_change_password' => true,
+                    'password_changed_at' => null,
+                ]
+            );
+        };
+
+        // ---------------------------
+        // 7) Officers list (5 per org) + link user_id
         // ---------------------------
         $xucsOfficers = [
             ['full_name' => 'Treasurer XUCS', 'email' => 'treasurer.xucs@xu.edu.ph', 'position' => 'Treasurer'],
@@ -139,6 +154,8 @@ class Sprint1Seeder extends Seeder
         ];
 
         foreach ($xucsOfficers as $o) {
+            $user = $makeOfficerUser($o['full_name'], $o['email']);
+
             OfficerEntry::query()->updateOrCreate(
                 [
                     'organization_id' => $org1->id,
@@ -146,6 +163,7 @@ class Sprint1Seeder extends Seeder
                     'email' => $o['email'],
                 ],
                 [
+                    'user_id' => $user->id, // ✅ NEW
                     'full_name' => $o['full_name'],
                     'position' => $o['position'],
                 ]
@@ -161,6 +179,8 @@ class Sprint1Seeder extends Seeder
         ];
 
         foreach ($xutiOfficers as $o) {
+            $user = $makeOfficerUser($o['full_name'], $o['email']);
+
             OfficerEntry::query()->updateOrCreate(
                 [
                     'organization_id' => $org2->id,
@@ -168,6 +188,7 @@ class Sprint1Seeder extends Seeder
                     'email' => $o['email'],
                 ],
                 [
+                    'user_id' => $user->id, // ✅ NEW
                     'full_name' => $o['full_name'],
                     'position' => $o['position'],
                 ]
@@ -175,14 +196,74 @@ class Sprint1Seeder extends Seeder
         }
 
         // ---------------------------
-        // 8) Projects (2 per org)
+        // 8) Assign Treasurer + Moderator memberships (optional but good)
         // ---------------------------
-        $org1Projects = [
-            'Hackathon Training Week',
-            'Community Coding Workshop',
-        ];
+        $xucsTreas = User::where('email', 'treasurer.xucs@xu.edu.ph')->first();
+        $xucsMod   = User::where('email', 'moderator.xucs@xu.edu.ph')->first();
 
-        foreach ($org1Projects as $title) {
+        if ($xucsTreas) {
+            OrgMembership::query()->updateOrCreate(
+                [
+                    'organization_id' => $org1->id,
+                    'school_year_id' => $sy->id,
+                    'role' => 'treasurer',
+                ],
+                [
+                    'user_id' => $xucsTreas->id,
+                    'archived_at' => null,
+                ]
+            );
+        }
+
+        if ($xucsMod) {
+            OrgMembership::query()->updateOrCreate(
+                [
+                    'organization_id' => $org1->id,
+                    'school_year_id' => $sy->id,
+                    'role' => 'moderator',
+                ],
+                [
+                    'user_id' => $xucsMod->id,
+                    'archived_at' => null,
+                ]
+            );
+        }
+
+        $xutiTreas = User::where('email', 'treasurer.xuti@xu.edu.ph')->first();
+        $xutiMod   = User::where('email', 'moderator.xuti@xu.edu.ph')->first();
+
+        if ($xutiTreas) {
+            OrgMembership::query()->updateOrCreate(
+                [
+                    'organization_id' => $org2->id,
+                    'school_year_id' => $sy->id,
+                    'role' => 'treasurer',
+                ],
+                [
+                    'user_id' => $xutiTreas->id,
+                    'archived_at' => null,
+                ]
+            );
+        }
+
+        if ($xutiMod) {
+            OrgMembership::query()->updateOrCreate(
+                [
+                    'organization_id' => $org2->id,
+                    'school_year_id' => $sy->id,
+                    'role' => 'moderator',
+                ],
+                [
+                    'user_id' => $xutiMod->id,
+                    'archived_at' => null,
+                ]
+            );
+        }
+
+        // ---------------------------
+        // 9) Projects (2 per org)
+        // ---------------------------
+        foreach (['Hackathon Training Week', 'Community Coding Workshop'] as $title) {
             Project::query()->firstOrCreate([
                 'organization_id' => $org1->id,
                 'school_year_id' => $sy->id,
@@ -190,12 +271,7 @@ class Sprint1Seeder extends Seeder
             ]);
         }
 
-        $org2Projects = [
-            'AI Awareness Seminar',
-            'Tech Expo Booth Setup',
-        ];
-
-        foreach ($org2Projects as $title) {
+        foreach (['AI Awareness Seminar', 'Tech Expo Booth Setup'] as $title) {
             Project::query()->firstOrCreate([
                 'organization_id' => $org2->id,
                 'school_year_id' => $sy->id,
@@ -207,5 +283,6 @@ class Sprint1Seeder extends Seeder
         $this->command?->warn('Admin Login: sacdev.admin@xu.edu.ph / Admin1234!');
         $this->command?->warn('President Login XUCS: president.xucs@xu.edu.ph / TempPass123!');
         $this->command?->warn('President Login XUTI: president.xuti@xu.edu.ph / TempPass123!');
+        $this->command?->warn('Officer Login Example: treasurer.xucs@xu.edu.ph / TempPass123!');
     }
 }

@@ -73,6 +73,12 @@ class ProjectHeadAssignmentController extends Controller
             // Create only if missing (no password reset if exists)
             [$user, $tempPassword] = AccountProvisioner::findOrCreateUser($officer->full_name, $officer->email);
 
+            // ✅ IMPORTANT: Link officer entry to this user (so future edits are deterministic)
+            if ((int) $officer->user_id !== (int) $user->id) {
+                $officer->user_id = $user->id;
+                $officer->save();
+            }
+
             // Ensure org access membership exists & not archived
             AccountProvisioner::ensureBasicOrgAccess($user->id, $orgId, $syId);
 
@@ -80,16 +86,18 @@ class ProjectHeadAssignmentController extends Controller
             $currentHead = ProjectAssignment::query()
                 ->where('project_id', $project->id)
                 ->where('assignment_role', 'project_head')
+                ->whereNull('archived_at')
                 ->first();
 
-            if ($currentHead && (int)$currentHead->user_id === (int)$user->id) {
-                return;
+            if ($currentHead && (int) $currentHead->user_id === (int) $user->id) {
+                return; // no-op
             }
 
-            // Overwrite previous head
+            // Overwrite previous head (soft approach: archive instead of delete if you prefer)
             ProjectAssignment::query()
                 ->where('project_id', $project->id)
                 ->where('assignment_role', 'project_head')
+                ->whereNull('archived_at')
                 ->delete();
 
             ProjectAssignment::query()->create([
@@ -103,6 +111,7 @@ class ProjectHeadAssignmentController extends Controller
         return redirect()->route('org.assign-project-heads.index')
             ->with('status', 'Project head assigned (existing users keep their password).');
     }
+
 
 
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\ForcedPasswordController;
 use App\Http\Controllers\Admin\SchoolYearController;
 use App\Http\Controllers\Org\OfficerEntryController;
 use App\Http\Controllers\Org\OrgDashboardController;
+use App\Http\Controllers\Org\OfficerInviteController;
 use App\Http\Controllers\Admin\OrganizationController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminOrgReviewController;
@@ -116,6 +117,8 @@ Route::prefix('org')
                 ->name('org.assign-project-heads.update');
             Route::get('activation-status', [ActivationStatusController::class, 'index'])
                 ->name('org.activation-status.index');
+
+            Route::post('officers/{officer}/resend-invite', [OfficerInviteController::class, 'resend'])->name('org.officers.resend-invite');    
         });
 
 

@@ -23,4 +23,8 @@ class OfficerEntry extends Model
     {
         return $this->belongsTo(SchoolYear::class);
     }
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class);
+    }
 }
