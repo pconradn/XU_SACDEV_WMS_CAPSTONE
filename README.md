@@ -1,151 +1,139 @@
 
-
-
 # SAcDev Project Workflow Management System
-## Development Cycle 1 (Sprint 1) – Foundation + Org Setup + Role Assignment
 
-This repository contains the implementation for **Development Cycle 1** of the SAcDev Project Workflow Management System.  
-Cycle 1 focuses on building the **core backend foundation**, authentication flow, role access control, and the organization setup workflow (officers, projects, and assignments).  
-The goal for this cycle is to make the system functional enough for login + encoding + role assignment + admin viewing, before moving to the full proposal submission workflow in Cycle 2.
+## Development Cycle 1 – System Foundation + Org Setup + Role Assignment
+
+This repository contains the implementation for **Development Cycle 1** of the SAcDev Project Workflow Management System.
+Cycle 1 focuses on establishing the **core system foundation**, including authentication, role-based access, active school year filtering, and the organization setup workflow (officers, projects, and assignments), so the system is already usable for login + encoding + role assignment before moving to full proposal workflow features in Cycle 2.
 
 ---
 
-##  Scope of Development Cycle 1
+## Key Features Implemented (Dev Cycle 1)
 
-###  Functional Features Implemented
+### 1) Authentication + Temporary Account Setup
 
-#### 1) User Authentication (Laravel Breeze)
-- Secure login using unique credentials
-- Uses Laravel’s built-in authentication scaffolding (Breeze)
+* Login implemented using **Laravel Breeze**
+* **Forced password change** on first login for temporary accounts:
 
-#### 2) Forced Password Change (Temporary Account Gate)
-- Users with **temporary passwords** are required to change password on first login
-- Uses the fields:
-  - `must_change_password`
-  - `password_changed_at`
+  * `must_change_password`
+  * `password_changed_at`
 
-#### 3) Role-Based Access Control (RBAC)
-Access to pages/features depends on role:
+### 2) Role-Based Access Control (RBAC)
+
+System access depends on role:
 
 **System Role**
-- `sacdev_admin` (SAcDev staff)
 
-**Organization Roles (Org Membership)**
-- `president`
-- `treasurer`
-- `moderator`
-- `member` (basic org portal access)
+* `sacdev_admin`
 
-Middleware was added to restrict access properly:
-- `sacdev_admin`
-- `must_change_password`
-- `active_sy_access`
+**Organization Roles**
 
-#### 4) Active School Year Filtering
-- Only **one school year can be active** at a time
-- Org-side encoding and views are based on the selected/active school year
-- Admin can manage school years and activate one
+* `president`
+* `treasurer`
+* `moderator`
+* `member`
 
-#### 5) Organization Setup Workflow (President Encoding)
-Org President can encode:
- **Officer List** (required first)  
- **Project List**  
- Assign:
-- Exactly **1 Treasurer**
-- Exactly **1 Moderator**
-- Exactly **1 Project Head per Project**
+Middleware added:
+
+* `sacdev_admin`
+* `must_change_password`
+* `active_sy_access`
+
+### 3) Active School Year Logic
+
+* Only **one school year** can be active at a time
+* Org-side encoding and records are filtered by the active school year
+* Admin can manage and activate school years
+
+### 4) Organization Setup Workflow (President)
+
+President can:
+
+* Encode **Officer List**
+* Encode **Projects**
+* Assign:
+
+  * **1 Treasurer**
+  * **1 Moderator**
+  * **1 Project Head per project**
 
 Rules enforced:
-- No free typing random emails for assignment
-- Assignments must come from the officer list first
-- System overwrites old treasurer/moderator assignments when changed
-- System overwrites old project head when assigning a new one
 
-#### 6) Auto Account Creation (Only When Needed)
-User accounts for students/officers are created only when they are assigned:
-- as **treasurer**
-- as **moderator**
-- as **project head**
+* No random email typing for role assignment
+* Assignments must come from the officer list
+* New assignments overwrite old ones safely
 
-Accounts are created using `AccountProvisioner`:
-- Generates temporary password
-- Sends credentials through email (`MAIL_MAILER=log` during development)
-- Sets must-change-password flag
+### 5) Auto Account Provisioning (Only When Needed)
 
-#### 7) Officer Entry ↔ User Linking
-- Officer entries are linked to user accounts through:
-  - `officer_entries.user_id`
+Accounts are created only when an officer is assigned as:
 
-This makes later features safe (email corrections, role checks, reassignments).
+* Treasurer
+* Moderator
+* Project Head
 
-#### 8) Invite Resend for Wrong Officer Email (Pending Invite Only)
-If an officer’s email was encoded incorrectly and the system already created an account,
-the invite can be resent safely ONLY when:
-- user is still pending (`must_change_password = 1`)
-- user has not activated yet (`password_changed_at = null`)
+Handled through `AccountProvisioner`:
 
-Resend process:
-- updates the existing user email
-- resets temp password safely (pending only)
-- resends credentials
+* Generates temporary password
+* Sends credentials (development uses `MAIL_MAILER=log`)
+* Sets password-change requirement
+
+### 6) Safe Invite Resend (Pending Accounts Only)
+
+Invite resend works only when:
+
+* `must_change_password = 1`
+* `password_changed_at = null`
+
+This allows correcting wrong encoded emails before the user activates.
 
 ---
 
-##  Database Tables / Core Models (Cycle 1)
-Development Cycle 1 includes the initial database structure with core relationships:
+## Core Tables / Models Used
 
-- `users`
-- `school_years`
-- `organizations`
-- `organization_school_years`
-- `officer_entries`
-- `projects`
-- `org_memberships`
-- `project_assignments`
+* `users`
+* `school_years`
+* `organizations`
+* `organization_school_years`
+* `officer_entries`
+* `projects`
+* `org_memberships`
+* `project_assignments`
 
 ---
 
-##  Seeder for Demo / Testing
-A ready-to-run seeder is included for Sprint 1 testing:
+## Seeder (Sprint 1)
 
 Seeder:
-- `Database\Seeders\Sprint1Seeder`
 
-Creates:
-- 1 active school year
-- 2 organizations
-- 1 SacDev Admin user
-- 2 president users
-- officer lists for each org
-- projects for each org
+* `Database\Seeders\Sprint1Seeder`
+
+Creates demo data including:
+
+* 1 active school year
+* 2 orgs
+* SacDev admin user
+* 2 presidents
+* officer lists + projects
 
 Test Accounts:
-- **Admin Login**
-  - Email: `sacdev.admin@xu.edu.ph`
-  - Password: `Admin1234!`
 
-- **President Login (XUCS)**
-  - Email: `president.xucs@xu.edu.ph`
-  - Password: `TempPass123!`
-
-- **President Login (XUTI)**
-  - Email: `president.xuti@xu.edu.ph`
-  - Password: `TempPass123!`
+* Admin: `sacdev.admin@xu.edu.ph` / `Admin1234!`
+* President (XUCS): `president.xucs@xu.edu.ph` / `TempPass123!`
+* President (XUTI): `president.xuti@xu.edu.ph` / `TempPass123!`
 
 ---
 
-##  Setup Instructions
+## Setup Instructions
 
-### 1) Install dependencies
+### Install dependencies
+
 ```bash
 composer install
 npm install
 npm run dev
-````
+```
 
-### 2) Configure `.env`
-
-Copy `.env.example` and generate key:
+### Configure `.env`
 
 ```bash
 cp .env.example .env
@@ -154,13 +142,13 @@ php artisan key:generate
 
 Update DB credentials in `.env`
 
-### 3) Run migrations + seed
+### Migrate + seed
 
 ```bash
 php artisan migrate:fresh --seed
 ```
 
-### 4) Run server
+### Run server
 
 ```bash
 php artisan serve
@@ -168,54 +156,29 @@ php artisan serve
 
 ---
 
-##  What to Test (Cycle 1 Demo Flow)
+## NPM Notes (Frontend)
 
-### Org President Flow
+* Use **`npm run dev`** while developing (recommended)
+* Use **`npm run build`** only for production/deployment
 
-1. Login as president
-2. Forced password change triggers
-3. Encode officer list
+---
+
+## Cycle 1 Demo Flow
+
+### Org President
+
+1. Login
+2. Change password (forced)
+3. Encode officers
 4. Encode projects
-5. Assign treasurer + moderator
+5. Assign treasurer/moderator
 6. Assign project heads
-7. Observe that assigned officers get accounts created automatically (invite logged)
+7. Check that accounts are auto-created (email logged)
 
-### SacDev Admin Flow
+### SacDev Admin
 
-1. Login as admin
+1. Login
 2. Manage school years (CRUD + activate)
-3. View organization entries (officers/projects/roles)
+3. View org data for monitoring
 
 ---
-
-##  Next Development Cycle (Cycle 2 Preview)
-
-Cycle 2 will focus on the actual workflow features such as:
-
-* proposal submission forms
-* approval routing (president → treasurer → moderator → sacdev)
-* feedback and revision loop
-* document tracking statuses
-* project completion + archival logic
-
----
-
-## Notes / Developer Reminders
-
-* Temporary accounts must always pass through the password change gate
-* Assignments should always use `users.id`, not `officer_entries.id`
-* Always link `officer_entries.user_id` after provisioning a user
-* Use `updateOrCreate()` for roles to prevent unique constraint errors
-* All org data must be filtered by active/selected school year
-
----
-
- Development Cycle 1 is considered complete once:
-
-* Authentication is stable
-* Org encoding works (officers/projects)
-* Assignment logic works without crashes
-* Admin can view data for monitoring
-
-```
-

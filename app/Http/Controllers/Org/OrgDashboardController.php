@@ -95,6 +95,8 @@ class OrgDashboardController extends Controller
 
         $request->session()->put('active_org_id', $orgId);
 
+        session(['active_org_id' => $orgId]);
+
         return redirect()->route('org.home');
     }
 }
