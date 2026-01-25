@@ -4,6 +4,8 @@ namespace App\Support;
 
 use App\Models\AuditLog;
 
+//for audit logs
+
 class Audit
 {
     public static function log(string $event, ?string $message = null, array $context = []): AuditLog

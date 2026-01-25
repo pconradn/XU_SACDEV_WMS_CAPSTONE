@@ -8,6 +8,8 @@ use App\Models\Organization;
 use App\Models\SchoolYear;
 use Illuminate\Http\Request;
 
+//AUDIT LOGS PAGE CONTROLLER
+
 class AuditLogController extends Controller
 {
     public function index(Request $request)
@@ -16,7 +18,8 @@ class AuditLogController extends Controller
             ->with(['actor', 'organization', 'schoolYear'])
             ->latest();
 
-        // Filters (optional)
+        
+
         if ($request->filled('event')) {
             $q->where('event', $request->string('event'));
         }

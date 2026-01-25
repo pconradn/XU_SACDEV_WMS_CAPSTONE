@@ -25,12 +25,12 @@
 
 <div class="min-h-screen bg-slate-50">
 
-    {{-- Top Bar (Steam-like header) --}}
+   
     <div class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="flex h-14 items-center justify-between gap-4">
 
-                {{-- Left: Brand --}}
+              
                 <div class="flex items-center gap-3">
                     <div class="h-9 w-15 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold">
                         PWM
@@ -52,7 +52,7 @@
                     @endauth
                 </div>
 
-                {{-- Center: Search (optional UI, can wire later) --}}
+             
                 <div class="hidden md:flex flex-1 justify-center">
                     <div class="w-full max-w-xl">
                         <div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
@@ -73,7 +73,7 @@
                     </div>
                 </div>
 
-                {{-- Right: Active SY + User --}}
+            
                 <div class="flex items-center gap-3">
                     @auth
                         <div class="hidden sm:flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
@@ -114,7 +114,6 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         <div class="grid grid-cols-12 gap-6">
 
-            {{-- Left Sidebar (Steam-like) --}}
             <aside class="col-span-12 lg:col-span-3">
                 <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
 
@@ -128,13 +127,12 @@
                     </div>
 
                     <div class="p-2">
-                        {{-- Keep Breeze navigation so nothing breaks.
-                             We'll restyle its links later once you show layouts/navigation.blade.php --}}
+                
                         @include('layouts.navigation')
                     </div>
                 </div>
 
-                {{-- Small info card (optional, Steam-like “side info”) --}}
+             
                 @auth
                     <div class="mt-4 rounded-2xl border border-slate-200 bg-white shadow-sm p-4">
                         <div class="text-xs font-semibold text-slate-700">Quick Info</div>
@@ -158,7 +156,7 @@
 
             {{-- Main Content --}}
             <section class="col-span-12 lg:col-span-9">
-                {{-- Page Header Area --}}
+                
                 @isset($header)
                     <div class="mb-4 rounded-2xl border border-slate-200 bg-white shadow-sm">
                         <div class="px-6 py-5">
@@ -167,7 +165,7 @@
                     </div>
                 @endisset
 
-                {{-- Page Content Card Container --}}
+             
                 <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <div class="p-6">
                         {{ $slot }}

@@ -7,6 +7,8 @@ use App\Models\SchoolYear;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+//SCHOOL YEAR CRUD
+
 class SchoolYearController extends Controller
 {
     public function index()
@@ -33,7 +35,7 @@ class SchoolYearController extends Controller
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
 
-        // Default is_active false for newly created SY
+        
         $data['is_active'] = false;
 
         SchoolYear::create($data);

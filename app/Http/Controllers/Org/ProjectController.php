@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use Illuminate\Http\Request;
 
+//PROJECTS CRUD
+
 class ProjectController extends Controller
 {
+    //IDENTIFY CONTEXT
     private function ctx(Request $request): array
     {
         return [

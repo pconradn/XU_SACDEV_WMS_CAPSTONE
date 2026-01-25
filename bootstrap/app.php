@@ -10,6 +10,7 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    //add middlewares here 
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'must_change_password' => \App\Http\Middleware\MustChangePassword::class,

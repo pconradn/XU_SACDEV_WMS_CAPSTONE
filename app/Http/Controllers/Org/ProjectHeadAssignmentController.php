@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Support\AccountProvisioner;
 
+//CRUD FOR PROJECT HEAD ASSIGNMENT TO PROJECTS
+
 class ProjectHeadAssignmentController extends Controller
 {
     public function index(Request $request)
@@ -23,7 +25,7 @@ class ProjectHeadAssignmentController extends Controller
             ->orderBy('title')
             ->get();
 
-        // load current head per project (assignment_role = project_head)
+
         $heads = ProjectAssignment::query()
             ->whereIn('project_id', $projects->pluck('id'))
             ->where('assignment_role', 'project_head')
@@ -69,20 +71,17 @@ class ProjectHeadAssignmentController extends Controller
         abort_unless($officer->organization_id === $orgId && $officer->school_year_id === $syId, 403);
 
         DB::transaction(function () use ($project, $officer, $orgId, $syId) {
-
-            // Create only if missing (no password reset if exists)
             [$user, $tempPassword] = AccountProvisioner::findOrCreateUser($officer->full_name, $officer->email);
 
-            // ✅ IMPORTANT: Link officer entry to this user (so future edits are deterministic)
             if ((int) $officer->user_id !== (int) $user->id) {
                 $officer->user_id = $user->id;
                 $officer->save();
             }
 
-            // Ensure org access membership exists & not archived
+  
             AccountProvisioner::ensureBasicOrgAccess($user->id, $orgId, $syId);
 
-            // If same head already, no-op
+         
             $currentHead = ProjectAssignment::query()
                 ->where('project_id', $project->id)
                 ->where('assignment_role', 'project_head')
@@ -90,10 +89,10 @@ class ProjectHeadAssignmentController extends Controller
                 ->first();
 
             if ($currentHead && (int) $currentHead->user_id === (int) $user->id) {
-                return; // no-op
+                return;
             }
 
-            // Overwrite previous head (soft approach: archive instead of delete if you prefer)
+
             ProjectAssignment::query()
                 ->where('project_id', $project->id)
                 ->where('assignment_role', 'project_head')

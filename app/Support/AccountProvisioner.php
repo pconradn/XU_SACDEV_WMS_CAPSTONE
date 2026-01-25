@@ -12,14 +12,13 @@ class AccountProvisioner
 {
 
     /**
-     * Resend credentials to a PENDING user (must_change_password = true and not yet changed).
-     * This will RESET their temp password (safe because they haven't activated yet).
+     * Resend credentials to users with must_change_password = true
      *
-     * @return string the new temp password
+     * return  the new temp password
      */
     public static function resendInviteToPendingUser(User $user): string
     {
-        // Safety: only pending invites
+        // only pending invites
         if (!(bool) $user->must_change_password || $user->password_changed_at !== null) {
             throw new \RuntimeException('Cannot resend invite: user is already activated.');
         }
@@ -45,18 +44,18 @@ class AccountProvisioner
     }
 
     /**
-     * Find user by email. If missing, create with temp password & must-change gate.
-     * If exists, DO NOT reset password.
+     * find user by email. If missing, create with temp password
+     * If exists, np pass reset
      *
-     * @return array{0: User, 1: ?string} temp password string only when created
+     * return an array{0: User, 1: ?string} temp password string only when created
      */
     public static function findOrCreateUser(string $name, string $email): array
     {
         $user = User::query()->where('email', $email)->first();
 
-        // If exists, don't touch password
+      
         if ($user) {
-            // Update name if blank/outdated (optional)
+            
             if (!$user->name || $user->name !== $name) {
                 $user->name = $name;
                 $user->save();
@@ -64,7 +63,7 @@ class AccountProvisioner
             return [$user, null];
         }
 
-        // Create new user
+       
         $tempPassword = Str::random(10) . '!' . rand(10, 99);
 
         $user = User::create([
@@ -74,10 +73,10 @@ class AccountProvisioner
             'system_role' => null,
             'must_change_password' => true,
             'password_changed_at' => null,
-            // add 'is_archived' only if you use it on users (optional)
+            
         ]);
 
-        // Send credentials (MAIL_MAILER=log is fine)
+    
         Mail::raw(
             "Hello {$user->name},\n\n" .
             "You have been assigned a role in the SAcDev Workflow System.\n\n" .
@@ -94,8 +93,8 @@ class AccountProvisioner
     }
 
     /**
-     * Ensure user has an active OrgMembership for org + schoolyear + role.
-     * If archived exists, revive it.
+     * makesure user has an active OrgMembership for org + schoolyear + role
+     * and if its archived, revive it.
      */
     public static function ensureMembership(int $userId, int $orgId, int $syId, string $role): OrgMembership
     {
@@ -124,8 +123,7 @@ class AccountProvisioner
     }
 
     /**
-     * Ensure user is at least a member (basic access) in org+sy.
-     * Useful when assigning project head so user can login to org portal.
+     * make sure user is at least a member in org+sy.
      */
     public static function ensureBasicOrgAccess(int $userId, int $orgId, int $syId): OrgMembership
     {
@@ -169,7 +167,7 @@ class AccountProvisioner
         $user->password_changed_at = null;
         $user->save();
 
-        // MAIL_MAILER=log for now
+       
         Mail::raw(
             "Hello {$user->name},\n\n" .
             "You have been assigned a role in the SAcDev Workflow System.\n\n" .

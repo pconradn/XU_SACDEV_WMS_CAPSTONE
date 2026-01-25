@@ -7,6 +7,8 @@ use App\Models\OrgMembership;
 use App\Models\SchoolYear;
 use Illuminate\Http\Request;
 
+//SELECT SCHOOL YEAR TO USE FOR ADDING PROJECTS AND OFFICERS LIST (temporary)
+
 class EncodeSchoolYearController extends Controller
 {
     public function show(Request $request)
@@ -20,12 +22,12 @@ class EncodeSchoolYearController extends Controller
 
         $orgId = (int) $request->session()->get('active_org_id', 0);
 
-        // Must have selected org first (multi-org)
+        // must have selected org first 
         if (!$orgId) {
             return redirect()->route('org.home')->with('status', 'Please select an organization first.');
         }
 
-        // Must be president in active SY for selected org
+       
         $isPresident = OrgMembership::query()
             ->where('user_id', $user->id)
             ->where('organization_id', $orgId)
@@ -38,15 +40,15 @@ class EncodeSchoolYearController extends Controller
             abort(403, 'Only the President can choose a school year to encode.');
         }
 
-        // Determine "next SY" by start_date / id ordering
+       
         $nextSy = SchoolYear::query()
             ->where('id', '!=', $activeSy->id)
             ->where(function ($q) use ($activeSy) {
-                // If you have start_date, use it
+                
                 if ($activeSy->start_date) {
                     $q->where('start_date', '>', $activeSy->start_date);
                 } else {
-                    // fallback: higher id
+                   
                     $q->where('id', '>', $activeSy->id);
                 }
             })
@@ -84,7 +86,7 @@ class EncodeSchoolYearController extends Controller
             return redirect()->route('org.home')->with('status', 'Please select an organization first.');
         }
 
-        // Must be president in active SY for selected org
+       
         $isPresident = OrgMembership::query()
             ->where('user_id', $user->id)
             ->where('organization_id', $orgId)
@@ -97,7 +99,6 @@ class EncodeSchoolYearController extends Controller
             abort(403, 'Only the President can update encode school year.');
         }
 
-        // Compute next SY same as show()
         $nextSy = SchoolYear::query()
             ->where('id', '!=', $activeSy->id)
             ->where(function ($q) use ($activeSy) {

@@ -19,14 +19,14 @@ class RequireActiveSYAccess
 
         $user = auth()->user();
 
-        // SacDev admin bypass
+       
         if ($user->system_role === 'sacdev_admin') {
             return $next($request);
         }
 
         $activeSyId = SchoolYear::activeId();
 
-        // If there is no active SY yet, block org portal access (admin still can access)
+        // if there is no active SY yet, block org portal access
         if (!$activeSyId) {
             return response()->view('blocked.no-active-sy', [], 403);
         }
@@ -53,7 +53,7 @@ class RequireActiveSYAccess
             return $next($request);
         }
 
-        // No access in active SY => archived/no access screen
+        //no access screen
         return response()->view('blocked.no-access', [], 403);
     }
 }

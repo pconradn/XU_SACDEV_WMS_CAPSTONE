@@ -15,7 +15,6 @@
                 </a>
             </div>
 
-            {{-- Assignments Summary --}}
             <div class="bg-white shadow rounded p-6 mb-6">
                 <h3 class="font-semibold text-lg mb-3">Assignments Summary</h3>
 
@@ -85,7 +84,7 @@
                 </div>
             </div>
 
-            {{-- Officers --}}
+    
             <div class="bg-white shadow rounded p-6 mb-6">
                 <h3 class="font-semibold text-lg mb-3">Officers Submitted</h3>
                 <div class="overflow-x-auto">
@@ -112,7 +111,7 @@
                 </div>
             </div>
 
-            {{-- Projects --}}
+    
             <div class="bg-white shadow rounded p-6">
                 <h3 class="font-semibold text-lg mb-3">Projects Submitted</h3>
                 <div class="overflow-x-auto">

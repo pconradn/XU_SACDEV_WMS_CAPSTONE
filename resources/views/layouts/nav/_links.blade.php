@@ -70,7 +70,6 @@
         // -------------------------
         } else {
 
-            // Detect org role for the ACTIVE school year
             $activeSyId = SchoolYear::activeYear()?->id;
             $activeOrgId = session('active_org_id');
 
@@ -79,7 +78,7 @@
             if ($activeSyId && $activeOrgId) {
                 $orgRole = OrgMembership::where('user_id', $user->id)
                     ->where('school_year_id', $activeSyId)
-                    ->where('organization_id', $activeOrgId)   // ✅ key fix
+                    ->where('organization_id', $activeOrgId)   
                     ->whereNull('archived_at')
                     ->value('role');
             }
@@ -89,7 +88,7 @@
             
 
 
-            // President-only workflow links
+       
             if ($isPresident) {
 
                 if (Route::has('org.encode-sy.show')) {
