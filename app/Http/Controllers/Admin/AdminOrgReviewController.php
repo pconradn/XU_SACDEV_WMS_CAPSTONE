@@ -12,6 +12,8 @@ use App\Models\SchoolYear;
 use App\Models\User;
 use Illuminate\Http\Request;
 
+//CONTROLLER FOR DISPLAYING ORG ENTRIES
+
 class AdminOrgReviewController extends Controller
 {
     public function index()
@@ -36,21 +38,21 @@ class AdminOrgReviewController extends Controller
         $org = Organization::findOrFail($orgId);
         $sy  = SchoolYear::findOrFail($syId);
 
-        // Officers
+        // officers
         $officers = OfficerEntry::query()
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
             ->orderBy('full_name')
             ->get();
 
-        // Projects
+        // projects
         $projects = Project::query()
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
             ->orderBy('title')
             ->get();
 
-        // Org roles: president/treasurer/moderator (active only)
+        // org roles
         $memberships = OrgMembership::query()
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
@@ -58,14 +60,14 @@ class AdminOrgReviewController extends Controller
             ->whereIn('role', ['president', 'treasurer', 'moderator'])
             ->get();
 
-        // Project heads
+        // project heads
         $projectHeads = ProjectAssignment::query()
             ->whereIn('project_id', $projects->pluck('id'))
             ->where('assignment_role', 'project_head')
             ->whereNull('archived_at')
             ->get();
 
-        // Users involved (for activation)
+        // users involved (for activation)
         $userIds = collect()
             ->merge($memberships->pluck('user_id'))
             ->merge($projectHeads->pluck('user_id'))
@@ -77,7 +79,7 @@ class AdminOrgReviewController extends Controller
             ->get()
             ->keyBy('id');
 
-        // Map memberships to display objects
+        // memberships 
         $roleRows = $memberships->map(function ($m) use ($users) {
             $u = $users->get($m->user_id);
 
@@ -89,7 +91,9 @@ class AdminOrgReviewController extends Controller
             ];
         })->sortBy('role')->values();
 
-        // Map project heads to display objects
+
+        
+        // project heads 
         $headRows = $projectHeads->map(function ($pa) use ($users, $projects) {
             $u = $users->get($pa->user_id);
             $project = $projects->firstWhere('id', $pa->project_id);

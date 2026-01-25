@@ -16,7 +16,7 @@ class MustChangePassword
 
         $user = auth()->user();
 
-        // Allow logout and the forced password change routes to avoid redirect loops
+        // allow logout and the forced password change routes to avoid those redirect loops
         $allowedRouteNames = [
             'password.force.form',
             'password.force.update',

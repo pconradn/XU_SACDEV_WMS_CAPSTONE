@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Http\Controllers\Controller;
 
+//OFFICER CRUD
+
 class OfficerEntryController extends Controller
 {
     private function ctx(Request $request): array
@@ -63,7 +65,7 @@ class OfficerEntryController extends Controller
 
         $this->logOfficerUpdateIfActiveSy($orgId, $syId, 'created', $officer);
 
-        // implement later email 
+       
         return redirect()->route('org.officers.index')
             ->with('status', 'Officer added.');
     }
@@ -106,22 +108,22 @@ class OfficerEntryController extends Controller
             return redirect()->route('org.officers.index')->with('status', 'Officer updated.');
         }
 
-        // ✅ If this officer is linked to a user account, handle login email too.
+        
         if ($officer->user_id) {
             $user = \App\Models\User::find($officer->user_id);
 
             if ($user) {
-                // If pending activation → show resend/relink banner
+                
                 if ((int) $user->must_change_password === 1) {
                     return redirect()
                         ->route('org.officers.index')
                         ->with('warning', 'This officer has a pending invite. Resend invite to the corrected email?')
                         ->with('resend_invite_officer_id', $officer->id)
-                        ->with('resend_invite_old_user_id', $user->id) // ✅ use user_id now
+                        ->with('resend_invite_old_user_id', $user->id) // 
                         ->with('resend_invite_new_email', $newEmail);
                 }
 
-                // Activated user → update their login email too (safe-guarded)
+                
                 $taken = \App\Models\User::query()
                     ->whereRaw('LOWER(email) = ?', [$newEmail])
                     ->where('id', '!=', $user->id)
@@ -162,7 +164,7 @@ class OfficerEntryController extends Controller
         $activeSy = SchoolYear::activeYear();
         if (!$activeSy) return;
 
-        // only log when encoding active SY
+       
         if ($syId !== (int) $activeSy->id) return;
 
         $name = $officer->full_name ?? 'Unknown';
@@ -191,16 +193,14 @@ class OfficerEntryController extends Controller
         );
     }
 
+    //no longer used
     private function officerIsAssignedSomewhere($officer, int $orgId, int $syId): bool
     {
-        // find old-user by officer email BEFORE change isn’t reliable here,
-        // so just check: is there an assigned user *matching officer email* OR officer email appears as user?
-        // Better: check via user record existence by email and links.
+
 
         $user = \App\Models\User::where('email', $officer->email)->first();
         if (!$user) {
-            // Could still be "assigned" if it used old email user; but we only show banner on email changed,
-            // so we can assume yes later. We'll do a broader check at resend time.
+
             return true;
         }
 

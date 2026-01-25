@@ -37,7 +37,7 @@ Route::get('/dashboard', function () {
 })->middleware(['auth'])->name('dashboard');
 
 
-// Force-change password
+// force-change password
 Route::middleware(['auth'])->group(function () {
     Route::get('/force-change-password', [ForcedPasswordController::class, 'show'])
         ->name('password.force.form');

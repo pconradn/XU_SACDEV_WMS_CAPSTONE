@@ -8,6 +8,8 @@ use App\Models\ProjectAssignment;
 use App\Models\SchoolYear;
 use Illuminate\Http\Request;
 
+//DASHBOARD FOR ORG
+
 class OrgDashboardController extends Controller
 {
     public function index(Request $request)
@@ -15,12 +17,12 @@ class OrgDashboardController extends Controller
         $user = $request->user();
         $activeSy = SchoolYear::activeYear();
 
-        // Middleware already blocks if no active SY, but keep safe:
+      
         if (!$activeSy) {
             return view('blocked.no-active-sy');
         }
 
-        // Org memberships for ACTIVE SY only (multi-org allowed)
+  
         $memberships = OrgMembership::query()
             ->with('organization')
             ->where('user_id', $user->id)
@@ -28,7 +30,7 @@ class OrgDashboardController extends Controller
             ->whereNull('archived_at')
             ->get();
 
-        // Pick current org from session, otherwise first org
+        
         $sessionOrgId = (int) $request->session()->get('active_org_id', 0);
 
         $currentMembership = $memberships->firstWhere('organization_id', $sessionOrgId)
@@ -41,13 +43,9 @@ class OrgDashboardController extends Controller
         }
 
         $currentOrg = $currentMembership?->organization;
-
-        // Roles for the selected org (could be multiple roles if you allow)
         $roles = $currentOrg
             ? $memberships->where('organization_id', $currentOrg->id)->pluck('role')->unique()->values()
             : collect();
-
-        // Project head assignments count in ACTIVE SY for selected org
         $projectHeadCount = 0;
         if ($currentOrg) {
             $projectHeadCount = ProjectAssignment::query()
@@ -81,7 +79,6 @@ class OrgDashboardController extends Controller
 
         $orgId = (int) $data['organization_id'];
 
-        // Security: ensure user actually has membership in that org for active SY
         $allowed = OrgMembership::query()
             ->where('user_id', $user->id)
             ->where('school_year_id', $activeSyId)
@@ -94,6 +91,8 @@ class OrgDashboardController extends Controller
         }
 
         $request->session()->put('active_org_id', $orgId);
+
+        session(['active_org_id' => $orgId]);
 
         return redirect()->route('org.home');
     }

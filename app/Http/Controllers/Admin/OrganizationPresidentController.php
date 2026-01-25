@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
+//ASSIGN PRESIDENT EMAIL TO ORG, TEMPORARY ORG ONBOARDING
+
 class OrganizationPresidentController extends Controller
 {
     public function create()
@@ -36,18 +38,18 @@ class OrganizationPresidentController extends Controller
         DB::transaction(function () use ($data) {
             $tempPassword = Str::random(12) . '!';
 
-            // Create or update president user
+            // CREATE or UPDATE president user
             $user = User::query()->firstOrNew(['email' => $data['president_email']]);
             $user->name = $data['president_name'];
 
-            // If user is new OR you want to reset temp password each time provisioning is done:
+            //  reset temp password each time provisioning is done
             $user->password = Hash::make($tempPassword);
             $user->system_role = null;
             $user->must_change_password = true;
             $user->password_changed_at = null;
             $user->save();
 
-            // Link org + SY to president
+            //  org + SY to president
             $orgSy = OrganizationSchoolYear::query()->updateOrCreate(
                 [
                     'organization_id' => $data['organization_id'],
@@ -59,7 +61,7 @@ class OrganizationPresidentController extends Controller
                 ]
             );
 
-            // Ensure president membership exists (and unarchive if previously archived)
+            // make sure president membership exists 
             $membership = OrgMembership::query()->firstOrNew([
                 'organization_id' => $data['organization_id'],
                 'school_year_id' => $data['school_year_id'],
@@ -70,7 +72,7 @@ class OrganizationPresidentController extends Controller
             $membership->archived_at = null;
             $membership->save();
 
-            // Send email (safe if MAIL_MAILER=log)
+            // send email 
             Mail::raw(
                 "Hello {$user->name},\n\n" .
                 "You have been provisioned as the Organization President for the SAcDev Workflow System.\n\n" .
