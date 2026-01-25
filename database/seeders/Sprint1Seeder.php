@@ -163,7 +163,7 @@ class Sprint1Seeder extends Seeder
                     'email' => $o['email'],
                 ],
                 [
-                    'user_id' => $user->id, // ✅ NEW
+                    'user_id' => $user->id,
                     'full_name' => $o['full_name'],
                     'position' => $o['position'],
                 ]
@@ -188,7 +188,7 @@ class Sprint1Seeder extends Seeder
                     'email' => $o['email'],
                 ],
                 [
-                    'user_id' => $user->id, // ✅ NEW
+                    'user_id' => $user->id, 
                     'full_name' => $o['full_name'],
                     'position' => $o['position'],
                 ]
@@ -279,7 +279,7 @@ class Sprint1Seeder extends Seeder
             ]);
         }
 
-        $this->command?->info('✅ Sprint1Seeder completed successfully!');
+        $this->command?->info('Sprint1Seeder completed successfully!');
         $this->command?->warn('Admin Login: sacdev.admin@xu.edu.ph / Admin1234!');
         $this->command?->warn('President Login XUCS: president.xucs@xu.edu.ph / TempPass123!');
         $this->command?->warn('President Login XUTI: president.xuti@xu.edu.ph / TempPass123!');
