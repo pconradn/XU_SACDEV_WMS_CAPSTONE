@@ -82,47 +82,6 @@
 
             </div>
 
-            {{-- President-only quick actions placeholders (we’ll add in later steps) --}}
-            <div class="bg-white shadow rounded p-6 mt-4">
-                <div class="text-sm text-gray-500 mb-2">Next Actions (Sprint 1)</div>
-                @if($roles->contains('president') && Route::has('org.encode-sy.show'))
-                    <a href="{{ route('org.encode-sy.show') }}"
-                    class="inline-flex items-center px-3 py-2 bg-blue-600 !text-white rounded text-sm">
-                        Select School Year to Encode
-                    </a>
-                @endif
-
-                <ul class="list-disc pl-5 text-gray-700 text-sm space-y-1">
-                    @if($roles->contains('president'))
-                        <div class="flex flex-wrap gap-2 mt-2">
-                            <a href="{{ route('org.encode-sy.show') }}" class="px-3 py-2 bg-blue-600 !text-white rounded text-sm">
-                                Select SY to Encode
-                            </a>
-                            <a href="{{ route('org.officers.index') }}" class="px-3 py-2 bg-gray-800 !text-white rounded text-sm">
-                                Officers
-                            </a>
-                            <a href="{{ route('org.projects.index') }}" class="px-3 py-2 bg-gray-800 !text-white rounded text-sm">
-                                Projects
-                            </a>
-                            <a href="{{ route('org.assign-roles.edit') }}" class="px-3 py-2 bg-gray-800 !text-white rounded text-sm">
-                                Assign Treasurer/Moderator
-                            </a>
-
-                            <a href="{{ route('org.assign-project-heads.index') }}" class="px-3 py-2 bg-gray-800 !text-white rounded text-sm">
-                                Assign Project Heads
-                            </a>
-                            <a href="{{ route('org.activation-status.index') }}"class="px-3 py-2 bg-gray-800 !text-white rounded text-sm">
-                                Activation Status
-                            </a>
-
-                        </div>
-
-                    @endif
-                    <li>Assign Treasurer/Moderator (Step 6)</li>
-                    <li>Assign Project Heads (Step 6)</li>
-                </ul>
-            </div>
-
         </div>
     </div>
 </x-app-layout>

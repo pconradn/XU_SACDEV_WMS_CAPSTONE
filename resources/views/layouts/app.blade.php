@@ -15,56 +15,168 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="font-sans antialiased">
-<div class="min-h-screen bg-gray-100">
+<body class="font-sans antialiased text-gray-900">
+@auth
+    @php
+        $isAdmin = auth()->user()->system_role === 'sacdev_admin';
+        $activeSy = \App\Models\SchoolYear::activeYear();
+    @endphp
+@endauth
 
-    {{-- Breeze navigation --}}
-    @include('layouts.navigation')
+<div class="min-h-screen bg-slate-50">
 
-    {{-- Top utility bar --}}
-    <div class="bg-gray-900 text-gray-100">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <span class="text-sm font-semibold tracking-wide">
-                    {{ config('app.name', 'SAcDev Workflow System') }}
-                </span>
+    {{-- Top Bar (Steam-like header) --}}
+    <div class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="flex h-14 items-center justify-between gap-4">
 
-                @auth
-                    @php
-                        $isAdmin = auth()->user()->system_role === 'sacdev_admin';
-                        $activeSy = \App\Models\SchoolYear::activeYear();
-                    @endphp
+                {{-- Left: Brand --}}
+                <div class="flex items-center gap-3">
+                    <div class="h-9 w-15 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold">
+                        PWM
+                    </div>
+                    <div class="leading-tight">
+                        <div class="text-sm font-semibold tracking-wide">
+                            {{ config('app.name', 'SAcDev Workflow System') }}
+                        </div>
+                        <div class="text-xs text-slate-500">
+                            Project Workflow Management
+                        </div>
+                    </div>
 
-                    <span class="text-xs px-2 py-1 rounded {{ $isAdmin ? 'bg-blue-600' : 'bg-emerald-600' }}">
-                        {{ $isAdmin ? 'ADMIN PORTAL' : 'ORG PORTAL' }}
-                    </span>
-
-                    <span class="text-xs px-2 py-1 rounded bg-gray-700">
-                        Active SY:
-                        <span class="font-semibold">
-                            {{ $activeSy?->name ?? 'None' }}
+                    @auth
+                        <span class="ml-2 text-[11px] px-2 py-1 rounded-full border
+                            {{ $isAdmin ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700' }}">
+                            {{ $isAdmin ? 'ADMIN PORTAL' : 'ORG PORTAL' }}
                         </span>
-                    </span>
-                @endauth
+                    @endauth
+                </div>
+
+                {{-- Center: Search (optional UI, can wire later) --}}
+                <div class="hidden md:flex flex-1 justify-center">
+                    <div class="w-full max-w-xl">
+                        <div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                            <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            <input
+                                type="text"
+                                placeholder="Search projects, officers, or requests…"
+                                class="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
+                                disabled
+                            />
+                        </div>
+                        <div class="mt-1 text-[11px] text-slate-400">
+                            (UI only for now — we can wire this later)
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Right: Active SY + User --}}
+                <div class="flex items-center gap-3">
+                    @auth
+                        <div class="hidden sm:flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                            <span class="text-xs text-slate-500">Active SY</span>
+                            <span class="text-xs font-semibold text-slate-800">
+                                {{ $activeSy?->name ?? 'None' }}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                            <div class="h-7 w-7 rounded-full bg-slate-100 flex items-center justify-center text-xs font-semibold text-slate-700">
+                                {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                            </div>
+                            <div class="hidden sm:block leading-tight">
+                                <div class="text-xs font-semibold text-slate-800">
+                                    {{ auth()->user()->name ?? 'User' }}
+                                </div>
+                                <div class="text-[11px] text-slate-500">
+                                    {{ $isAdmin ? 'SAcDev Staff' : 'Organization User' }}
+                                </div>
+                            </div>
+                        </div>
+                    @endauth
+
+                    @guest
+                        <a href="{{ route('login') }}"
+                           class="text-sm font-semibold text-slate-700 hover:text-slate-900">
+                            Login
+                        </a>
+                    @endguest
+                </div>
+
             </div>
-
-
         </div>
     </div>
 
-    {{-- Page Heading --}}
-    @isset($header)
-        <header class="bg-white shadow">
-            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                {{ $header }}
-            </div>
-        </header>
-    @endisset
+    {{-- Body --}}
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+        <div class="grid grid-cols-12 gap-6">
 
-    {{-- Page Content --}}
-    <main>
-        {{ $slot }}
-    </main>
+            {{-- Left Sidebar (Steam-like) --}}
+            <aside class="col-span-12 lg:col-span-3">
+                <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+
+                    <div class="px-4 py-3 border-b border-slate-200 bg-slate-50">
+                        <div class="text-xs font-semibold tracking-wide text-slate-700">
+                            Navigation
+                        </div>
+                        <div class="text-[11px] text-slate-500">
+                            Use the menu to access modules
+                        </div>
+                    </div>
+
+                    <div class="p-2">
+                        {{-- Keep Breeze navigation so nothing breaks.
+                             We'll restyle its links later once you show layouts/navigation.blade.php --}}
+                        @include('layouts.navigation')
+                    </div>
+                </div>
+
+                {{-- Small info card (optional, Steam-like “side info”) --}}
+                @auth
+                    <div class="mt-4 rounded-2xl border border-slate-200 bg-white shadow-sm p-4">
+                        <div class="text-xs font-semibold text-slate-700">Quick Info</div>
+                        <div class="mt-2 space-y-2 text-sm">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500 text-xs">Portal</span>
+                                <span class="text-xs font-semibold {{ $isAdmin ? 'text-blue-700' : 'text-emerald-700' }}">
+                                    {{ $isAdmin ? 'Admin' : 'Organization' }}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500 text-xs">Active SY</span>
+                                <span class="text-xs font-semibold text-slate-800">
+                                    {{ $activeSy?->name ?? 'None' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                @endauth
+            </aside>
+
+            {{-- Main Content --}}
+            <section class="col-span-12 lg:col-span-9">
+                {{-- Page Header Area --}}
+                @isset($header)
+                    <div class="mb-4 rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <div class="px-6 py-5">
+                            {{ $header }}
+                        </div>
+                    </div>
+                @endisset
+
+                {{-- Page Content Card Container --}}
+                <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="p-6">
+                        {{ $slot }}
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
 
 </div>
 </body>
