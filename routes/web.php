@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\SchoolYearController;
 use App\Http\Controllers\Org\OfficerEntryController;
 use App\Http\Controllers\Org\OrgDashboardController;
 use App\Http\Controllers\Org\OfficerInviteController;
+use App\Http\Controllers\Org\StrategicPlanController;
 use App\Http\Controllers\Admin\OrganizationController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminOrgReviewController;
@@ -119,6 +120,17 @@ Route::prefix('org')
                 ->name('org.activation-status.index');
 
             Route::post('officers/{officer}/resend-invite', [OfficerInviteController::class, 'resend'])->name('org.officers.resend-invite');    
+
+            // Strategic Plan (B-1)
+            Route::get('strategic-plan', [StrategicPlanController::class, 'edit'])
+                ->name('strategic_plan.edit');
+
+            Route::post('strategic-plan/draft', [StrategicPlanController::class, 'saveDraft'])
+                ->name('strategic_plan.draft');
+
+            Route::post('strategic-plan/submit', [StrategicPlanController::class, 'submitToModerator'])
+                ->name('strategic_plan.submit');
+
         });
 
 
