@@ -67,6 +67,9 @@ class StrategicPlanController extends Controller
 
         $validated = $request->validated();
 
+        $validated['projects'] = array_values($validated['projects'] ?? []);
+        $validated['fund_sources'] = array_values($validated['fund_sources'] ?? []);
+
         DB::transaction(function () use ($request, $validated, $orgId, $syId, $userId) {
 
             $submission = StrategicPlanSubmission::query()
@@ -111,8 +114,7 @@ class StrategicPlanController extends Controller
             $submission->status = StrategicPlanSubmission::STATUS_DRAFT; // keep draft on save
             $submission->save();
 
-            // Replace projects snapshot for simplicity
-            // (You can optimize later; snapshot replace is clean for v1)
+
             $this->syncProjects($submission, $validated['projects'] ?? []);
 
             // Replace fund sources snapshot
@@ -121,6 +123,9 @@ class StrategicPlanController extends Controller
             // Recompute totals from saved projects + sources
             $this->recomputeTotals($submission);
         });
+
+        //dd($request->input('projects'));
+        
 
         return redirect()
             ->route('org.strategic_plan.edit')

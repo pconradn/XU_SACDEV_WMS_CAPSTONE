@@ -123,13 +123,13 @@ Route::prefix('org')
 
             // Strategic Plan (B-1)
             Route::get('strategic-plan', [StrategicPlanController::class, 'edit'])
-                ->name('strategic_plan.edit');
+                ->name('org.strategic_plan.edit');
 
             Route::post('strategic-plan/draft', [StrategicPlanController::class, 'saveDraft'])
-                ->name('strategic_plan.draft');
+                ->name('org.strategic_plan.draft');
 
             Route::post('strategic-plan/submit', [StrategicPlanController::class, 'submitToModerator'])
-                ->name('strategic_plan.submit');
+                ->name('org.strategic_plan.submit');
 
         });
 
