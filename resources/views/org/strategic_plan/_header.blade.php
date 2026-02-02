@@ -2,9 +2,10 @@
     <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
             <h1 class="text-xl font-semibold text-slate-900">Registration Form B-1: Strategic Plan</h1>
-            <p class="text-sm text-slate-500">
-                School Year: <span class="font-medium text-slate-700">{{ $schoolYear?->name ?? 'N/A' }}</span>
-            </p>
+            <div class="text-sm text-slate-600">
+                Target School Year: <span class="font-semibold">{{ $schoolYear->name }}</span>
+                <a href="{{ route('org.strategic_plan.select_sy') }}" class="text-blue-700 hover:underline ml-2">Change</a>
+            </div>
         </div>
 
         <div class="flex items-center gap-2">

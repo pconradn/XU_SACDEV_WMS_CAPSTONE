@@ -11,6 +11,7 @@
               class="space-y-6">
             @csrf
 
+            
             @include('org.strategic_plan._identity', ['submission' => $submission])
             @include('org.strategic_plan._projects')
             @include('org.strategic_plan._funds')

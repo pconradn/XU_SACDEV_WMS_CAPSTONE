@@ -131,6 +131,18 @@ Route::prefix('org')
             Route::post('strategic-plan/submit', [StrategicPlanController::class, 'submitToModerator'])
                 ->name('org.strategic_plan.submit');
 
+
+            // Select target SY for this form
+            Route::get('/strategic-plan/select-sy', [StrategicPlanController::class, 'selectSy'])
+                ->name('org.strategic_plan.select_sy');
+
+            Route::post('/strategic-plan/select-sy', [StrategicPlanController::class, 'storeSelectedSy'])
+                ->name('org.strategic_plan.select_sy.store');
+
+            // Main form (edit)
+            Route::get('/strategic-plan', [StrategicPlanController::class, 'edit'])
+                ->name('org.strategic_plan.edit');            
+
         });
 
 
