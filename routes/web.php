@@ -29,6 +29,8 @@ use App\Http\Controllers\Org\ProjectHeadAssignmentController;
 use App\Http\Controllers\Org\ModeratorStrategicPlanController;
 use App\Http\Controllers\Admin\OrganizationPresidentController;
 use App\Http\Controllers\Admin\SacdevB3OfficerSubmissionController;
+use App\Http\Controllers\Moderator\B5ModeratorSubmissionController;
+use App\Http\Controllers\Admin\SacdevB5ModeratorSubmissionController;
 use App\Http\Controllers\SACDEV\SacdevB2PresidentRegistrationController;
 
 /*
@@ -156,6 +158,15 @@ Route::prefix('admin')
         Route::prefix('member-lists')->name('admin.member_lists.')->group(function () {
             Route::get('/', [SacdevB4MemberListController::class, 'index'])->name('index');
             Route::get('/{list}', [SacdevB4MemberListController::class, 'show'])->name('show');
+        });
+
+
+        Route::prefix('moderator-submissions')->name('admin.moderator_submissions.')->group(function () {
+            Route::get('/', [SacdevB5ModeratorSubmissionController::class, 'index'])->name('index');
+            Route::get('/{submission}', [SacdevB5ModeratorSubmissionController::class, 'show'])->name('show');
+
+            Route::post('/{submission}/return', [SacdevB5ModeratorSubmissionController::class, 'returnToModerator'])->name('return');
+            Route::post('/{submission}/approve', [SacdevB5ModeratorSubmissionController::class, 'approve'])->name('approve');
         });
 
 
@@ -319,6 +330,18 @@ Route::prefix('org')
 
                 Route::post('strategic-plans/{submission}/forward', [ModeratorStrategicPlanController::class, 'forwardToSacdev'])
                     ->name('strategic_plans.forward');
+
+                Route::prefix('forms/b5/moderator')
+                    ->name('b5.moderator.')
+                    ->group(function () {
+                        Route::get('/', [B5ModeratorSubmissionController::class, 'index'])->name('index');
+                        Route::get('/edit', [B5ModeratorSubmissionController::class, 'edit'])->name('edit');
+
+                        Route::post('/save-draft', [B5ModeratorSubmissionController::class, 'saveDraft'])->name('saveDraft');
+                        Route::post('/submit', [B5ModeratorSubmissionController::class, 'submit'])->name('submit');
+                        Route::post('/unsubmit', [B5ModeratorSubmissionController::class, 'unsubmit'])->name('unsubmit');
+                    });
+                
             });
     });
 
