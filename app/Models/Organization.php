@@ -49,5 +49,15 @@ class Organization extends Model
         return $this->hasMany(\App\Models\MemberList::class);
     }
 
+    public function moderatorTerms()
+    {
+        return $this->hasMany(\App\Models\OrgModeratorTerm::class);
+    }
+
+    public function moderatorSubmissions()
+    {
+        return $this->hasMany(\App\Models\ModeratorSubmission::class);
+    }
+
 
 }

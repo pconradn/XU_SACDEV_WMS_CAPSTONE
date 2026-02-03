@@ -51,4 +51,14 @@ class User extends Authenticatable
         return $this->hasMany(PresidentRegistration::class, 'sacdev_reviewed_by_user_id');
     }
 
+    public function moderatorTerms()
+    {
+        return $this->hasMany(\App\Models\OrgModeratorTerm::class, 'user_id');
+    }
+
+    public function moderatorSubmissions()
+    {
+        return $this->hasMany(\App\Models\ModeratorSubmission::class, 'moderator_user_id');
+    }
+
 }
