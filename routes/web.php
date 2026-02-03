@@ -21,9 +21,11 @@ use App\Http\Controllers\Org\ActivationStatusController;
 use App\Http\Controllers\Org\EncodeSchoolYearController;
 use App\Http\Controllers\Org\OrgRoleAssignmentController;
 use App\Http\Controllers\Admin\SacdevStrategicPlanController;
+use App\Http\Controllers\Org\PresidentRegistrationController;
 use App\Http\Controllers\Org\ProjectHeadAssignmentController;
 use App\Http\Controllers\Org\ModeratorStrategicPlanController;
 use App\Http\Controllers\Admin\OrganizationPresidentController;
+use App\Http\Controllers\SACDEV\SacdevB2PresidentRegistrationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -114,6 +116,28 @@ Route::prefix('admin')
             Route::post('/{submission}/revert-approval', [SacdevStrategicPlanController::class, 'revertApproval'])
                 ->name('revert_approval');
         });
+
+
+        Route::prefix('president-registrations')->name('admin.b2.president.')->group(function () {
+
+            // List all B-2 President Registrations
+            Route::get('/', [SacdevB2PresidentRegistrationController::class, 'index'])
+                ->name('index');
+
+            // View a specific B-2 registration
+            Route::get('/{registration}', [SacdevB2PresidentRegistrationController::class, 'show'])
+                ->name('show');
+
+            // Return to organization with required remarks
+            Route::post('/{registration}/return', [SacdevB2PresidentRegistrationController::class, 'returnToOrg'])
+                ->name('return');
+
+            // Approve registration
+            Route::post('/{registration}/approve', [SacdevB2PresidentRegistrationController::class, 'approve'])
+                ->name('approve');
+        });
+
+
     });
 
 /*
@@ -192,6 +216,23 @@ Route::prefix('org')
 
             Route::post('strategic-plan/select-sy', [StrategicPlanController::class, 'storeSelectedSy'])
                 ->name('org.strategic_plan.select_sy.store');
+
+                
+
+            Route::get('/b2/president', [PresidentRegistrationController::class, 'index'])->name('org.b2.president.index');
+
+            // choose/set target SY in session 
+            Route::post('/b2/president/set-target-sy', [PresidentRegistrationController::class, 'setTargetSy'])
+                ->name('org.b2.president.setTargetSy');
+
+            // open/create draft for current org + selected target SY
+            Route::get('/b2/president/edit', [PresidentRegistrationController::class, 'edit'])->name('org.b2.president.edit');
+
+            // actions
+            Route::post('/b2/president/save-draft', [PresidentRegistrationController::class, 'saveDraft'])->name('org.b2.president.saveDraft');
+            Route::post('/b2/president/submit', [PresidentRegistrationController::class, 'submit'])->name('org.b2.president.submit');
+            Route::post('/b2/president/unsubmit', [PresidentRegistrationController::class, 'unsubmit'])->name('org.b2.president.unsubmit');
+
         });
 
         /*

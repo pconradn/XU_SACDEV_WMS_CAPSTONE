@@ -41,4 +41,14 @@ class User extends Authenticatable
         return $this->hasMany(\App\Models\OfficerEntry::class);
     }
 
+    public function encodedPresidentRegistrations()
+    {
+        return $this->hasMany(PresidentRegistration::class, 'encoded_by_user_id');
+    }
+
+    public function sacdevReviewedPresidentRegistrations()
+    {
+        return $this->hasMany(PresidentRegistration::class, 'sacdev_reviewed_by_user_id');
+    }
+
 }

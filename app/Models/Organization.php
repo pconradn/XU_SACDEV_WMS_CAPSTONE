@@ -28,4 +28,14 @@ class Organization extends Model
     {
         return $this->hasMany(OfficerEntry::class);
     }
+    
+    public function presidentRegistrations()
+    {
+        return $this->hasMany(PresidentRegistration::class);
+    }
+
+    public function presidentTerms()
+    {
+        return $this->hasMany(OrgPresidentTerm::class);
+    }
 }

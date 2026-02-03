@@ -75,6 +75,14 @@
                 ];
             }
 
+            if (Route::has('admin.b2.president.index')) {
+                $links[] = [
+                    'label' => 'B-2 President Registrations',
+                    'href'  => route('admin.b2.president.index'),
+                    'class' => $linkClass(['admin.b2.president.*']),
+                ];
+            }
+
 
 
         // -------------------------
@@ -108,6 +116,22 @@
                         'label' => 'Select SY to Encode',
                         'href'  => route('org.encode-sy.show'),
                         'class' => $linkClass(['org.encode-sy.show']),
+                    ];
+                }
+
+                if (Route::has('org.b2.president.index')) {
+                    $links[] = [
+                        'label' => 'B-2 President Registration',
+                        'href'  => route('org.b2.president.index'),
+                        'class' => $linkClass(['org.b2.president.*']),
+                    ];
+                }
+
+                if (Route::has('org.strategic_plan.select_sy')) {
+                    $links[] = [
+                        'label' => 'Strategic Plan Submission',
+                        'href'  => route('org.strategic_plan.select_sy'),
+                        'class' => $linkClass(['org.strategic-plan.*']),
                     ];
                 }
 
