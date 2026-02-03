@@ -86,4 +86,87 @@ class SacdevB5ModeratorSubmissionController extends Controller
 
         return back()->with('success', 'Moderator form approved.');
     }
+
+
+    public function allowEdit(Request $request, ModeratorSubmission $submission)
+    {
+        // Must have pending request
+        if (!$submission->edit_requested) {
+            return back()->with('error', 'No edit request is pending for this submission.');
+        }
+
+        // Only makes sense if locked
+        if (!in_array($submission->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true)) {
+            return back()->with('error', 'Allow edit is only valid when the form is submitted or approved.');
+        }
+
+        $data = $request->validate([
+            'sacdev_remarks' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        // Unlock by moving to returned status (so moderator can edit + resubmit)
+        $submission->status = 'returned_by_sacdev';
+        $submission->returned_at = now();
+
+        // If it was approved, remove approval timestamp to “unfinalize”
+        if ($submission->approved_at) {
+            $submission->approved_at = null;
+        }
+
+        // Add a remark (optional)
+        $msg = trim((string)($data['sacdev_remarks'] ?? ''));
+        if ($msg === '') {
+            $msg = 'Edit request granted. Please update the form and resubmit.';
+        }
+
+        $submission->sacdev_reviewed_by_user_id = auth()->id();
+        $submission->sacdev_remarks = $msg;
+        $submission->sacdev_reviewed_at = now();
+
+        // Clear the request flag
+        $submission->edit_requested = false;
+        $submission->edit_requested_at = null;
+        $submission->edit_requested_by_user_id = null;
+        $submission->edit_request_message = null;
+
+        $submission->save();
+
+        return back()->with('success', 'Edit access granted. Submission returned for revision.');
+    }
+
+
+
+    public function revertApproval(Request $request, ModeratorSubmission $submission)
+    {
+        if ($submission->status !== 'approved_by_sacdev') {
+            return back()->with('error', 'Only approved submissions can be reverted.');
+        }
+
+        $data = $request->validate([
+            'sacdev_remarks' => ['required', 'string', 'min:3', 'max:5000'],
+        ]);
+
+        // Revert to returned state so moderator can revise & resubmit
+        $submission->status = 'returned_by_sacdev';
+        $submission->returned_at = now();
+        $submission->approved_at = null;
+
+        $submission->sacdev_reviewed_by_user_id = auth()->id();
+        $submission->sacdev_remarks = $data['sacdev_remarks'];
+        $submission->sacdev_reviewed_at = now();
+
+        // You can optionally flag edit_requested=false too
+        $submission->edit_requested = false;
+        $submission->edit_requested_at = null;
+        $submission->edit_requested_by_user_id = null;
+        $submission->edit_request_message = null;
+
+        $submission->save();
+
+        return back()->with('success', 'Approval reverted and returned for revision.');
+    }
+   
+
+
+
 }

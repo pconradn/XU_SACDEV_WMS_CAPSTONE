@@ -279,4 +279,41 @@ class B5ModeratorSubmissionController extends Controller
 
         return back()->with('success', 'Submission was reverted back to draft.');
     }
+
+
+    public function requestEdit(Request $request)
+    {
+        ['userId' => $userId, 'orgId' => $orgId, 'syId' => $syId] = $this->ctx($request);
+
+        $submission = ModeratorSubmission::query()
+            ->where('organization_id', $orgId)
+            ->where('target_school_year_id', $syId)
+            ->firstOrFail();
+
+        if ((int) $submission->moderator_user_id !== $userId) {
+            abort(403);
+        }
+
+        // Only needed when locked
+        if (!in_array($submission->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true)) {
+            return back()->with('error', 'Request edit is only needed when the form is submitted or approved.');
+        }
+
+        if ($submission->edit_requested) {
+            return back()->with('error', 'Edit request is already pending.');
+        }
+
+        $data = $request->validate([
+            'edit_request_message' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $submission->edit_requested = true;
+        $submission->edit_requested_at = now();
+        $submission->edit_requested_by_user_id = $userId;
+        $submission->edit_request_message = $data['edit_request_message'] ?? null;
+        $submission->save();
+
+        return back()->with('success', 'Edit request sent to SACDEV.');
+    }
+
 }

@@ -44,6 +44,26 @@
             </div>
         @endif
 
+        @if($submission->edit_requested)
+            <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+                <div class="font-semibold">Edit Request Pending</div>
+                <div class="text-sm mt-1">
+                    The moderator requested to edit this form.
+                    @if($submission->edit_requested_at)
+                        <span class="ml-1 text-amber-800/80">({{ $submission->edit_requested_at->format('M d, Y h:i A') }})</span>
+                    @endif
+                </div>
+
+                @if($submission->edit_request_message)
+                    <div class="mt-3 rounded-lg border border-amber-200 bg-white/60 p-3 text-sm whitespace-pre-line">
+                        <div class="font-semibold mb-1">Message</div>
+                        {{ $submission->edit_request_message }}
+                    </div>
+                @endif
+            </div>
+        @endif
+
+
         {{-- SACDEV remarks display --}}
         @if($submission->sacdev_remarks && in_array($submission->status, ['returned_by_sacdev','approved_by_sacdev'], true))
             <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -62,12 +82,16 @@
 
         {{-- ACTIONS --}}
         <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="text-sm text-slate-700">
-                    Actions are available only when the form is <span class="font-semibold">submitted_to_sacdev</span>.
+                    Actions:
+                    <span class="font-semibold">Approve</span> or <span class="font-semibold">Return</span> when submitted.
+                    <span class="font-semibold">Revert Approval</span> only when approved.
+                    <span class="font-semibold">Allow Edit</span> only when an edit request is pending.
                 </div>
 
-                <div class="flex gap-2">
+                <div class="flex flex-wrap gap-2">
+                    {{-- Approve / Return (only if submitted) --}}
                     @if($submission->status === 'submitted_to_sacdev')
                         <form method="POST" action="{{ route('admin.moderator_submissions.approve', $submission) }}">
                             @csrf
@@ -80,12 +104,31 @@
                                 class="inline-flex justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100">
                             Return w/ Remarks
                         </button>
-                    @else
-                        <div class="text-sm text-slate-500">No actions available for this status.</div>
+                    @endif
+
+                    {{-- Allow Edit (only if request pending and currently locked) --}}
+                    @if($submission->edit_requested && in_array($submission->status, ['submitted_to_sacdev','approved_by_sacdev'], true))
+                        <button type="button" id="openAllowEditModalBtn"
+                                class="inline-flex justify-center rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100">
+                            Allow Edit
+                        </button>
+                    @endif
+
+                    {{-- Revert Approval (only when approved) --}}
+                    @if($submission->status === 'approved_by_sacdev')
+                        <button type="button" id="openRevertApprovalModalBtn"
+                                class="inline-flex justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                            Revert Approval
+                        </button>
                     @endif
                 </div>
             </div>
         </div>
+
+        {{-- Modals --}}
+        @include('admin.forms.b5_moderator.partials._allow_edit_modal', ['submission' => $submission])
+        @include('admin.forms.b5_moderator.partials._revert_approval_modal', ['submission' => $submission])
+
 
         {{-- DETAILS --}}
         @include('admin.forms.b5_moderator.partials._detail_section', [
@@ -260,4 +303,34 @@
             closeBtns.forEach(b => b.addEventListener('click', () => modal.classList.add('hidden')));
         })();
     </script>
+    <script>
+        (function () {
+            // Return modal
+            const returnBtn = document.getElementById('openReturnModalBtn');
+            const returnModal = document.getElementById('returnModal');
+            const closeReturnBtns = document.querySelectorAll('[data-close-return-modal]');
+            if (returnBtn && returnModal) {
+                returnBtn.addEventListener('click', () => returnModal.classList.remove('hidden'));
+                closeReturnBtns.forEach(b => b.addEventListener('click', () => returnModal.classList.add('hidden')));
+            }
+
+            // Allow edit modal
+            const allowBtn = document.getElementById('openAllowEditModalBtn');
+            const allowModal = document.getElementById('allowEditModal');
+            const closeAllowBtns = document.querySelectorAll('[data-close-allow-edit-modal]');
+            if (allowBtn && allowModal) {
+                allowBtn.addEventListener('click', () => allowModal.classList.remove('hidden'));
+                closeAllowBtns.forEach(b => b.addEventListener('click', () => allowModal.classList.add('hidden')));
+            }
+
+            // Revert approval modal
+            const revertBtn = document.getElementById('openRevertApprovalModalBtn');
+            const revertModal = document.getElementById('revertApprovalModal');
+            const closeRevertBtns = document.querySelectorAll('[data-close-revert-approval-modal]');
+            if (revertBtn && revertModal) {
+                revertBtn.addEventListener('click', () => revertModal.classList.remove('hidden'));
+                closeRevertBtns.forEach(b => b.addEventListener('click', () => revertModal.classList.add('hidden')));
+            }
+        })();
+        </script>
 </x-app-layout>

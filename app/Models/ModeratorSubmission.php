@@ -54,6 +54,11 @@ class ModeratorSubmission extends Model
         'skills_and_interests',
 
         'version',
+
+        'edit_requested',
+        'edit_requested_at',
+        'edit_requested_by_user_id',
+        'edit_request_message',
     ];
 
     protected $casts = [
@@ -73,6 +78,8 @@ class ModeratorSubmission extends Model
         'served_nominating_org_years' => 'integer',
 
         'version' => 'integer',
+        'edit_requested' => 'boolean',
+        'edit_requested_at' => 'datetime',
     ];
 
     // --------------------
@@ -108,5 +115,9 @@ class ModeratorSubmission extends Model
     {
         return $this->hasMany(ModeratorSubmissionLeadership::class, 'moderator_submission_id')
             ->orderBy('sort_order');
+    }
+    public function editRequestedBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'edit_requested_by_user_id');
     }
 }

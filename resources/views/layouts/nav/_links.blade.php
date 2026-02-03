@@ -99,6 +99,17 @@
                 ];
             }
 
+            if (Route::has('admin.moderator_submissions.index')) {
+                $links[] = [
+                    'label' => 'B-5 Moderator Submissions',
+                    'href'  => route('admin.moderator_submissions.index'),
+                    'class' => $linkClass([
+                        'admin.moderator_submissions.*',
+                    ]),
+                ];
+            }
+
+
 
 
         // -------------------------
@@ -229,6 +240,16 @@
                     'class' => $linkClass(['org.moderator.strategic_plans.*']),
                 ];
             
+            }
+
+            if (Route::has('moderator.b5.moderator.index')) {
+                $links[] = [
+                    'label' => 'B-5 Moderator Form',
+                    'href'  => route('moderator.b5.moderator.index'),
+                    'class' => $linkClass([
+                        'moderator.b5.moderator.*',
+                    ]),
+                ];
             }
 
             

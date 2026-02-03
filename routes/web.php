@@ -167,6 +167,10 @@ Route::prefix('admin')
 
             Route::post('/{submission}/return', [SacdevB5ModeratorSubmissionController::class, 'returnToModerator'])->name('return');
             Route::post('/{submission}/approve', [SacdevB5ModeratorSubmissionController::class, 'approve'])->name('approve');
+
+            Route::post('/{submission}/allow-edit', [SacdevB5ModeratorSubmissionController::class, 'allowEdit'])->name('allow_edit');
+
+            Route::post('/{submission}/revert-approval', [SacdevB5ModeratorSubmissionController::class, 'revertApproval'])->name('revert_approval');
         });
 
 
@@ -340,6 +344,7 @@ Route::prefix('org')
                         Route::post('/save-draft', [B5ModeratorSubmissionController::class, 'saveDraft'])->name('saveDraft');
                         Route::post('/submit', [B5ModeratorSubmissionController::class, 'submit'])->name('submit');
                         Route::post('/unsubmit', [B5ModeratorSubmissionController::class, 'unsubmit'])->name('unsubmit');
+                        Route::post('/request-edit', [B5ModeratorSubmissionController::class, 'requestEdit'])->name('requestEdit');
                     });
                 
             });

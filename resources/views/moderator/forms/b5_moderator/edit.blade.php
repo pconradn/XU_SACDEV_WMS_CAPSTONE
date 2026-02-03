@@ -47,7 +47,7 @@
             @include('moderator.forms.b5_moderator.partials._questions', ['submission' => $submission, 'isLocked' => $isLocked])
             @include('moderator.forms.b5_moderator.partials._skills', ['submission' => $submission, 'isLocked' => $isLocked])
 
-            <div class="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div class="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap">
                 <button type="submit"
                         class="inline-flex justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
                         {{ $isLocked ? 'disabled' : '' }}>
@@ -69,12 +69,33 @@
                     </button>
                 @endif
 
+                {{-- Request Edit (only when locked) --}}
+                @if(in_array($submission->status, ['submitted_to_sacdev','approved_by_sacdev'], true))
+                    @if($submission->edit_requested)
+                        <div class="inline-flex items-center rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
+                            Edit request pending
+                        </div>
+                    @else
+                        <button type="button"
+                                id="openEditRequestModalBtn"
+                                class="inline-flex justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                            Request Edit
+                        </button>
+                    @endif
+                @endif
+
                 @if($isLocked)
                     <div class="text-sm text-slate-500 sm:ml-3">
                         This form is locked because it is already submitted or approved.
                     </div>
                 @endif
             </div>
+
+            {{-- Request Edit Modal --}}
+            @include('moderator.forms.b5_moderator.partials._request_edit_modal', ['submission' => $submission])
+
+
+            
         </form>
     </div>
 

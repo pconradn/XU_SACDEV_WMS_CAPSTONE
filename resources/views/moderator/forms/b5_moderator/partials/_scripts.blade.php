@@ -85,3 +85,16 @@
     tbody.addEventListener('click', onRemove);
 })();
 </script>
+
+<script>
+(function () {
+    const openBtn = document.getElementById('openEditRequestModalBtn');
+    const modal = document.getElementById('editRequestModal');
+    const closeBtns = document.querySelectorAll('[data-close-edit-request-modal]');
+
+    if (!openBtn || !modal) return;
+
+    openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+    closeBtns.forEach(b => b.addEventListener('click', () => modal.classList.add('hidden')));
+})();
+</script>
