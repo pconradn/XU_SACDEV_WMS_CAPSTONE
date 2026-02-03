@@ -38,4 +38,11 @@ class Organization extends Model
     {
         return $this->hasMany(OrgPresidentTerm::class);
     }
+    
+    public function officerSubmissions()
+    {
+        return $this->hasMany(\App\Models\OfficerSubmission::class);
+    }
+
+
 }

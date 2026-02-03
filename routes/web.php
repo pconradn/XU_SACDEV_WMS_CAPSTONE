@@ -10,9 +10,10 @@ use App\Http\Controllers\ForcedPasswordController;
 use App\Http\Controllers\Admin\SchoolYearController;
 use App\Http\Controllers\Org\OfficerEntryController;
 use App\Http\Controllers\Org\OrgDashboardController;
-use App\Http\Controllers\Org\OfficerInviteController;
+use App\Http\Controllers\Org\B3OfficerListController;
 
 // Org
+use App\Http\Controllers\Org\OfficerInviteController;
 use App\Http\Controllers\Org\StrategicPlanController;
 use App\Http\Controllers\Admin\OrganizationController;
 use App\Http\Controllers\Admin\AdminDashboardController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\Org\PresidentRegistrationController;
 use App\Http\Controllers\Org\ProjectHeadAssignmentController;
 use App\Http\Controllers\Org\ModeratorStrategicPlanController;
 use App\Http\Controllers\Admin\OrganizationPresidentController;
+use App\Http\Controllers\Admin\SacdevB3OfficerSubmissionController;
 use App\Http\Controllers\SACDEV\SacdevB2PresidentRegistrationController;
 
 /*
@@ -138,6 +140,18 @@ Route::prefix('admin')
         });
 
 
+        Route::prefix('officer-submissions')->name('admin.officer_submissions.')->group(function () {
+            Route::get('/', [SacdevB3OfficerSubmissionController::class, 'index'])->name('index');
+            Route::get('/{submission}', [SacdevB3OfficerSubmissionController::class, 'show'])->name('show');
+
+            Route::post('/{submission}/return', [SacdevB3OfficerSubmissionController::class, 'returnToOrg'])->name('return');
+            Route::post('/{submission}/approve', [SacdevB3OfficerSubmissionController::class, 'approve'])->name('approve');
+
+            Route::post('/{submission}/allow-edit', [SacdevB3OfficerSubmissionController::class, 'allowEdit'])
+                ->name('allow_edit');
+        });
+
+
     });
 
 /*
@@ -217,7 +231,11 @@ Route::prefix('org')
             Route::post('strategic-plan/select-sy', [StrategicPlanController::class, 'storeSelectedSy'])
                 ->name('org.strategic_plan.select_sy.store');
 
-                
+            /*
+            |--------------------------------------------------------------------------
+            | President (B-2) – Org Side
+            |--------------------------------------------------------------------------
+            */    
 
             Route::get('/b2/president', [PresidentRegistrationController::class, 'index'])->name('org.b2.president.index');
 
@@ -232,6 +250,33 @@ Route::prefix('org')
             Route::post('/b2/president/save-draft', [PresidentRegistrationController::class, 'saveDraft'])->name('org.b2.president.saveDraft');
             Route::post('/b2/president/submit', [PresidentRegistrationController::class, 'submit'])->name('org.b2.president.submit');
             Route::post('/b2/president/unsubmit', [PresidentRegistrationController::class, 'unsubmit'])->name('org.b2.president.unsubmit');
+
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Officers (B-3) – Org Side
+            |--------------------------------------------------------------------------
+            */
+
+            Route::prefix('org/forms/b3/officers-list')
+                ->name('org.b3.officers-list.')
+                ->group(function () {
+
+                    Route::get('/', [B3OfficerListController::class, 'index'])->name('index');
+                    Route::post('/target-sy', [B3OfficerListController::class, 'setTargetSy'])->name('setTargetSy');
+
+                    Route::get('/edit', [B3OfficerListController::class, 'edit'])->name('edit');
+
+                    Route::post('/save-draft', [B3OfficerListController::class, 'saveDraft'])->name('saveDraft');
+                    Route::post('/submit', [B3OfficerListController::class, 'submit'])->name('submit');
+
+                    Route::post('/unsubmit', [B3OfficerListController::class, 'unsubmit'])->name('unsubmit');
+
+                    Route::post('/request-edit', [B3OfficerListController::class, 'requestEdit'])
+                        ->name('requestEdit');
+                });
+
 
         });
 

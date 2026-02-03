@@ -83,6 +83,14 @@
                 ];
             }
 
+            if (Route::has('admin.officer_submissions.index')) {
+                $links[] = [
+                    'label' => 'B-3 Officer Submissions',
+                    'href'  => route('admin.officer_submissions.index'),
+                    'class' => $linkClass(['admin.officer_submissions.*']),
+                ];
+            }
+
 
 
         // -------------------------
@@ -124,6 +132,14 @@
                         'label' => 'B-2 President Registration',
                         'href'  => route('org.b2.president.index'),
                         'class' => $linkClass(['org.b2.president.*']),
+                    ];
+                }
+
+                if (Route::has('org.b3.officers-list.index')) {
+                    $links[] = [
+                        'label' => 'B-3 Officers List',
+                        'href'  => route('org.b3.officers-list.index'),
+                        'class' => $linkClass(['org.b3.officers-list.*']),
                     ];
                 }
 
