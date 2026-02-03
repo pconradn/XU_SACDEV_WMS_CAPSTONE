@@ -95,8 +95,11 @@ class StrategicPlanController extends Controller
                 ->firstOrFail();
 
             // Prevent editing ONLY once approved by SACDEV
-            if ($submission->status === StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV) {
-                abort(403, 'This submission has already been approved and can no longer be edited.');
+            if (in_array($submission->status, [
+                StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV,
+                StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV,
+            ])) {
+                abort(403, 'This submission is under review by SACDEV and can no longer be edited.');
             }
 
             // Handle logo upload (optional)
@@ -157,9 +160,13 @@ class StrategicPlanController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($submission->status === StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV) {
-                abort(403, 'This submission has already been approved and can no longer be edited.');
+            if (in_array($submission->status, [
+                StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV,
+                StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV,
+            ])) {
+                abort(403, 'This submission is under review by SACDEV and can no longer be edited.');
             }
+
 
             $submission->status = StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR;
             $submission->submitted_to_moderator_at = now();
