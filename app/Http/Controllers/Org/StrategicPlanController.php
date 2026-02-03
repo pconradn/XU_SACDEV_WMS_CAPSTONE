@@ -67,6 +67,12 @@ class StrategicPlanController extends Controller
 
         $schoolYear = SchoolYear::findOrFail($targetSyId);
 
+        $canEdit = in_array($submission->status, [
+            StrategicPlanSubmission::STATUS_DRAFT,
+            StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
+            StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
+        ], true);
+
         return view('org.strategic_plan.edit', compact('submission', 'schoolYear'));
     }
 
@@ -95,11 +101,12 @@ class StrategicPlanController extends Controller
                 ->firstOrFail();
 
             // Prevent editing ONLY once approved by SACDEV
-            if (in_array($submission->status, [
-                StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV,
-                StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV,
-            ])) {
-                abort(403, 'This submission is under review by SACDEV and can no longer be edited.');
+            if (!in_array($submission->status, [
+                StrategicPlanSubmission::STATUS_DRAFT,
+                StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
+                StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
+            ], true)) {
+                abort(403, 'This submission is currently under review and cannot be edited.');
             }
 
             // Handle logo upload (optional)
@@ -136,6 +143,8 @@ class StrategicPlanController extends Controller
             $this->recomputeTotals($submission);
         });
 
+
+
         return redirect()
             ->route('org.strategic_plan.edit')
             ->with('success', 'Draft saved.');
@@ -160,23 +169,37 @@ class StrategicPlanController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if (in_array($submission->status, [
-                StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV,
-                StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV,
-            ])) {
-                abort(403, 'This submission is under review by SACDEV and can no longer be edited.');
+            if (!in_array($submission->status, [
+                StrategicPlanSubmission::STATUS_DRAFT,
+                StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
+                StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
+            ], true)) {
+                abort(403, 'This submission cannot be submitted right now.');
             }
 
 
             $submission->status = StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR;
             $submission->submitted_to_moderator_at = now();
-
+            
+            /**
+             * Clear MODERATOR review cycle
+             */
             $submission->moderator_reviewed_by = null;
             $submission->moderator_reviewed_at = null;
             $submission->moderator_remarks = null;
 
+            /**
+             * Clear SACDEV review cycle
+             */
+            $submission->sacdev_reviewed_by = null;
+            $submission->sacdev_reviewed_at = null;
+            $submission->sacdev_remarks = null;
+            $submission->approved_at = null; // safety reset
+
             $submission->save();
         });
+
+
 
         return redirect()
             ->route('org.strategic_plan.edit')

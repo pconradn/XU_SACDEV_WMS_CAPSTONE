@@ -84,6 +84,7 @@ class ModeratorStrategicPlanController extends Controller
             if (!in_array($submission->status, [
                 StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR,
                 StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
+                StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV,
             ], true)) {
                 abort(403, 'Invalid state for returning.');
             }
@@ -127,7 +128,7 @@ class ModeratorStrategicPlanController extends Controller
                 StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR,
                 StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
             ], true)) {
-                abort(403, 'Invalid state for forwarding.');
+                abort(403, 'This submission is no longer in moderator review stage.');
             }
 
             $submission->status = StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV;
@@ -135,7 +136,7 @@ class ModeratorStrategicPlanController extends Controller
             $submission->moderator_reviewed_by = $userId;
             $submission->moderator_reviewed_at = now();
 
-            // use moderator_remarks as “Noted by” note (optional)
+            
             $submission->moderator_remarks = $request->input('moderator_note');
 
             $submission->forwarded_to_sacdev_at = now();

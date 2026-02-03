@@ -89,7 +89,7 @@ class StrategicPlanSubmission extends Model
         return $this->belongsTo(User::class, 'moderator_reviewed_by');
     }
 
-    public function sacdevReviewedBy(): BelongsTo
+    public function sacdevReviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sacdev_reviewed_by');
     }

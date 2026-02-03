@@ -49,6 +49,16 @@
                 ];
             }
 
+            if (Route::has('admin.strategic_plans.index')) {
+                $links[] = [
+                    'label' => 'Strategic Plans',
+                    'href'  => route('admin.strategic_plans.index'),
+                    'class' => $linkClass([
+                        'admin.strategic_plans.*',
+                    ]),
+                ];
+            }
+
             if (Route::has('admin.review.index')) {
                 $links[] = [
                     'label' => 'Review Submissions',
@@ -64,6 +74,8 @@
                     'class' => $linkClass(['admin.audit-logs.*']),
                 ];
             }
+
+
 
         // -------------------------
         // ORG
