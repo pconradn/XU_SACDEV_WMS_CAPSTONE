@@ -146,7 +146,23 @@
                         'class' => $linkClass(['org.activation-status.*']),
                     ];
                 }
+
+
+
+
             }
+        
+
+            if (($isModerator ?? false) && Route::has('org.moderator.strategic_plans.index')) {
+                $links[] = [
+                    'label' => 'Moderator Review',
+                    'href'  => route('org.moderator.strategic_plans.index'),
+                    'class' => $linkClass(['org.moderator.strategic_plans.*']),
+                ];
+            
+            }
+
+            
         }
     }
 @endphp
@@ -156,3 +172,7 @@
 @auth
     @include('layouts.nav._account', ['user' => $user, 'mode' => $mode ?? 'desktop'])
 @endauth
+
+<div class="text-xs text-red-600">
+    isModerator: {{ isset($isModerator) ? ($isModerator ? 'true' : 'false') : 'NOT SET' }}
+</div>

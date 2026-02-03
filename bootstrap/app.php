@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'sacdev_admin' => \App\Http\Middleware\RequireSacdevAdmin::class,
             'active_sy_access' => \App\Http\Middleware\RequireActiveSYAccess::class,
             'president_encode' => \App\Http\Middleware\RequirePresidentEncodeContext::class,
+            'org.moderator' => \App\Http\Middleware\EnsureOrgModerator::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

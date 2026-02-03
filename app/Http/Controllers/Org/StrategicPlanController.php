@@ -125,6 +125,7 @@ class StrategicPlanController extends Controller
 
             // keep draft on save
             $submission->status = StrategicPlanSubmission::STATUS_DRAFT;
+
             $submission->save();
 
             $this->syncProjects($submission, $validated['projects'] ?? []);
@@ -138,37 +139,42 @@ class StrategicPlanController extends Controller
     }
 
 
-public function submitToModerator(SubmitStrategicPlanRequest $request)
-{
-    $targetSyId = (int) $request->session()->get('target_sy_id');
+    public function submitToModerator(SubmitStrategicPlanRequest $request)
+    {
+        $targetSyId = (int) $request->session()->get('target_sy_id');
 
-    if (!$targetSyId) {
-        return redirect()->route('org.strategic_plan.select_sy')
-            ->with('info', 'Please select the school year you want to submit for.');
-    }
-
-    ['orgId' => $orgId] = $this->ctx($request);
-
-    DB::transaction(function () use ($orgId, $targetSyId) {
-        $submission = StrategicPlanSubmission::query()
-            ->where('organization_id', $orgId)
-            ->where('target_school_year_id', $targetSyId)
-            ->lockForUpdate()
-            ->firstOrFail();
-
-        if ($submission->status === StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV) {
-            abort(403, 'This submission has already been approved and can no longer be edited.');
+        if (!$targetSyId) {
+            return redirect()->route('org.strategic_plan.select_sy')
+                ->with('info', 'Please select the school year you want to submit for.');
         }
 
-        $submission->status = StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR;
-        $submission->submitted_to_moderator_at = now();
-        $submission->save();
-    });
+        ['orgId' => $orgId] = $this->ctx($request);
 
-    return redirect()
-        ->route('org.strategic_plan.edit')
-        ->with('success', 'Submitted to moderator for review.');
-}
+        DB::transaction(function () use ($orgId, $targetSyId) {
+            $submission = StrategicPlanSubmission::query()
+                ->where('organization_id', $orgId)
+                ->where('target_school_year_id', $targetSyId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($submission->status === StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV) {
+                abort(403, 'This submission has already been approved and can no longer be edited.');
+            }
+
+            $submission->status = StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR;
+            $submission->submitted_to_moderator_at = now();
+
+            $submission->moderator_reviewed_by = null;
+            $submission->moderator_reviewed_at = null;
+            $submission->moderator_remarks = null;
+
+            $submission->save();
+        });
+
+        return redirect()
+            ->route('org.strategic_plan.edit')
+            ->with('success', 'Submitted to moderator for review.');
+    }
 
 
     private function syncProjects(StrategicPlanSubmission $submission, array $projectsPayload): void
