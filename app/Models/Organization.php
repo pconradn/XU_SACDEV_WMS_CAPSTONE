@@ -43,6 +43,11 @@ class Organization extends Model
     {
         return $this->hasMany(\App\Models\OfficerSubmission::class);
     }
+    
+    public function memberLists()
+    {
+        return $this->hasMany(\App\Models\MemberList::class);
+    }
 
 
 }

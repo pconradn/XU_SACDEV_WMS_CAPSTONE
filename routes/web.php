@@ -13,6 +13,7 @@ use App\Http\Controllers\Org\OrgDashboardController;
 use App\Http\Controllers\Org\B3OfficerListController;
 
 // Org
+use App\Http\Controllers\Org\B4MembersListController;
 use App\Http\Controllers\Org\OfficerInviteController;
 use App\Http\Controllers\Org\StrategicPlanController;
 use App\Http\Controllers\Admin\OrganizationController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\Admin\AdminOrgReviewController;
 use App\Http\Controllers\Org\ActivationStatusController;
 use App\Http\Controllers\Org\EncodeSchoolYearController;
 use App\Http\Controllers\Org\OrgRoleAssignmentController;
+use App\Http\Controllers\Admin\SacdevB4MemberListController;
 use App\Http\Controllers\Admin\SacdevStrategicPlanController;
 use App\Http\Controllers\Org\PresidentRegistrationController;
 use App\Http\Controllers\Org\ProjectHeadAssignmentController;
@@ -151,6 +153,11 @@ Route::prefix('admin')
                 ->name('allow_edit');
         });
 
+        Route::prefix('member-lists')->name('admin.member_lists.')->group(function () {
+            Route::get('/', [SacdevB4MemberListController::class, 'index'])->name('index');
+            Route::get('/{list}', [SacdevB4MemberListController::class, 'show'])->name('show');
+        });
+
 
     });
 
@@ -275,6 +282,17 @@ Route::prefix('org')
 
                     Route::post('/request-edit', [B3OfficerListController::class, 'requestEdit'])
                         ->name('requestEdit');
+                });
+
+
+            Route::prefix('org/forms/b4/members-list')
+                ->name('org.b4.members-list.')
+                ->group(function () {
+                    Route::get('/', [B4MembersListController::class, 'index'])->name('index');
+                    Route::post('/target-sy', [B4MembersListController::class, 'setTargetSy'])->name('setTargetSy');
+
+                    Route::get('/edit', [B4MembersListController::class, 'edit'])->name('edit');
+                    Route::post('/save', [B4MembersListController::class, 'save'])->name('save');
                 });
 
 

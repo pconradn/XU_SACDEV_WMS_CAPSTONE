@@ -91,6 +91,14 @@
                 ];
             }
 
+            if (Route::has('admin.member_lists.index')) {
+                $links[] = [
+                    'label' => 'B-4 Members Lists',
+                    'href'  => route('admin.member_lists.index'),
+                    'class' => $linkClass(['admin.member_lists.*']),
+                ];
+            }
+
 
 
         // -------------------------
@@ -142,6 +150,15 @@
                         'class' => $linkClass(['org.b3.officers-list.*']),
                     ];
                 }
+
+                if (Route::has('org.b4.members-list.index')) {
+                    $links[] = [
+                        'label' => 'B-4 Members List',
+                        'href'  => route('org.b4.members-list.index'),
+                        'class' => $linkClass(['org.b4.members-list.*']),
+                    ];
+                }
+
 
                 if (Route::has('org.strategic_plan.select_sy')) {
                     $links[] = [
