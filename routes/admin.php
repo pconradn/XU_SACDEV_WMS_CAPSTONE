@@ -22,6 +22,16 @@ Route::prefix('admin')
         Route::get('/', [AdminDashboardController::class, 'index'])
             ->name('admin.home');
 
+        Route::get('/rereg', [\App\Http\Controllers\Admin\ReregHubController::class, 'index'])
+            ->name('admin.rereg.index');
+
+        Route::post('/rereg/set-sy', [\App\Http\Controllers\Admin\ReregHubController::class, 'setSy'])
+            ->name('rereg.setSy');
+
+        Route::get('/rereg/{organization}/hub', [\App\Http\Controllers\Admin\ReregHubController::class, 'hub'])
+            ->name('rereg.hub');
+
+
         Route::resource('school-years', SchoolYearController::class)
             ->names('admin.school-years');
 
