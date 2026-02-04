@@ -140,15 +140,26 @@ class OrgReregDashboardController extends Controller
             && $this->isApproved($b3?->status)
             && $this->isApproved($b5?->status);
 
+            $b5Moderator = OrgMembership::query()
+                ->where('organization_id', $orgId)
+                ->where('school_year_id', $syId)
+                ->where('role', 'moderator')
+                ->whereNull('archived_at')
+                ->with('user')
+                ->first();
+
+            $canAssignModerator = true; // since this dashboard route is already inside org.role:president middleware
+
         return view('org.rereg.index', [
             'schoolYears' => $schoolYears,
             'encodeSyId'  => $syId,
             'forms'       => $forms,
             'allApproved' => $allApproved,
 
-            // NEW
+          
             'canAssignNextPresident' => $canAssignNextPresident,
             'canAssignModerator'     => $canAssignModerator,
+            'b5Moderator' => $b5Moderator,
             'isTargetSyModerator'    => $isTargetSyModerator,
         ]);
     }

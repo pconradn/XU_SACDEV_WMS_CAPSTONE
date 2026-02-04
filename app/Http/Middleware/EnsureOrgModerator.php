@@ -2,35 +2,35 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\SchoolYear;
 use Closure;
 use Illuminate\Http\Request;
+use App\Models\OrgMembership;
 
 class EnsureOrgModerator
 {
     public function handle(Request $request, Closure $next)
     {
         $userId = (int) auth()->id();
-        $orgId  = (int) $request->session()->get('active_org_id');
 
-        if (!$userId || !$orgId) {
+        // Use the SAME context keys the org portal uses
+        $orgId = (int) $request->session()->get('active_org_id');
+        $syId  = (int) $request->session()->get('encode_sy_id');
+
+        // If you require context first, redirect them to context page
+        if (! $orgId || ! $syId) {
             abort(403, 'No active organization selected.');
+            // OR: return redirect()->route('context.show');
         }
 
-        $activeSyId = (int) SchoolYear::query()->where('is_active', true)->value('id');
-        if (!$activeSyId) {
-            abort(403, 'No active school year.');
-        }
-
-        $isModerator = \App\Models\OrgMembership::query()
-            ->where('organization_id', $orgId)
-            ->where('school_year_id', $activeSyId)
+        // Moderator check MUST come from org_memberships
+        $isModerator = OrgMembership::query()
             ->where('user_id', $userId)
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
             ->where('role', 'moderator')
-            ->whereNull('archived_at')
             ->exists();
 
-        if (!$isModerator) {
+        if (! $isModerator) {
             abort(403, 'Moderator access only.');
         }
 

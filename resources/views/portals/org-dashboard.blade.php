@@ -1,5 +1,18 @@
 <x-app-layout>
     <x-slot name="header">
+
+
+        @php
+            $isModerator = \App\Models\OrgMembership::query()
+                ->where('user_id', auth()->id())
+                ->where('organization_id', session('active_org_id'))
+                ->where('school_year_id', session('encode_sy_id'))
+                ->where('role', 'moderator')
+                ->exists();
+        @endphp
+
+
+
         <div class="flex flex-col gap-1">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Org Portal
@@ -146,11 +159,21 @@
                 @else
                     <div class="mt-4 flex flex-wrap gap-2">
 
-                        {{-- Re-registration is role-based via routes anyway --}}
-                        <a href="{{ route('org.rereg.index') }}"
-                           class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                        {{-- Debug (keep this while testing) --}}
+                        <div class="text-xs text-red-600">
+                            isModerator: {{ isset($isModerator) ? ($isModerator ? 'true' : 'false') : 'NOT SET' }}
+                        </div>
+                        @php
+                            $reregHref = ($isModerator ?? false)
+                                ? route('org.moderator.rereg.dashboard')
+                                : route('org.rereg.index');
+                        @endphp
+
+                        <a href="{{ $reregHref }}"
+                        class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
                             Re-registration Hub
                         </a>
+
 
                         {{-- Show management links if President role exists --}}
                         @if($roles->contains('president'))

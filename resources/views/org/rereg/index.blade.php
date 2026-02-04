@@ -59,19 +59,57 @@
                                 </div>
                             </div>
 
-                            @if($f['editRoute'] && Route::has($f['editRoute']))
-                                <a href="{{ route($f['editRoute']) }}"
-                                   class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                                    Open
-                                </a>
-                            @else
-                                <span class="text-xs text-slate-500">No action</span>
+                            {{-- normal cards: show Open if route exists --}}
+                            @if($key !== 'b5')
+                                @if($f['editRoute'] && Route::has($f['editRoute']))
+                                    <a href="{{ route($f['editRoute']) }}"
+                                       class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                                        Open
+                                    </a>
+                                @else
+                                    <span class="text-xs text-slate-500">No action</span>
+                                @endif
                             @endif
                         </div>
 
+                        {{-- B5 special content --}}
                         @if($key === 'b5')
-                            <div class="mt-4 text-sm text-slate-600">
-                                This form is completed by the assigned moderator. You can track the status here.
+                            <div class="mt-4 space-y-3">
+                                <div class="text-sm text-slate-600">
+                                    This form is completed by the assigned moderator. You can track the status here.
+                                </div>
+
+                                @php
+                                    $mod = $b5Moderator ?? null; // expected: OrgMembership with ->user loaded
+                                @endphp
+
+                                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                    <div class="text-sm font-semibold text-slate-900">Assigned moderator (Target SY)</div>
+
+                                    @if($mod && $mod->user)
+                                        <div class="mt-2 text-sm text-slate-700">
+                                            <div><span class="text-slate-500">Name:</span> {{ $mod->user->name }}</div>
+                                            <div><span class="text-slate-500">Email:</span> {{ $mod->user->email }}</div>
+                                        </div>
+                                    @else
+                                        <div class="mt-2 text-sm text-slate-600">
+                                            No moderator assigned yet for this school year.
+                                        </div>
+                                    @endif
+
+                                    @if(!empty($canAssignModerator) && $canAssignModerator)
+                                        <div class="mt-3">
+                                            <a href="{{ route('org.rereg.assign.moderator.edit') }}"
+                                               class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+                                                {{ ($mod && $mod->user) ? 'Change Moderator' : 'Assign Moderator' }}
+                                            </a>
+                                        </div>
+
+                                        <div class="mt-2 text-xs text-slate-500">
+                                            Use this if the moderator email is wrong, or if the moderator changes for this SY.
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                         @endif
                     </div>

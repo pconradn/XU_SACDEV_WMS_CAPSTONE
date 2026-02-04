@@ -1,0 +1,94 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\OrganizationController;
+use App\Http\Controllers\Admin\OrganizationPresidentController;
+use App\Http\Controllers\Admin\SchoolYearController;
+use App\Http\Controllers\Admin\AdminOrgReviewController;
+
+use App\Http\Controllers\Admin\SacdevStrategicPlanController;
+use App\Http\Controllers\Admin\SacdevB3OfficerSubmissionController;
+use App\Http\Controllers\Admin\SacdevB4MemberListController;
+use App\Http\Controllers\Admin\SacdevB5ModeratorSubmissionController;
+use App\Http\Controllers\SACDEV\SacdevB2PresidentRegistrationController;
+
+Route::prefix('admin')
+    ->middleware(['auth', 'sacdev_admin', 'must_change_password'])
+    ->group(function () {
+
+        Route::get('/', [AdminDashboardController::class, 'index'])
+            ->name('admin.home');
+
+        Route::resource('school-years', SchoolYearController::class)
+            ->names('admin.school-years');
+
+        Route::patch('school-years/{schoolYear}/activate', [SchoolYearController::class, 'activate'])
+            ->name('admin.school-years.activate');
+
+        Route::get('organizations/assign-president', [OrganizationPresidentController::class, 'create'])
+            ->name('admin.organizations.assign-president');
+
+        Route::post('organizations/assign-president', [OrganizationPresidentController::class, 'store'])
+            ->name('admin.organizations.assign-president.store');
+
+        Route::resource('organizations', OrganizationController::class)
+            ->except(['show'])
+            ->names('admin.organizations');
+
+        Route::get('review', [AdminOrgReviewController::class, 'index'])
+            ->name('admin.review.index');
+
+        Route::get('review/show', [AdminOrgReviewController::class, 'show'])
+            ->name('admin.review.show');
+
+        Route::get('audit-logs', [AuditLogController::class, 'index'])
+            ->name('admin.audit-logs.index');
+
+        Route::prefix('strategic-plans')->name('admin.strategic_plans.')->group(function () {
+            Route::get('/', [SacdevStrategicPlanController::class, 'index'])->name('index');
+            Route::get('/{submission}', [SacdevStrategicPlanController::class, 'show'])->name('show');
+
+            Route::post('/{submission}/return', [SacdevStrategicPlanController::class, 'returnToOrg'])->name('return');
+            Route::post('/{submission}/approve', [SacdevStrategicPlanController::class, 'approve'])->name('approve');
+
+            Route::post('/{submission}/revert-approval', [SacdevStrategicPlanController::class, 'revertApproval'])
+                ->name('revert_approval');
+        });
+
+        Route::prefix('president-registrations')->name('admin.b2.president.')->group(function () {
+            Route::get('/', [SacdevB2PresidentRegistrationController::class, 'index'])->name('index');
+            Route::get('/{registration}', [SacdevB2PresidentRegistrationController::class, 'show'])->name('show');
+            Route::post('/{registration}/return', [SacdevB2PresidentRegistrationController::class, 'returnToOrg'])->name('return');
+            Route::post('/{registration}/approve', [SacdevB2PresidentRegistrationController::class, 'approve'])->name('approve');
+        });
+
+        Route::prefix('officer-submissions')->name('admin.officer_submissions.')->group(function () {
+            Route::get('/', [SacdevB3OfficerSubmissionController::class, 'index'])->name('index');
+            Route::get('/{submission}', [SacdevB3OfficerSubmissionController::class, 'show'])->name('show');
+
+            Route::post('/{submission}/return', [SacdevB3OfficerSubmissionController::class, 'returnToOrg'])->name('return');
+            Route::post('/{submission}/approve', [SacdevB3OfficerSubmissionController::class, 'approve'])->name('approve');
+
+            Route::post('/{submission}/allow-edit', [SacdevB3OfficerSubmissionController::class, 'allowEdit'])
+                ->name('allow_edit');
+        });
+
+        Route::prefix('member-lists')->name('admin.member_lists.')->group(function () {
+            Route::get('/', [SacdevB4MemberListController::class, 'index'])->name('index');
+            Route::get('/{list}', [SacdevB4MemberListController::class, 'show'])->name('show');
+        });
+
+        Route::prefix('moderator-submissions')->name('admin.moderator_submissions.')->group(function () {
+            Route::get('/', [SacdevB5ModeratorSubmissionController::class, 'index'])->name('index');
+            Route::get('/{submission}', [SacdevB5ModeratorSubmissionController::class, 'show'])->name('show');
+
+            Route::post('/{submission}/return', [SacdevB5ModeratorSubmissionController::class, 'returnToModerator'])->name('return');
+            Route::post('/{submission}/approve', [SacdevB5ModeratorSubmissionController::class, 'approve'])->name('approve');
+
+            Route::post('/{submission}/allow-edit', [SacdevB5ModeratorSubmissionController::class, 'allowEdit'])->name('allow_edit');
+            Route::post('/{submission}/revert-approval', [SacdevB5ModeratorSubmissionController::class, 'revertApproval'])->name('revert_approval');
+        });
+    });

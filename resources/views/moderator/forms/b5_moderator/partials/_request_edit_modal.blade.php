@@ -1,45 +1,49 @@
-<div id="editRequestModal" class="hidden fixed inset-0 z-50">
-    <div class="absolute inset-0 bg-black/40"></div>
 
-    <div class="relative mx-auto mt-24 w-full max-w-lg px-4">
-        <div class="rounded-2xl bg-white shadow-xl border border-slate-200 overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-200">
-                <div class="text-base font-semibold text-slate-900">Request Edit</div>
-                <div class="text-sm text-slate-600 mt-1">
-                    This will notify SACDEV that you need to edit a submitted/approved form.
-                </div>
+<div id="editRequestModal"
+     class="fixed inset-0 z-50 hidden bg-slate-900/50 px-4 py-6 overflow-y-auto">
+    <div class="mx-auto w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <h3 class="text-lg font-semibold text-slate-900">Request Edit</h3>
+                <p class="mt-1 text-sm text-slate-600">
+                    Send a message to SACDEV asking them to allow editing for this form.
+                </p>
             </div>
 
-            <form method="POST" action="{{ route('moderator.b5.moderator.requestEdit') }}">
-                @csrf
+            <button type="button"
+                    data-close-edit-request-modal
+                    class="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700">
+                ✕
+            </button>
+        </div>
 
-                <div class="p-5 space-y-3">
-                    <label class="block text-sm font-medium text-slate-700">Message (optional)</label>
-                    <textarea name="edit_request_message" rows="4"
-                              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                              placeholder="Explain what needs to be changed (optional).">{{ old('edit_request_message') }}</textarea>
+        <div class="mt-4">
+            <label class="block text-sm font-medium text-slate-700">
+                Message (optional)
+            </label>
 
-                    @if($submission->status === 'approved_by_sacdev')
-                        <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-                            Note: This submission is already approved. Once SACDEV grants your request,
-                            the status will be moved to <span class="font-semibold">returned_by_sacdev</span> so you can resubmit.
-                        </div>
-                    @endif
-                </div>
+            <textarea name="edit_request_message"
+                      rows="4"
+                      class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                      placeholder="Example: I need to correct my department/contact info. Please allow editing.">{{ old('edit_request_message', $submission->edit_request_message) }}</textarea>
 
-                <div class="px-5 py-4 border-t border-slate-200 flex items-center justify-end gap-2">
-                    <button type="button"
-                            data-close-edit-request-modal
-                            class="inline-flex justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                        Cancel
-                    </button>
+            <div class="mt-2 text-xs text-slate-500">
+                Once sent, the request will show as pending until SACDEV responds.
+            </div>
+        </div>
 
-                    <button type="submit"
-                            class="inline-flex justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-                        Send Request
-                    </button>
-                </div>
-            </form>
+        <div class="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <button type="button"
+                    data-close-edit-request-modal
+                    class="inline-flex justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                Cancel
+            </button>
+
+            <button type="submit"
+                    formaction="{{ route('org.moderator.rereg.b5.requestEdit') }}"
+                    class="inline-flex justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+                Send Request
+            </button>
         </div>
     </div>
 </div>
