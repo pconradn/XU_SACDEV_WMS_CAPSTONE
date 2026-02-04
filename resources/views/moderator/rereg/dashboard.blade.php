@@ -39,30 +39,49 @@
         {{-- Forms Grid --}}
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 
-            {{-- B1 --}}
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <div class="text-base font-semibold text-slate-900">
-                            B1 — Strategic Plan
-                        </div>
-                        <div class="mt-2">
-                            <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                                {{ $b1->status ?? '—' }}
-                            </span>
-                        </div>
+        {{-- B1 --}}
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-start justify-between">
+                <div>
+                    <div class="text-base font-semibold text-slate-900">
+                        B1 — Strategic Plan
                     </div>
-                    <span class="text-xs text-slate-500">View only</span>
+                    <div class="mt-2">
+                        <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                            {{ $b1->status ?? '—' }}
+                        </span>
+                    </div>
                 </div>
 
-                <div class="mt-4 text-sm text-slate-600">
-                    @if($b1)
-                        A strategic plan submission exists for this organization and school year.
-                    @else
-                        No strategic plan has been submitted yet.
-                    @endif
-                </div>
+                <span class="text-xs text-slate-500">
+                    {{ $b1 ? 'Ready for review' : 'View only' }}
+                </span>
             </div>
+
+            <div class="mt-4 text-sm text-slate-600">
+                @if($b1)
+                    A strategic plan submission exists for this organization and school year and is ready for moderator review.
+                @else
+                    No strategic plan has been submitted yet for this organization and school year.
+                @endif
+            </div>
+
+            {{-- Actions --}}
+            <div class="mt-4 space-y-2">
+                @if($b1)
+                    <a href="{{ route('org.moderator.strategic_plans.show', $b1) }}"
+                    class="inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+                        Review B1 Submission
+                    </a>
+                @else
+                    <button type="button" disabled
+                        class="inline-flex w-full items-center justify-center rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-600">
+                        No B1 Submission Yet
+                    </button>
+                @endif
+            </div>
+        </div>
+
 
             {{-- B2 --}}
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

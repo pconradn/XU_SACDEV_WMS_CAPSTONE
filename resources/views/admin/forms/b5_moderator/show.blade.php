@@ -131,14 +131,7 @@
 
 
         {{-- DETAILS --}}
-        @include('admin.forms.b5_moderator.partials._detail_section', [
-            'title' => 'Moderator Identity',
-            'content' => view()->make('admin.forms.b5_moderator.partials._detail_section', [
-                'title' => null,
-                'content' => null
-            ])
-        ])
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        @component('admin.forms.b5_moderator.partials._detail_section', ['title' => 'Moderator Identity'])
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <div class="text-xs uppercase tracking-wide text-slate-500">Full Name</div>
@@ -158,7 +151,10 @@
                     </div>
                 </div>
             </div>
-        </div>
+        @endcomponent
+
+
+
 
         <div class="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 class="text-base font-semibold text-slate-900">Personal Information</h3>

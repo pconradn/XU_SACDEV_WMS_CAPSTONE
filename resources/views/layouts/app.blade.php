@@ -68,7 +68,7 @@
                             />
                         </div>
                         <div class="mt-1 text-[11px] text-slate-400">
-                            (UI only for now — we can wire this later)
+                            
                         </div>
                     </div>
                 </div>

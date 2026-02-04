@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Org;
 
 use App\Http\Controllers\Controller;
-use App\Models\SchoolYear;
 use App\Models\StrategicPlanSubmission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,18 +13,22 @@ class ModeratorStrategicPlanController extends Controller
     {
         return [
             'orgId' => (int) $request->session()->get('active_org_id'),
-            'activeSyId' => (int) SchoolYear::query()->where('is_active', true)->value('id'),
+            'syId'  => (int) $request->session()->get('encode_sy_id'),
             'userId' => (int) auth()->id(),
         ];
     }
 
     public function index(Request $request)
     {
-        ['orgId' => $orgId] = $this->ctx($request);
+        ['orgId' => $orgId, 'syId' => $syId] = $this->ctx($request);
+
+        // If require.context middleware is solid, this is optional
+        abort_unless($orgId && $syId, 403, 'No active organization / school year selected.');
 
         $submissions = StrategicPlanSubmission::query()
-            ->with(['targetSchoolYear'])
+            ->with(['targetSchoolYear', 'submittedBy'])
             ->where('organization_id', $orgId)
+            ->where('target_school_year_id', $syId)
             ->whereIn('status', [
                 StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR,
                 StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
@@ -42,11 +45,11 @@ class ModeratorStrategicPlanController extends Controller
 
     public function show(Request $request, StrategicPlanSubmission $submission)
     {
-        ['orgId' => $orgId] = $this->ctx($request);
+        ['orgId' => $orgId, 'syId' => $syId] = $this->ctx($request);
 
-        if ((int) $submission->organization_id !== (int) $orgId) {
-            abort(403);
-        }
+        abort_unless($orgId && $syId, 403, 'No active organization / school year selected.');
+        abort_unless((int) $submission->organization_id === (int) $orgId, 403);
+        abort_unless((int) $submission->target_school_year_id === (int) $syId, 403);
 
         $submission->load([
             'targetSchoolYear',
@@ -63,11 +66,11 @@ class ModeratorStrategicPlanController extends Controller
 
     public function returnToOrg(Request $request, StrategicPlanSubmission $submission)
     {
-        ['orgId' => $orgId, 'userId' => $userId] = $this->ctx($request);
+        ['orgId' => $orgId, 'syId' => $syId, 'userId' => $userId] = $this->ctx($request);
 
-        if ((int) $submission->organization_id !== (int) $orgId) {
-            abort(403);
-        }
+        abort_unless($orgId && $syId, 403, 'No active organization / school year selected.');
+        abort_unless((int) $submission->organization_id === (int) $orgId, 403);
+        abort_unless((int) $submission->target_school_year_id === (int) $syId, 403);
 
         $request->validate([
             'moderator_remarks' => ['required', 'string', 'min:5'],
@@ -80,7 +83,6 @@ class ModeratorStrategicPlanController extends Controller
                 abort(403, 'Already approved by SACDEV.');
             }
 
-            // Only allow return if it has been submitted to moderator
             if (!in_array($submission->status, [
                 StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR,
                 StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
@@ -94,7 +96,7 @@ class ModeratorStrategicPlanController extends Controller
             $submission->moderator_reviewed_at = now();
             $submission->moderator_remarks = $request->input('moderator_remarks');
 
-            // If it was forwarded before, pull it back
+            // pull back if previously forwarded
             $submission->forwarded_to_sacdev_at = null;
 
             $submission->save();
@@ -107,11 +109,11 @@ class ModeratorStrategicPlanController extends Controller
 
     public function forwardToSacdev(Request $request, StrategicPlanSubmission $submission)
     {
-        ['orgId' => $orgId, 'userId' => $userId] = $this->ctx($request);
+        ['orgId' => $orgId, 'syId' => $syId, 'userId' => $userId] = $this->ctx($request);
 
-        if ((int) $submission->organization_id !== (int) $orgId) {
-            abort(403);
-        }
+        abort_unless($orgId && $syId, 403, 'No active organization / school year selected.');
+        abort_unless((int) $submission->organization_id === (int) $orgId, 403);
+        abort_unless((int) $submission->target_school_year_id === (int) $syId, 403);
 
         $request->validate([
             'moderator_note' => ['nullable', 'string'],
@@ -132,14 +134,11 @@ class ModeratorStrategicPlanController extends Controller
             }
 
             $submission->status = StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV;
-
             $submission->moderator_reviewed_by = $userId;
             $submission->moderator_reviewed_at = now();
-
-            
             $submission->moderator_remarks = $request->input('moderator_note');
-
             $submission->forwarded_to_sacdev_at = now();
+
             $submission->save();
         });
 
