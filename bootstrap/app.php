@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'active_sy_access' => \App\Http\Middleware\RequireActiveSYAccess::class,
             'president_encode' => \App\Http\Middleware\RequirePresidentEncodeContext::class,
             'org.moderator' => \App\Http\Middleware\EnsureOrgModerator::class,
+            'org.ctx'  => \App\Http\Middleware\OrgContextMiddleware::class,
+            'org.role' => \App\Http\Middleware\OrgRoleMiddleware::class,
+            'require_president_active_sy' => \App\Http\Middleware\RequirePresidentActiveSy::class,
+
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -21,7 +21,9 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminOrgReviewController;
 use App\Http\Controllers\Org\ActivationStatusController;
 use App\Http\Controllers\Org\EncodeSchoolYearController;
+use App\Http\Controllers\Org\OrgReregDashboardController;
 use App\Http\Controllers\Org\OrgRoleAssignmentController;
+use App\Http\Controllers\Org\OrgReregAssignmentsController;
 use App\Http\Controllers\Admin\SacdevB4MemberListController;
 use App\Http\Controllers\Admin\SacdevStrategicPlanController;
 use App\Http\Controllers\Org\PresidentRegistrationController;
@@ -182,27 +184,38 @@ Route::prefix('admin')
 |--------------------------------------------------------------------------
 */
 Route::prefix('org')
-    ->middleware(['auth', 'active_sy_access', 'must_change_password'])
+    ->middleware(['auth', 'must_change_password'])  
     ->group(function () {
 
-        Route::get('/', [OrgDashboardController::class, 'index'])
-            ->name('org.home');
+        Route::get('/', [OrgDashboardController::class, 'index'])->name('org.home');
+        Route::post('/switch-org', [OrgDashboardController::class, 'switchOrg'])->name('org.switch');
 
-        Route::post('/switch-org', [OrgDashboardController::class, 'switchOrg'])
-            ->name('org.switch');
-
-        Route::get('/encode-school-year', [EncodeSchoolYearController::class, 'show'])
-            ->name('org.encode-sy.show');
-
-        Route::post('/encode-school-year', [EncodeSchoolYearController::class, 'update'])
-            ->name('org.encode-sy.update');
+        // Encode SY selector (we'll restrict which SYs can appear in the controller)
+        Route::get('/encode-school-year', [EncodeSchoolYearController::class, 'show'])->name('org.encode-sy.show');
+        Route::post('/encode-school-year', [EncodeSchoolYearController::class, 'update'])->name('org.encode-sy.update');
 
         /*
-        |--------------------------------------------------------------------------
-        | PRESIDENT-ONLY (Encoding / Management)
-        |--------------------------------------------------------------------------
+        |----------------------------------------------------------------------
+        | PROVISIONING (ACTIVE SY PRESIDENT ONLY)
+        |----------------------------------------------------------------------
         */
-        Route::middleware(['president_encode'])->group(function () {
+        Route::prefix('provision')
+            ->middleware(['require_president_active_sy'])
+            ->name('org.provision.')
+            ->group(function () {
+                Route::get('/next-president', [OrgReregAssignmentsController::class, 'editNextPresident'])
+                    ->name('next_president.edit');
+                Route::post('/next-president', [OrgReregAssignmentsController::class, 'storeNextPresident'])
+                    ->name('next_president.store');
+            });
+
+        /*
+        |----------------------------------------------------------------------
+        | OPERATIONAL MODULES (ACTIVE SY ACCESS)
+        |----------------------------------------------------------------------
+        | These should remain blocked for SY2-only users.
+        */
+        Route::middleware(['operational_access', 'president_encode'])->group(function () {
 
             Route::resource('officers', OfficerEntryController::class)
                 ->except(['show'])
@@ -232,91 +245,65 @@ Route::prefix('org')
 
             Route::get('activation-status', [ActivationStatusController::class, 'index'])
                 ->name('org.activation-status.index');
-
-            /*
-            |--------------------------------------------------------------------------
-            | Strategic Plan (B-1) – Org Side
-            |--------------------------------------------------------------------------
-            */
-            Route::get('strategic-plan', [StrategicPlanController::class, 'edit'])
-                ->name('org.strategic_plan.edit');
-
-            Route::post('strategic-plan/draft', [StrategicPlanController::class, 'saveDraft'])
-                ->name('org.strategic_plan.draft');
-
-            Route::post('strategic-plan/submit', [StrategicPlanController::class, 'submitToModerator'])
-                ->name('org.strategic_plan.submit');
-
-            Route::get('strategic-plan/select-sy', [StrategicPlanController::class, 'selectSy'])
-                ->name('org.strategic_plan.select_sy');
-
-            Route::post('strategic-plan/select-sy', [StrategicPlanController::class, 'storeSelectedSy'])
-                ->name('org.strategic_plan.select_sy.store');
-
-            /*
-            |--------------------------------------------------------------------------
-            | President (B-2) – Org Side
-            |--------------------------------------------------------------------------
-            */    
-
-            Route::get('/b2/president', [PresidentRegistrationController::class, 'index'])->name('org.b2.president.index');
-
-            // choose/set target SY in session 
-            Route::post('/b2/president/set-target-sy', [PresidentRegistrationController::class, 'setTargetSy'])
-                ->name('org.b2.president.setTargetSy');
-
-            // open/create draft for current org + selected target SY
-            Route::get('/b2/president/edit', [PresidentRegistrationController::class, 'edit'])->name('org.b2.president.edit');
-
-            // actions
-            Route::post('/b2/president/save-draft', [PresidentRegistrationController::class, 'saveDraft'])->name('org.b2.president.saveDraft');
-            Route::post('/b2/president/submit', [PresidentRegistrationController::class, 'submit'])->name('org.b2.president.submit');
-            Route::post('/b2/president/unsubmit', [PresidentRegistrationController::class, 'unsubmit'])->name('org.b2.president.unsubmit');
-
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Officers (B-3) – Org Side
-            |--------------------------------------------------------------------------
-            */
-
-            Route::prefix('org/forms/b3/officers-list')
-                ->name('org.b3.officers-list.')
-                ->group(function () {
-
-                    Route::get('/', [B3OfficerListController::class, 'index'])->name('index');
-                    Route::post('/target-sy', [B3OfficerListController::class, 'setTargetSy'])->name('setTargetSy');
-
-                    Route::get('/edit', [B3OfficerListController::class, 'edit'])->name('edit');
-
-                    Route::post('/save-draft', [B3OfficerListController::class, 'saveDraft'])->name('saveDraft');
-                    Route::post('/submit', [B3OfficerListController::class, 'submit'])->name('submit');
-
-                    Route::post('/unsubmit', [B3OfficerListController::class, 'unsubmit'])->name('unsubmit');
-
-                    Route::post('/request-edit', [B3OfficerListController::class, 'requestEdit'])
-                        ->name('requestEdit');
-                });
-
-
-            Route::prefix('org/forms/b4/members-list')
-                ->name('org.b4.members-list.')
-                ->group(function () {
-                    Route::get('/', [B4MembersListController::class, 'index'])->name('index');
-                    Route::post('/target-sy', [B4MembersListController::class, 'setTargetSy'])->name('setTargetSy');
-
-                    Route::get('/edit', [B4MembersListController::class, 'edit'])->name('edit');
-                    Route::post('/save', [B4MembersListController::class, 'save'])->name('save');
-                });
-
-
         });
 
         /*
-        |--------------------------------------------------------------------------
-        | MODERATOR (Review Only)
-        |--------------------------------------------------------------------------
+        |----------------------------------------------------------------------
+        | RE-REGISTRATION HUB (FUTURE SY OK)
+        |----------------------------------------------------------------------
+        */
+        Route::prefix('rereg')
+            ->middleware(['org.ctx']) // requires active_org_id + encode_sy_id
+            ->name('org.rereg.')
+            ->group(function () {
+
+                Route::get('/', [OrgReregDashboardController::class, 'index'])->name('index');
+                Route::post('/set-sy', [OrgReregDashboardController::class, 'setSy'])->name('setSy');
+
+                Route::middleware(['org.role:president'])->group(function () {
+
+                    Route::prefix('b1')->name('b1.')->group(function () {
+                        Route::get('/edit', [StrategicPlanController::class, 'edit'])->name('edit');
+                        Route::post('/draft', [StrategicPlanController::class, 'saveDraft'])->name('draft');
+                        Route::post('/submit', [StrategicPlanController::class, 'submitToModerator'])->name('submit');
+                    });
+
+                    Route::prefix('b2')->name('b2.')->group(function () {
+                        Route::get('/president', [PresidentRegistrationController::class, 'index'])->name('president.index');
+                        Route::get('/president/edit', [PresidentRegistrationController::class, 'edit'])->name('president.edit');
+                        Route::post('/president/save-draft', [PresidentRegistrationController::class, 'saveDraft'])->name('president.saveDraft');
+                        Route::post('/president/submit', [PresidentRegistrationController::class, 'submit'])->name('president.submit');
+                        Route::post('/president/unsubmit', [PresidentRegistrationController::class, 'unsubmit'])->name('president.unsubmit');
+                    });
+
+                    Route::prefix('b3/officers-list')->name('b3.officers-list.')->group(function () {
+                        Route::get('/', [B3OfficerListController::class, 'index'])->name('index');
+                        Route::get('/edit', [B3OfficerListController::class, 'edit'])->name('edit');
+                        Route::post('/save-draft', [B3OfficerListController::class, 'saveDraft'])->name('saveDraft');
+                        Route::post('/submit', [B3OfficerListController::class, 'submit'])->name('submit');
+                        Route::post('/unsubmit', [B3OfficerListController::class, 'unsubmit'])->name('unsubmit');
+                        Route::post('/request-edit', [B3OfficerListController::class, 'requestEdit'])->name('requestEdit');
+                    });
+
+                    Route::prefix('b4/members-list')->name('b4.members-list.')->group(function () {
+                        Route::get('/', [B4MembersListController::class, 'index'])->name('index');
+                        Route::get('/edit', [B4MembersListController::class, 'edit'])->name('edit');
+                        Route::post('/save', [B4MembersListController::class, 'save'])->name('save');
+                    });
+
+                    Route::prefix('assign')->name('assign.')->group(function () {
+                        Route::get('/moderator', [OrgReregAssignmentsController::class, 'editModerator'])
+                            ->name('moderator.edit');
+                        Route::post('/moderator', [OrgReregAssignmentsController::class, 'storeModerator'])
+                            ->name('moderator.store');
+                    });
+                });
+            });
+
+        /*
+        |----------------------------------------------------------------------
+        | MODERATOR PORTAL (should also NOT require active_sy_access)
+        |----------------------------------------------------------------------
         */
         Route::middleware(['org.moderator'])
             ->prefix('moderator')
@@ -335,19 +322,15 @@ Route::prefix('org')
                 Route::post('strategic-plans/{submission}/forward', [ModeratorStrategicPlanController::class, 'forwardToSacdev'])
                     ->name('strategic_plans.forward');
 
-                Route::prefix('forms/b5/moderator')
-                    ->name('b5.moderator.')
-                    ->group(function () {
-                        Route::get('/', [B5ModeratorSubmissionController::class, 'index'])->name('index');
-                        Route::get('/edit', [B5ModeratorSubmissionController::class, 'edit'])->name('edit');
-
-                        Route::post('/save-draft', [B5ModeratorSubmissionController::class, 'saveDraft'])->name('saveDraft');
-                        Route::post('/submit', [B5ModeratorSubmissionController::class, 'submit'])->name('submit');
-                        Route::post('/unsubmit', [B5ModeratorSubmissionController::class, 'unsubmit'])->name('unsubmit');
-                        Route::post('/request-edit', [B5ModeratorSubmissionController::class, 'requestEdit'])->name('requestEdit');
-                    });
-                
+                Route::prefix('rereg/b5')->name('rereg.b5.')->group(function () {
+                    Route::get('/', [B5ModeratorSubmissionController::class, 'index'])->name('index');
+                    Route::get('/edit', [B5ModeratorSubmissionController::class, 'edit'])->name('edit');
+                    Route::post('/save-draft', [B5ModeratorSubmissionController::class, 'saveDraft'])->name('saveDraft');
+                    Route::post('/submit', [B5ModeratorSubmissionController::class, 'submit'])->name('submit');
+                    Route::post('/unsubmit', [B5ModeratorSubmissionController::class, 'unsubmit'])->name('unsubmit');
+                    Route::post('/request-edit', [B5ModeratorSubmissionController::class, 'requestEdit'])->name('requestEdit');
+                });
             });
     });
 
-require __DIR__.'/auth.php';
+    require __DIR__.'/auth.php';
