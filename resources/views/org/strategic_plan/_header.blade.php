@@ -1,22 +1,23 @@
 <div class="bg-white shadow-sm rounded-xl border border-slate-200 p-5">
     <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 
-
         <div>
             <h1 class="text-xl font-semibold text-slate-900">Registration Form B-1: Strategic Plan</h1>
             <div class="text-sm text-slate-600">
                 Target School Year: <span class="font-semibold">{{ $schoolYear->name }}</span>
-                <a href="{{ route('org.strategic_plan.select_sy') }}" class="text-blue-700 hover:underline ml-2">Change</a>
+                <a href="{{ route('org.rereg.index') }}" class="text-blue-700 hover:underline ml-2">
+                    Back to Re-Registration
+                </a>
             </div>
         </div>
 
         <div class="flex items-center gap-2">
             <span class="text-xs px-2.5 py-1 rounded-full border
-                @if($submission->status === 'approved')
+                @if($submission->status === 'approved' || $submission->status === 'approved_by_sacdev')
                     bg-emerald-50 border-emerald-200 text-emerald-700
                 @elseif(str_contains($submission->status, 'returned'))
                     bg-rose-50 border-rose-200 text-rose-700
-                @elseif($submission->status === 'submitted_to_moderator' || $submission->status === 'forwarded_to_sacdev')
+                @elseif(in_array($submission->status, ['submitted_to_moderator','forwarded_to_sacdev'], true))
                     bg-amber-50 border-amber-200 text-amber-700
                 @else
                     bg-slate-50 border-slate-200 text-slate-700
@@ -27,16 +28,14 @@
         </div>
     </div>
 
-
     @if(!empty($submission->moderator_remarks))
         <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
             <div class="flex items-start gap-3">
                 <div class="mt-0.5 text-amber-600">
-                    
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
-                        viewBox="0 0 24 24">
+                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M13 16h-1v-4h-1m1-4h.01M12 20.5a8.5 8.5 0 100-17 8.5 8.5 0 000 17z"/>
+                              d="M13 16h-1v-4h-1m1-4h.01M12 20.5a8.5 8.5 0 100-17 8.5 8.5 0 000 17z"/>
                     </svg>
                 </div>
 
@@ -59,15 +58,14 @@
         </div>
     @endif
 
-
     @if(!empty($submission->sacdev_remarks))
         <div class="mt-4 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
             <div class="flex items-start gap-3">
                 <div class="mt-0.5 text-indigo-600">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
-                        viewBox="0 0 24 24">
+                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M13 16h-1v-4h-1m1-4h.01M12 20.5a8.5 8.5 0 100-17 8.5 8.5 0 000 17z"/>
+                              d="M13 16h-1v-4h-1m1-4h.01M12 20.5a8.5 8.5 0 100-17 8.5 8.5 0 000 17z"/>
                     </svg>
                 </div>
 

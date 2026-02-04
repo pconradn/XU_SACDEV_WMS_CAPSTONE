@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Updated: routes now live under org.rereg.b1.* --}}
     @include('org.strategic_plan._header', ['submission' => $submission, 'schoolYear' => $schoolYear])
 
     @include('org.strategic_plan._alpine', ['submission' => $submission])
@@ -6,17 +7,15 @@
     <div class="space-y-6" x-data="strategicPlanForm(window.__SP_INIT__)">
         {{-- SAVE DRAFT --}}
         <form method="POST"
-              action="{{ route('org.strategic_plan.draft') }}"
+              action="{{ route('org.rereg.b1.draft') }}"
               enctype="multipart/form-data"
               class="space-y-6">
             @csrf
 
-            
             @include('org.strategic_plan._identity', ['submission' => $submission])
             @include('org.strategic_plan._projects')
             @include('org.strategic_plan._funds')
             @include('org.strategic_plan._projects_modal')
-            
 
             <div class="flex items-center gap-3">
                 <button type="submit"
@@ -25,14 +24,9 @@
                 </button>
                 <p class="text-sm text-slate-500">You can save anytime. Submitting comes after saving.</p>
             </div>
-
-
-            
-
-
         </form>
 
         {{-- SUBMIT --}}
-        @include('org.strategic_plan._submit', ['submission' => $submission])
+        @include('org.strategic_plan._submit', ['submission' => $submission, 'submitRoute' => 'org.rereg.b1.submit'])
     </div>
 </x-app-layout>

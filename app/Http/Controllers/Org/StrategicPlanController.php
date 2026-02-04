@@ -2,44 +2,89 @@
 
 namespace App\Http\Controllers\Org;
 
-use App\Models\SchoolYear;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use App\Models\StrategicPlanPartner;
-use App\Models\StrategicPlanProject;
-use App\Models\StrategicPlanObjective;
-use App\Models\StrategicPlanFundSource;
-use App\Models\StrategicPlanSubmission;
-use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\Org\SaveDraftStrategicPlanRequest;
+use App\Http\Requests\Org\SubmitStrategicPlanRequest;
+use App\Models\OrgMembership;
+use App\Models\SchoolYear;
 use App\Models\StrategicPlanBeneficiary;
 use App\Models\StrategicPlanDeliverable;
-use App\Http\Requests\Org\SubmitStrategicPlanRequest;
-use App\Http\Requests\Org\SaveDraftStrategicPlanRequest;
+use App\Models\StrategicPlanFundSource;
+use App\Models\StrategicPlanObjective;
+use App\Models\StrategicPlanPartner;
+use App\Models\StrategicPlanProject;
+use App\Models\StrategicPlanSubmission;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class StrategicPlanController extends Controller
 {
+    /**
+     * IMPORTANT:
+     * We now use encode_sy_id as the target SY for re-registration
+     * because the whole /org/rereg flow is based on that.
+     *
+     * So this controller should NOT rely on target_sy_id anymore.
+     */
     private function ctx(Request $request): array
     {
         return [
-            'orgId' => (int) $request->session()->get('active_org_id'),
-            'syId'  => (int) $request->session()->get('encode_sy_id'), // target SY (SY X)
-            'userId'=> (int) $request->user()->id,
+            'orgId'    => (int) $request->session()->get('active_org_id'),
+            'targetSy' => (int) $request->session()->get('encode_sy_id'), // SY being re-registered
+            'userId'   => (int) $request->user()->id,
         ];
     }
 
+    /**
+     * Guard: user must have membership for org + targetSY (any role),
+     * because dashboard allows selecting SY only if user has membership there.
+     * (The routes already apply org.role:president, but this is a safe backend guard too.)
+     */
+    private function assertMembership(Request $request, int $orgId, int $targetSyId): void
+    {
+        $userId = (int) $request->user()->id;
+
+        $ok = OrgMembership::query()
+            ->where('user_id', $userId)
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $targetSyId)
+            ->whereNull('archived_at')
+            ->exists();
+
+        abort_unless($ok, 403, 'No access to this organization for the selected school year.');
+    }
+
+    /**
+     * Guard: allow edit only when status is editable.
+     */
+    private function assertEditableStatus(StrategicPlanSubmission $submission): void
+    {
+        $editable = in_array($submission->status, [
+            StrategicPlanSubmission::STATUS_DRAFT,
+            StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
+            StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
+        ], true);
+
+        abort_unless($editable, 403, 'This submission is currently under review and cannot be edited.');
+    }
+
+    /**
+     * GET /org/rereg/b1/edit
+     */
     public function edit(Request $request)
     {
-        $targetSyId = (int) $request->session()->get('target_sy_id');
+        ['orgId' => $orgId, 'targetSy' => $targetSyId, 'userId' => $userId] = $this->ctx($request);
 
-        if (!$targetSyId) {
-            return redirect()->route('org.strategic_plan.select_sy')
-                ->with('info', 'Please select the school year you want to submit for.');
+        if ($orgId <= 0) {
+            return redirect()->route('org.home')->with('status', 'Please select an organization first.');
         }
 
-    
-        ['orgId' => $orgId, 'userId' => $userId] = $this->ctx($request);
+        if ($targetSyId <= 0) {
+            return redirect()->route('org.rereg.index')->with('status', 'Please select a target school year first.');
+        }
+
+        $this->assertMembership($request, $orgId, $targetSyId);
 
         $submission = StrategicPlanSubmission::query()
             ->with([
@@ -53,67 +98,71 @@ class StrategicPlanController extends Controller
             ->where('target_school_year_id', $targetSyId)
             ->first();
 
-        if (! $submission) {
+        if (!$submission) {
             $submission = StrategicPlanSubmission::create([
-                'organization_id'        => $orgId,
-                'target_school_year_id'  => $targetSyId,
-                'submitted_by_user_id'   => $userId,
-                'status'                 => StrategicPlanSubmission::STATUS_DRAFT,
-                'org_name'               => '',
+                'organization_id'       => $orgId,
+                'target_school_year_id' => $targetSyId,
+                'submitted_by_user_id'  => $userId,
+                'status'                => StrategicPlanSubmission::STATUS_DRAFT,
+                'org_name'              => '',
             ]);
 
-            $submission->load(['projects', 'fundSources']);
+            $submission->load([
+                'projects.objectives',
+                'projects.beneficiaries',
+                'projects.deliverables',
+                'projects.partners',
+                'fundSources',
+            ]);
         }
 
         $schoolYear = SchoolYear::findOrFail($targetSyId);
 
+        // optional flag if your blade wants it
         $canEdit = in_array($submission->status, [
             StrategicPlanSubmission::STATUS_DRAFT,
             StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
             StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
         ], true);
 
-        return view('org.strategic_plan.edit', compact('submission', 'schoolYear'));
+        return view('org.strategic_plan.edit', compact('submission', 'schoolYear', 'canEdit'));
     }
 
-
+    /**
+     * POST /org/rereg/b1/draft
+     */
     public function saveDraft(SaveDraftStrategicPlanRequest $request)
     {
-        $targetSyId = (int) $request->session()->get('target_sy_id');
+        ['orgId' => $orgId, 'targetSy' => $targetSyId, 'userId' => $userId] = $this->ctx($request);
 
-        if (!$targetSyId) {
-            return redirect()->route('org.strategic_plan.select_sy')
-                ->with('info', 'Please select the school year you want to submit for.');
+        if ($orgId <= 0) {
+            return redirect()->route('org.home')->with('status', 'Please select an organization first.');
         }
 
-        ['orgId' => $orgId, 'userId' => $userId] = $this->ctx($request);
+        if ($targetSyId <= 0) {
+            return redirect()->route('org.rereg.index')->with('status', 'Please select a target school year first.');
+        }
+
+        $this->assertMembership($request, $orgId, $targetSyId);
 
         $validated = $request->validated();
         $validated['projects'] = array_values($validated['projects'] ?? []);
         $validated['fund_sources'] = array_values($validated['fund_sources'] ?? []);
 
         DB::transaction(function () use ($request, $validated, $orgId, $targetSyId, $userId) {
-
             $submission = StrategicPlanSubmission::query()
                 ->where('organization_id', $orgId)
                 ->where('target_school_year_id', $targetSyId)
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            // Prevent editing ONLY once approved by SACDEV
-            if (!in_array($submission->status, [
-                StrategicPlanSubmission::STATUS_DRAFT,
-                StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
-                StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
-            ], true)) {
-                abort(403, 'This submission is currently under review and cannot be edited.');
-            }
+            $this->assertEditableStatus($submission);
 
             // Handle logo upload (optional)
             if ($request->hasFile('logo')) {
                 $file = $request->file('logo');
 
-                // store under: storage/app/public/strategic-plans/{orgId}/{targetSyId}/...
+                // storage/app/public/strategic-plans/{orgId}/{targetSyId}/...
                 $path = $file->store("public/strategic-plans/{$orgId}/{$targetSyId}");
 
                 if ($submission->logo_path && Storage::exists($submission->logo_path)) {
@@ -128,13 +177,14 @@ class StrategicPlanController extends Controller
 
             $submission->fill([
                 'org_acronym' => $validated['org_acronym'] ?? null,
-                'org_name'    => $validated['org_name'] ?? $submission->org_name,
+                'org_name'    => $validated['org_name'] ?? ($submission->org_name ?? ''),
                 'mission'     => $validated['mission'] ?? null,
                 'vision'      => $validated['vision'] ?? null,
             ]);
 
-            // keep draft on save
+            // stays draft on save
             $submission->status = StrategicPlanSubmission::STATUS_DRAFT;
+            $submission->submitted_by_user_id = $submission->submitted_by_user_id ?: $userId;
 
             $submission->save();
 
@@ -143,24 +193,27 @@ class StrategicPlanController extends Controller
             $this->recomputeTotals($submission);
         });
 
-
-
         return redirect()
-            ->route('org.strategic_plan.edit')
+            ->route('org.rereg.b1.edit')
             ->with('success', 'Draft saved.');
     }
 
-
+    /**
+     * POST /org/rereg/b1/submit
+     */
     public function submitToModerator(SubmitStrategicPlanRequest $request)
     {
-        $targetSyId = (int) $request->session()->get('target_sy_id');
+        ['orgId' => $orgId, 'targetSy' => $targetSyId] = $this->ctx($request);
 
-        if (!$targetSyId) {
-            return redirect()->route('org.strategic_plan.select_sy')
-                ->with('info', 'Please select the school year you want to submit for.');
+        if ($orgId <= 0) {
+            return redirect()->route('org.home')->with('status', 'Please select an organization first.');
         }
 
-        ['orgId' => $orgId] = $this->ctx($request);
+        if ($targetSyId <= 0) {
+            return redirect()->route('org.rereg.index')->with('status', 'Please select a target school year first.');
+        }
+
+        $this->assertMembership($request, $orgId, $targetSyId);
 
         DB::transaction(function () use ($orgId, $targetSyId) {
             $submission = StrategicPlanSubmission::query()
@@ -169,47 +222,43 @@ class StrategicPlanController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if (!in_array($submission->status, [
+            $editable = in_array($submission->status, [
                 StrategicPlanSubmission::STATUS_DRAFT,
                 StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
                 StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
-            ], true)) {
-                abort(403, 'This submission cannot be submitted right now.');
-            }
+            ], true);
 
+            abort_unless($editable, 403, 'This submission cannot be submitted right now.');
 
             $submission->status = StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR;
             $submission->submitted_to_moderator_at = now();
-            
-            /**
-             * Clear MODERATOR review cycle
-             */
+
+            // Clear Moderator cycle
             $submission->moderator_reviewed_by = null;
             $submission->moderator_reviewed_at = null;
             $submission->moderator_remarks = null;
 
-            /**
-             * Clear SACDEV review cycle
-             */
+            // Clear Sacdev cycle
             $submission->sacdev_reviewed_by = null;
             $submission->sacdev_reviewed_at = null;
             $submission->sacdev_remarks = null;
-            $submission->approved_at = null; // safety reset
+            $submission->approved_at = null;
 
             $submission->save();
         });
 
-
-
         return redirect()
-            ->route('org.strategic_plan.edit')
+            ->route('org.rereg.b1.edit')
             ->with('success', 'Submitted to moderator for review.');
     }
 
+    /**
+     * ---- Sync helpers ----
+     */
 
     private function syncProjects(StrategicPlanSubmission $submission, array $projectsPayload): void
     {
-        // Delete existing
+        // Delete existing deep children first
         $existingProjects = $submission->projects()->get();
 
         foreach ($existingProjects as $p) {
@@ -223,35 +272,35 @@ class StrategicPlanController extends Controller
         // Create new snapshot
         foreach ($projectsPayload as $proj) {
             if (empty($proj['title'])) {
-                continue; // skip empty rows
+                continue;
             }
 
             $project = StrategicPlanProject::create([
-                'submission_id'      => $submission->id,
-                'category'           => $proj['category'],
-                'target_date'        => $proj['target_date'] ?? null,
-                'title'              => $proj['title'],
-                'implementing_body'  => $proj['implementing_body'] ?? null,
-                'budget'             => $proj['budget'] ?? 0,
+                'submission_id'     => $submission->id,
+                'category'          => $proj['category'] ?? null,
+                'target_date'       => $proj['target_date'] ?? null,
+                'title'             => $proj['title'],
+                'implementing_body' => $proj['implementing_body'] ?? null,
+                'budget'            => $proj['budget'] ?? 0,
             ]);
 
             foreach (($proj['objectives'] ?? []) as $text) {
-                if (trim((string)$text) === '') continue;
+                if (trim((string) $text) === '') continue;
                 StrategicPlanObjective::create(['project_id' => $project->id, 'text' => $text]);
             }
 
             foreach (($proj['beneficiaries'] ?? []) as $text) {
-                if (trim((string)$text) === '') continue;
+                if (trim((string) $text) === '') continue;
                 StrategicPlanBeneficiary::create(['project_id' => $project->id, 'text' => $text]);
             }
 
             foreach (($proj['deliverables'] ?? []) as $text) {
-                if (trim((string)$text) === '') continue;
+                if (trim((string) $text) === '') continue;
                 StrategicPlanDeliverable::create(['project_id' => $project->id, 'text' => $text]);
             }
 
             foreach (($proj['partners'] ?? []) as $text) {
-                if (trim((string)$text) === '') continue;
+                if (trim((string) $text) === '') continue;
                 StrategicPlanPartner::create(['project_id' => $project->id, 'text' => $text]);
             }
         }
@@ -263,15 +312,15 @@ class StrategicPlanController extends Controller
 
         foreach ($fundSourcesPayload as $fs) {
             $type = $fs['type'] ?? null;
-            if (! $type) continue;
+            if (!$type) continue;
 
             $amount = $fs['amount'] ?? 0;
 
             StrategicPlanFundSource::create([
                 'submission_id' => $submission->id,
-                'type' => $type,
-                'label' => $fs['label'] ?? null,
-                'amount' => $amount,
+                'type'          => $type,
+                'label'         => $fs['label'] ?? null,
+                'amount'        => $amount,
             ]);
         }
     }
@@ -280,9 +329,9 @@ class StrategicPlanController extends Controller
     {
         $projects = $submission->projects()->get();
 
-        $orgDev = $projects->where('category', StrategicPlanProject::CAT_ORG_DEV)->sum('budget');
-        $stud   = $projects->where('category', StrategicPlanProject::CAT_STUDENT_SERVICES)->sum('budget');
-        $comm   = $projects->where('category', StrategicPlanProject::CAT_COMMUNITY_INVOLVEMENT)->sum('budget');
+        $orgDev  = $projects->where('category', StrategicPlanProject::CAT_ORG_DEV)->sum('budget');
+        $stud    = $projects->where('category', StrategicPlanProject::CAT_STUDENT_SERVICES)->sum('budget');
+        $comm    = $projects->where('category', StrategicPlanProject::CAT_COMMUNITY_INVOLVEMENT)->sum('budget');
         $overall = $orgDev + $stud + $comm;
 
         $submission->total_org_dev = $orgDev;
@@ -293,62 +342,22 @@ class StrategicPlanController extends Controller
         $submission->save();
     }
 
+    /**
+     * LEGACY methods kept so your routes won't break if they still exist,
+     * but in the new flow, target SY is encode_sy_id set from dashboard.
+     * You can delete these later once you remove the routes.
+     */
     public function selectSy(Request $request)
     {
-        // current active SY
-        $activeSy = SchoolYear::query()->where('is_active', true)->first();
-
-        // allow active + next (simple rule)
-        //$allowed = SchoolYear::query()
-        //    ->orderBy('start_date')
-        //    ->get(); // you can filter more strictly later
-
-        // If you want strictly active + next:
-        $allowed = SchoolYear::query()
-            ->orderBy('start_date')
-            ->when($activeSy, function ($q) use ($activeSy) {
-                 $q->where('id', $activeSy->id)
-                  ->orWhere('start_date', '>', $activeSy->start_date);
-            })
-            ->take(2)
-            ->get();
-
-        $selectedId = (int) $request->session()->get('target_sy_id');
-
-        return view('org.strategic_plan.select_sy', [
-            'activeSy' => $activeSy,
-            'schoolYears' => $allowed,
-            'selectedId' => $selectedId,
-        ]);
+        return redirect()
+            ->route('org.rereg.index')
+            ->with('status', 'Please select the target school year from the Re-Registration dashboard.');
     }
 
     public function storeSelectedSy(Request $request)
     {
-        $activeSy = SchoolYear::query()->where('is_active', true)->first();
-
-        $request->validate([
-            'target_school_year_id' => ['required', 'integer', Rule::exists('school_years', 'id')],
-        ]);
-
-        $targetId = (int) $request->input('target_school_year_id');
-
-        // Optional guard: must be active or after active
-        if ($activeSy && $targetId !== (int)$activeSy->id) {
-            $target = SchoolYear::find($targetId);
-
-            if (!$target || ($activeSy->start_date && $target->start_date && $target->start_date < $activeSy->start_date)) {
-                return back()->withErrors([
-                    'target_school_year_id' => 'Invalid target school year selection.',
-                ]);
-            }
-        }
-
-        $request->session()->put('target_sy_id', $targetId);
-
-        return redirect()->route('org.strategic_plan.edit')
-            ->with('success', 'Target school year selected.');
+        return redirect()
+            ->route('org.rereg.index')
+            ->with('status', 'Please select the target school year from the Re-Registration dashboard.');
     }
-
-
-
 }
