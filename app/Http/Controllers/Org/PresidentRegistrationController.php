@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Org;
 
 use App\Http\Controllers\Controller;
+use App\Models\OrgMembership;
 use App\Models\PresidentRegistration;
 use App\Models\SchoolYear;
 use Illuminate\Http\Request;
@@ -15,52 +16,46 @@ class PresidentRegistrationController extends Controller
     private function ctx(Request $request): array
     {
         return [
-            'orgId' => (int) $request->session()->get('active_org_id'),
-            'activeSyId' => (int) $request->session()->get('encode_sy_id'),
-            'targetSyId' => (int) ($request->session()->get('target_sy_id') ?? 0),
+            'orgId'     => (int) $request->session()->get('active_org_id'),
+            'targetSyId'=> (int) $request->session()->get('encode_sy_id'), // re-reg target SY (SY2)
+            'userId'    => (int) $request->user()->id,
         ];
     }
 
-    public function index(Request $request)
+    private function requireTargetSy(Request $request): int
     {
-        ['orgId' => $orgId, 'activeSyId' => $activeSyId, 'targetSyId' => $targetSyId] = $this->ctx($request);
-
-        $schoolYears = SchoolYear::query()->orderByDesc('id')->get();
-
-        // fallback: if no target selected, use active SY (or next SY if your flow expects that)
-        if (!$targetSyId) {
-            $targetSyId = $activeSyId;
-            $request->session()->put('target_sy_id', $targetSyId);
+        $targetSyId = (int) $request->session()->get('encode_sy_id');
+        if ($targetSyId <= 0) {
+            abort(403, 'No target school year selected.');
         }
-
-        $registration = PresidentRegistration::query()
-            ->where('organization_id', $orgId)
-            ->where('target_school_year_id', $targetSyId)
-            ->latest('id')
-            ->first();
-
-        return view('org.forms.b2_president.index', compact('schoolYears', 'targetSyId', 'registration'));
+        return $targetSyId;
     }
 
-    public function setTargetSy(Request $request)
+    /**
+     * (Optional safety) Ensure user actually has membership for this org+SY.
+     * Your org.role middleware already checks role, but this prevents weird cases where
+     * encode_sy_id is set to an SY they shouldn’t even see.
+     */
+    private function assertUserHasOrgSyAccess(int $userId, int $orgId, int $targetSyId): void
     {
-        $request->validate([
-            'target_school_year_id' => ['required', 'integer', 'exists:school_years,id'],
-        ]);
+        $ok = OrgMembership::query()
+            ->where('user_id', $userId)
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $targetSyId)
+            ->whereNull('archived_at')
+            ->exists();
 
-        $request->session()->put('target_sy_id', (int) $request->input('target_school_year_id'));
-
-        return redirect()->route('org.b2.president.edit');
+        abort_unless($ok, 403, 'You do not have access to this organization for the selected school year.');
     }
 
     public function edit(Request $request)
     {
-        ['orgId' => $orgId, 'activeSyId' => $activeSyId, 'targetSyId' => $targetSyId] = $this->ctx($request);
+        ['orgId' => $orgId, 'userId' => $userId] = $this->ctx($request);
+        $targetSyId = $this->requireTargetSy($request);
 
-        if (!$targetSyId) {
-            $targetSyId = $activeSyId;
-            $request->session()->put('target_sy_id', $targetSyId);
-        }
+        $this->assertUserHasOrgSyAccess($userId, $orgId, $targetSyId);
+
+        $schoolYear = SchoolYear::findOrFail($targetSyId);
 
         $registration = PresidentRegistration::query()
             ->with(['leaderships', 'trainings', 'awards'])
@@ -70,20 +65,38 @@ class PresidentRegistrationController extends Controller
                     'target_school_year_id' => $targetSyId,
                 ],
                 [
-                    'encoded_by_user_id' => auth()->id(),
+                    'encoded_by_user_id' => $userId,
                     'status' => 'draft',
                     'version' => 1,
                 ]
             );
 
-        $isLocked = in_array($registration->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true);
+        // allow edit only on draft / returned
+        $isLocked = in_array($registration->status, [
+            'submitted_to_sacdev',
+            'approved_by_sacdev',
+        ], true);
 
-        return view('org.forms.b2_president.edit', compact('registration', 'targetSyId', 'isLocked'));
+        $canEdit = in_array($registration->status, [
+            'draft',
+            'returned_by_sacdev',
+        ], true);
+
+        return view('org.forms.b2_president.edit', compact(
+            'registration',
+            'schoolYear',
+            'targetSyId',
+            'isLocked',
+            'canEdit'
+        ));
     }
 
     public function saveDraft(Request $request)
     {
-        ['orgId' => $orgId, 'targetSyId' => $targetSyId] = $this->ctx($request);
+        ['orgId' => $orgId, 'userId' => $userId] = $this->ctx($request);
+        $targetSyId = $this->requireTargetSy($request);
+
+        $this->assertUserHasOrgSyAccess($userId, $orgId, $targetSyId);
 
         $registration = PresidentRegistration::query()
             ->with(['leaderships', 'trainings', 'awards'])
@@ -91,14 +104,12 @@ class PresidentRegistrationController extends Controller
             ->where('target_school_year_id', $targetSyId)
             ->firstOrFail();
 
-        if ($registration->status === 'approved_by_sacdev') {
-            return back()->with('error', 'This form is already approved and cannot be edited.');
-        }
-        if ($registration->status === 'submitted_to_sacdev') {
-            return back()->with('error', 'This form is already submitted and cannot be edited unless returned.');
+        // allow edit only on draft / returned
+        if (!in_array($registration->status, ['draft', 'returned_by_sacdev'], true)) {
+            return back()->with('error', 'This form is currently under review and cannot be edited.');
         }
 
-        // draft validation: validate only formats if present
+        // draft validation: validate formats if present
         $validated = $request->validate([
             'photo_id' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
 
@@ -170,21 +181,27 @@ class PresidentRegistrationController extends Controller
             'awards.*.date_received' => ['nullable', 'date'],
         ]);
 
-        DB::transaction(function () use ($request, $registration) {
+        DB::transaction(function () use ($request, $registration, $userId) {
             // handle upload (optional for draft)
             if ($request->hasFile('photo_id')) {
+                // delete old file if exists
+                if ($registration->photo_id_path && Storage::disk('public')->exists($registration->photo_id_path)) {
+                    Storage::disk('public')->delete($registration->photo_id_path);
+                }
+
                 $path = $request->file('photo_id')->store('president-ids', 'public');
                 $registration->photo_id_path = $path;
             }
 
-            // update main fields
+            // update main fields (excluding children + file)
             $registration->fill($request->except(['leaderships', 'trainings', 'awards', 'photo_id']));
-            $registration->encoded_by_user_id = $registration->encoded_by_user_id ?? auth()->id();
+
+            $registration->encoded_by_user_id = $registration->encoded_by_user_id ?: $userId;
             $registration->status = 'draft';
-            $registration->version = (int) $registration->version + 1;
+            $registration->version = ((int) $registration->version) + 1;
             $registration->save();
 
-            // sync children (simple approach: delete + recreate)
+            // sync children (delete + recreate)
             $registration->leaderships()->delete();
             foreach (($request->input('leaderships') ?? []) as $i => $row) {
                 if ($this->rowEmpty($row)) continue;
@@ -209,7 +226,10 @@ class PresidentRegistrationController extends Controller
 
     public function submit(Request $request)
     {
-        ['orgId' => $orgId, 'targetSyId' => $targetSyId] = $this->ctx($request);
+        ['orgId' => $orgId, 'userId' => $userId] = $this->ctx($request);
+        $targetSyId = $this->requireTargetSy($request);
+
+        $this->assertUserHasOrgSyAccess($userId, $orgId, $targetSyId);
 
         $registration = PresidentRegistration::query()
             ->with(['leaderships', 'trainings', 'awards'])
@@ -217,8 +237,8 @@ class PresidentRegistrationController extends Controller
             ->where('target_school_year_id', $targetSyId)
             ->firstOrFail();
 
-        if (in_array($registration->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true)) {
-            return back()->with('error', 'This form is already submitted/approved.');
+        if (!in_array($registration->status, ['draft', 'returned_by_sacdev'], true)) {
+            return back()->with('error', 'This form cannot be submitted right now.');
         }
 
         // submit validation: strict required fields
@@ -240,7 +260,7 @@ class PresidentRegistrationController extends Controller
             'certified' => ['required', Rule::in(['1', 1, true, 'on'])],
         ]);
 
-        // Save all fields like draft, then lock + set submitted
+        // Save full content first
         $this->saveDraft($request);
 
         $registration->refresh();
@@ -248,7 +268,7 @@ class PresidentRegistrationController extends Controller
         $registration->status = 'submitted_to_sacdev';
         $registration->submitted_at = now();
 
-        // clear old SACDEV remarks on new submit (optional but recommended)
+        // clear old SACDEV remarks when resubmitting
         $registration->sacdev_reviewed_by_user_id = null;
         $registration->sacdev_remarks = null;
         $registration->sacdev_reviewed_at = null;
@@ -258,6 +278,29 @@ class PresidentRegistrationController extends Controller
         return back()->with('success', 'Submitted to SACDEV successfully.');
     }
 
+    public function unsubmit(Request $request)
+    {
+        ['orgId' => $orgId, 'userId' => $userId] = $this->ctx($request);
+        $targetSyId = $this->requireTargetSy($request);
+
+        $this->assertUserHasOrgSyAccess($userId, $orgId, $targetSyId);
+
+        $registration = PresidentRegistration::query()
+            ->where('organization_id', $orgId)
+            ->where('target_school_year_id', $targetSyId)
+            ->firstOrFail();
+
+        if ($registration->status !== 'submitted_to_sacdev') {
+            return back()->with('error', 'This form cannot be pulled back because it is not currently submitted.');
+        }
+
+        $registration->status = 'draft';
+        $registration->submitted_at = null;
+        $registration->save();
+
+        return back()->with('success', 'Submission pulled back. You can now edit and resubmit.');
+    }
+
     private function rowEmpty(array $row): bool
     {
         foreach ($row as $v) {
@@ -265,34 +308,4 @@ class PresidentRegistrationController extends Controller
         }
         return true;
     }
-
-
-    public function unsubmit(Request $request)
-    {
-        ['orgId' => $orgId, 'targetSyId' => $targetSyId] = $this->ctx($request);
-
-        $registration = PresidentRegistration::query()
-            ->where('organization_id', $orgId)
-            ->where('target_school_year_id', $targetSyId)
-            ->firstOrFail();
-
-        // Allow ONLY if currently submitted to SACDEV
-        if ($registration->status !== 'submitted_to_sacdev') {
-            return back()->with(
-                'error',
-                'This form cannot be pulled back because it is not currently submitted to SACDEV.'
-            );
-        }
-
-        $registration->status = 'draft';
-        $registration->submitted_at = null;
-
-        $registration->save();
-
-        return back()->with(
-            'success',
-            'Submission pulled back successfully. You may now edit and resubmit the form.'
-        );
-    }
-
 }

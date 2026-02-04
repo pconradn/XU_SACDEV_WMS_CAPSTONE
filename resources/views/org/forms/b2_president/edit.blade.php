@@ -1,10 +1,18 @@
 <x-app-layout>
     <div class="mx-auto max-w-6xl px-4 py-6">
-        <div class="mb-4">
+        <div class="mb-6">
             <h2 class="text-xl font-semibold text-slate-900">
-                B-2 President Registration
-                <span class="text-slate-500 font-normal">(Target SY: {{ $targetSyId }})</span>
+                Registration Form B-2: President Registration
             </h2>
+
+            <div class="mt-1 text-sm text-slate-600">
+                Target School Year:
+                <span class="font-semibold">{{ $schoolYear->name }}</span>
+
+                <a href="{{ route('org.rereg.index') }}" class="ml-2 text-blue-700 hover:underline">
+                    Change
+                </a>
+            </div>
         </div>
 
         @include('org.forms.b2_president.partials._status_banner', ['registration' => $registration])
@@ -17,14 +25,14 @@
         @endif
 
         @if(session('error'))
-            <div class="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-900">
+            <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-900">
                 <div class="font-semibold">Error</div>
                 <div class="text-sm mt-1">{{ session('error') }}</div>
             </div>
         @endif
 
         @if($errors->any())
-            <div class="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-900">
+            <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-900">
                 <div class="font-semibold">Please fix the errors below.</div>
                 <ul class="mt-2 list-disc pl-5 text-sm space-y-1">
                     @foreach($errors->all() as $err)
@@ -34,7 +42,6 @@
             </div>
         @endif
 
-     
         @if($registration->status === 'submitted_to_sacdev')
             <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
                 <div class="font-semibold">Need to change something?</div>
@@ -42,7 +49,7 @@
                     You can pull back the submission to edit the form, then submit again.
                 </p>
 
-                <form method="POST" action="{{ route('org.b2.president.unsubmit') }}" class="mt-3">
+                <form method="POST" action="{{ route('org.rereg.b2.president.unsubmit') }}" class="mt-3">
                     @csrf
                     <button type="submit"
                             class="inline-flex justify-center rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100">
@@ -52,7 +59,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('org.b2.president.saveDraft') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('org.rereg.b2.president.saveDraft') }}" enctype="multipart/form-data">
             @csrf
 
             {{-- Default false for checkbox --}}
@@ -77,7 +84,7 @@
                 </button>
 
                 <button type="submit"
-                        formaction="{{ route('org.b2.president.submit') }}"
+                        formaction="{{ route('org.rereg.b2.president.submit') }}"
                         class="inline-flex justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
                         {{ $isLocked ? 'disabled' : '' }}>
                     Submit to SACDEV
