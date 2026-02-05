@@ -56,7 +56,7 @@ Route::prefix('org')
         | OPERATIONAL MODULES (ACTIVE SY ACCESS)
         |----------------------------------------------------------------------
         */
-        Route::middleware(['operational_access', 'org.role:president'])->group(function () {
+        Route::middleware(['operational_access', 'president_encode','org.role:president'])->group(function () {
 
 
             Route::resource('officers', OfficerEntryController::class)

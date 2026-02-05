@@ -16,11 +16,7 @@
             </div>
 
             <div class="flex items-center gap-2">
-                {{-- optional: if you later add admin.rereg.index --}}
-                {{-- <a href="{{ route('admin.rereg.index') }}"
-                   class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                    Change Organization
-                </a> --}}
+
 
                 <a href="{{ route('admin.home') }}"
                    class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">

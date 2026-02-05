@@ -9,16 +9,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Project extends Model
 {
     protected $fillable = [
-        'organization_id',
-        'school_year_id',
-        'title',
-        'description',
-        'status',
-        'completed_at',
+        'organization_id','school_year_id','title',
+        'category','target_date','implementing_body','budget',
+        'source_strategic_plan_project_id',
     ];
+
 
     protected $casts = [
         'completed_at' => 'datetime',
+        'target_date' => 'date',
+        'budget' => 'decimal:2',
     ];
 
     public function organization(): BelongsTo

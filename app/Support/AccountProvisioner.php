@@ -88,9 +88,6 @@ class AccountProvisioner
      * Reset temp password ONLY if user is still pending (not activated yet).
      * - If pending: new temp password + email + return temp
      * - If activated: return null (no reset)
-     *
-     * This is what we’ll use when president changes moderator to a different email,
-     * OR when they want to correct wrong invite and the account is still not activated.
      */
     public static function resetTempPasswordIfPending(User $user): ?string
     {
@@ -125,8 +122,10 @@ class AccountProvisioner
     /**
      * Make sure user has an active OrgMembership for org+sy+role.
      * If archived, revive it.
+     *
+     * NEW: optional $officerEntryId so memberships created from officer list can be linked.
      */
-    public static function ensureMembership(int $userId, int $orgId, int $syId, string $role): OrgMembership
+    public static function ensureMembership(int $userId, int $orgId, int $syId, string $role, ?int $officerEntryId = null): OrgMembership
     {
         $membership = OrgMembership::query()
             ->where('user_id', $userId)
@@ -136,10 +135,23 @@ class AccountProvisioner
             ->first();
 
         if ($membership) {
+            $dirty = false;
+
             if ($membership->archived_at !== null) {
                 $membership->archived_at = null;
+                $dirty = true;
+            }
+
+            // attach officer_entry_id if provided and missing
+            if ($officerEntryId && (int) ($membership->officer_entry_id ?? 0) !== (int) $officerEntryId) {
+                $membership->officer_entry_id = $officerEntryId;
+                $dirty = true;
+            }
+
+            if ($dirty) {
                 $membership->save();
             }
+
             return $membership;
         }
 
@@ -149,13 +161,16 @@ class AccountProvisioner
             'school_year_id' => $syId,
             'role' => $role,
             'archived_at' => null,
+            'officer_entry_id' => $officerEntryId, // nullable
         ]);
     }
 
     /**
      * Make sure user is at least a member in org+sy.
+     *
+     * NEW: optional $officerEntryId so memberships created from officer list can be linked.
      */
-    public static function ensureBasicOrgAccess(int $userId, int $orgId, int $syId): OrgMembership
+    public static function ensureBasicOrgAccess(int $userId, int $orgId, int $syId, ?int $officerEntryId = null): OrgMembership
     {
         $role = 'member';
 
@@ -167,10 +182,23 @@ class AccountProvisioner
             ->first();
 
         if ($membership) {
+            $dirty = false;
+
             if ($membership->archived_at !== null) {
                 $membership->archived_at = null;
+                $dirty = true;
+            }
+
+            // attach officer_entry_id if provided and missing
+            if ($officerEntryId && (int) ($membership->officer_entry_id ?? 0) !== (int) $officerEntryId) {
+                $membership->officer_entry_id = $officerEntryId;
+                $dirty = true;
+            }
+
+            if ($dirty) {
                 $membership->save();
             }
+
             return $membership;
         }
 
@@ -180,6 +208,7 @@ class AccountProvisioner
             'school_year_id' => $syId,
             'role' => $role,
             'archived_at' => null,
+            'officer_entry_id' => $officerEntryId, // nullable
         ]);
     }
 

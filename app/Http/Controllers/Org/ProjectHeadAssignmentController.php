@@ -10,8 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Support\AccountProvisioner;
 
-//CRUD FOR PROJECT HEAD ASSIGNMENT TO PROJECTS
-
 class ProjectHeadAssignmentController extends Controller
 {
     public function index(Request $request)
@@ -24,7 +22,6 @@ class ProjectHeadAssignmentController extends Controller
             ->where('school_year_id', $syId)
             ->orderBy('title')
             ->get();
-
 
         $heads = ProjectAssignment::query()
             ->whereIn('project_id', $projects->pluck('id'))
@@ -78,10 +75,9 @@ class ProjectHeadAssignmentController extends Controller
                 $officer->save();
             }
 
-  
-            AccountProvisioner::ensureBasicOrgAccess($user->id, $orgId, $syId);
+            // IMPORTANT: link membership to this officer entry
+            AccountProvisioner::ensureBasicOrgAccess($user->id, $orgId, $syId, $officer->id);
 
-         
             $currentHead = ProjectAssignment::query()
                 ->where('project_id', $project->id)
                 ->where('assignment_role', 'project_head')
@@ -92,12 +88,12 @@ class ProjectHeadAssignmentController extends Controller
                 return;
             }
 
-
+            // archive old head assignment (recommended)
             ProjectAssignment::query()
                 ->where('project_id', $project->id)
                 ->where('assignment_role', 'project_head')
                 ->whereNull('archived_at')
-                ->delete();
+                ->update(['archived_at' => now()]);
 
             ProjectAssignment::query()->create([
                 'project_id' => $project->id,
@@ -110,7 +106,4 @@ class ProjectHeadAssignmentController extends Controller
         return redirect()->route('org.assign-project-heads.index')
             ->with('status', 'Project head assigned (existing users keep their password).');
     }
-
-
-
 }

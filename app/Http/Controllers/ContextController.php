@@ -13,20 +13,20 @@ class ContextController extends Controller
     {
         $userId = (int) auth()->id();
 
-        // All membership rows for this user
+        
         $memberships = OrgMembership::query()
             ->where('user_id', $userId)
+            ->whereNull('archived_at')
             ->get(['organization_id', 'school_year_id']);
 
-        // If user has no memberships, you can decide what to do
         if ($memberships->isEmpty()) {
-            abort(403, 'No organization memberships found for your account.');
+            abort(403, 'No active organization memberships found for your account.');
         }
 
         $orgIds = $memberships->pluck('organization_id')->unique()->values();
         $syIds  = $memberships->pluck('school_year_id')->unique()->values();
 
-        // Only show orgs/SYs user belongs to
+        // Only show orgs user belongs to (active memberships only)
         $orgs = Organization::query()
             ->whereIn('id', $orgIds)
             ->orderBy('name')
@@ -52,7 +52,7 @@ class ContextController extends Controller
         $orgId = (int) $data['active_org_id'];
         $syId  = (int) $data['encode_sy_id'];
 
-        // ✅ Critical: validate the PAIR exists in org_memberships
+      
         $allowed = OrgMembership::query()
             ->where('user_id', $userId)
             ->where('organization_id', $orgId)
