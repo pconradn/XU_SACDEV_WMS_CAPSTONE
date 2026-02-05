@@ -155,7 +155,7 @@ class OrgReregAssignmentsController extends Controller
         $targetSyId = $this->targetSyId($request);
 
         $this->requireTargetSySelected($targetSyId);
-        $this->assertTargetSyPresident($request, $orgId, $targetSyId);
+        $this->assertActiveSyPresident($request, $orgId, $targetSyId);
 
         $data = $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
@@ -186,7 +186,7 @@ class OrgReregAssignmentsController extends Controller
                 // if user still hasn't activated, you can choose to reset temp password
                 // NOTE: implement this method in AccountProvisioner if you don't have it yet
                 if (method_exists(AccountProvisioner::class, 'resetTempPasswordIfNotActivated') && !$this->isActivated($user)) {
-                    $newTemp = AccountProvisioner::resetTempPasswordIfNotActivated($user->id);
+                    $newTemp = AccountProvisioner::resetTempPasswordIfPending($user->id);
                     if ($newTemp) {
                         $tempPassword = $newTemp;
                         $didResetTemp = true;

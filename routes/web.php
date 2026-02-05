@@ -1,16 +1,19 @@
 <?php
 
 use App\Models\OrgMembership;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ContextController;
 use App\Http\Controllers\ForcedPasswordController;
+
 
 /*
 |--------------------------------------------------------------------------
 | Public
 |--------------------------------------------------------------------------
 */
-Route::get('/', fn () => view('welcome'));
+Route::get('/', fn () => view('auth.login'));
+
 
 /*
 |--------------------------------------------------------------------------
@@ -36,6 +39,7 @@ Route::middleware(['auth'])->group(function () {
 | Dashboard Redirect
 |--------------------------------------------------------------------------
 */
+
 Route::get('/dashboard', function () {
     $user = auth()->user();
 

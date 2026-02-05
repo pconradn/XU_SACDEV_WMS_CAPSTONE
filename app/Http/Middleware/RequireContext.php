@@ -9,7 +9,7 @@ class RequireContext
 {
     public function handle(Request $request, Closure $next)
     {
-        // allow these routes even without context
+        
         if ($request->routeIs('context.*') || $request->routeIs('logout')) {
             return $next($request);
         }

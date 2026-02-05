@@ -42,7 +42,7 @@ Route::prefix('org')
         |----------------------------------------------------------------------
         */
         Route::prefix('provision')
-            ->middleware(['require_president_active_sy', 'require.context'])
+            ->middleware(['require_president_active_sy'])
             ->name('org.provision.')
             ->group(function () {
                 Route::get('/next-president', [OrgReregAssignmentsController::class, 'editNextPresident'])
@@ -56,7 +56,8 @@ Route::prefix('org')
         | OPERATIONAL MODULES (ACTIVE SY ACCESS)
         |----------------------------------------------------------------------
         */
-        Route::middleware(['operational_access', 'president_encode', 'require.context'])->group(function () {
+        Route::middleware(['operational_access', 'org.role:president'])->group(function () {
+
 
             Route::resource('officers', OfficerEntryController::class)
                 ->except(['show'])
@@ -92,7 +93,7 @@ Route::prefix('org')
         | Protect the hub itself so moderators cannot access /org/rereg.
         */
         Route::prefix('rereg')
-            ->middleware(['org.ctx', 'org.role:president', 'require.context'])
+            ->middleware([ 'require.context', 'org.role:president'])
             ->name('org.rereg.')
             ->group(function () {
 
@@ -140,7 +141,7 @@ Route::prefix('org')
         |----------------------------------------------------------------------
         */
         Route::prefix('moderator')
-            ->middleware(['org.moderator', 'require.context'])
+            ->middleware(['require.context', 'org.moderator'])
             ->name('org.moderator.')
             ->group(function () {
 

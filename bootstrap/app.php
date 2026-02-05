@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'org.role' => \App\Http\Middleware\OrgRoleMiddleware::class,
             'require_president_active_sy' => \App\Http\Middleware\RequirePresidentActiveSy::class,
             'require.context' => \App\Http\Middleware\RequireContext::class,
+            'operational_access' => \App\Http\Middleware\OperationalAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
