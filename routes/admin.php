@@ -2,16 +2,17 @@
 
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AuditLogController;
-use App\Http\Controllers\Admin\OrganizationController;
-use App\Http\Controllers\Admin\OrganizationPresidentController;
 use App\Http\Controllers\Admin\SchoolYearController;
+use App\Http\Controllers\Admin\OrganizationController;
+use App\Http\Controllers\Admin\OrgActivationController;
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminOrgReviewController;
 
-use App\Http\Controllers\Admin\SacdevStrategicPlanController;
-use App\Http\Controllers\Admin\SacdevB3OfficerSubmissionController;
 use App\Http\Controllers\Admin\SacdevB4MemberListController;
+use App\Http\Controllers\Admin\SacdevStrategicPlanController;
+use App\Http\Controllers\Admin\OrganizationPresidentController;
+use App\Http\Controllers\Admin\SacdevB3OfficerSubmissionController;
 use App\Http\Controllers\Admin\SacdevB5ModeratorSubmissionController;
 use App\Http\Controllers\SACDEV\SacdevB2PresidentRegistrationController;
 
@@ -56,6 +57,9 @@ Route::prefix('admin')
 
         Route::get('audit-logs', [AuditLogController::class, 'index'])
             ->name('admin.audit-logs.index');
+
+        Route::post('/admin/rereg/{organization}/activate', [OrgActivationController::class, 'activate'])
+            ->name('admin.rereg.activate');
 
         Route::prefix('strategic-plans')->name('admin.strategic_plans.')->group(function () {
             Route::get('/', [SacdevStrategicPlanController::class, 'index'])->name('index');

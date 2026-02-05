@@ -1,6 +1,7 @@
 @php
     use App\Models\SchoolYear;
     use App\Models\OrgMembership;
+    use App\Models\OrganizationSchoolYear;
 
     $linkClass = function (array $activePatterns) {
         $active = request()->routeIs(...$activePatterns);
@@ -38,13 +39,49 @@
         // ADMIN
         // =========================
         if ($isAdmin) {
+            $home = [];
             $rereg = [];
+            $queues = [];
             $admin = [];
+            $orgTools = [];
 
-            if (Route::has('admin.rereg.index')) {
-                $rereg[] = $item('Re-Registration', route('admin.rereg.index'), ['admin.rereg.*', 'rereg.*']);
+            // Home / dashboard
+            if (Route::has('admin.home')) {
+                $home[] = $item('Admin Dashboard', route('admin.home'), ['admin.home']);
             }
 
+            // Re-registration hub flow
+            if (Route::has('admin.rereg.index')) {
+                $rereg[] = $item('Re-Registration Hub', route('admin.rereg.index'), ['admin.rereg.*', 'rereg.*']);
+            }
+
+            // Review / tools (non-form)
+            if (Route::has('admin.review.index')) {
+                $orgTools[] = $item('Organization Review', route('admin.review.index'), ['admin.review.*']);
+            }
+
+            // Form queues (indexes)
+            if (Route::has('admin.strategic_plans.index')) {
+                $queues[] = $item('B-1 Strategic Plans', route('admin.strategic_plans.index'), ['admin.strategic_plans.*']);
+            }
+
+            if (Route::has('admin.b2.president.index')) {
+                $queues[] = $item('B-2 President Registrations', route('admin.b2.president.index'), ['admin.b2.president.*']);
+            }
+
+            if (Route::has('admin.officer_submissions.index')) {
+                $queues[] = $item('B-3 Officer Submissions', route('admin.officer_submissions.index'), ['admin.officer_submissions.*']);
+            }
+
+            if (Route::has('admin.member_lists.index')) {
+                $queues[] = $item('B-4 Member Lists', route('admin.member_lists.index'), ['admin.member_lists.*']);
+            }
+
+            if (Route::has('admin.moderator_submissions.index')) {
+                $queues[] = $item('B-5 Moderator Submissions', route('admin.moderator_submissions.index'), ['admin.moderator_submissions.*']);
+            }
+
+            // Administration
             if (Route::has('admin.school-years.index')) {
                 $admin[] = $item('School Years', route('admin.school-years.index'), ['admin.school-years.*']);
             }
@@ -53,18 +90,37 @@
                 $admin[] = $item('Organizations', route('admin.organizations.index'), ['admin.organizations.*']);
             }
 
+            if (Route::has('admin.organizations.assign-president')) {
+                $admin[] = $item('Assign President', route('admin.organizations.assign-president'), ['admin.organizations.assign-president*']);
+                // includes both GET and POST names
+            }
+
             if (Route::has('admin.audit-logs.index')) {
                 $admin[] = $item('Audit Logs', route('admin.audit-logs.index'), ['admin.audit-logs.*']);
+            }
+
+            // ----- Groups -----
+            if (!empty($home)) {
+                $groups[] = ['key' => 'admin_home', 'title' => 'Home', 'links' => $home, 'icon' => 'home'];
             }
 
             if (!empty($rereg)) {
                 $groups[] = ['key' => 'admin_rereg', 'title' => 'Re-Registration', 'links' => $rereg, 'icon' => 'clipboard'];
             }
 
+            if (!empty($queues)) {
+                $groups[] = ['key' => 'admin_queues', 'title' => 'Submission Queues', 'links' => $queues, 'icon' => 'inbox'];
+            }
+
+            if (!empty($orgTools)) {
+                $groups[] = ['key' => 'admin_org_tools', 'title' => 'Org Tools', 'links' => $orgTools, 'icon' => 'grid'];
+            }
+
             if (!empty($admin)) {
                 $groups[] = ['key' => 'admin_admin', 'title' => 'Administration', 'links' => $admin, 'icon' => 'settings'];
             }
         }
+
 
         // =========================
         // ORG / MODERATOR
@@ -84,7 +140,15 @@
                     ->value('role');
 
                 $isPresident = ($orgRole === 'president');
-                $isModerator = ($orgRole === 'moderator');
+
+                if (!$isPresident) {
+                    $osyPresident = OrganizationSchoolYear::query()
+                        ->where('organization_id', $activeOrgId)
+                        ->where('school_year_id', $syId)
+                        ->value('president_user_id');
+
+                    $isPresident = ((int)$osyPresident === (int)$user->id);
+                }
 
                 if ($isPresident) {
                     $rereg = [];
