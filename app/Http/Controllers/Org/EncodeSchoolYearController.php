@@ -7,112 +7,51 @@ use App\Models\OrgMembership;
 use App\Models\SchoolYear;
 use Illuminate\Http\Request;
 
-//SELECT SCHOOL YEAR TO USE FOR ADDING PROJECTS AND OFFICERS LIST (temporary)
-
 class EncodeSchoolYearController extends Controller
 {
     public function show(Request $request)
     {
         $user = $request->user();
-        $activeSy = SchoolYear::activeYear();
 
-        if (!$activeSy) {
-            abort(403, 'No active school year.');
-        }
-
-        $orgId = (int) $request->session()->get('active_org_id', 0);
-
-        // must have selected org first 
-        if (!$orgId) {
-            return redirect()->route('org.home')->with('status', 'Please select an organization first.');
-        }
-
-       
-        $isPresident = OrgMembership::query()
+        // ✅ all SY where user has membership (any org)
+        $allowedSyIds = OrgMembership::query()
             ->where('user_id', $user->id)
-            ->where('organization_id', $orgId)
-            ->where('school_year_id', $activeSy->id)
             ->whereNull('archived_at')
-            ->where('role', 'president')
-            ->exists();
+            ->distinct()
+            ->pluck('school_year_id')
+            ->map(fn($v) => (int)$v)
+            ->all();
 
-        if (!$isPresident) {
-            abort(403, 'Only the President can choose a school year to encode.');
-        }
+        $schoolYears = SchoolYear::query()
+            ->whereIn('id', $allowedSyIds ?: [-1])
+            ->orderByDesc('id')
+            ->get();
 
-       
-        $nextSy = SchoolYear::query()
-            ->where('id', '!=', $activeSy->id)
-            ->where(function ($q) use ($activeSy) {
-                
-                if ($activeSy->start_date) {
-                    $q->where('start_date', '>', $activeSy->start_date);
-                } else {
-                   
-                    $q->where('id', '>', $activeSy->id);
-                }
-            })
-            ->orderBy('start_date')
-            ->orderBy('id')
-            ->first();
+        $selectedSyId = (int) $request->session()->get('encode_sy_id', 0);
 
-        $allowed = collect([$activeSy])->when($nextSy, fn ($c) => $c->push($nextSy));
-
-        $selectedEncodeSyId = (int) $request->session()->get('encode_sy_id', $activeSy->id);
-        if (!$allowed->pluck('id')->contains($selectedEncodeSyId)) {
-            $selectedEncodeSyId = $activeSy->id;
-            $request->session()->put('encode_sy_id', $selectedEncodeSyId);
+        // default to newest allowed SY if none selected
+        if ($selectedSyId <= 0 && $schoolYears->count() > 0) {
+            $selectedSyId = (int) $schoolYears->first()->id;
+            $request->session()->put('encode_sy_id', $selectedSyId);
         }
 
         return view('org.encode-school-year', [
-            'activeSy' => $activeSy,
-            'nextSy' => $nextSy,
-            'allowedSchoolYears' => $allowed,
-            'selectedEncodeSyId' => $selectedEncodeSyId,
+            'allowedSchoolYears' => $schoolYears,
+            'selectedEncodeSyId' => $selectedSyId,
         ]);
     }
 
     public function update(Request $request)
     {
         $user = $request->user();
-        $activeSy = SchoolYear::activeYear();
 
-        if (!$activeSy) {
-            abort(403, 'No active school year.');
-        }
-
-        $orgId = (int) $request->session()->get('active_org_id', 0);
-        if (!$orgId) {
-            return redirect()->route('org.home')->with('status', 'Please select an organization first.');
-        }
-
-       
-        $isPresident = OrgMembership::query()
+        $allowedSyIds = OrgMembership::query()
             ->where('user_id', $user->id)
-            ->where('organization_id', $orgId)
-            ->where('school_year_id', $activeSy->id)
             ->whereNull('archived_at')
-            ->where('role', 'president')
-            ->exists();
-
-        if (!$isPresident) {
-            abort(403, 'Only the President can update encode school year.');
-        }
-
-        $nextSy = SchoolYear::query()
-            ->where('id', '!=', $activeSy->id)
-            ->where(function ($q) use ($activeSy) {
-                if ($activeSy->start_date) {
-                    $q->where('start_date', '>', $activeSy->start_date);
-                } else {
-                    $q->where('id', '>', $activeSy->id);
-                }
-            })
-            ->orderBy('start_date')
-            ->orderBy('id')
-            ->first();
-
-        $allowedIds = collect([$activeSy->id])->when($nextSy, fn ($c) => $c->push($nextSy->id));
+            ->distinct()
+            ->pluck('school_year_id')
+            ->map(fn($v) => (int)$v)
+            ->all();
 
         $data = $request->validate([
             'encode_sy_id' => ['required', 'integer'],
@@ -120,12 +59,28 @@ class EncodeSchoolYearController extends Controller
 
         $encodeSyId = (int) $data['encode_sy_id'];
 
-        if (!$allowedIds->contains($encodeSyId)) {
+        if (!in_array($encodeSyId, $allowedSyIds, true)) {
             return back()->with('status', 'Invalid school year selection.');
         }
 
+    
         $request->session()->put('encode_sy_id', $encodeSyId);
 
-        return redirect()->route('org.home')->with('status', 'Encoding School Year updated.');
+        
+        $currentOrgId = (int) $request->session()->get('active_org_id', 0);
+        if ($currentOrgId > 0) {
+            $stillAllowed = OrgMembership::query()
+                ->where('user_id', $user->id)
+                ->where('school_year_id', $encodeSyId)
+                ->where('organization_id', $currentOrgId)
+                ->whereNull('archived_at')
+                ->exists();
+
+            if (!$stillAllowed) {
+                $request->session()->forget('active_org_id');
+            }
+        }
+
+        return redirect()->route('org.home')->with('status', 'School year updated.');
     }
 }

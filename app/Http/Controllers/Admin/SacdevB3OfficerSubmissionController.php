@@ -7,9 +7,27 @@ use App\Models\OfficerSubmission;
 use App\Models\SchoolYear;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\OrgMembership;
+use App\Models\User;
+use App\Support\InAppNotifier;
+use Illuminate\Support\Facades\DB;
+
 
 class SacdevB3OfficerSubmissionController extends Controller
 {
+
+    private function presidentForSy(int $orgId, int $targetSyId): ?User
+    {
+        $membership = OrgMembership::query()
+            ->with('user')
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $targetSyId)
+            ->where('role', 'president')
+            ->first();
+
+        return $membership?->user;
+    }
+
     public function index(Request $request)
     {
         $targetSyId = (int) ($request->input('target_school_year_id') ?? 0);
@@ -46,95 +64,184 @@ class SacdevB3OfficerSubmissionController extends Controller
 
     public function returnToOrg(Request $request, OfficerSubmission $submission)
     {
-        if ($submission->status !== 'submitted_to_sacdev') {
-            return back()->with('error', 'Only submitted forms can be returned.');
-        }
-
         $data = $request->validate([
             'sacdev_remarks' => ['required', 'string', 'min:3'],
         ]);
 
-        $submission->status = 'returned_by_sacdev';
-        $submission->returned_at = now();
+        $orgId = (int) $submission->organization_id;
+        $syId  = (int) $submission->target_school_year_id;
 
-        $submission->sacdev_reviewed_by_user_id = Auth::id();
-        $submission->sacdev_remarks = $data['sacdev_remarks'];
-        $submission->sacdev_reviewed_at = now();
+        $president = $this->presidentForSy($orgId, $syId);
 
-        $submission->save();
+        DB::transaction(function () use ($submission, $data, $president, $orgId, $syId) {
+
+            $locked = OfficerSubmission::query()
+                ->whereKey($submission->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($locked->status !== 'submitted_to_sacdev') {
+                abort(403, 'Only submitted forms can be returned.');
+            }
+
+            $locked->status = 'returned_by_sacdev';
+            $locked->returned_at = now();
+            $locked->sacdev_reviewed_by_user_id = Auth::id();
+            $locked->sacdev_remarks = $data['sacdev_remarks'];
+            $locked->sacdev_reviewed_at = now();
+            $locked->save();
+
+            $submissionId = (int) $locked->getKey();
+
+            DB::afterCommit(function () use ($president, $orgId, $syId, $submissionId) {
+                if (!$president) return;
+
+                $dedupeKey = "b3:officer_submission:{$submissionId}:returned_by_sacdev:to:{$president->getKey()}";
+
+                InAppNotifier::notifyOnce($president, [
+                    'dedupe_key'   => $dedupeKey,
+                    'title'        => 'B3 Officers List returned by SACDEV',
+                    'message'      => 'SACDEV returned your Officers List with remarks. Please revise and resubmit.',
+                    'org_id'       => $orgId,
+                    'target_sy_id' => $syId,
+                    'form'         => 'b3_officers_list',
+                    'status'       => 'returned_by_sacdev',
+                    'action_url'   => route('org.rereg.b3.officers-list.edit'),
+                    'meta'         => ['submission_id' => $submissionId],
+                ]);
+            });
+        });
 
         return redirect()
             ->route('admin.officer_submissions.show', $submission->id)
             ->with('success', 'Returned to organization with remarks.');
     }
 
+
     public function approve(Request $request, OfficerSubmission $submission)
     {
-        if ($submission->status !== 'submitted_to_sacdev') {
-            return back()->with('error', 'Only submitted forms can be approved.');
-        }
-
         $data = $request->validate([
             'sacdev_remarks' => ['nullable', 'string'],
         ]);
 
-        $submission->status = 'approved_by_sacdev';
-        $submission->approved_at = now();
+        $orgId = (int) $submission->organization_id;
+        $syId  = (int) $submission->target_school_year_id;
 
-        $submission->sacdev_reviewed_by_user_id = Auth::id();
-        $submission->sacdev_remarks = $data['sacdev_remarks'] ?? null;
-        $submission->sacdev_reviewed_at = now();
+        $president = $this->presidentForSy($orgId, $syId);
 
-        $submission->save();
+        DB::transaction(function () use ($submission, $data, $president, $orgId, $syId) {
+
+            $locked = OfficerSubmission::query()
+                ->whereKey($submission->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($locked->status !== 'submitted_to_sacdev') {
+                abort(403, 'Only submitted forms can be approved.');
+            }
+
+            $locked->status = 'approved_by_sacdev';
+            $locked->approved_at = now();
+            $locked->sacdev_reviewed_by_user_id = Auth::id();
+            $locked->sacdev_remarks = $data['sacdev_remarks'] ?? null;
+            $locked->sacdev_reviewed_at = now();
+            $locked->save();
+
+            $submissionId = (int) $locked->getKey();
+
+            DB::afterCommit(function () use ($president, $orgId, $syId, $submissionId) {
+                if (!$president) return;
+
+                $dedupeKey = "b3:officer_submission:{$submissionId}:approved_by_sacdev:to:{$president->getKey()}";
+
+                InAppNotifier::notifyOnce($president, [
+                    'dedupe_key'   => $dedupeKey,
+                    'title'        => 'B3 Officers List approved by SACDEV',
+                    'message'      => 'Your Officers List has been approved by SACDEV.',
+                    'org_id'       => $orgId,
+                    'target_sy_id' => $syId,
+                    'form'         => 'b3_officers_list',
+                    'status'       => 'approved_by_sacdev',
+                    'action_url'   => route('org.rereg.b3.officers-list.index'),
+                    'meta'         => ['submission_id' => $submissionId],
+                ]);
+            });
+        });
 
         return redirect()
             ->route('admin.officer_submissions.show', $submission->id)
             ->with('success', 'Approved successfully.');
     }
 
+
     public function allowEdit(Request $request, OfficerSubmission $submission)
     {
-        if (!$submission->edit_requested) {
-            return back()->with('error', 'No edit request is pending for this submission.');
-        }
-
-        // Allowed when submitted or approved (since those are locked states)
-        if (!in_array($submission->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true)) {
-            return back()->with('error', 'Cannot allow edit for this status.');
-        }
-
         $data = $request->validate([
             'sacdev_remarks' => ['nullable', 'string', 'max:5000'],
         ]);
 
-        // Convert to returned so org can edit + resubmit
-        $submission->status = 'returned_by_sacdev';
-        $submission->returned_at = now();
+        $orgId = (int) $submission->organization_id;
+        $syId  = (int) $submission->target_school_year_id;
 
-        $submission->sacdev_reviewed_by_user_id = auth()->id();
-        $submission->sacdev_reviewed_at = now();
+        $president = $this->presidentForSy($orgId, $syId);
 
-        // Keep a clear remark trail
-        $base = "Edit request granted. Please update the form then resubmit.";
-        $extra = trim((string)($data['sacdev_remarks'] ?? ''));
-        $submission->sacdev_remarks = $extra ? ($base . "\n\nSACDEV Note: " . $extra) : $base;
+        DB::transaction(function () use ($request, $submission, $data, $president, $orgId, $syId) {
 
-        // Clear edit request flags
-        $submission->edit_requested = false;
-        $submission->edit_request_reason = null;
-        $submission->edit_requested_by_user_id = null;
-        $submission->edit_requested_at = null;
+            $locked = OfficerSubmission::query()
+                ->whereKey($submission->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        // If it was approved, we are intentionally “undoing” approval by returning it.
-        $submission->approved_at = null;
+            if (!$locked->edit_requested) {
+                abort(403, 'No edit request is pending for this submission.');
+            }
 
-        // If it was submitted, you can keep submitted_at for audit, or clear it. I recommend keep it.
-        // $submission->submitted_at = $submission->submitted_at;
+            if (!in_array($locked->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true)) {
+                abort(403, 'Cannot allow edit for this status.');
+            }
 
-        $submission->save();
+            $locked->status = 'returned_by_sacdev';
+            $locked->returned_at = now();
+            $locked->sacdev_reviewed_by_user_id = auth()->id();
+            $locked->sacdev_reviewed_at = now();
+
+            $base = "Edit request granted. Please update the form then resubmit.";
+            $extra = trim((string)($data['sacdev_remarks'] ?? ''));
+            $locked->sacdev_remarks = $extra ? ($base . "\n\nSACDEV Note: " . $extra) : $base;
+
+            $locked->edit_requested = false;
+            $locked->edit_request_reason = null;
+            $locked->edit_requested_by_user_id = null;
+            $locked->edit_requested_at = null;
+
+            $locked->approved_at = null;
+
+            $locked->save();
+
+            $submissionId = (int) $locked->getKey();
+
+            DB::afterCommit(function () use ($president, $orgId, $syId, $submissionId) {
+                if (!$president) return;
+
+                $dedupeKey = "b3:officer_submission:{$submissionId}:edit_granted:to:{$president->getKey()}";
+
+                InAppNotifier::notifyOnce($president, [
+                    'dedupe_key'   => $dedupeKey,
+                    'title'        => 'Edit request granted for B3 Officers List',
+                    'message'      => 'SACDEV granted your edit request. Please update the Officers List and resubmit.',
+                    'org_id'       => $orgId,
+                    'target_sy_id' => $syId,
+                    'form'         => 'b3_officers_list',
+                    'status'       => 'edit_granted',
+                    'action_url'   => route('org.rereg.b3.officers-list.edit'),
+                    'meta'         => ['submission_id' => $submissionId],
+                ]);
+            });
+        });
 
         return back()->with('success', 'Edit request granted. The organization can now edit and resubmit.');
     }
+
 
 
 }

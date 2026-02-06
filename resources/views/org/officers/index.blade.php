@@ -7,6 +7,13 @@
     </x-slot>
 
 
+
+    @if (session('warning'))
+        <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800 text-sm">
+            {{ session('warning') }}
+        </div>
+    @endif
+
     @if (session('warning') && session('resend_invite_officer_id'))
         <div class="mb-4 p-4 rounded bg-yellow-100 text-yellow-900 border border-yellow-200">
             <div class="font-semibold">Action needed</div>

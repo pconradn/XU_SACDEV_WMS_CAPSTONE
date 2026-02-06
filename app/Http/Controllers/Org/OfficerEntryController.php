@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Org;
 
 use App\Support\Audit;
+use App\Models\Project;
 use App\Models\SchoolYear;
 use App\Models\OfficerEntry;
 use Illuminate\Http\Request;
+use App\Models\OrgMembership;
 use Illuminate\Validation\Rule;
+use App\Models\ProjectAssignment;
 use App\Http\Controllers\Controller;
 
 //OFFICER CRUD
@@ -150,13 +153,69 @@ class OfficerEntryController extends Controller
 
         abort_unless($officer->organization_id === $orgId && $officer->school_year_id === $syId, 404);
 
+        // Safety: prevent deleting someone who still holds responsibilities
+        if ($this->officerHasActiveAssignments($officer, $orgId, $syId)) {
+            return redirect()
+                ->route('org.officers.index')
+                ->with('warning', 'Cannot delete this officer because they are still assigned as Treasurer/Moderator/Project Head. Please reassign first.');
+        }
+
+
+        // Archive membership linked to this officer entry (ONLY for this org+SY)
+        OrgMembership::query()
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->where('officer_entry_id', $officer->id)
+            ->whereNull('archived_at')
+            ->update(['archived_at' => now()]);
+
         $this->logOfficerUpdateIfActiveSy($orgId, $syId, 'deleted', $officer);
+
 
         $officer->delete();
 
         return redirect()->route('org.officers.index')
-            ->with('status', 'Officer deleted.');
+            ->with('status', 'Officer deleted and access archived.');
     }
+
+
+    private function officerHasActiveAssignments(OfficerEntry $officer, int $orgId, int $syId): bool
+    {
+        $userId = (int) ($officer->user_id ?? 0);
+
+        // If they don't even have a user, they can't be assigned to org roles or projects
+        if ($userId <= 0) {
+            return false;
+        }
+
+        // Treasurer / Moderator / President roles for this org+SY
+        $hasOrgRole = OrgMembership::query()
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->where('user_id', $userId)
+            ->whereIn('role', ['treasurer', 'moderator', 'president'])
+            ->whereNull('archived_at')
+            ->exists();
+
+        if ($hasOrgRole) return true;
+
+        // Project Head assignments under projects belonging to this org+SY
+        $projectIds = Project::query()
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->pluck('id');
+
+        if ($projectIds->isEmpty()) return false;
+
+        return ProjectAssignment::query()
+            ->whereIn('project_id', $projectIds)
+            ->where('assignment_role', 'project_head')   // ✅ FIXED COLUMN
+            ->where('user_id', $userId)
+            ->whereNull('archived_at')
+            ->exists();
+    }
+
+
 
 
     private function logOfficerUpdateIfActiveSy(int $orgId, int $syId, string $action, $officer): void

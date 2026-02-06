@@ -7,7 +7,21 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Organization extends Model
 {
-    protected $fillable = ['name', 'acronym'];
+    protected $fillable = [
+        'name',
+        'acronym',
+        'mission',
+        'vision',
+        'logo_path',
+        'logo_original_name',
+        'logo_mime',
+        'logo_size_bytes',
+        'last_b1_submission_id',
+    ];
+
+    protected $casts = [
+        'logo_size_bytes' => 'integer',
+    ];
 
     public function schoolYears(): HasMany
     {
@@ -59,5 +73,8 @@ class Organization extends Model
         return $this->hasMany(\App\Models\ModeratorSubmission::class);
     }
 
-
+    public function lastStrategicPlanSubmission()
+    {
+        return $this->belongsTo(StrategicPlanSubmission::class, 'last_b1_submission_id');
+    }
 }

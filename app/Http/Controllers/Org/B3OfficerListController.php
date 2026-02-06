@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Org;
 
 use App\Http\Controllers\Controller;
 use App\Models\OfficerSubmission;
+use App\Models\SchoolYear;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -13,59 +14,92 @@ class B3OfficerListController extends Controller
     private function ctx(Request $request): array
     {
         return [
-            'orgId' => (int) $request->session()->get('active_org_id'),
-            'targetSyId' => (int) $request->session()->get('encode_sy_id'), // match your B-2 target SY session key if different
+            'orgId'      => (int) $request->session()->get('active_org_id'),
+            'targetSyId' => (int) $request->session()->get('encode_sy_id'), // re-reg target SY
+            'userId'     => (int) $request->user()->id,
         ];
     }
 
+    /**
+     * Optional landing page. Most flows go straight to edit.
+     * Keep it working but align with new routes + new "encode_sy_id".
+     */
     public function index(Request $request)
     {
         ['orgId' => $orgId, 'targetSyId' => $targetSyId] = $this->ctx($request);
 
-        $schoolYears = \App\Models\SchoolYear::query()->orderByDesc('id')->get();
+        // Only show the selected SY (for clarity) + you can still pass it for display
+        $schoolYear = $targetSyId ? SchoolYear::find($targetSyId) : null;
 
         $registration = null;
-        if ($orgId && $targetSyId) {
+        if ($orgId > 0 && $targetSyId > 0) {
             $registration = OfficerSubmission::query()
                 ->where('organization_id', $orgId)
                 ->where('target_school_year_id', $targetSyId)
+                ->latest('id')
                 ->first();
         }
 
-        return view('org.forms.b3_officers.index', compact('schoolYears', 'targetSyId', 'registration'));
+        return view('org.forms.b3_officers.index', [
+            'targetSyId' => $targetSyId,
+            'schoolYear' => $schoolYear,
+            'registration' => $registration,
+        ]);
     }
 
+    /**
+     * We no longer set target SY inside B3.
+     * The rereg dashboard (or global selector) sets encode_sy_id already.
+     * Keep this method for backward compatibility, but just redirect back to rereg dashboard.
+     */
     public function setTargetSy(Request $request)
     {
         $data = $request->validate([
-            'target_school_year_id' => ['required', 'integer'],
+            'target_school_year_id' => ['required', 'integer', 'exists:school_years,id'],
         ]);
 
-        // Use same session key pattern you use for B-2 target SY.
+        // If you still want to allow changing here, we update encode_sy_id
         $request->session()->put('encode_sy_id', (int) $data['target_school_year_id']);
 
-        return redirect()->route('org.b3.officers-list.edit');
+        return redirect()->route('org.rereg.index')->with('status', 'Target SY updated.');
     }
 
     public function edit(Request $request)
     {
         ['orgId' => $orgId, 'targetSyId' => $targetSyId] = $this->ctx($request);
 
-        if (!$orgId || !$targetSyId) {
-            return redirect()->route('org.b3.officers-list.index')
-                ->with('error', 'Please select a Target School Year first.');
+        if ($orgId <= 0) {
+            return redirect()->route('org.home')->with('status', 'Please select an organization first.');
+        }
+
+        if ($targetSyId <= 0) {
+            return redirect()->route('org.rereg.index')->with('status', 'Please select a target school year first.');
         }
 
         $registration = OfficerSubmission::query()
             ->with('items')
             ->firstOrCreate(
-                ['organization_id' => $orgId, 'target_school_year_id' => $targetSyId],
-                ['status' => 'draft', 'encoded_by_user_id' => auth()->id()]
+                [
+                    'organization_id' => $orgId,
+                    'target_school_year_id' => $targetSyId,
+                ],
+                [
+                    'status' => 'draft',
+                    'encoded_by_user_id' => auth()->id(),
+                ]
             );
 
+        $schoolYear = SchoolYear::find($targetSyId);
+
+        // lock if already submitted or approved
         $isLocked = in_array($registration->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true);
 
-        return view('org.forms.b3_officers.edit', compact('registration', 'targetSyId', 'isLocked'));
+        return view('org.forms.b3_officers.edit', [
+            'registration' => $registration,
+            'targetSyId' => $targetSyId,
+            'schoolYear' => $schoolYear,
+            'isLocked' => $isLocked,
+        ]);
     }
 
     private function rowEmpty(array $row): bool
@@ -80,7 +114,7 @@ class B3OfficerListController extends Controller
         ];
 
         foreach ($values as $v) {
-            if ($v !== null && trim((string)$v) !== '') return false;
+            if ($v !== null && trim((string) $v) !== '') return false;
         }
 
         return true;
@@ -88,13 +122,17 @@ class B3OfficerListController extends Controller
 
     private function isEditable(OfficerSubmission $registration): bool
     {
+        // allow edits only if draft or returned
         return in_array($registration->status, ['draft', 'returned_by_sacdev'], true);
     }
 
     private function persistDraft(Request $request, OfficerSubmission $registration): void
     {
         DB::transaction(function () use ($request, $registration) {
-            $registration->fill($request->except(['items']));
+
+            // keep it simple: just store certified + remarks fields if you have them
+            // (avoid mass-assigning unknown fields)
+            $registration->certified = (bool) $request->input('certified', false);
             $registration->encoded_by_user_id = $registration->encoded_by_user_id ?? auth()->id();
             $registration->status = 'draft';
             $registration->save();
@@ -131,7 +169,7 @@ class B3OfficerListController extends Controller
             return back()->with('error', 'This form cannot be edited at its current status.');
         }
 
-        // Draft: validate formats only (nullable)
+        // Draft validation: formats only (nullable)
         $request->validate([
             'certified' => ['nullable', 'boolean'],
 
@@ -164,11 +202,10 @@ class B3OfficerListController extends Controller
             return back()->with('error', 'This form cannot be submitted at its current status.');
         }
 
-        // Submit validation
         $request->validate([
             'certified' => ['required', Rule::in(['1', 1, true, 'on'])],
 
-            'items' => ['nullable', 'array'], // no minimum yet (as you said)
+            'items' => ['nullable', 'array'],
             'items.*.position' => ['required_with:items.*.officer_name,items.*.student_id_number,items.*.course_and_year,items.*.mobile_number', 'nullable', 'string', 'max:255'],
             'items.*.officer_name' => ['required_with:items.*.position,items.*.student_id_number,items.*.course_and_year,items.*.mobile_number', 'nullable', 'string', 'max:255'],
             'items.*.student_id_number' => ['required_with:items.*.position,items.*.officer_name,items.*.course_and_year,items.*.mobile_number', 'nullable', 'string', 'max:50'],
@@ -177,19 +214,27 @@ class B3OfficerListController extends Controller
             'items.*.mobile_number' => ['required_with:items.*.position,items.*.officer_name,items.*.student_id_number,items.*.course_and_year', 'nullable', 'string', 'max:30'],
         ]);
 
-        // Save content (sets status draft)
+        // Save content (forces draft)
         $this->persistDraft($request, $registration);
 
-        // Then lock it as submitted
+        // Then lock as submitted
         $registration->refresh();
         $registration->status = 'submitted_to_sacdev';
         $registration->submitted_at = now();
 
-        // clear old SACDEV remarks on new submit
+        // clear SACDEV cycle fields (if your table has them)
         $registration->sacdev_reviewed_by_user_id = null;
         $registration->sacdev_remarks = null;
         $registration->sacdev_reviewed_at = null;
         $registration->returned_at = null;
+
+        // clear edit request flags (if your table has them)
+        if (isset($registration->edit_requested)) {
+            $registration->edit_requested = false;
+            $registration->edit_request_reason = null;
+            $registration->edit_requested_by_user_id = null;
+            $registration->edit_requested_at = null;
+        }
 
         $registration->save();
 
@@ -205,7 +250,6 @@ class B3OfficerListController extends Controller
             ->where('target_school_year_id', $targetSyId)
             ->firstOrFail();
 
-        // Allow ONLY if submitted
         if ($registration->status !== 'submitted_to_sacdev') {
             return back()->with('error', 'This form cannot be pulled back because it is not currently submitted to SACDEV.');
         }
@@ -226,12 +270,10 @@ class B3OfficerListController extends Controller
             ->where('target_school_year_id', $targetSyId)
             ->firstOrFail();
 
-        // Only allow requesting edit if not editable already
         if (in_array($submission->status, ['draft', 'returned_by_sacdev'], true)) {
             return back()->with('error', 'This form is already editable. No need to request edit.');
         }
 
-        // Only allow request if submitted or approved
         if (!in_array($submission->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true)) {
             return back()->with('error', 'Edit request is not available for this status.');
         }
@@ -239,6 +281,11 @@ class B3OfficerListController extends Controller
         $data = $request->validate([
             'edit_request_reason' => ['required', 'string', 'min:5', 'max:2000'],
         ]);
+
+        if (!isset($submission->edit_requested)) {
+            // if your table does not support edit-request fields, fail loudly
+            return back()->with('error', 'Edit request feature is not enabled for this form yet.');
+        }
 
         if ($submission->edit_requested) {
             return back()->with('error', 'An edit request is already pending.');
@@ -252,6 +299,4 @@ class B3OfficerListController extends Controller
 
         return back()->with('success', 'Edit request sent to SACDEV.');
     }
-
-
 }

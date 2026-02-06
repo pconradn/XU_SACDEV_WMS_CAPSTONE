@@ -4,10 +4,9 @@ namespace App\Http\Controllers\Moderator;
 
 use App\Http\Controllers\Controller;
 use App\Models\ModeratorSubmission;
-use App\Models\OrgModeratorTerm;
+use App\Models\OrgMembership;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class B5ModeratorSubmissionController extends Controller
 {
@@ -15,86 +14,28 @@ class B5ModeratorSubmissionController extends Controller
     {
         return [
             'userId' => (int) auth()->id(),
-            'orgId'  => (int) $request->session()->get('active_moderator_org_id'),
-            'syId'   => (int) $request->session()->get('active_moderator_sy_id'),
+            'orgId'  => (int) $request->session()->get('active_org_id'),
+            'syId'   => (int) $request->session()->get('encode_sy_id'),
         ];
     }
 
-    /**
-     * List assignments (org+SY) for this moderator.
-     * For now: also allows selecting an assignment via query param (?term_id=).
-     * We’ll wire the blade later.
-     */
-    public function index(Request $request)
+    private function assertModeratorContext(int $userId, int $orgId, int $syId): void
     {
-        $userId = (int) auth()->id();
+        abort_unless($orgId && $syId, 403, 'No active organization / school year selected.');
 
-        $terms = OrgModeratorTerm::query()
-            ->with(['organization', 'schoolYear'])
-            ->where('user_id', $userId)
-            ->orderByDesc('school_year_id')
-            ->get();
-
-        // Allow selection via query (simple)
-        $termId = (int) $request->query('term_id', 0);
-        if ($termId > 0) {
-            $term = $terms->firstWhere('id', $termId);
-            if ($term) {
-                $request->session()->put('active_moderator_org_id', (int) $term->organization_id);
-                $request->session()->put('active_moderator_sy_id', (int) $term->school_year_id);
-
-                return redirect()->route('moderator.b5.moderator.edit');
-            }
-        }
-
-        // View later
-        return view('moderator.forms.b5_moderator.index', compact('terms'));
-    }
-
-    public function edit(Request $request)
-    {
-        ['userId' => $userId, 'orgId' => $orgId, 'syId' => $syId] = $this->ctx($request);
-
-        if (!$orgId || !$syId) {
-            return redirect()->route('moderator.b5.moderator.index')
-                ->with('error', 'Please select an assignment first.');
-        }
-
-        // Ensure this moderator is assigned to org+sy
-        $term = OrgModeratorTerm::query()
+        $ok = OrgMembership::query()
             ->where('user_id', $userId)
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
-            ->firstOrFail();
+            ->where('role', 'moderator')
+            ->exists();
 
-        $submission = ModeratorSubmission::query()
-            ->with(['leaderships', 'organization', 'targetSchoolYear'])
-            ->firstOrCreate(
-                [
-                    'organization_id' => $orgId,
-                    'target_school_year_id' => $syId,
-                ],
-                [
-                    'moderator_user_id' => $userId,
-                    'org_moderator_term_id' => $term->id,
-                    'status' => 'draft',
-                ]
-            );
+        abort_unless($ok, 403, 'Moderator access only.');
+    }
 
-        // Keep link consistent
-        if (!$submission->moderator_user_id) {
-            $submission->moderator_user_id = $userId;
-        }
-        if (!$submission->org_moderator_term_id) {
-            $submission->org_moderator_term_id = $term->id;
-        }
-        $submission->save();
-
-        // lock rules: same as B-2/B-3
-        $isLocked = in_array($submission->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true);
-
-        // View later
-        return view('moderator.forms.b5_moderator.edit', compact('submission', 'term', 'isLocked'));
+    private function isLocked(ModeratorSubmission $submission): bool
+    {
+        return in_array($submission->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true);
     }
 
     private function rowEmpty(array $row): bool
@@ -107,14 +48,48 @@ class B5ModeratorSubmissionController extends Controller
         ];
 
         foreach ($values as $v) {
-            if ($v !== null && trim((string)$v) !== '') return false;
+            if ($v !== null && trim((string) $v) !== '') return false;
         }
         return true;
+    }
+
+    public function edit(Request $request)
+    {
+        ['userId' => $userId, 'orgId' => $orgId, 'syId' => $syId] = $this->ctx($request);
+
+        $this->assertModeratorContext($userId, $orgId, $syId);
+
+        $submission = ModeratorSubmission::query()
+            ->with(['leaderships', 'organization', 'targetSchoolYear'])
+            ->firstOrCreate(
+                [
+                    'organization_id'       => $orgId,
+                    'target_school_year_id' => $syId,
+                ],
+                [
+                    'moderator_user_id' => $userId,
+                    'status'            => 'draft',
+                ]
+            );
+
+        // ensure ownership
+        if (! $submission->moderator_user_id) {
+            $submission->moderator_user_id = $userId;
+            $submission->save();
+        }
+
+        abort_unless((int) $submission->moderator_user_id === $userId, 403);
+
+        $isLocked = $this->isLocked($submission);
+
+        return view('moderator.forms.b5_moderator.edit', compact('submission', 'isLocked'));
     }
 
     public function saveDraft(Request $request)
     {
         ['userId' => $userId, 'orgId' => $orgId, 'syId' => $syId] = $this->ctx($request);
+
+        $this->assertModeratorContext($userId, $orgId, $syId);
 
         $submission = ModeratorSubmission::query()
             ->with(['leaderships'])
@@ -122,22 +97,16 @@ class B5ModeratorSubmissionController extends Controller
             ->where('target_school_year_id', $syId)
             ->firstOrFail();
 
-        // Only moderator owner can edit
-        if ((int) $submission->moderator_user_id !== $userId) {
-            abort(403);
-        }
+        abort_unless((int) $submission->moderator_user_id === $userId, 403);
 
-        // Lock only when submitted/approved
-        if (in_array($submission->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true)) {
+        if ($this->isLocked($submission)) {
             return back()->with('error', 'This form is locked and cannot be edited unless returned.');
         }
 
-        // Draft validation: types only
         $validated = $request->validate([
             'photo_id' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
 
             'full_name' => ['nullable', 'string', 'max:255'],
-
             'birthday' => ['nullable', 'date'],
             'age' => ['nullable', 'integer', 'min:0', 'max:120'],
             'sex' => ['nullable', 'string', 'max:20'],
@@ -156,7 +125,6 @@ class B5ModeratorSubmissionController extends Controller
 
             'was_moderator_before' => ['nullable', 'boolean'],
             'moderated_org_name' => ['nullable', 'string', 'max:255'],
-
             'served_nominating_org_before' => ['nullable', 'boolean'],
             'served_nominating_org_years' => ['nullable', 'integer', 'min:0', 'max:80'],
 
@@ -170,24 +138,29 @@ class B5ModeratorSubmissionController extends Controller
         ]);
 
         DB::transaction(function () use ($request, $submission, $userId) {
-            // upload optional
             if ($request->hasFile('photo_id')) {
                 $path = $request->file('photo_id')->store('moderator-ids', 'public');
                 $submission->photo_id_path = $path;
             }
 
             $submission->fill($request->except(['leaderships', 'photo_id']));
-            $submission->moderator_user_id = $submission->moderator_user_id ?? $userId;
-
+            $submission->moderator_user_id = $submission->moderator_user_id ?: $userId;
             $submission->status = 'draft';
             $submission->version = (int) $submission->version + 1;
             $submission->save();
 
-            // sync leadership rows
             $submission->leaderships()->delete();
+
             foreach (($request->input('leaderships') ?? []) as $i => $row) {
                 if (!is_array($row) || $this->rowEmpty($row)) continue;
-                $submission->leaderships()->create(array_merge($row, ['sort_order' => $i + 1]));
+
+                $submission->leaderships()->create([
+                    'organization_name'    => $row['organization_name'] ?? null,
+                    'position'             => $row['position'] ?? null,
+                    'organization_address' => $row['organization_address'] ?? null,
+                    'inclusive_years'      => $row['inclusive_years'] ?? null,
+                    'sort_order'           => $i + 1,
+                ]);
             }
         });
 
@@ -198,21 +171,21 @@ class B5ModeratorSubmissionController extends Controller
     {
         ['userId' => $userId, 'orgId' => $orgId, 'syId' => $syId] = $this->ctx($request);
 
+        $this->assertModeratorContext($userId, $orgId, $syId);
+
         $submission = ModeratorSubmission::query()
             ->with(['leaderships'])
             ->where('organization_id', $orgId)
             ->where('target_school_year_id', $syId)
             ->firstOrFail();
 
-        if ((int) $submission->moderator_user_id !== $userId) {
-            abort(403);
-        }
+        abort_unless((int) $submission->moderator_user_id === $userId, 403);
 
         if (in_array($submission->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true)) {
             return back()->with('error', 'This form is already submitted/approved.');
         }
 
-        // strict submit validation (match your requirements)
+        // strict submit validation (adjust if you need more required fields)
         $request->validate([
             'photo_id' => [$submission->photo_id_path ? 'nullable' : 'required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
 
@@ -228,11 +201,9 @@ class B5ModeratorSubmissionController extends Controller
             'mobile_number' => ['required', 'string', 'max:30'],
             'email' => ['required', 'email', 'max:255'],
             'city_address' => ['required', 'string'],
-
-            // leadership max 4 enforced later; for now just accept array if present
         ]);
 
-        // Save everything as draft first
+        // Save everything first as draft (uploads + leadership rows)
         $this->saveDraft($request);
 
         $submission->refresh();
@@ -245,6 +216,12 @@ class B5ModeratorSubmissionController extends Controller
         $submission->sacdev_remarks = null;
         $submission->sacdev_reviewed_at = null;
 
+        // reset edit request flags on new submit
+        $submission->edit_requested = false;
+        $submission->edit_requested_at = null;
+        $submission->edit_requested_by_user_id = null;
+        $submission->edit_request_message = null;
+
         $submission->save();
 
         return back()->with('success', 'Submitted to SACDEV successfully.');
@@ -254,21 +231,20 @@ class B5ModeratorSubmissionController extends Controller
     {
         ['userId' => $userId, 'orgId' => $orgId, 'syId' => $syId] = $this->ctx($request);
 
+        $this->assertModeratorContext($userId, $orgId, $syId);
+
         $submission = ModeratorSubmission::query()
             ->where('organization_id', $orgId)
             ->where('target_school_year_id', $syId)
             ->firstOrFail();
 
-        if ((int) $submission->moderator_user_id !== $userId) {
-            abort(403);
-        }
+        abort_unless((int) $submission->moderator_user_id === $userId, 403);
 
-        // Only allow if currently submitted
         if ($submission->status !== 'submitted_to_sacdev') {
             return back()->with('error', 'You can only unsubmit when the form is submitted to SACDEV.');
         }
 
-        // If SACDEV already reviewed, don’t allow unsubmit (optional safety)
+        // optional safety: don’t allow if SACDEV already reviewed
         if ($submission->sacdev_reviewed_at) {
             return back()->with('error', 'Cannot unsubmit because SACDEV has already started reviewing.');
         }
@@ -280,21 +256,20 @@ class B5ModeratorSubmissionController extends Controller
         return back()->with('success', 'Submission was reverted back to draft.');
     }
 
-
     public function requestEdit(Request $request)
     {
         ['userId' => $userId, 'orgId' => $orgId, 'syId' => $syId] = $this->ctx($request);
+
+        $this->assertModeratorContext($userId, $orgId, $syId);
 
         $submission = ModeratorSubmission::query()
             ->where('organization_id', $orgId)
             ->where('target_school_year_id', $syId)
             ->firstOrFail();
 
-        if ((int) $submission->moderator_user_id !== $userId) {
-            abort(403);
-        }
+        abort_unless((int) $submission->moderator_user_id === $userId, 403);
 
-        // Only needed when locked
+        // only needed when locked
         if (!in_array($submission->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true)) {
             return back()->with('error', 'Request edit is only needed when the form is submitted or approved.');
         }
@@ -315,5 +290,7 @@ class B5ModeratorSubmissionController extends Controller
 
         return back()->with('success', 'Edit request sent to SACDEV.');
     }
+
+
 
 }

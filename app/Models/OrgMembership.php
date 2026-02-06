@@ -13,6 +13,7 @@ class OrgMembership extends Model
         'user_id',
         'role',
         'archived_at',
+        'officer_entry_id',
     ];
 
     protected $casts = [
@@ -33,4 +34,10 @@ class OrgMembership extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function officerEntry()
+    {
+        return $this->belongsTo(\App\Models\OfficerEntry::class, 'officer_entry_id');
+    }
+
 }

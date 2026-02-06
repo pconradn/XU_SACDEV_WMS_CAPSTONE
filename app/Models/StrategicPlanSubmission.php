@@ -15,7 +15,8 @@ class StrategicPlanSubmission extends Model
     public const STATUS_FORWARDED_TO_SACDEV = 'forwarded_to_sacdev';
     public const STATUS_RETURNED_BY_SACDEV = 'returned_by_sacdev';
     public const STATUS_APPROVED_BY_SACDEV = 'approved_by_sacdev';
-    public const STATUS_APPROVED = 'approved';
+    public const STATUS_SUBMITTED_TO_SACDEV = 'submitted_to_sacdev';
+
 
     protected $fillable = [
         'organization_id',

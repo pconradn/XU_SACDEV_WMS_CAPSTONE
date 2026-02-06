@@ -10,15 +10,12 @@ use Illuminate\Support\Str;
 
 class AccountProvisioner
 {
-
     /**
-     * Resend credentials to users with must_change_password = true
-     *
-     * return  the new temp password
+     * Resend credentials to users with must_change_password = true (pending user)
+     * Returns the new temp password.
      */
     public static function resendInviteToPendingUser(User $user): string
     {
-        // only pending invites
         if (!(bool) $user->must_change_password || $user->password_changed_at !== null) {
             throw new \RuntimeException('Cannot resend invite: user is already activated.');
         }
@@ -44,18 +41,16 @@ class AccountProvisioner
     }
 
     /**
-     * find user by email. If missing, create with temp password
-     * If exists, np pass reset
+     * If user exists: update name if needed, no password reset.
+     * If missing: create with temp password + email credentials.
      *
-     * return an array{0: User, 1: ?string} temp password string only when created
+     * Returns [User, ?string tempPassword]
      */
     public static function findOrCreateUser(string $name, string $email): array
     {
         $user = User::query()->where('email', $email)->first();
 
-      
         if ($user) {
-            
             if (!$user->name || $user->name !== $name) {
                 $user->name = $name;
                 $user->save();
@@ -63,7 +58,6 @@ class AccountProvisioner
             return [$user, null];
         }
 
-       
         $tempPassword = Str::random(10) . '!' . rand(10, 99);
 
         $user = User::create([
@@ -73,10 +67,8 @@ class AccountProvisioner
             'system_role' => null,
             'must_change_password' => true,
             'password_changed_at' => null,
-            
         ]);
 
-    
         Mail::raw(
             "Hello {$user->name},\n\n" .
             "You have been assigned a role in the SAcDev Workflow System.\n\n" .
@@ -93,10 +85,47 @@ class AccountProvisioner
     }
 
     /**
-     * makesure user has an active OrgMembership for org + schoolyear + role
-     * and if its archived, revive it.
+     * Reset temp password ONLY if user is still pending (not activated yet).
+     * - If pending: new temp password + email + return temp
+     * - If activated: return null (no reset)
      */
-    public static function ensureMembership(int $userId, int $orgId, int $syId, string $role): OrgMembership
+    public static function resetTempPasswordIfPending(User $user): ?string
+    {
+        $isPending = (bool) $user->must_change_password && $user->password_changed_at === null;
+
+        if (!$isPending) {
+            return null;
+        }
+
+        $tempPassword = Str::random(10) . '!' . rand(10, 99);
+
+        $user->password = Hash::make($tempPassword);
+        $user->must_change_password = true;
+        $user->password_changed_at = null;
+        $user->save();
+
+        Mail::raw(
+            "Hello {$user->name},\n\n" .
+            "Your temporary credentials have been updated for the SAcDev Workflow System.\n\n" .
+            "Login email: {$user->email}\n" .
+            "Temporary password: {$tempPassword}\n\n" .
+            "You will be required to change your password on first login.\n\n" .
+            "Thank you.",
+            function ($message) use ($user) {
+                $message->to($user->email)->subject('SAcDev System - Account Credentials (Updated)');
+            }
+        );
+
+        return $tempPassword;
+    }
+
+    /**
+     * Make sure user has an active OrgMembership for org+sy+role.
+     * If archived, revive it.
+     *
+     * NEW: optional $officerEntryId so memberships created from officer list can be linked.
+     */
+    public static function ensureMembership(int $userId, int $orgId, int $syId, string $role, ?int $officerEntryId = null): OrgMembership
     {
         $membership = OrgMembership::query()
             ->where('user_id', $userId)
@@ -106,10 +135,23 @@ class AccountProvisioner
             ->first();
 
         if ($membership) {
+            $dirty = false;
+
             if ($membership->archived_at !== null) {
                 $membership->archived_at = null;
+                $dirty = true;
+            }
+
+            // attach officer_entry_id if provided and missing
+            if ($officerEntryId && (int) ($membership->officer_entry_id ?? 0) !== (int) $officerEntryId) {
+                $membership->officer_entry_id = $officerEntryId;
+                $dirty = true;
+            }
+
+            if ($dirty) {
                 $membership->save();
             }
+
             return $membership;
         }
 
@@ -119,15 +161,17 @@ class AccountProvisioner
             'school_year_id' => $syId,
             'role' => $role,
             'archived_at' => null,
+            'officer_entry_id' => $officerEntryId, // nullable
         ]);
     }
 
     /**
-     * make sure user is at least a member in org+sy.
+     * Make sure user is at least a member in org+sy.
+     *
+     * NEW: optional $officerEntryId so memberships created from officer list can be linked.
      */
-    public static function ensureBasicOrgAccess(int $userId, int $orgId, int $syId): OrgMembership
+    public static function ensureBasicOrgAccess(int $userId, int $orgId, int $syId, ?int $officerEntryId = null): OrgMembership
     {
-        // choose role name for general access. Use 'member' if that’s your default.
         $role = 'member';
 
         $membership = OrgMembership::query()
@@ -138,10 +182,23 @@ class AccountProvisioner
             ->first();
 
         if ($membership) {
+            $dirty = false;
+
             if ($membership->archived_at !== null) {
                 $membership->archived_at = null;
+                $dirty = true;
+            }
+
+            // attach officer_entry_id if provided and missing
+            if ($officerEntryId && (int) ($membership->officer_entry_id ?? 0) !== (int) $officerEntryId) {
+                $membership->officer_entry_id = $officerEntryId;
+                $dirty = true;
+            }
+
+            if ($dirty) {
                 $membership->save();
             }
+
             return $membership;
         }
 
@@ -151,10 +208,13 @@ class AccountProvisioner
             'school_year_id' => $syId,
             'role' => $role,
             'archived_at' => null,
+            'officer_entry_id' => $officerEntryId, // nullable
         ]);
     }
 
-
+    /**
+     * Legacy helper (you can keep it if other parts use it).
+     */
     public static function provisionUser(string $name, string $email): array
     {
         $tempPassword = Str::random(10) . '!' . rand(10, 99);
@@ -167,7 +227,6 @@ class AccountProvisioner
         $user->password_changed_at = null;
         $user->save();
 
-       
         Mail::raw(
             "Hello {$user->name},\n\n" .
             "You have been assigned a role in the SAcDev Workflow System.\n\n" .
