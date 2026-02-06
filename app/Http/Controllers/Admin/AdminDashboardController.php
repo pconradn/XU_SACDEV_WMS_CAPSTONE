@@ -11,79 +11,84 @@ use App\Http\Controllers\Controller;
 use App\Models\PresidentRegistration;
 use App\Models\StrategicPlanSubmission;
 
-//SHOW ADMIN DASHBOARD
-
 class AdminDashboardController extends Controller
 {
     public function index()
     {
         $activeSy = SchoolYear::activeYear();
 
-
         $actionable = ['submitted_to_sacdev', 'forwarded_to_sacdev'];
 
-
+        // Pending case count (org|sy pairs across forms)
         $pendingCaseCount = collect()
             ->merge(
                 StrategicPlanSubmission::whereIn('status', $actionable)
                     ->get(['organization_id', 'target_school_year_id'])
-                    ->map(fn ($r) => $r->organization_id.'|'.$r->target_school_year_id)
+                    ->map(fn ($r) => (int)$r->organization_id . '|' . (int)$r->target_school_year_id)
+                    ->toBase()
             )
             ->merge(
                 PresidentRegistration::whereIn('status', $actionable)
                     ->get(['organization_id', 'target_school_year_id'])
-                    ->map(fn ($r) => $r->organization_id.'|'.$r->target_school_year_id)
+                    ->map(fn ($r) => (int)$r->organization_id . '|' . (int)$r->target_school_year_id)
+                    ->toBase()
             )
             ->merge(
                 OfficerSubmission::whereIn('status', $actionable)
                     ->get(['organization_id', 'target_school_year_id'])
-                    ->map(fn ($r) => $r->organization_id.'|'.$r->target_school_year_id)
+                    ->map(fn ($r) => (int)$r->organization_id . '|' . (int)$r->target_school_year_id)
+                    ->toBase()
             )
             ->merge(
                 ModeratorSubmission::whereIn('status', $actionable)
                     ->get(['organization_id', 'target_school_year_id'])
-                    ->map(fn ($r) => $r->organization_id.'|'.$r->target_school_year_id)
+                    ->map(fn ($r) => (int)$r->organization_id . '|' . (int)$r->target_school_year_id)
+                    ->toBase()
             )
             ->unique()
             ->count();
 
-
         // Ready for activation count (across ALL SY)
         $approved = 'approved_by_sacdev';
 
-        // get org+sy pairs where each form is approved
         $b1Approved = StrategicPlanSubmission::where('status', $approved)
             ->get(['organization_id', 'target_school_year_id'])
-            ->map(fn($r) => $r->organization_id.'|'.$r->target_school_year_id)
-            ->unique();
+            ->map(fn ($r) => (int)$r->organization_id . '|' . (int)$r->target_school_year_id)
+            ->unique()
+            ->toBase();
 
         $b2Approved = PresidentRegistration::where('status', $approved)
             ->get(['organization_id', 'target_school_year_id'])
-            ->map(fn($r) => $r->organization_id.'|'.$r->target_school_year_id)
-            ->unique();
+            ->map(fn ($r) => (int)$r->organization_id . '|' . (int)$r->target_school_year_id)
+            ->unique()
+            ->toBase();
 
         $b3Approved = OfficerSubmission::where('status', $approved)
             ->get(['organization_id', 'target_school_year_id'])
-            ->map(fn($r) => $r->organization_id.'|'.$r->target_school_year_id)
-            ->unique();
+            ->map(fn ($r) => (int)$r->organization_id . '|' . (int)$r->target_school_year_id)
+            ->unique()
+            ->toBase();
 
         $b5Approved = ModeratorSubmission::where('status', $approved)
             ->get(['organization_id', 'target_school_year_id'])
-            ->map(fn($r) => $r->organization_id.'|'.$r->target_school_year_id)
-            ->unique();
+            ->map(fn ($r) => (int)$r->organization_id . '|' . (int)$r->target_school_year_id)
+            ->unique()
+            ->toBase();
 
         // intersection = cases where ALL forms are approved
         $readyKeys = $b1Approved
             ->intersect($b2Approved)
             ->intersect($b3Approved)
             ->intersect($b5Approved)
-            ->values();
+            ->values()
+            ->toBase();
 
-        // activated keys from pivot table
+        // activated keys from pivot table (already base collection)
         $activatedKeys = DB::table('organization_school_years')
             ->get(['organization_id', 'school_year_id'])
-            ->map(fn($r) => (int)$r->organization_id.'|'.(int)$r->school_year_id)
-            ->unique();
+            ->map(fn ($r) => (int)$r->organization_id . '|' . (int)$r->school_year_id)
+            ->unique()
+            ->toBase();
 
         // not activated yet
         $readyNotActivated = $readyKeys->diff($activatedKeys);

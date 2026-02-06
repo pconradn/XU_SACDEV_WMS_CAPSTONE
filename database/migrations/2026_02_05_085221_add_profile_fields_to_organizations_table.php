@@ -26,11 +26,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('organizations', function (Blueprint $table) {
-            $table->dropIndex('org_last_b1_idx');
+            
 
             $table->dropColumn([
-                'org_acronym',
-                'org_name',
+
                 'mission',
                 'vision',
                 'logo_path',

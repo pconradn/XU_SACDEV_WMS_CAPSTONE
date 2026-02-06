@@ -60,6 +60,21 @@ Route::get('/dashboard', function () {
 | Route Modules
 |--------------------------------------------------------------------------
 */
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])
+        ->name('notifications.index');
+
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])
+        ->name('notifications.markAllRead');
+
+    Route::get('/notifications/{id}', [\App\Http\Controllers\NotificationController::class, 'show'])
+        ->name('notifications.show');
+});
+
+
+
+
 require __DIR__ . '/admin.php';
 require __DIR__ . '/org.php';
 

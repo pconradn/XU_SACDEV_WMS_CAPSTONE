@@ -11,16 +11,20 @@ use App\Models\ModeratorSubmission;
 use App\Support\AccountProvisioner;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 
 class OrgReregAssignmentsController extends Controller
 {
 
-    private function assertActiveSyPresident(Request $request, int $orgId): void
-    {
+    private function assertActiveSyPresident(Request $request, int $orgId): ?RedirectResponse{
         $userId = (int) $request->user()->id;
         $activeSyId = $this->activeSyId();
 
-        abort_unless($activeSyId > 0, 403, 'No active school year found.');
+        if ($activeSyId <= 0) {
+            return redirect()
+                ->back()
+                ->with('error', 'No active school year found. Please contact the administrator.');
+        }
 
         $ok = OrgMembership::query()
             ->where('user_id', $userId)
@@ -30,8 +34,15 @@ class OrgReregAssignmentsController extends Controller
             ->whereNull('archived_at')
             ->exists();
 
-        abort_unless($ok, 403, 'Only the ACTIVE SY president can assign the next SY president.');
+        if (! $ok) {
+            return redirect()
+                ->back()
+                ->with('error', 'President access only for the active school year.');
+        }
+
+        return null; 
     }
+
 
     private function orgId(Request $request): int
     {
@@ -49,9 +60,15 @@ class OrgReregAssignmentsController extends Controller
         return (int) SchoolYear::activeId();
     }
 
-    private function requireTargetSySelected(int $targetSyId): void
+    private function requireTargetSySelected(int $targetSyId): ?RedirectResponse
     {
-        abort_unless($targetSyId > 0, 403, 'Please select a target school year first.');
+        if ($targetSyId <= 0) {
+            return redirect()
+                ->route('org.rereg.index') 
+                ->with('error', 'Please select a target school year first.');
+        }
+
+        return null;
     }
 
 
@@ -115,7 +132,7 @@ class OrgReregAssignmentsController extends Controller
         $targetSyId = $this->targetSyId($request);
 
         $this->requireTargetSySelected($targetSyId);
-        $this->assertActiveSyPresident($request, $orgId, $targetSyId);
+        //$this->assertActiveSyPresident($request, $orgId, $targetSyId);
 
         $schoolYears = SchoolYear::query()->orderByDesc('id')->get(['id','name']);
         $selectedSyId = (int) $request->query('target_sy_id', $targetSyId);
@@ -155,7 +172,7 @@ class OrgReregAssignmentsController extends Controller
         $targetSyId = $this->targetSyId($request);
 
         $this->requireTargetSySelected($targetSyId);
-        $this->assertActiveSyPresident($request, $orgId, $targetSyId);
+        //$this->assertActiveSyPresident($request, $orgId, $targetSyId);
 
         $data = $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
@@ -314,7 +331,7 @@ class OrgReregAssignmentsController extends Controller
         ]);
 
         return redirect()
-            ->route('org.rereg.assign.next_president.edit')
+            ->route('org.provision.next_president.edit')
             ->with('status', $tempPassword
                 ? 'Next SY president assigned. Temporary password logged (and email sent if mail is enabled).'
                 : 'Next SY president assigned (existing user).'

@@ -2,21 +2,24 @@
 
 namespace App\Http\Controllers\Org;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\Org\SaveDraftStrategicPlanRequest;
-use App\Http\Requests\Org\SubmitStrategicPlanRequest;
-use App\Models\OrgMembership;
+use App\Models\User;
 use App\Models\SchoolYear;
-use App\Models\StrategicPlanBeneficiary;
-use App\Models\StrategicPlanDeliverable;
-use App\Models\StrategicPlanFundSource;
-use App\Models\StrategicPlanObjective;
+use Illuminate\Http\Request;
+use App\Models\OrgMembership;
+use App\Support\InAppNotifier;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
 use App\Models\StrategicPlanPartner;
 use App\Models\StrategicPlanProject;
+use Illuminate\Http\RedirectResponse;
+use App\Models\StrategicPlanObjective;
+use App\Models\StrategicPlanFundSource;
 use App\Models\StrategicPlanSubmission;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\StrategicPlanBeneficiary;
+use App\Models\StrategicPlanDeliverable;
+use App\Http\Requests\Org\SubmitStrategicPlanRequest;
+use App\Http\Requests\Org\SaveDraftStrategicPlanRequest;
 
 class StrategicPlanController extends Controller
 {
@@ -41,7 +44,7 @@ class StrategicPlanController extends Controller
      * because dashboard allows selecting SY only if user has membership there.
      * (The routes already apply org.role:president, but this is a safe backend guard too.)
      */
-    private function assertMembership(Request $request, int $orgId, int $targetSyId): void
+    private function assertMembership(Request $request, int $orgId, int $targetSyId): ?RedirectResponse
     {
         $userId = (int) $request->user()->id;
 
@@ -52,13 +55,19 @@ class StrategicPlanController extends Controller
             ->whereNull('archived_at')
             ->exists();
 
-        abort_unless($ok, 403, 'No access to this organization for the selected school year.');
+        if (! $ok) {
+            return redirect()
+                ->route('org.rereg.index') // or org.dashboard / org.orgs.index etc.
+                ->with('error', 'No access to this organization for the selected school year.');
+        }
+
+        return null;
     }
 
     /**
      * Guard: allow edit only when status is editable.
      */
-    private function assertEditableStatus(StrategicPlanSubmission $submission): void
+    private function assertEditableStatus(StrategicPlanSubmission $submission): ?RedirectResponse
     {
         $editable = in_array($submission->status, [
             StrategicPlanSubmission::STATUS_DRAFT,
@@ -66,7 +75,13 @@ class StrategicPlanController extends Controller
             StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
         ], true);
 
-        abort_unless($editable, 403, 'This submission is currently under review and cannot be edited.');
+        if (! $editable) {
+            return redirect()
+                ->route('org.strategic-plans.show', $submission->id) // adjust route if needed
+                ->with('error', 'This submission is currently under review and cannot be edited.');
+        }
+
+        return null;
     }
 
     /**
@@ -198,24 +213,54 @@ class StrategicPlanController extends Controller
             ->with('success', 'Draft saved.');
     }
 
+
+    private function moderatorForSy(int $orgId, int $targetSyId): ?User
+    {
+        $membership = OrgMembership::query()
+            ->with('user')
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $targetSyId) // adjust if your column name differs
+            ->where('role', 'moderator')           // adjust to your constant if you have one
+            ->first();
+
+        return $membership?->user;
+    }
+
+
+
+
     /**
      * POST /org/rereg/b1/submit
      */
+
+
     public function submitToModerator(SubmitStrategicPlanRequest $request)
     {
         ['orgId' => $orgId, 'targetSy' => $targetSyId] = $this->ctx($request);
 
         if ($orgId <= 0) {
-            return redirect()->route('org.home')->with('status', 'Please select an organization first.');
+            return redirect()->route('org.home')->with('error', 'Please select an organization first.');
         }
 
         if ($targetSyId <= 0) {
-            return redirect()->route('org.rereg.index')->with('status', 'Please select a target school year first.');
+            return redirect()->route('org.rereg.index')->with('error', 'Please select a target school year first.');
         }
 
-        $this->assertMembership($request, $orgId, $targetSyId);
+        // if your assertMembership returns ?RedirectResponse, use this:
+        if ($resp = $this->assertMembership($request, $orgId, $targetSyId)) {
+            return $resp;
+        }
 
-        DB::transaction(function () use ($orgId, $targetSyId) {
+        $moderator = $this->moderatorForSy($orgId, $targetSyId);
+        if (! $moderator) {
+            return redirect()->route('org.rereg.index')
+                ->with('error', 'No moderator assigned for this organization and school year.');
+        }
+
+        $submissionId = null;
+
+        $resp = DB::transaction(function () use ($orgId, $targetSyId, &$submissionId, $moderator) {
+
             $submission = StrategicPlanSubmission::query()
                 ->where('organization_id', $orgId)
                 ->where('target_school_year_id', $targetSyId)
@@ -228,32 +273,64 @@ class StrategicPlanController extends Controller
                 StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
             ], true);
 
-            abort_unless($editable, 403, 'This submission cannot be submitted right now.');
+            if (! $editable) {
+                return redirect()
+                    ->route('org.rereg.b1.edit')
+                    ->with('error', 'This submission cannot be submitted right now.');
+            }
 
             $submission->status = StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR;
             $submission->submitted_to_moderator_at = now();
 
-            // Clear Moderator cycle
+            // clear cycles...
             $submission->moderator_reviewed_by = null;
             $submission->moderator_reviewed_at = null;
             $submission->moderator_remarks = null;
 
-            // Clear Sacdev cycle
             $submission->sacdev_reviewed_by = null;
             $submission->sacdev_reviewed_at = null;
             $submission->sacdev_remarks = null;
             $submission->approved_at = null;
 
             $submission->save();
+
+            $submissionId = (int) $submission->getKey();
+
+            DB::afterCommit(function () use ($orgId, $targetSyId, $submissionId, $moderator) {
+                $dedupeKey = implode(':', [
+                    'rereg','strategic_plan','submitted_to_moderator',
+                    'org'.$orgId,'sy'.$targetSyId,'sub'.$submissionId,'to_user'.$moderator->getKey(),
+                ]);
+
+                InAppNotifier::notifyOnce($moderator, [
+                    'dedupe_key'   => $dedupeKey,
+                    'title'        => 'Strategic Plan submitted for review',
+                    'message'      => 'A Strategic Plan was submitted to you. Please review and return or forward to SACDEV.',
+                    'org_id'       => $orgId,
+                    'target_sy_id' => $targetSyId,
+                    'form'         => 'strategic_plan',
+                    'status'       => 'submitted_to_moderator',
+                    'action_url'   => route('org.moderator.strategic_plans.show', $submissionId),
+                    'meta'         => ['submission_id' => $submissionId],
+                ]);
+            });
+
+            return null; // success
         });
+
+        // IMPORTANT: if transaction returned a redirect, return it now
+        if ($resp instanceof RedirectResponse) {
+            return $resp;
+        }
 
         return redirect()
             ->route('org.rereg.b1.edit')
             ->with('success', 'Submitted to moderator for review.');
     }
 
+
     /**
-     * ---- Sync helpers ----
+     * ---- helpers ----
      */
 
     private function syncProjects(StrategicPlanSubmission $submission, array $projectsPayload): void
