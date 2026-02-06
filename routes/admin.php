@@ -72,6 +72,16 @@ Route::prefix('admin')
                 ->name('revert_approval');
         });
 
+        Route::prefix('sacdev')->name('sacdev.')->group(function () {
+            Route::get('/rereg', [\App\Http\Controllers\Sacdev\SacdevReregOverviewController::class, 'index'])
+                ->name('rereg.overview');
+
+            Route::post('/rereg/set-sy', [\App\Http\Controllers\Sacdev\SacdevReregOverviewController::class, 'setSy'])
+                ->name('rereg.setSy');
+        });
+
+
+
         Route::prefix('president-registrations')->name('admin.b2.president.')->group(function () {
             Route::get('/', [SacdevB2PresidentRegistrationController::class, 'index'])->name('index');
             Route::get('/{registration}', [SacdevB2PresidentRegistrationController::class, 'show'])->name('show');

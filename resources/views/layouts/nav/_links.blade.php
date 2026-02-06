@@ -11,11 +11,12 @@
             : 'bg-white text-slate-700 border-transparent hover:bg-slate-50 hover:text-slate-900';
     };
 
-    $item = function (string $label, string $href, array $activePatterns) use ($linkClass) {
+    $item = function (string $label, string $href, array $activePatterns, $badge = null) use ($linkClass) {
         return [
             'label' => $label,
             'href'  => $href,
             'class' => $linkClass($activePatterns),
+            'badge'  => $badge,
         ];
     };
 
@@ -52,7 +53,12 @@
 
             // Re-registration hub flow
             if (Route::has('admin.rereg.index')) {
-                $rereg[] = $item('Re-Registration Hub', route('admin.rereg.index'), ['admin.rereg.*', 'rereg.*']);
+                $rereg[] = $item(
+                    'Re-Registration Hub',
+                    route('admin.rereg.index'),
+                    ['admin.rereg.*', 'rereg.*'],
+                    $adminReregBadgeCount ?? null
+                );
             }
 
             // Review / tools (non-form)
@@ -220,6 +226,7 @@
             if (str_contains($l['class'], 'bg-blue-50')) return true;
         }
         return false;
+        
     };
 
     $iconSvg = function (string $name) {

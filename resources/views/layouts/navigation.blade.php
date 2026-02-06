@@ -16,6 +16,8 @@
         </div>
     </details>
 
+    
+
     {{-- Desktop --}}
     <div class="hidden lg:block space-y-1">
         @include('layouts.nav._links', ['user' => $user, 'isAdmin' => $isAdmin, 'mode' => 'desktop'])

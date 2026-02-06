@@ -31,6 +31,25 @@
                     <div class="text-sm text-gray-500">School Years</div>
                     <div class="text-lg font-semibold">{{ $syCount }}</div>
                 </div>
+                <a href="{{ route('admin.rereg.index') }}" class="block hover:bg-slate-50 rounded">
+                    <div class="bg-white shadow rounded p-6">
+                        <div class="text-sm text-gray-500">Re-Registration Pending</div>
+
+                        <div class="flex items-center gap-2">
+                            <div class="text-lg font-semibold text-red-600">
+                                {{ $pendingCaseCount }}
+                            </div>
+
+                            @if($pendingCaseCount > 0)
+                                <span class="text-xs rounded-full bg-red-100 text-red-700 px-2 py-0.5 font-semibold">
+                                    Needs review
+                                </span>
+
+                            @endif
+                        </div>
+                    </div>
+
+                </a>
             </div>
 
             <div class="mt-6 bg-white shadow rounded p-6">
