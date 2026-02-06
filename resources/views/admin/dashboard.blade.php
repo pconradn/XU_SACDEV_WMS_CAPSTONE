@@ -50,6 +50,28 @@
                     </div>
 
                 </a>
+
+                <div class="bg-white shadow rounded p-6">
+                    <div class="text-sm text-gray-500">Organizations Ready for Activation</div>
+
+                    <div class="flex items-center gap-2">
+                        <div class="text-lg font-semibold text-emerald-700">
+                            {{ $readyForActivationCount }}
+                        </div>
+
+                        @if($readyForActivationCount > 0)
+                            <span class="text-xs rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 font-semibold">
+                                Action needed
+                            </span>
+
+                        @endif
+                    </div>
+                </div>
+
+
+
+
+
             </div>
 
             <div class="mt-6 bg-white shadow rounded p-6">
