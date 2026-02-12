@@ -170,7 +170,7 @@ class SacdevStrategicPlanController extends Controller
             $allowed = [
                 StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV,
                 
-                StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
+                //StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
             ];
 
             if (! in_array($locked->status, $allowed, true)) {
