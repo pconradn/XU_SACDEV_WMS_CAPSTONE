@@ -23,16 +23,12 @@ class ModeratorStrategicPlanController extends Controller
 
     private function presidentForSy(int $orgId, int $syId): ?User
     {
-        // Adjust field names to match your schema:
-        // - organization_id
-        // - school_year_id (or target_school_year_id)
-        // - role (or position)
-        // - user_id
+
         $membership = OrgMembership::query()
             ->with('user')
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
-            ->where('role', 'president') // adjust to your constant if you have one
+            ->where('role', 'president') 
             ->first();
 
         return $membership?->user;
@@ -43,7 +39,7 @@ class ModeratorStrategicPlanController extends Controller
     {
         ['orgId' => $orgId, 'syId' => $syId] = $this->ctx($request);
 
-        // If require.context middleware is solid, this is optional
+        
         abort_unless($orgId && $syId, 403, 'No active organization / school year selected.');
 
         $submissions = StrategicPlanSubmission::query()
@@ -124,7 +120,7 @@ class ModeratorStrategicPlanController extends Controller
             $submission->forwarded_to_sacdev_at = null;
             $submission->save();
 
-            // Notify president AFTER COMMIT (avoid false alerts)
+       
             DB::afterCommit(function () use ($submission, $orgId, $syId) {
                 $president = $this->presidentForSy($orgId, $syId);
 

@@ -53,7 +53,7 @@ class ModeratorReregDashboardController extends Controller
         abort_unless($isAssignedModerator, 403, 'Moderator access only.');
 
 
-        // Who is the president for this org + target SY?
+     
         $presidentMembership = OrgMembership::query()
             ->with('user')
             ->where('organization_id', $orgId)
@@ -61,16 +61,15 @@ class ModeratorReregDashboardController extends Controller
             ->where('role', 'president')
             ->first();
 
-        // B1 status (Strategic Plan)
         $b1 = null;
         if (class_exists(StrategicPlanSubmission::class)) {
             $b1 = StrategicPlanSubmission::query()
                 ->where('organization_id', $orgId)
-                ->where('target_school_year_id', $syId) // adjust if your column is school_year_id
+                ->where('target_school_year_id', $syId) 
                 ->first();
         }
 
-        // Optional B2/B3 if those models exist
+     
         $b2 = null;
         $b2Class = 'App\\Models\\PresidentRegistration';
         if (class_exists($b2Class)) {
@@ -106,7 +105,6 @@ class ModeratorReregDashboardController extends Controller
 
             $editable = ! $b5 || ! in_array($b5->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true);
 
-            // “same moderator both years” check (update to your real model)
             $sameModeratorBoth = \App\Models\OrgMembership::query()
                 ->where('user_id', $userId)
                 ->where('organization_id', $orgId)

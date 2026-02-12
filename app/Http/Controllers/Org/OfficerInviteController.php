@@ -29,14 +29,14 @@ class OfficerInviteController extends Controller
 
         $oldUser = User::findOrFail($data['old_user_id']);
 
-        // only pending invites should be allowed here
+  
         abort_unless((int) $oldUser->must_change_password === 1 && $oldUser->password_changed_at === null, 403);
 
         return DB::transaction(function () use ($officer, $orgId, $syId, $oldUser) {
 
             $newEmail = strtolower(trim($officer->email));
 
-            // new email must be unique
+           
             $taken = User::query()
                 ->whereRaw('LOWER(email) = ?', [$newEmail])
                 ->where('id', '!=', $oldUser->id)

@@ -185,7 +185,7 @@ class B5ModeratorSubmissionController extends Controller
             return back()->with('error', 'This form is already submitted/approved.');
         }
 
-        // strict submit validation (adjust if you need more required fields)
+       
         $request->validate([
             'photo_id' => [$submission->photo_id_path ? 'nullable' : 'required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
 
@@ -203,7 +203,7 @@ class B5ModeratorSubmissionController extends Controller
             'city_address' => ['required', 'string'],
         ]);
 
-        // Save everything first as draft (uploads + leadership rows)
+       
         $this->saveDraft($request);
 
         $submission->refresh();
@@ -211,12 +211,12 @@ class B5ModeratorSubmissionController extends Controller
         $submission->status = 'submitted_to_sacdev';
         $submission->submitted_at = now();
 
-        // clear old SACDEV review fields on new submit
+      
         $submission->sacdev_reviewed_by_user_id = null;
         $submission->sacdev_remarks = null;
         $submission->sacdev_reviewed_at = null;
 
-        // reset edit request flags on new submit
+      
         $submission->edit_requested = false;
         $submission->edit_requested_at = null;
         $submission->edit_requested_by_user_id = null;
@@ -244,7 +244,7 @@ class B5ModeratorSubmissionController extends Controller
             return back()->with('error', 'You can only unsubmit when the form is submitted to SACDEV.');
         }
 
-        // optional safety: don’t allow if SACDEV already reviewed
+       
         if ($submission->sacdev_reviewed_at) {
             return back()->with('error', 'Cannot unsubmit because SACDEV has already started reviewing.');
         }
@@ -269,7 +269,7 @@ class B5ModeratorSubmissionController extends Controller
 
         abort_unless((int) $submission->moderator_user_id === $userId, 403);
 
-        // only needed when locked
+     
         if (!in_array($submission->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true)) {
             return back()->with('error', 'Request edit is only needed when the form is submitted or approved.');
         }

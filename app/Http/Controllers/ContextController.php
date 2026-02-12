@@ -26,7 +26,6 @@ class ContextController extends Controller
         $orgIds = $memberships->pluck('organization_id')->unique()->values();
         $syIds  = $memberships->pluck('school_year_id')->unique()->values();
 
-        // Only show orgs user belongs to (active memberships only)
         $orgs = Organization::query()
             ->whereIn('id', $orgIds)
             ->orderBy('name')
@@ -68,7 +67,6 @@ class ContextController extends Controller
         $request->session()->put('active_org_id', $orgId);
         $request->session()->put('encode_sy_id', $syId);
 
-        // Optional: clear moderator-specific selections if you still use them anywhere
         $request->session()->forget(['active_moderator_org_id', 'active_moderator_sy_id']);
 
         return redirect()->route('dashboard');

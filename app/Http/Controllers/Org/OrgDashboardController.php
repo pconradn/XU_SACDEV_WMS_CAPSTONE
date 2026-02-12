@@ -29,7 +29,7 @@ class OrgDashboardController extends Controller
 
         $selectedSy = SchoolYear::find($selectedSyId);
 
-        // ✅ membership list for selected SY (this powers the org dropdown)
+      
         $memberships = OrgMembership::query()
             ->with('organization')
             ->where('user_id', $user->id)
@@ -37,7 +37,7 @@ class OrgDashboardController extends Controller
             ->whereNull('archived_at')
             ->get();
 
-        // ✅ keep active_org_id only if valid for this SY
+     
         $sessionOrgId = (int) $request->session()->get('active_org_id', 0);
 
         $currentMembership = $memberships->firstWhere('organization_id', $sessionOrgId)

@@ -57,10 +57,7 @@ class OrgActivationController extends Controller
         try {
             DB::transaction(function () use ($organization, $encodeSyId, $b1, $b3, $b5) {
 
-                /**
-                 * HARD LOCK (DB side)
-                 * - lock the org+sy activation row check so simultaneous requests can’t double-create
-                 */
+  
                 $existing = OrganizationSchoolYear::query()
                     ->where('organization_id', $organization->id)
                     ->where('school_year_id', $encodeSyId)
@@ -68,13 +65,10 @@ class OrgActivationController extends Controller
                     ->first();
 
                 if ($existing) {
-                    // Throwing an exception cleanly aborts the transaction
+                   
                     throw new \RuntimeException('ALREADY_ACTIVATED');
                 }
 
-                // ---------------------------
-                // A) Update Organization profile (Choice A)
-                // ---------------------------
                 $organization->update([
                     'name'   => $b1->org_name ?: $organization->name,
                     'acronym'=> $b1->org_acronym ?: $organization->acronym,
@@ -86,13 +80,11 @@ class OrgActivationController extends Controller
                     'logo_mime' => $b1->logo_mime,
                     'logo_size_bytes' => $b1->logo_size_bytes,
 
-                    // keep if you migrated this
+                    
                     'last_b1_submission_id' => $b1->id,
                 ]);
 
-                // ---------------------------
-                // B) Create/Upsert OfficerEntries from B3 items
-                // ---------------------------
+
                 $items = $b3?->items ?? collect();
 
                 foreach ($items as $item) {
@@ -114,14 +106,12 @@ class OrgActivationController extends Controller
                             'mobile_number' => $item->mobile_number,
                             'sort_order' => $item->sort_order,
                             'email' => $email,
-                            'user_id' => null, // do NOT create users here
+                            'user_id' => null, 
                         ]
                     );
                 }
 
-                // ---------------------------
-                // C) Create/Upsert Projects from B1 StrategicPlanProjects
-                // ---------------------------
+
                 $spProjects = StrategicPlanProject::query()
                     ->where('submission_id', $b1->id)
                     ->get();
@@ -143,9 +133,6 @@ class OrgActivationController extends Controller
                     );
                 }
 
-                // ---------------------------
-                // D) Create activation record (THIS is the "activated" lock)
-                // ---------------------------
                 OrganizationSchoolYear::query()->create([
                     'organization_id' => $organization->id,
                     'school_year_id' => $encodeSyId,
@@ -153,11 +140,7 @@ class OrgActivationController extends Controller
                     'president_confirmed_at' => now(),
                 ]);
 
-                // ---------------------------
-                // E) Link President + Moderator OfficerEntry to their accounts
-                // ---------------------------
 
-                // President: B1 submitter
                 $presUser = User::find((int) $b1->submitted_by_user_id);
 
                 if ($presUser) {
@@ -185,7 +168,7 @@ class OrgActivationController extends Controller
                     }
                 }
 
-                // Moderator: B5 has moderator_user_id (+ email)
+        
                 if ((int) ($b5->moderator_user_id ?? 0) > 0) {
                     $modUser = User::find((int) $b5->moderator_user_id);
                     $modEmail = mb_strtolower(trim((string) ($b5->email ?: ($modUser?->email ?? ''))));
@@ -227,7 +210,7 @@ class OrgActivationController extends Controller
                     }
                 }
 
-                // Treasurer linking: best effort (position == "Treasurer")
+               
                 $treasurerItem = $items->first(function ($it) {
                     return mb_strtolower(trim((string) $it->position)) === 'treasurer';
                 });

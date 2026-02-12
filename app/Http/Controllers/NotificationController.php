@@ -31,7 +31,6 @@ class NotificationController extends Controller
         $data = $n->data ?? [];
         $actionUrl = $data['action_url'] ?? null;
 
-        // If there is a target page, redirect there
         if ($actionUrl) return redirect($actionUrl);
 
         return view('notifications.show', compact('n'));

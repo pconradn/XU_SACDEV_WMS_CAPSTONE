@@ -153,7 +153,7 @@ class OfficerEntryController extends Controller
 
         abort_unless($officer->organization_id === $orgId && $officer->school_year_id === $syId, 404);
 
-        // Safety: prevent deleting someone who still holds responsibilities
+        
         if ($this->officerHasActiveAssignments($officer, $orgId, $syId)) {
             return redirect()
                 ->route('org.officers.index')
@@ -161,7 +161,7 @@ class OfficerEntryController extends Controller
         }
 
 
-        // Archive membership linked to this officer entry (ONLY for this org+SY)
+       
         OrgMembership::query()
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
@@ -183,12 +183,12 @@ class OfficerEntryController extends Controller
     {
         $userId = (int) ($officer->user_id ?? 0);
 
-        // If they don't even have a user, they can't be assigned to org roles or projects
+        
         if ($userId <= 0) {
             return false;
         }
 
-        // Treasurer / Moderator / President roles for this org+SY
+        
         $hasOrgRole = OrgMembership::query()
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
@@ -199,7 +199,7 @@ class OfficerEntryController extends Controller
 
         if ($hasOrgRole) return true;
 
-        // Project Head assignments under projects belonging to this org+SY
+        
         $projectIds = Project::query()
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
@@ -209,7 +209,7 @@ class OfficerEntryController extends Controller
 
         return ProjectAssignment::query()
             ->whereIn('project_id', $projectIds)
-            ->where('assignment_role', 'project_head')   // ✅ FIXED COLUMN
+            ->where('assignment_role', 'project_head')   
             ->where('user_id', $userId)
             ->whereNull('archived_at')
             ->exists();

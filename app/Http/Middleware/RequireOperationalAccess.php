@@ -19,14 +19,12 @@ class RequireOperationalAccess
 
         $user = auth()->user();
 
-        // SACDEV admins bypass
         if ($user->system_role === 'sacdev_admin') {
             return $next($request);
         }
 
         $activeSyId = SchoolYear::activeId();
 
-        // Case A: has active membership (normal)
         $hasActiveMembership = $activeSyId
             ? OrgMembership::query()
                 ->where('user_id', $user->id)
@@ -39,12 +37,12 @@ class RequireOperationalAccess
             return $next($request);
         }
 
-        // Case B: has pending assignments from ANY SY (carry-over)
+
         $hasPendingAssignments = ProjectAssignment::query()
             ->where('user_id', $user->id)
             ->whereNull('archived_at')
             ->whereHas('project', function ($q) {
-                // adjust to your actual status column
+            
                 $q->where('status', '!=', 'accomplished');
             })
             ->exists();
@@ -53,7 +51,7 @@ class RequireOperationalAccess
             return $next($request);
         }
 
-        // No access at all
+
         return response()->view('blocked.no-access', [], 403);
     }
 }

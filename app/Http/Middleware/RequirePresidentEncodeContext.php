@@ -23,7 +23,7 @@ class RequirePresidentEncodeContext
             return redirect()->route('org.home')->with('status', 'Please select an organization first.');
         }
 
-        // president permission is based on ACTIVE SY membership for selected org
+      
         $isPresident = OrgMembership::query()
             ->where('user_id', $user->id)
             ->where('organization_id', $orgId)
@@ -36,7 +36,7 @@ class RequirePresidentEncodeContext
             abort(403, 'Only the President can encode officers/projects.');
         }
 
-        // make sure SY selected or default to active SY
+  
         if (!$request->session()->has('encode_sy_id')) {
             $request->session()->put('encode_sy_id', $activeSy->id);
         }

@@ -29,8 +29,7 @@ class ReregHubController extends Controller
     {
         $encodeSyId = (int) $request->session()->get('encode_sy_id');
 
-        // Fallback: default to active SY if none selected yet
-        // (If your school_years table doesn't have is_active, swap this to latest('id')->value('id'))
+
         if (!$encodeSyId) {
             $activeId = (int) SchoolYear::query()->where('is_active', true)->value('id');
             if ($activeId) {
@@ -96,7 +95,7 @@ class ReregHubController extends Controller
             ),
         ];
 
-        // Optional for later UI: readiness badge
+    
         $allApproved = collect([$b1, $b2, $b3, $b5])->every(function ($m) {
             return $m && (string) $m->status === 'approved_by_sacdev';
         });
@@ -157,10 +156,7 @@ class ReregHubController extends Controller
         return ['submitted_to_sacdev', 'forwarded_to_sacdev'];
     }
 
-    /**
-     * SY badges: counts of unique (org_id|sy_id) "cases" that have ANY actionable form, across ALL school years.
-     * Returns: [syId => count]
-     */
+
     private function syBadgesAll(): array
     {
         $actionable = $this->actionableStatuses();
@@ -189,17 +185,14 @@ class ReregHubController extends Controller
             ->unique()
             ->values();
 
-        // countBy SY id
+      
         return $pairs
             ->map(fn($k) => (int) explode('|', $k)[1])
             ->countBy()
             ->all();
     }
 
-    /**
-     * Org badge: for THIS org + THIS target SY, how many forms are actionable.
-     * Returns: int 0..4
-     */
+
     private function orgPendingCountFor(Organization $org, int $syId): int
     {
         $actionable = $this->actionableStatuses();
@@ -226,19 +219,19 @@ class ReregHubController extends Controller
     {
         $encodeSyId = (int) $request->session()->get('encode_sy_id');
 
-        // --- Active SY (needed for Prev/Active/Next buttons + default selection) ---
+     
         $activeSy = SchoolYear::query()->where('is_active', true)->first();
 
-        // Fallback to active SY if none selected
+       
         if (!$encodeSyId && $activeSy) {
             $encodeSyId = (int) $activeSy->id;
             $request->session()->put('encode_sy_id', $encodeSyId);
         }
 
-        // Full list for modal
+       
         $allSchoolYears = SchoolYear::query()->orderByDesc('id')->get();
 
-        // Quick list (Prev / Active / Next)
+     
         $schoolYears = collect();
         if ($activeSy) {
             $prevSy = SchoolYear::query()
@@ -255,7 +248,7 @@ class ReregHubController extends Controller
             $schoolYears->push($activeSy);
             if ($nextSy) $schoolYears->push($nextSy);
         } else {
-            // Fallback if somehow no active SY exists: show latest 3 as quick buttons
+            
             $schoolYears = $allSchoolYears->take(3)->reverse()->values();
             if (!$encodeSyId) {
                 $encodeSyId = (int) ($schoolYears->last()?->id ?? 0);
@@ -265,21 +258,18 @@ class ReregHubController extends Controller
             }
         }
 
-        // If selected SY isn't in quick buttons, keep it (modal can still show it),
-        // but we need the selected label.
+  
         $selectedSy = $encodeSyId
             ? $allSchoolYears->firstWhere('id', $encodeSyId)
             : $activeSy;
 
-        // Orgs list (you can filter later; right now show all)
+      
         $organizations = Organization::query()
             ->orderBy('name')
             ->get();
 
         $actionable = ['submitted_to_sacdev', 'forwarded_to_sacdev'];
 
-        // --- SY badges (counts per SY across all orgs) ---
-        // unique "case key" = org_id|sy_id where ANY form is actionable
         $caseKeys = collect()
             ->merge(
                 StrategicPlanSubmission::whereIn('status', $actionable)
@@ -309,13 +299,12 @@ class ReregHubController extends Controller
             ->countBy()
             ->all();
 
-        // --- ORG badges (for currently selected SY only) ---
-        // count how many of B1/B2/B3/B5 are actionable for each org
+
         $orgBadges = [];
         $readyOrgIds = [];
 
         if ($encodeSyId) {
-            // Latest status per org for the selected SY
+    
             $b1 = StrategicPlanSubmission::where('target_school_year_id', $encodeSyId)
                 ->get(['id', 'organization_id', 'status'])
                 ->sortByDesc('id')
@@ -355,7 +344,7 @@ class ReregHubController extends Controller
                     optional($b5->get($orgId))->status,
                 ];
 
-                // only orgs that have started re-reg (any exists)
+            
                 $started = collect($statuses)->filter()->isNotEmpty();
                 if (!$started) continue;
 

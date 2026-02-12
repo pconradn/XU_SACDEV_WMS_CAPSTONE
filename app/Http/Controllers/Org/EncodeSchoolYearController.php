@@ -13,7 +13,7 @@ class EncodeSchoolYearController extends Controller
     {
         $user = $request->user();
 
-        // ✅ all SY where user has membership (any org)
+    
         $allowedSyIds = OrgMembership::query()
             ->where('user_id', $user->id)
             ->whereNull('archived_at')
@@ -29,7 +29,7 @@ class EncodeSchoolYearController extends Controller
 
         $selectedSyId = (int) $request->session()->get('encode_sy_id', 0);
 
-        // default to newest allowed SY if none selected
+        
         if ($selectedSyId <= 0 && $schoolYears->count() > 0) {
             $selectedSyId = (int) $schoolYears->first()->id;
             $request->session()->put('encode_sy_id', $selectedSyId);

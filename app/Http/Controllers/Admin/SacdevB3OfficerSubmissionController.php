@@ -45,7 +45,7 @@ class SacdevB3OfficerSubmissionController extends Controller
         if ($status) {
             $q->where('status', $status);
         } else {
-            // Default view: show relevant pipeline statuses
+           
             $q->whereIn('status', ['submitted_to_sacdev', 'returned_by_sacdev', 'approved_by_sacdev']);
         }
 
