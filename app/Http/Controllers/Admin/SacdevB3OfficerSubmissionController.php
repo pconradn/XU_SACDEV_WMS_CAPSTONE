@@ -162,7 +162,7 @@ class SacdevB3OfficerSubmissionController extends Controller
                     'target_sy_id' => $syId,
                     'form'         => 'b3_officers_list',
                     'status'       => 'approved_by_sacdev',
-                    'action_url'   => route('org.rereg.b3.officers-list.index'),
+                    'action_url'   => route('org.rereg.b3.officers-list.edit'),
                     'meta'         => ['submission_id' => $submissionId],
                 ]);
             });

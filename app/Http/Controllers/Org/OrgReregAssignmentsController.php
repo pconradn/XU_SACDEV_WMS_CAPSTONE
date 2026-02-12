@@ -118,13 +118,17 @@ class OrgReregAssignmentsController extends Controller
     public function editModerator(Request $request)
     {
         $orgId = $this->orgId($request);
-        $targetSyId = $this->targetSyId($request);
 
-        $this->requireTargetSySelected($targetSyId);
         
+        $targetSyId = $this->targetSyId($request);
+        $this->requireTargetSySelected($targetSyId);
 
-        $schoolYears = SchoolYear::query()->orderByDesc('id')->get(['id','name']);
-        $selectedSyId = (int) $request->query('target_sy_id', $targetSyId);
+      
+        $selectedSyId = (int) $targetSyId;
+
+        $currentSy = SchoolYear::query()
+            ->where('id', $selectedSyId) 
+            ->first(['id','name']);
 
         $current = OrgMembership::query()
             ->with('user')
@@ -139,20 +143,21 @@ class OrgReregAssignmentsController extends Controller
             $hasB5ForCurrentModerator = ModeratorSubmission::query()
                 ->where('organization_id', $orgId)
                 ->where('target_school_year_id', $selectedSyId)
-                ->where('moderator_user_id', $current->user->id)  
+                ->where('moderator_user_id', $current->user->id)
                 ->exists();
         }
+
         $suggested = $this->suggestedModeratorUser($orgId, $selectedSyId);
 
-
         return view('org.rereg.assign_moderator', compact(
-            'schoolYears',
+            'currentSy',
             'selectedSyId',
             'current',
             'suggested',
             'hasB5ForCurrentModerator'
         ));
     }
+
 
 
     public function storeModerator(Request $request)

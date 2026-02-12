@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Org;
 
-use App\Models\User;
-use Illuminate\Http\Request;
-use App\Models\OrgMembership;
-use App\Support\InAppNotifier;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Models\OrgMembership;
 use App\Models\StrategicPlanSubmission;
+use App\Models\User;
+use App\Support\InAppNotifier;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ModeratorStrategicPlanController extends Controller
 {
@@ -29,6 +30,7 @@ class ModeratorStrategicPlanController extends Controller
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
             ->where('role', 'president') 
+            ->where('archived_at', null)  
             ->first();
 
         return $membership?->user;
@@ -83,8 +85,10 @@ class ModeratorStrategicPlanController extends Controller
 
 
 
-    public function returnToOrg(Request $request, StrategicPlanSubmission $submission){
-        
+
+
+    public function returnToOrg(Request $request, StrategicPlanSubmission $submission)
+    {
         ['orgId' => $orgId, 'syId' => $syId, 'userId' => $userId] = $this->ctx($request);
 
         abort_unless($orgId && $syId, 403, 'No active organization / school year selected.');
@@ -95,34 +99,40 @@ class ModeratorStrategicPlanController extends Controller
             'moderator_remarks' => ['required', 'string', 'min:5'],
         ]);
 
-        DB::transaction(function () use ($submission, $request, $userId, $orgId, $syId) {
-            $submission = StrategicPlanSubmission::query()
+        $result = DB::transaction(function () use ($submission, $request, $userId, $orgId, $syId) {
+
+            $locked = StrategicPlanSubmission::query()
                 ->whereKey($submission->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($submission->status === StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV) {
-                abort(403, 'Already approved by SACDEV.');
+            if ($locked->status === StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV) {
+                return redirect()
+                    ->route('org.moderator.strategic_plans.show', $locked->getKey())
+                    ->with('error', 'This Strategic Plan has already been approved by SACDEV and can no longer be modified.');
             }
 
-            if (!in_array($submission->status, [
+            if (! in_array($locked->status, [
                 StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR,
-                StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
-                StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV,
             ], true)) {
-                abort(403, 'Invalid state for returning.');
+                return redirect()
+                    ->route('org.moderator.strategic_plans.show', $locked->getKey())
+                    ->with('error', 'This submission cannot be returned in its current state.');
             }
 
-            $submission->status = StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR;
-            $submission->moderator_reviewed_by = $userId;
-            $submission->moderator_reviewed_at = now();
-            $submission->moderator_remarks = $request->input('moderator_remarks');
-            $submission->forwarded_to_sacdev_at = null;
-            $submission->save();
+            $locked->status = StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR;
+            $locked->moderator_reviewed_by = $userId;
+            $locked->moderator_reviewed_at = now();
+            $locked->moderator_remarks = $request->input('moderator_remarks');
+            $locked->forwarded_to_sacdev_at = null;
+            $locked->save();
 
-       
-            DB::afterCommit(function () use ($submission, $orgId, $syId) {
+            // Prepare data for after-commit notification
+            $submissionId = (int) $locked->getKey();
+
+            DB::afterCommit(function () use ($orgId, $syId, $submissionId) {
                 $president = $this->presidentForSy($orgId, $syId);
+                if (! $president) return;
 
                 $dedupeKey = implode(':', [
                     'rereg',
@@ -130,36 +140,45 @@ class ModeratorStrategicPlanController extends Controller
                     'returned_by_moderator',
                     'org'.$orgId,
                     'sy'.$syId,
-                    'sub'.$submission->getKey(),
-                    'to_user'.($president?->getKey() ?? 0),
+                    'sub'.$submissionId,
+                    'to_user'.$president->getKey(),
                 ]);
 
                 InAppNotifier::notifyOnce($president, [
                     'dedupe_key'   => $dedupeKey,
-                    'title'        => 'Strategic Plan returned by Moderator',
+                    'title'        => 'Strategic Plan Returned by Moderator',
                     'message'      => 'Your Strategic Plan submission was returned. Please review the remarks and resubmit.',
                     'org_id'       => $orgId,
                     'target_sy_id' => $syId,
                     'form'         => 'strategic_plan',
                     'status'       => 'returned_by_moderator',
-                    
-                    'action_url' => route('org.rereg.b1.edit'),
-                    'meta'         => [
-                        'submission_id' => $submission->getKey(),
-                    ],
+                    'action_url'   => route('org.rereg.b1.edit'),
+                    'meta'         => ['submission_id' => $submissionId],
+                    'send_mail'    => true,
                 ]);
             });
+
+            return true;
         });
 
+        
+        if ($result instanceof RedirectResponse) {
+            return $result;
+        }
+
         return redirect()
-            ->route('org.moderator.strategic_plans.show', $submission)
+            ->route('org.moderator.strategic_plans.show', $submission->getKey())
             ->with('success', 'Returned to organization with remarks.');
     }
 
 
 
 
+
+
     public function forwardToSacdev(Request $request, StrategicPlanSubmission $submission){
+
+
         ['orgId' => $orgId, 'syId' => $syId, 'userId' => $userId] = $this->ctx($request);
 
         abort_unless($orgId && $syId, 403, 'No active organization / school year selected.');
@@ -170,32 +189,40 @@ class ModeratorStrategicPlanController extends Controller
             'moderator_note' => ['nullable', 'string'],
         ]);
 
-        DB::transaction(function () use ($submission, $request, $userId, $orgId, $syId) {
-            $submission = StrategicPlanSubmission::query()
+        $result = DB::transaction(function () use ($submission, $request, $userId, $orgId, $syId) {
+
+            $locked = StrategicPlanSubmission::query()
                 ->whereKey($submission->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($submission->status === StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV) {
-                abort(403, 'Already approved by SACDEV.');
+            if ($locked->status === StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV) {
+                return redirect()
+                    ->route('org.moderator.strategic_plans.show', $locked->getKey())
+                    ->with('error', 'This Strategic Plan has already been approved by SACDEV and can no longer be modified.');
             }
 
-            if (!in_array($submission->status, [
+          
+            if (! in_array($locked->status, [
                 StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR,
-                StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
             ], true)) {
-                abort(403, 'This submission is no longer in moderator review stage.');
+                return redirect()
+                    ->route('org.moderator.strategic_plans.show', $locked->getKey())
+                    ->with('error', 'This submission is no longer in the moderator review stage.');
             }
 
-            $submission->status = StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV;
-            $submission->moderator_reviewed_by = $userId;
-            $submission->moderator_reviewed_at = now();
-            $submission->moderator_remarks = $request->input('moderator_note');
-            $submission->forwarded_to_sacdev_at = now();
-            $submission->save();
+            $locked->status = StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV;
+            $locked->moderator_reviewed_by = $userId;
+            $locked->moderator_reviewed_at = now();
+            $locked->moderator_remarks = $request->input('moderator_note');
+            $locked->forwarded_to_sacdev_at = now();
+            $locked->save();
 
-            DB::afterCommit(function () use ($submission, $orgId, $syId) {
+            $submissionId = (int) $locked->getKey();
+
+            DB::afterCommit(function () use ($orgId, $syId, $submissionId) {
                 $president = $this->presidentForSy($orgId, $syId);
+                if (! $president) return;
 
                 $dedupeKey = implode(':', [
                     'rereg',
@@ -203,29 +230,36 @@ class ModeratorStrategicPlanController extends Controller
                     'forwarded_to_sacdev',
                     'org'.$orgId,
                     'sy'.$syId,
-                    'sub'.$submission->getKey(),
-                    'to_user'.($president?->getKey() ?? 0),
+                    'sub'.$submissionId,
+                    'to_user'.$president->getKey(),
                 ]);
 
                 InAppNotifier::notifyOnce($president, [
                     'dedupe_key'   => $dedupeKey,
-                    'title'        => 'Strategic Plan forwarded to SACDEV',
+                    'title'        => 'Strategic Plan Forwarded to SACDEV',
                     'message'      => 'Your Strategic Plan submission has been forwarded to SACDEV for review.',
                     'org_id'       => $orgId,
                     'target_sy_id' => $syId,
                     'form'         => 'strategic_plan',
                     'status'       => 'forwarded_to_sacdev',
-                    'action_url' => route('org.rereg.b1.edit'),
-                    'meta'         => [
-                        'submission_id' => $submission->getKey(),
-                    ],
+                    'action_url'   => route('org.rereg.b1.edit'),
+                    'meta'         => ['submission_id' => $submissionId],
+                    'send_mail'    => true,
                 ]);
             });
+
+            return true;
         });
 
+        
+        if ($result instanceof RedirectResponse) {
+            return $result;
+        }
+
         return redirect()
-            ->route('org.moderator.strategic_plans.show', $submission)
+            ->route('org.moderator.strategic_plans.show', $submission->getKey())
             ->with('success', 'Noted and forwarded to SACDEV.');
     }
+
 
 }

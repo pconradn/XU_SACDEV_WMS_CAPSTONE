@@ -201,11 +201,16 @@ class StrategicPlanController extends Controller
             ->with('user')
             ->where('organization_id', $orgId)
             ->where('school_year_id', $targetSyId) 
-            ->where('role', 'moderator')           
+            ->where('role', 'moderator') 
+            ->where('archived_at', null)         
             ->first();
+
+        //dd($membership);
 
         return $membership?->user;
     }
+
+
 
 
 
@@ -234,9 +239,7 @@ class StrategicPlanController extends Controller
                 ->with('error', 'No moderator assigned for this organization and school year.');
         }
 
-        $submissionId = null;
-
-        $resp = DB::transaction(function () use ($orgId, $targetSyId, &$submissionId, $moderator) {
+        $result = DB::transaction(function () use ($orgId, $targetSyId) {
 
             $submission = StrategicPlanSubmission::query()
                 ->where('organization_id', $orgId)
@@ -270,38 +273,40 @@ class StrategicPlanController extends Controller
 
             $submission->save();
 
-            $submissionId = (int) $submission->getKey();
-
-            DB::afterCommit(function () use ($orgId, $targetSyId, $submissionId, $moderator) {
-                $dedupeKey = implode(':', [
-                    'rereg','strategic_plan','submitted_to_moderator',
-                    'org'.$orgId,'sy'.$targetSyId,'sub'.$submissionId,'to_user'.$moderator->getKey(),
-                ]);
-
-                InAppNotifier::notifyOnce($moderator, [
-                    'dedupe_key'   => $dedupeKey,
-                    'title'        => 'Strategic Plan submitted for review',
-                    'message'      => 'A Strategic Plan was submitted to you. Please review and return or forward to SACDEV.',
-                    'org_id'       => $orgId,
-                    'target_sy_id' => $targetSyId,
-                    'form'         => 'strategic_plan',
-                    'status'       => 'submitted_to_moderator',
-                    'action_url'   => route('org.moderator.strategic_plans.show', $submissionId),
-                    'meta'         => ['submission_id' => $submissionId],
-                ]);
-            });
-
-            return null; 
+            return (int) $submission->getKey();
         });
 
-        if ($resp instanceof RedirectResponse) {
-            return $resp;
+        
+        if ($result instanceof RedirectResponse) {
+            return $result;
         }
+
+        $submissionId = (int) $result;
+
+        $dedupeKey = implode(':', [
+            'rereg','strategic_plan','submitted_to_moderator',
+            'org'.$orgId,'sy'.$targetSyId,'sub'.$submissionId,'to_user'.$moderator->getKey(),
+        ]);
+
+        InAppNotifier::notifyOnce($moderator, [
+            'dedupe_key'   => $dedupeKey,
+            'title'        => 'Strategic Plan Submitted for Review',
+            'message'      => 'A Strategic Plan has been submitted to you for review. Please evaluate it and either return it with feedback or forward it to SACDEV.',
+            'org_id'       => $orgId,
+            'target_sy_id' => $targetSyId,
+            'form'         => 'strategic_plan',
+            'status'       => 'submitted_to_moderator',
+            'action_url'   => route('org.moderator.strategic_plans.show', $submissionId),
+            'meta'         => ['submission_id' => $submissionId],
+            'send_mail'    => true,
+        ]);
 
         return redirect()
             ->route('org.rereg.b1.edit')
             ->with('success', 'Submitted to moderator for review.');
     }
+
+
 
 
     

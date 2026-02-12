@@ -233,6 +233,7 @@ class OrgActivationController extends Controller
                     }
                 }
             }, 3); 
+            
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === 'ALREADY_ACTIVATED') {
                 return back()->with('status', 'This organization is already activated for the selected school year.');

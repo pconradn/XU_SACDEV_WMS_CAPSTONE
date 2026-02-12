@@ -1,17 +1,18 @@
-{{-- Details Modal (keep OUTSIDE the table markup) --}}
+{{-- Project Modal (Create + Edit) --}}
 <div x-show="detailsOpen" x-cloak
      class="fixed inset-0 z-50 flex items-center justify-center p-4"
      @keydown.escape.window="closeDetails()">
 
-    {{-- overlay --}}
     <div class="absolute inset-0 bg-slate-900/50" @click="closeDetails()"></div>
 
-    {{-- modal panel --}}
     <div class="relative w-full max-w-4xl rounded-2xl bg-white shadow-xl border border-slate-200">
         <div class="flex items-start justify-between p-5 border-b border-slate-200">
             <div>
-                <h3 class="text-lg font-semibold text-slate-900">Project Details</h3>
-                <p class="text-sm text-slate-500 mt-1">Add objectives, beneficiaries, deliverables, and partners.</p>
+                <h3 class="text-lg font-semibold text-slate-900"
+                    x-text="draftMode === 'edit' ? 'Edit Project' : 'Add Project'"></h3>
+                <p class="text-sm text-slate-500 mt-1">
+                    Fill in the project info, then add objectives, beneficiaries, deliverables, and partners.
+                </p>
             </div>
             <button type="button"
                     class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
@@ -20,44 +21,67 @@
             </button>
         </div>
 
-        <div class="p-5 space-y-5" x-show="detailsProject">
-            {{-- debug: confirms modal is inside the draft form --}}
-            <input type="hidden" name="debug_details_idx" :value="detailsProject?._idx ?? ''">
+        <div class="p-5 space-y-5" x-show="draftProject">
+            {{-- Core info --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Target Date</label>
+                    <input type="date"
+                           class="w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                           x-model="draftProject.target_date">
+                </div>
 
-            {{-- quick status --}}
-            <div class="flex flex-wrap gap-2 text-xs">
-                <span class="inline-flex items-center gap-1 rounded-full px-2 py-1 border"
-                      :class="projectStatus(detailsProject).objectivesOk ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'">
-                    Objectives: <span x-text="projectStatus(detailsProject).objectivesOk ? '✔' : '✖'"></span>
-                </span>
-                <span class="inline-flex items-center gap-1 rounded-full px-2 py-1 border"
-                      :class="projectStatus(detailsProject).beneficiariesOk ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'">
-                    Beneficiaries: <span x-text="projectStatus(detailsProject).beneficiariesOk ? '✔' : '✖'"></span>
-                </span>
-                <span class="inline-flex items-center gap-1 rounded-full px-2 py-1 border"
-                      :class="projectStatus(detailsProject).deliverablesOk ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'">
-                    Deliverables: <span x-text="projectStatus(detailsProject).deliverablesOk ? '✔' : '✖'"></span>
-                </span>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Budget (₱)</label>
+                    <input type="number" step="0.01" min="0"
+                           class="w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                           x-model="draftProject.budget"
+                           placeholder="0.00">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Project / Initiative Title</label>
+                    <input type="text"
+                           class="w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                           x-model="draftProject.title"
+                           placeholder="e.g., Leadership Training Seminar">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Implementing Body (optional)</label>
+                    <input type="text"
+                           class="w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                           x-model="draftProject.implementing_body"
+                           placeholder="(optional)">
+                </div>
             </div>
 
+
+
+            {{-- inline validation hint --}}
+            <div x-show="draftProject && !isDraftComplete()"
+                 class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                Complete Target Date, Title, Budget, and at least one Objective, Beneficiary, and Deliverable before saving.
+            </div>
+
+            {{-- Details lists --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {{-- Objectives --}}
                 <div class="rounded-xl border border-slate-200 p-4">
                     <div class="flex items-center justify-between">
                         <p class="text-sm font-semibold text-slate-800">Objectives (at least 1)</p>
                         <button type="button" class="text-xs font-medium text-blue-700 hover:underline"
-                                @click="addTextItem(detailsProject,'objectives')">+ Add</button>
+                                @click="addTextItem(draftProject,'objectives')">+ Add</button>
                     </div>
 
-                    <template x-for="(t, j) in detailsProject.objectives" :key="j">
+                    <template x-for="(t, j) in draftProject.objectives" :key="j">
                         <div class="mt-2 flex gap-2">
                             <input type="text"
                                    class="flex-1 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 py-2"
-                                   x-model="detailsProject.objectives[j]"
-                                   :name="'projects['+detailsProject._idx+'][objectives]['+j+']'">
+                                   x-model="draftProject.objectives[j]">
                             <button type="button"
                                     class="rounded-lg border border-rose-200 bg-rose-50 px-2 text-rose-700 hover:bg-rose-100"
-                                    @click="removeTextItem(detailsProject,'objectives',j)">✕</button>
+                                    @click="removeTextItem(draftProject,'objectives',j)">✕</button>
                         </div>
                     </template>
                 </div>
@@ -67,18 +91,17 @@
                     <div class="flex items-center justify-between">
                         <p class="text-sm font-semibold text-slate-800">Beneficiaries (at least 1)</p>
                         <button type="button" class="text-xs font-medium text-blue-700 hover:underline"
-                                @click="addTextItem(detailsProject,'beneficiaries')">+ Add</button>
+                                @click="addTextItem(draftProject,'beneficiaries')">+ Add</button>
                     </div>
 
-                    <template x-for="(t, j) in detailsProject.beneficiaries" :key="j">
+                    <template x-for="(t, j) in draftProject.beneficiaries" :key="j">
                         <div class="mt-2 flex gap-2">
                             <input type="text"
                                    class="flex-1 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 py-2"
-                                   x-model="detailsProject.beneficiaries[j]"
-                                   :name="'projects['+detailsProject._idx+'][beneficiaries]['+j+']'">
+                                   x-model="draftProject.beneficiaries[j]">
                             <button type="button"
                                     class="rounded-lg border border-rose-200 bg-rose-50 px-2 text-rose-700 hover:bg-rose-100"
-                                    @click="removeTextItem(detailsProject,'beneficiaries',j)">✕</button>
+                                    @click="removeTextItem(draftProject,'beneficiaries',j)">✕</button>
                         </div>
                     </template>
                 </div>
@@ -88,18 +111,17 @@
                     <div class="flex items-center justify-between">
                         <p class="text-sm font-semibold text-slate-800">Deliverables (at least 1)</p>
                         <button type="button" class="text-xs font-medium text-blue-700 hover:underline"
-                                @click="addTextItem(detailsProject,'deliverables')">+ Add</button>
+                                @click="addTextItem(draftProject,'deliverables')">+ Add</button>
                     </div>
 
-                    <template x-for="(t, j) in detailsProject.deliverables" :key="j">
+                    <template x-for="(t, j) in draftProject.deliverables" :key="j">
                         <div class="mt-2 flex gap-2">
                             <input type="text"
                                    class="flex-1 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 py-2"
-                                   x-model="detailsProject.deliverables[j]"
-                                   :name="'projects['+detailsProject._idx+'][deliverables]['+j+']'">
+                                   x-model="draftProject.deliverables[j]">
                             <button type="button"
                                     class="rounded-lg border border-rose-200 bg-rose-50 px-2 text-rose-700 hover:bg-rose-100"
-                                    @click="removeTextItem(detailsProject,'deliverables',j)">✕</button>
+                                    @click="removeTextItem(draftProject,'deliverables',j)">✕</button>
                         </div>
                     </template>
                 </div>
@@ -109,18 +131,17 @@
                     <div class="flex items-center justify-between">
                         <p class="text-sm font-semibold text-slate-800">Partners / Stakeholders (optional)</p>
                         <button type="button" class="text-xs font-medium text-blue-700 hover:underline"
-                                @click="addTextItem(detailsProject,'partners')">+ Add</button>
+                                @click="addTextItem(draftProject,'partners')">+ Add</button>
                     </div>
 
-                    <template x-for="(t, j) in detailsProject.partners" :key="j">
+                    <template x-for="(t, j) in draftProject.partners" :key="j">
                         <div class="mt-2 flex gap-2">
                             <input type="text"
                                    class="flex-1 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 py-2"
-                                   x-model="detailsProject.partners[j]"
-                                   :name="'projects['+detailsProject._idx+'][partners]['+j+']'">
+                                   x-model="draftProject.partners[j]">
                             <button type="button"
                                     class="rounded-lg border border-rose-200 bg-rose-50 px-2 text-rose-700 hover:bg-rose-100"
-                                    @click="removeTextItem(detailsProject,'partners',j)">✕</button>
+                                    @click="removeTextItem(draftProject,'partners',j)">✕</button>
                         </div>
                     </template>
                 </div>
@@ -128,14 +149,13 @@
         </div>
 
         <div class="p-5 border-t border-slate-200 flex items-center justify-between">
-            <p class="text-sm text-slate-500">
-                Tip: You can press <span class="font-medium">Esc</span> to close.
-            </p>
+            <p class="text-sm text-slate-500">Tip: press <span class="font-medium">Esc</span> to close</p>
 
             <button type="button"
-                    class="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                    @click="closeDetails()">
-                Done
+                    class="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    :disabled="!isDraftComplete()"
+                    @click="saveDraftProject()">
+                Save Project
             </button>
         </div>
     </div>

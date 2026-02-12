@@ -24,13 +24,13 @@ class AccountProvisioner
 
         Mail::raw(
             "Hello {$user->name},\n\n" .
-            "You have been assigned a role in the SAcDev Workflow System.\n\n" .
+            "You have been assigned a role in the SACDEV Workflow System.\n\n" .
             "Login email: {$user->email}\n" .
             "Temporary password: {$tempPassword}\n\n" .
             "You will be required to change your password on first login.\n\n" .
             "Thank you.",
             function ($message) use ($user) {
-                $message->to($user->email)->subject('SAcDev System - Account Credentials (Resent)');
+                $message->to($user->email)->subject('SACDEV System - Account Credentials (Resent)');
             }
         );
 
@@ -63,13 +63,13 @@ class AccountProvisioner
 
         Mail::raw(
             "Hello {$user->name},\n\n" .
-            "You have been assigned a role in the SAcDev Workflow System.\n\n" .
+            "You have been assigned a role in the SACDEV Workflow System.\n\n" .
             "Login email: {$user->email}\n" .
             "Temporary password: {$tempPassword}\n\n" .
             "You will be required to change your password on first login.\n\n" .
             "Thank you.",
             function ($message) use ($user) {
-                $message->to($user->email)->subject('SAcDev System - Account Credentials');
+                $message->to($user->email)->subject('SACDEV System - Account Credentials');
             }
         );
 
@@ -93,13 +93,13 @@ class AccountProvisioner
 
         Mail::raw(
             "Hello {$user->name},\n\n" .
-            "Your temporary credentials have been updated for the SAcDev Workflow System.\n\n" .
+            "Your temporary credentials have been updated for the SACDEV Workflow System.\n\n" .
             "Login email: {$user->email}\n" .
             "Temporary password: {$tempPassword}\n\n" .
             "You will be required to change your password on first login.\n\n" .
             "Thank you.",
             function ($message) use ($user) {
-                $message->to($user->email)->subject('SAcDev System - Account Credentials (Updated)');
+                $message->to($user->email)->subject('SACDEV System - Account Credentials (Updated)');
             }
         );
 
@@ -205,13 +205,13 @@ class AccountProvisioner
 
         Mail::raw(
             "Hello {$user->name},\n\n" .
-            "You have been assigned a role in the SAcDev Workflow System.\n\n" .
+            "You have been assigned a role in the SACDEV Workflow System.\n\n" .
             "Login email: {$user->email}\n" .
             "Temporary password: {$tempPassword}\n\n" .
             "You will be required to change your password on first login.\n\n" .
             "Thank you.",
             function ($message) use ($user) {
-                $message->to($user->email)->subject('SAcDev System - Account Credentials');
+                $message->to($user->email)->subject('SACDEV System - Account Credentials');
             }
         );
 
