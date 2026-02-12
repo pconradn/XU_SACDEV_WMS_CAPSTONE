@@ -20,7 +20,7 @@ class ReregActionNotification extends Notification
 
     public function toArray($notifiable): array
     {
-        // Keep this structure consistent across the system
+      
         return [
             'dedupe_key' => $this->payload['dedupe_key'] ?? null,
 
