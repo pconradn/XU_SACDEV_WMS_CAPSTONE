@@ -294,7 +294,7 @@ class OrgActivationController extends Controller
 
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === 'ALREADY_ACTIVATED') {
-                return back()->with('status', 'This organization is already activated for the selected school year.');
+                return back()->with('status', 'This organization is already registered for the selected school year.');
             }
             throw $e;
         }
@@ -317,7 +317,7 @@ class OrgActivationController extends Controller
             InAppNotifier::notifyOnce($president, [
                 'dedupe_key'   => $dedupeKey,
                 'title'        => 'Organization Activated',
-                'message'      => 'Your organization has been activated for the selected school year. You may now proceed with the next steps in the system.',
+                'message'      => 'Your organization has been registered for the selected school year. You may now proceed with the next steps in the system.',
                 'org_id'       => $organization->id,
                 'target_sy_id' => $encodeSyId,
                 'form'         => 'activation',
@@ -332,7 +332,7 @@ class OrgActivationController extends Controller
         });
 
 
-        return back()->with('success', 'Organization activated. Officers and projects were created for the selected school year.');
+        return back()->with('success', 'Organization registered. Officers and projects were created for the selected school year.');
     }
 
     private function makeXuEmailFromStudentId(?string $studentId): ?string

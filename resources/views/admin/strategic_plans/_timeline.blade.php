@@ -24,7 +24,18 @@
             </div>
 
             <div class="mt-4 text-sm text-slate-600 space-y-1">
-                <div>Submitted By User ID: <span class="font-semibold text-slate-900">{{ $submission->submitted_by_user_id ?? '—' }}</span></div>
-                <div>Moderator User ID (assigned): <span class="font-semibold text-slate-900">{{ $submission->moderator_user_id ?? '—' }}</span></div>
+            <div>
+                Submitted By:
+                <span class="font-semibold text-slate-900">
+                    {{ $submission->submittedBy?->name ?? '—' }}
+                </span>
+            </div>
+
+            <div>
+                Moderator (Reviewed By):
+                <span class="font-semibold text-slate-900">
+                    {{ $submission->moderatorReviewedBy?->name ?? '—' }}
+                </span>
+            </div>
             </div>
         </div>

@@ -15,6 +15,23 @@
             </div>
         @endif
 
+        @if($isActivated)
+            <div class="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <div class="text-sm font-semibold">Already Registered for this School Year</div>
+                        <div class="mt-1 text-sm text-emerald-800/90">
+                            This organization already has an activation record for the selected school year, so registration is complete.
+                        </div>
+                    </div>
+
+                    <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-800">
+                        Registered
+                    </span>
+                </div>
+            </div>
+        @endif
+
         <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <form method="POST" action="{{ route('org.rereg.setSy') }}" class="flex flex-col gap-3 sm:flex-row sm:items-end">
                 @csrf
@@ -118,16 +135,21 @@
 
             <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between gap-4">
-                    <div>
-                        <div class="text-sm font-semibold text-slate-900">Re-registration readiness</div>
-                        <div class="text-sm text-slate-600 mt-1">
+                    <div class="text-sm text-slate-600 mt-1">
+                        @if($isActivated)
+                            Registration is already completed for this school year.
+                        @else
                             All required forms must be approved by SACDEV before activation.
-                        </div>
+                        @endif
                     </div>
 
-                    @if($allApproved)
+                    @if($isActivated)
                         <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-800">
-                            Ready for Activation
+                            Registered 
+                        </span>
+                    @elseif($allApproved)
+                        <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-800">
+                            Ready for Registration
                         </span>
                     @else
                         <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700">

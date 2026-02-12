@@ -123,10 +123,10 @@
                     @if(!empty($alreadyActivated) && $alreadyActivated)
                         <div class="mt-2 text-sm text-slate-700">
                             <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                                Activated
+                                Registered
                             </span>
                             <span class="ml-2 text-xs text-slate-500">
-                                This organization is already activated for the selected school year.
+                                This organization is already registered for the selected school year.
                             </span>
                         </div>
                     @endif
@@ -151,16 +151,16 @@
                             onclick="document.getElementById('activateModal').classList.remove('hidden')"
                             class="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
                         >
-                            Activate Organization
+                            Register Organization
                         </button>
                     @elseif(!empty($alreadyActivated) && $alreadyActivated)
                         <button
                             type="button"
                             class="inline-flex items-center rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 cursor-not-allowed"
                             disabled
-                            title="Already activated for this school year"
+                            title="Already registered for this school year"
                         >
-                            Activate Organization
+                            Register Organization
                         </button>
                     @endif
                 </div>
@@ -176,7 +176,7 @@
                             <div class="px-6 py-5 border-b border-slate-200">
                                 <div class="text-lg font-semibold text-slate-900">Confirm Activation</div>
                                 <div class="mt-1 text-sm text-slate-600">
-                                    You are about to activate <span class="font-semibold">{{ $organization->name }}</span>
+                                    You are about to register <span class="font-semibold">{{ $organization->name }}</span>
                                     for the selected school year.
                                 </div>
                             </div>
@@ -195,7 +195,7 @@
                                 <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
                                     <div class="font-semibold">Important</div>
                                     <div class="mt-1 text-sm">
-                                        After activation, this organization <span class="font-semibold">cannot be activated again</span>
+                                        After registration, this organization <span class="font-semibold">cannot be registered again</span>
                                         for the same school year. Please review B-1 and B-3 details before proceeding.
                                     </div>
                                 </div>
@@ -216,7 +216,7 @@
                                         type="submit"
                                         class="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
                                     >
-                                        Yes, Activate
+                                        Yes, register
                                     </button>
                                 </form>
                             </div>

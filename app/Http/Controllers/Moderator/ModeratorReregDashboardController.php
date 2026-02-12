@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Moderator;
 
-use App\Models\SchoolYear;
-use Illuminate\Http\Request;
-use App\Models\OrgMembership;
-use App\Models\ModeratorSubmission;
 use App\Http\Controllers\Controller;
+use App\Models\ModeratorSubmission;
+use App\Models\OrganizationSchoolYear;
+use App\Models\OrgMembership;
+use App\Models\SchoolYear;
 use App\Models\StrategicPlanSubmission;
+use Illuminate\Http\Request;
 
 class ModeratorReregDashboardController extends Controller
 {
@@ -116,6 +117,11 @@ class ModeratorReregDashboardController extends Controller
             $previousB5SyId = $canUsePreviousB5 ? $prevSyId : null;
         }
 
+        $isActivated = OrganizationSchoolYear::query()
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->exists();
+
         return view('moderator.rereg.dashboard', compact(
             'b1',
             'b2',
@@ -125,7 +131,8 @@ class ModeratorReregDashboardController extends Controller
             'canUsePreviousB5',
             'previousB5SyId',
             'orgId',
-            'syId'
+            'syId',
+            'isActivated',
         ));
     }
 }

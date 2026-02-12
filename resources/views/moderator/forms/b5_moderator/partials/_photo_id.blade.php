@@ -18,7 +18,7 @@
                     {{ $submission->photo_id_path }}
                 </div>
                 <p class="mt-1 text-xs text-slate-500">
-                    (We’ll add a proper preview link later if your storage is configured.)
+                  
                 </p>
             @else
                 <div class="mt-1 text-sm text-slate-500">No file uploaded yet.</div>

@@ -208,9 +208,7 @@
                         $mod[] = $item('Review Strategic Plans (B-1)', route('org.moderator.strategic_plans.index'), ['org.moderator.strategic_plans.*']);
                     }
 
-                    if (Route::has('org.moderator.rereg.b5.index')) {
-                        $mod[] = $item('B-5 Moderator Form', route('org.moderator.rereg.b5.index'), ['org.moderator.rereg.b5.*']);
-                    }
+
 
                     if (!empty($mod)) {
                         $groups[] = ['key' => 'org_mod', 'title' => 'Moderator', 'links' => $mod, 'icon' => 'user'];

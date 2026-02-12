@@ -3,16 +3,17 @@
 namespace App\Http\Controllers\Org;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\ModeratorSubmission;                     
 
-use App\Models\SchoolYear;
-use App\Models\OrgMembership;
+use App\Models\OfficerSubmission;                       
+use App\Models\OrganizationSchoolYear;
 
 // Forms
-use App\Models\StrategicPlanSubmission as StrategicPlan; 
+use App\Models\OrgMembership;
 use App\Models\PresidentRegistration;                   
-use App\Models\OfficerSubmission;                       
-use App\Models\ModeratorSubmission;                     
+use App\Models\SchoolYear;
+use App\Models\StrategicPlanSubmission as StrategicPlan; 
+use Illuminate\Http\Request;
 
 class OrgReregDashboardController extends Controller
 {
@@ -28,6 +29,15 @@ class OrgReregDashboardController extends Controller
     public function index(Request $request)
     {
         ['orgId' => $orgId, 'syId' => $syId, 'userId' => $userId] = $this->ctx($request);
+
+        $isActivated = false;
+
+        if ($syId) {
+            $isActivated = OrganizationSchoolYear::query()
+                ->where('organization_id', $orgId)  
+                ->where('school_year_id', $syId)
+                ->exists();
+        }
 
   
         $allowedSyIds = OrgMembership::query()
@@ -149,12 +159,13 @@ class OrgReregDashboardController extends Controller
             'encodeSyId'  => $syId,
             'forms'       => $forms,
             'allApproved' => $allApproved,
-
+            'isActivated' => $isActivated ,
           
             'canAssignNextPresident' => $canAssignNextPresident,
             'canAssignModerator'     => $canAssignModerator,
             'b5Moderator' => $b5Moderator,
             'isTargetSyModerator'    => $isTargetSyModerator,
+            
         ]);
     }
 
