@@ -91,7 +91,6 @@ class SacdevB5ModeratorSubmissionController extends Controller
                     'target_sy_id' => $syId,
                     'form'         => 'b5_moderator',
                     'status'       => 'returned_by_sacdev',
-                    // adjust to your moderator-side edit/show route:
                     'action_url'   => route('org.moderator.rereg.b5.edit', $submissionId),
                     'meta'         => ['submission_id' => $submissionId],
                 ]);

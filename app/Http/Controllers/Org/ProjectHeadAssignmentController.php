@@ -75,7 +75,6 @@ class ProjectHeadAssignmentController extends Controller
                 $officer->save();
             }
 
-            // IMPORTANT: link membership to this officer entry
             AccountProvisioner::ensureBasicOrgAccess($user->id, $orgId, $syId, $officer->id);
 
             $currentHead = ProjectAssignment::query()
@@ -88,7 +87,6 @@ class ProjectHeadAssignmentController extends Controller
                 return;
             }
 
-            // archive old head assignment (recommended)
             ProjectAssignment::query()
                 ->where('project_id', $project->id)
                 ->where('assignment_role', 'project_head')

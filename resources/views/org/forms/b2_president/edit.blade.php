@@ -9,9 +9,6 @@
                 Target School Year:
                 <span class="font-semibold">{{ $schoolYear->name }}</span>
 
-                <a href="{{ route('org.rereg.index') }}" class="ml-2 text-blue-700 hover:underline">
-                    Change
-                </a>
             </div>
         </div>
 

@@ -45,7 +45,7 @@ class SacdevB3OfficerSubmissionController extends Controller
         if ($status) {
             $q->where('status', $status);
         } else {
-            // Default view: show relevant pipeline statuses
+           
             $q->whereIn('status', ['submitted_to_sacdev', 'returned_by_sacdev', 'approved_by_sacdev']);
         }
 
@@ -162,7 +162,7 @@ class SacdevB3OfficerSubmissionController extends Controller
                     'target_sy_id' => $syId,
                     'form'         => 'b3_officers_list',
                     'status'       => 'approved_by_sacdev',
-                    'action_url'   => route('org.rereg.b3.officers-list.index'),
+                    'action_url'   => route('org.rereg.b3.officers-list.edit'),
                     'meta'         => ['submission_id' => $submissionId],
                 ]);
             });

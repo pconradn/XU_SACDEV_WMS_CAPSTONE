@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Notifications\Notifiable;
 
 class OrgMembership extends Model
 {
+    use Notifiable;
+    
     protected $fillable = [
         'organization_id',
         'school_year_id',

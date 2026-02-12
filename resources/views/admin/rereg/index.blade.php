@@ -56,7 +56,7 @@
                         </form>
                     @endforeach
 
-                    {{-- More button --}}
+               
                     <button type="button"
                         onclick="document.getElementById('syModal').classList.remove('hidden')"
                         class="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
@@ -64,7 +64,7 @@
                     </button>
                 </div>
 
-                {{-- Optional: show which SY is selected --}}
+              
                 <div class="text-xs text-slate-500">
                     Selected: <span class="font-semibold text-slate-800">
                         {{ $selectedSy?->name ?? ('SY #' . ($encodeSyId ?? '—')) }}
@@ -191,11 +191,11 @@
 
                                             @if($isActivated)
                                                 <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800">
-                                                    Activated
+                                                    Registered
                                                 </span>
                                             @elseif($isReady)
                                                 <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-                                                    Ready for activation
+                                                    Ready for registration
                                                 </span>
                                             @elseif($pending > 0)
                                                 <span class="inline-flex items-center rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">

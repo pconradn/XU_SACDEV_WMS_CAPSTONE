@@ -28,7 +28,6 @@ class OrgRoleMiddleware
             ->whereIn('role', $roles)
             ->exists();
 
-        // Fallback: if role check includes "president", allow OSY president too
         if (!$hasRole && in_array('president', $roles, true)) {
             $hasRole = OrganizationSchoolYear::query()
                 ->where('organization_id', $orgId)

@@ -36,20 +36,37 @@
 
 <script>
     function strategicPlanForm(init) {
-        const projects = init?.projects ?? [];
-        const fundSources = init?.fundSources ?? [];
+
+        // ----------------------------
+        // Helpers
+        // ----------------------------
+        const num = (val) => {
+            const n = parseFloat(val);
+            return isNaN(n) ? 0 : n;
+        };
+
+        const hasText = (s) => (s ?? '').toString().trim().length > 0;
+
+        const trimmedCount = (arr) => {
+            if (!Array.isArray(arr)) return 0;
+            return arr.filter(x => hasText(x)).length;
+        };
+
+        // ----------------------------
+        // Projects init (from server)
+        // ----------------------------
+        const incomingProjects = init?.projects ?? [];
 
         let nextProjectIdx = 0;
 
         const normalizeProject = (p) => {
             const obj = {
                 _idx: (typeof p._idx === 'number') ? p._idx : nextProjectIdx++,
-                _open: false,
                 category: p.category ?? 'org_dev',
                 target_date: p.target_date ?? '',
                 title: p.title ?? '',
                 implementing_body: p.implementing_body ?? '',
-                budget: p.budget ?? '0',
+                budget: (p.budget ?? '0').toString(),
 
                 objectives: Array.isArray(p.objectives) ? p.objectives : [''],
                 beneficiaries: Array.isArray(p.beneficiaries) ? p.beneficiaries : [''],
@@ -64,10 +81,13 @@
             return obj;
         };
 
-        const normalizedProjects = (projects || []).map(normalizeProject);
-        nextProjectIdx = normalizedProjects.reduce((m, p) => Math.max(m, p._idx + 1), 0);
+        const projects = (incomingProjects || []).map(normalizeProject);
+        nextProjectIdx = projects.reduce((m, p) => Math.max(m, p._idx + 1), 0);
 
-        const fixedTypes = [
+        // ----------------------------
+        // Funds init (from server)
+        // ----------------------------
+        const fixedFundTypes = [
             { type: 'org_funds', label: 'Student Org Funds' },
             { type: 'aeco', label: 'AECO Fund (Finance Office)' },
             { type: 'pta', label: 'PTA' },
@@ -75,204 +95,83 @@
             { type: 'raised_funds', label: 'Raised Funds' },
         ];
 
-        const fixedFundAmounts = {};
-        fixedTypes.forEach(t => fixedFundAmounts[t.type] = '0');
+        const fixedFundAmounts = {
+            org_funds: '0',
+            aeco: '0',
+            pta: '0',
+            membership_fee: '0',
+            raised_funds: '0',
+        };
 
         let nextFundIdx = 0;
+        const fundIndexMap = {};
         const otherSources = [];
 
-        (fundSources || []).forEach(fs => {
-            const type = fs.type ?? '';
-            const amount = fs.amount ?? '0';
-            if (Object.prototype.hasOwnProperty.call(fixedFundAmounts, type)) {
+        fixedFundTypes.forEach(t => {
+            fundIndexMap[t.type] = nextFundIdx++;
+        });
+
+        (init?.fundSources ?? []).forEach(fs => {
+            const type = (fs.type ?? '').toString();
+            const amount = (fs.amount ?? '0').toString();
+
+            if (type in fixedFundAmounts) {
                 fixedFundAmounts[type] = amount;
             } else if (type === 'other') {
                 otherSources.push({
                     _idx: nextFundIdx++,
-                    label: fs.label ?? '',
+                    label: (fs.label ?? '').toString(),
                     amount: amount,
                 });
             }
         });
 
-        // Reserve indices for fixed fund types so Blade names stay stable
-        const fundIndexMap = {};
-        fixedTypes.forEach(t => fundIndexMap[t.type] = nextFundIdx++);
-        // Ensure other indices don't collide
-        otherSources.forEach(o => { o._idx = nextFundIdx++; });
-
+        // ----------------------------
+        // Alpine component
+        // ----------------------------
         return {
 
-
-            fixedFundTypes: [
-                { type: 'org_funds', label: 'Student Org Funds' },
-                { type: 'aeco', label: 'AECO Fund (Finance Office)' },
-                { type: 'pta', label: 'PTA' },
-                { type: 'membership_fee', label: 'Membership Fee' },
-                { type: 'raised_funds', label: 'Raised Funds' },
-            ],
-
-            // map: type => amount string/number
-                fixedFundAmounts: {
-                org_funds: '0',
-                aeco: '0',
-                pta: '0',
-                membership_fee: '0',
-                raised_funds: '0',
-            },
-
-            otherSources: [],       // { _idx, label, amount }
-            fundIndexMap: {},       // type => index
-            nextFundIdx: 0,
-
-
-            initFundsFromServer() {
-            // init.fundSources should be an array like [{type,label,amount}, ...]
-            const sources = (init?.fundSources ?? []);
-
-            // build stable indices for fixed types first
-            this.fixedFundTypes.forEach(t => {
-                if (!(t.type in this.fundIndexMap)) {
-                    this.fundIndexMap[t.type] = this.nextFundIdx++;
-                }
-            });
-
-            // apply incoming values
-            sources.forEach(fs => {
-                const type = fs.type ?? '';
-                const amount = (fs.amount ?? '0').toString();
-
-                if (type in this.fixedFundAmounts) {
-                    this.fixedFundAmounts[type] = amount;
-                } else if (type === 'other') {
-                    const idx = this.nextFundIdx++;
-                    this.otherSources.push({
-                        _idx: idx,
-                        label: (fs.label ?? '').toString(),
-                        amount: amount,
-                    });
-                }
-            });
-            },
-
-            fundSourceIndex(type) {
-                // fixed types only
-                return this.fundIndexMap[type] ?? 0;
-            },
-
-            addOtherSource() {
-                const idx = this.nextFundIdx++;
-                this.otherSources.push({ _idx: idx, label: '', amount: '0' });
-            },
-
-            removeOtherSource(idx) {
-            this.otherSources = this.otherSources.filter(o => o._idx !== idx);
-            },
-
-            num(val) {
-            const n = parseFloat(val);
-            return isNaN(n) ? 0 : n;
-            },
-
-            totalFunds() {
-            let total = 0;
-
-            // fixed
-            Object.keys(this.fixedFundAmounts).forEach(k => {
-                total += this.num(this.fixedFundAmounts[k]);
-            });
-
-            // other
-            this.otherSources.forEach(o => {
-                total += this.num(o.amount);
-            });
-
-            return total;
-            },
-
-            init() {
-                this.initFundsFromServer();
-            },
-
-
-
-
-
-
-
-
-
-
-
-
+            // ===== categories
             categories: [
                 { key: 'org_dev', label: 'Organizational Development' },
                 { key: 'student_services', label: 'Student Services' },
                 { key: 'community_involvement', label: 'Community Involvement' },
             ],
 
+            // ===== projects state
             nextProjectIdx,
-            projects: normalizedProjects,
-
-            normalizeProject(p) {
-                const obj = {
-                    _idx: (typeof p._idx === 'number') ? p._idx : this.nextProjectIdx++,
-                    _open: false,
-                    category: p.category ?? 'org_dev',
-                    target_date: p.target_date ?? '',
-                    title: p.title ?? '',
-                    implementing_body: p.implementing_body ?? '',
-                    budget: p.budget ?? '0',
-                    objectives: Array.isArray(p.objectives) ? p.objectives : [''],
-                    beneficiaries: Array.isArray(p.beneficiaries) ? p.beneficiaries : [''],
-                    deliverables: Array.isArray(p.deliverables) ? p.deliverables : [''],
-                    partners: Array.isArray(p.partners) ? p.partners : [],
-                };
-
-                if (obj.objectives.length === 0) obj.objectives = [''];
-                if (obj.beneficiaries.length === 0) obj.beneficiaries = [''];
-                if (obj.deliverables.length === 0) obj.deliverables = [''];
-
-                return obj;
-            },
+            projects,
 
             projectsByCategory(catKey) {
                 return this.projects.filter(p => p.category === catKey);
-            },
-
-            addProject(category) {
-                this.projects.push(this.normalizeProject({
-                    category,
-                    objectives: [''],
-                    beneficiaries: [''],
-                    deliverables: [''],
-                    partners: [],
-                }));
             },
 
             removeProject(idx) {
                 this.projects = this.projects.filter(p => p._idx !== idx);
             },
 
-            addTextItem(project, key) {
-                if (!Array.isArray(project[key])) project[key] = [];
-                project[key].push('');
+            // ===== project validation + status
+            projectStatus(p) {
+                return {
+                    objectivesOk: trimmedCount(p?.objectives) >= 1,
+                    beneficiariesOk: trimmedCount(p?.beneficiaries) >= 1,
+                    deliverablesOk: trimmedCount(p?.deliverables) >= 1,
+                };
             },
 
-            removeTextItem(project, key, j) {
-                project[key].splice(j, 1);
-                if ((key === 'objectives' || key === 'beneficiaries' || key === 'deliverables') && project[key].length === 0) {
-                    project[key].push('');
-                }
+            projectValid(p) {
+                return trimmedCount(p?.objectives) >= 1
+                    && trimmedCount(p?.beneficiaries) >= 1
+                    && trimmedCount(p?.deliverables) >= 1;
             },
 
-            num(val) {
-                const n = parseFloat(val);
-                return isNaN(n) ? 0 : n;
+            allProjectsValid() {
+                if (this.projects.length === 0) return false;
+                return this.projects.every(p => this.projectValid(p));
             },
 
             categoryTotal(catKey) {
-                return this.projectsByCategory(catKey).reduce((sum, p) => sum + this.num(p.budget), 0);
+                return this.projectsByCategory(catKey).reduce((sum, p) => sum + num(p.budget), 0);
             },
 
             overallTotal() {
@@ -280,12 +179,19 @@
             },
 
             formatMoney(n) {
-                const x = (typeof n === 'number') ? n : this.num(n);
+                const x = (typeof n === 'number') ? n : num(n);
                 return x.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             },
 
+            // ===== funds state
+            fixedFundTypes,
+            fixedFundAmounts,
+            otherSources,
+            fundIndexMap,
+            nextFundIdx,
+
             fundSourceIndex(type) {
-                return this.fundIndexMap[type];
+                return this.fundIndexMap[type] ?? 0;
             },
 
             addOtherSource() {
@@ -299,54 +205,126 @@
 
             totalFunds() {
                 let total = 0;
-                Object.keys(this.fixedFundAmounts).forEach(k => total += this.num(this.fixedFundAmounts[k]));
-                this.otherSources.forEach(o => total += this.num(o.amount));
+                Object.keys(this.fixedFundAmounts).forEach(k => total += num(this.fixedFundAmounts[k]));
+                this.otherSources.forEach(o => total += num(o.amount));
                 return total;
             },
 
-            // modal state
+            // ======================================================
+            // MODAL FLOW (Create/Edit) — create only when complete
+            // ======================================================
             detailsOpen: false,
-            detailsProjectIdx: null,
+            draftProject: null,
+            draftMode: 'create',     // 'create' | 'edit'
+            draftEditIdx: null,
 
-            openDetails(idx) {
-                this.detailsProjectIdx = idx;
+            openProjectCreate(category) {
+                this.draftMode = 'create';
+                this.draftEditIdx = null;
+
+                this.draftProject = {
+                    category,
+                    target_date: '',
+                    title: '',
+                    implementing_body: '',
+                    budget: '',
+                    objectives: [''],
+                    beneficiaries: [''],
+                    deliverables: [''],
+                    partners: [],
+                };
+
+                this.detailsOpen = true;
+            },
+
+            openProjectEdit(idx) {
+                const original = this.projects.find(x => x._idx === idx);
+                if (!original) return;
+
+                this.draftMode = 'edit';
+                this.draftEditIdx = idx;
+
+                // clone so cancel won’t mutate existing project
+                this.draftProject = JSON.parse(JSON.stringify({
+                    ...original,
+                    objectives: original.objectives ?? [''],
+                    beneficiaries: original.beneficiaries ?? [''],
+                    deliverables: original.deliverables ?? [''],
+                    partners: original.partners ?? [],
+                }));
+
                 this.detailsOpen = true;
             },
 
             closeDetails() {
                 this.detailsOpen = false;
-                this.detailsProjectIdx = null;
+                this.draftProject = null;
+                this.draftMode = 'create';
+                this.draftEditIdx = null;
             },
 
-            get detailsProject() {
-                return this.projects.find(p => p._idx === this.detailsProjectIdx) || null;
+            isDraftComplete() {
+                const p = this.draftProject;
+                if (!p) return false;
+
+                const hasList = (arr) => Array.isArray(arr) && arr.some(x => hasText(x));
+
+                return (
+                    hasText(p.target_date) &&
+                    hasText(p.title) &&
+                    // budget can be empty if you want optional, but you said "complete"
+                    // so we treat empty as incomplete
+                    hasText(p.budget) &&
+                    num(p.budget) >= 0 &&
+                    hasList(p.objectives) &&
+                    hasList(p.beneficiaries) &&
+                    hasList(p.deliverables)
+                );
             },
 
-            trimmedCount(arr) {
-                if (!Array.isArray(arr)) return 0;
-                return arr.filter(x => String(x ?? '').trim().length > 0).length;
+            saveDraftProject() {
+                if (!this.isDraftComplete()) return;
+
+                if (this.draftMode === 'create') {
+                    const newIdx = this.nextProjectIdx++;
+                    this.projects.push({
+                        _idx: newIdx,
+                        ...this.draftProject,
+                    });
+                } else {
+                    const i = this.projects.findIndex(x => x._idx === this.draftEditIdx);
+                    if (i !== -1) {
+                        this.projects[i] = {
+                            _idx: this.draftEditIdx,
+                            ...this.draftProject,
+                        };
+                    }
+                }
+
+                this.closeDetails();
             },
 
-            projectValid(p) {
-                return this.trimmedCount(p.objectives) >= 1
-                    && this.trimmedCount(p.beneficiaries) >= 1
-                    && this.trimmedCount(p.deliverables) >= 1;
+            // ===== text list helpers (work for draft + real project)
+            addTextItem(project, key) {
+                if (!project) return;
+                if (!Array.isArray(project[key])) project[key] = [];
+                project[key].push('');
             },
 
-            projectStatus(p) {
-                return {
-                    objectivesOk: this.trimmedCount(p.objectives) >= 1,
-                    beneficiariesOk: this.trimmedCount(p.beneficiaries) >= 1,
-                    deliverablesOk: this.trimmedCount(p.deliverables) >= 1,
-            };
+            removeTextItem(project, key, j) {
+                if (!project || !Array.isArray(project[key])) return;
+
+                project[key].splice(j, 1);
+
+                if ((key === 'objectives' || key === 'beneficiaries' || key === 'deliverables') && project[key].length === 0) {
+                    project[key].push('');
+                }
             },
 
-            allProjectsValid() {
-                // If there are 0 projects total, do you want to allow submit?
-                // Usually NO for this form — so return false if none.
-                if (this.projects.length === 0) return false;
-
-                return this.projects.every(p => this.projectValid(p));
+            // ===== init hook (kept, for fund UI if needed)
+            init() {
+                // all funds already loaded above into fixedFundAmounts/otherSources
+                // keeping init in case your HTML uses x-init="init()"
             },
         };
     }

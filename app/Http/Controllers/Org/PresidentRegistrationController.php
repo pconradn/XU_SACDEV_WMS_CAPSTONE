@@ -31,11 +31,7 @@ class PresidentRegistrationController extends Controller
         return $targetSyId;
     }
 
-    /**
-     * (Optional safety) Ensure user actually has membership for this org+SY.
-     * Your org.role middleware already checks role, but this prevents weird cases where
-     * encode_sy_id is set to an SY they shouldn’t even see.
-     */
+ 
     private function assertUserHasOrgSyAccess(int $userId, int $orgId, int $targetSyId): void
     {
         $ok = OrgMembership::query()
@@ -71,7 +67,7 @@ class PresidentRegistrationController extends Controller
                 ]
             );
 
-        // allow edit only on draft / returned
+        
         $isLocked = in_array($registration->status, [
             'submitted_to_sacdev',
             'approved_by_sacdev',
@@ -104,12 +100,12 @@ class PresidentRegistrationController extends Controller
             ->where('target_school_year_id', $targetSyId)
             ->firstOrFail();
 
-        // allow edit only on draft / returned
+   
         if (!in_array($registration->status, ['draft', 'returned_by_sacdev'], true)) {
             return back()->with('error', 'This form is currently under review and cannot be edited.');
         }
 
-        // draft validation: validate formats if present
+     
         $validated = $request->validate([
             'photo_id' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
 
@@ -157,10 +153,8 @@ class PresidentRegistrationController extends Controller
 
             'skills_and_interests' => ['nullable', 'string'],
 
-            // checkbox (draft can be false)
             'certified' => ['nullable', 'boolean'],
 
-            // dynamic arrays
             'leaderships' => ['nullable', 'array'],
             'leaderships.*.organization_name' => ['nullable', 'string', 'max:255'],
             'leaderships.*.position' => ['nullable', 'string', 'max:255'],
@@ -182,9 +176,9 @@ class PresidentRegistrationController extends Controller
         ]);
 
         DB::transaction(function () use ($request, $registration, $userId) {
-            // handle upload (optional for draft)
+           
             if ($request->hasFile('photo_id')) {
-                // delete old file if exists
+              
                 if ($registration->photo_id_path && Storage::disk('public')->exists($registration->photo_id_path)) {
                     Storage::disk('public')->delete($registration->photo_id_path);
                 }
@@ -193,7 +187,6 @@ class PresidentRegistrationController extends Controller
                 $registration->photo_id_path = $path;
             }
 
-            // update main fields (excluding children + file)
             $registration->fill($request->except(['leaderships', 'trainings', 'awards', 'photo_id']));
 
             $registration->encoded_by_user_id = $registration->encoded_by_user_id ?: $userId;
@@ -201,7 +194,6 @@ class PresidentRegistrationController extends Controller
             $registration->version = ((int) $registration->version) + 1;
             $registration->save();
 
-            // sync children (delete + recreate)
             $registration->leaderships()->delete();
             foreach (($request->input('leaderships') ?? []) as $i => $row) {
                 if ($this->rowEmpty($row)) continue;
@@ -241,7 +233,6 @@ class PresidentRegistrationController extends Controller
             return back()->with('error', 'This form cannot be submitted right now.');
         }
 
-        // submit validation: strict required fields
         $request->validate([
             'photo_id' => [$registration->photo_id_path ? 'nullable' : 'required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
 
@@ -260,7 +251,6 @@ class PresidentRegistrationController extends Controller
             'certified' => ['required', Rule::in(['1', 1, true, 'on'])],
         ]);
 
-        // Save full content first
         $this->saveDraft($request);
 
         $registration->refresh();
@@ -268,7 +258,6 @@ class PresidentRegistrationController extends Controller
         $registration->status = 'submitted_to_sacdev';
         $registration->submitted_at = now();
 
-        // clear old SACDEV remarks when resubmitting
         $registration->sacdev_reviewed_by_user_id = null;
         $registration->sacdev_remarks = null;
         $registration->sacdev_reviewed_at = null;

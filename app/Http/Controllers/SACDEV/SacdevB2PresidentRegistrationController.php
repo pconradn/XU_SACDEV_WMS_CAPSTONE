@@ -168,7 +168,7 @@ class SacdevB2PresidentRegistrationController extends Controller
                     'target_sy_id' => $syId,
                     'form'         => 'b2_president_registration',
                     'status'       => 'approved_by_sacdev',
-                    'action_url'   => route('org.rereg.b2.president.index'),
+                    'action_url'   => route('org.rereg.b2.president.edit'),
                     'meta'         => ['registration_id' => $regId],
                 ]);
             });

@@ -51,7 +51,7 @@ class OrgReregAssignmentsController extends Controller
 
     private function targetSyId(Request $request): int
     {
-        // SY being encoded (re-reg target)
+        
         return (int) $request->session()->get('encode_sy_id');
     }
 
@@ -74,33 +74,22 @@ class OrgReregAssignmentsController extends Controller
 
 
     /**
-     * If you have "must_change_password" logic, this is the simplest signal:
-     * - false => already activated (changed password)
-     * - true  => still on temp password
-     *
-     * Adjust if your column name differs.
+
      */
     private function isActivated(User $user): bool
     {
-        // Example column:
-        // return !$user->must_change_password;
 
-        // If you store it differently, update here
         return property_exists($user, 'must_change_password')
             ? !(bool) $user->must_change_password
-            : true; // fallback: treat as activated if unknown
+            : true; 
     }
 
-    /**
-     * Find a suggested moderator user to prefill the form:
-     * 1) Moderator in ACTIVE SY (same org)
-     * 2) Most recent moderator membership (same org, any SY, excluding target)
-     */
+
     private function suggestedModeratorUser(int $orgId, int $targetSyId): ?User
     {
         $activeSyId = $this->activeSyId();
 
-        // Prefer active SY moderator (if target is not the active year)
+     
         if ($activeSyId && $activeSyId !== $targetSyId) {
             $m = OrgMembership::query()
                 ->where('organization_id', $orgId)
@@ -113,7 +102,7 @@ class OrgReregAssignmentsController extends Controller
             if ($m?->user) return $m->user;
         }
 
-        // Otherwise, most recent moderator (excluding target)
+     
         $m = OrgMembership::query()
             ->where('organization_id', $orgId)
             ->where('school_year_id', '!=', $targetSyId)
@@ -129,13 +118,17 @@ class OrgReregAssignmentsController extends Controller
     public function editModerator(Request $request)
     {
         $orgId = $this->orgId($request);
+
+        
         $targetSyId = $this->targetSyId($request);
-
         $this->requireTargetSySelected($targetSyId);
-        //$this->assertActiveSyPresident($request, $orgId, $targetSyId);
 
-        $schoolYears = SchoolYear::query()->orderByDesc('id')->get(['id','name']);
-        $selectedSyId = (int) $request->query('target_sy_id', $targetSyId);
+      
+        $selectedSyId = (int) $targetSyId;
+
+        $currentSy = SchoolYear::query()
+            ->where('id', $selectedSyId) 
+            ->first(['id','name']);
 
         $current = OrgMembership::query()
             ->with('user')
@@ -150,14 +143,14 @@ class OrgReregAssignmentsController extends Controller
             $hasB5ForCurrentModerator = ModeratorSubmission::query()
                 ->where('organization_id', $orgId)
                 ->where('target_school_year_id', $selectedSyId)
-                ->where('moderator_user_id', $current->user->id)   // adjust column if different
+                ->where('moderator_user_id', $current->user->id)
                 ->exists();
         }
+
         $suggested = $this->suggestedModeratorUser($orgId, $selectedSyId);
 
-
         return view('org.rereg.assign_moderator', compact(
-            'schoolYears',
+            'currentSy',
             'selectedSyId',
             'current',
             'suggested',
@@ -166,42 +159,32 @@ class OrgReregAssignmentsController extends Controller
     }
 
 
+
     public function storeModerator(Request $request)
     {
         $orgId = $this->orgId($request);
         $targetSyId = $this->targetSyId($request);
 
         $this->requireTargetSySelected($targetSyId);
-        //$this->assertActiveSyPresident($request, $orgId, $targetSyId);
+
 
         $data = $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
             'email'     => ['required', 'email', 'max:255'],
         ]);
 
-        /**
-         * Behavior:
-         * - Assign whatever email/name was entered as moderator for target SY.
-         * - If user does not exist: create + temp password (logged).
-         * - If exists and NOT activated: do NOT force reset by default, unless you want it.
-         *   (If you want “reset temp password whenever they change moderator”, we can add a checkbox.)
-         * - If exists and activated: no temp password.
-         *
-         * Optional: if you want to "correct previous moderator email" instead of creating a new account,
-         * we can add a separate "update_email_of_suggested" toggle later.
-         */
+ 
 
         [$user, $tempPassword, $didResetTemp] = DB::transaction(function () use ($data, $orgId, $targetSyId) {
 
-            // create/find by email
+         
             [$user, $tempPassword] = AccountProvisioner::findOrCreateUser($data['full_name'], $data['email']);
 
-            // If this is an existing user (no temp password returned), optionally reset temp password ONLY if not activated
+       
             $didResetTemp = false;
 
             if (!$tempPassword) {
-                // if user still hasn't activated, you can choose to reset temp password
-                // NOTE: implement this method in AccountProvisioner if you don't have it yet
+     
                 if (method_exists(AccountProvisioner::class, 'resetTempPasswordIfNotActivated') && !$this->isActivated($user)) {
                     $newTemp = AccountProvisioner::resetTempPasswordIfPending($user->id);
                     if ($newTemp) {
@@ -211,10 +194,10 @@ class OrgReregAssignmentsController extends Controller
                 }
             }
 
-            // Ensure they can see org+SY
+       
             AccountProvisioner::ensureBasicOrgAccess($user->id, $orgId, $targetSyId);
 
-            // Archive any existing moderator for org+targetSY
+       
             OrgMembership::query()
                 ->where('organization_id', $orgId)
                 ->where('school_year_id', $targetSyId)
@@ -222,7 +205,6 @@ class OrgReregAssignmentsController extends Controller
                 ->whereNull('archived_at')
                 ->update(['archived_at' => now()]);
 
-            // Assign moderator membership
             AccountProvisioner::ensureMembership($user->id, $orgId, $targetSyId, 'moderator');
 
             return [$user, $tempPassword, $didResetTemp];
@@ -237,7 +219,7 @@ class OrgReregAssignmentsController extends Controller
                 'name'  => $user->name,
                 'org_id' => $orgId,
                 'sy_id'  => $targetSyId,
-                'temp_password' => $tempPassword, // will be null if activated existing user
+                'temp_password' => $tempPassword, 
             ]
         );
 
@@ -255,7 +237,7 @@ class OrgReregAssignmentsController extends Controller
     {
         $orgId = $this->orgId($request);
 
-        // selected SY comes from query string first, fallback to session
+       
         $selectedSyId = (int) $request->query('target_sy_id', $this->targetSyId($request));
         $this->requireTargetSySelected($selectedSyId);
 
@@ -263,7 +245,7 @@ class OrgReregAssignmentsController extends Controller
 
         $schoolYears = \App\Models\SchoolYear::query()
             ->orderByDesc('id')
-            ->get(['id', 'name']); // use 'name' if your column is name
+            ->get(['id', 'name']); 
 
         $current = OrgMembership::query()
             ->with('user')
@@ -288,7 +270,7 @@ class OrgReregAssignmentsController extends Controller
 
         $this->requireTargetSySelected($targetSyId);
 
-        // Most workflows: Active SY president assigns Target SY president
+      
         $this->assertActiveSyPresident($request, $orgId);
 
         $data = $request->validate([
@@ -302,13 +284,13 @@ class OrgReregAssignmentsController extends Controller
 
         [$user, $tempPassword] = DB::transaction(function () use ($data, $orgId, $targetSyId) {
 
-            // Create/find account (returns temp password if created)
+         
             [$user, $tempPassword] = AccountProvisioner::findOrCreateUser($data['full_name'], $data['email']);
 
-            // Ensure basic access
+         
             AccountProvisioner::ensureBasicOrgAccess($user->id, $orgId, $targetSyId);
 
-            // Archive existing president for target SY
+      
             OrgMembership::query()
                 ->where('organization_id', $orgId)
                 ->where('school_year_id', $targetSyId)
@@ -316,7 +298,7 @@ class OrgReregAssignmentsController extends Controller
                 ->whereNull('archived_at')
                 ->update(['archived_at' => now()]);
 
-            // Ensure new president membership
+         
             AccountProvisioner::ensureMembership($user->id, $orgId, $targetSyId, 'president');
 
             return [$user, $tempPassword];
@@ -333,7 +315,7 @@ class OrgReregAssignmentsController extends Controller
         return redirect()
             ->route('org.provision.next_president.edit')
             ->with('status', $tempPassword
-                ? 'Next SY president assigned. Temporary password logged (and email sent if mail is enabled).'
+                ? 'Next SY president assigned. Temporary password logged.'
                 : 'Next SY president assigned (existing user).'
             );
     }

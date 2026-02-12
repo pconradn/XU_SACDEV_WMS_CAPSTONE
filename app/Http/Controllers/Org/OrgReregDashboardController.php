@@ -3,16 +3,17 @@
 namespace App\Http\Controllers\Org;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\ModeratorSubmission;                     
 
-use App\Models\SchoolYear;
-use App\Models\OrgMembership;
+use App\Models\OfficerSubmission;                       
+use App\Models\OrganizationSchoolYear;
 
 // Forms
-use App\Models\StrategicPlanSubmission as StrategicPlan; // B1
-use App\Models\PresidentRegistration;                    // B2
-use App\Models\OfficerSubmission;                        // B3
-use App\Models\ModeratorSubmission;                      // B5
+use App\Models\OrgMembership;
+use App\Models\PresidentRegistration;                   
+use App\Models\SchoolYear;
+use App\Models\StrategicPlanSubmission as StrategicPlan; 
+use Illuminate\Http\Request;
 
 class OrgReregDashboardController extends Controller
 {
@@ -20,7 +21,7 @@ class OrgReregDashboardController extends Controller
     {
         return [
             'orgId' => (int) $request->session()->get('active_org_id'),
-            'syId'  => (int) $request->session()->get('encode_sy_id'), // target SY for re-reg
+            'syId'  => (int) $request->session()->get('encode_sy_id'), 
             'userId'=> (int) $request->user()->id,
         ];
     }
@@ -29,9 +30,16 @@ class OrgReregDashboardController extends Controller
     {
         ['orgId' => $orgId, 'syId' => $syId, 'userId' => $userId] = $this->ctx($request);
 
-        /**
-         * Only show SYs where user has membership in this org.
-         */
+        $isActivated = false;
+
+        if ($syId) {
+            $isActivated = OrganizationSchoolYear::query()
+                ->where('organization_id', $orgId)  
+                ->where('school_year_id', $syId)
+                ->exists();
+        }
+
+  
         $allowedSyIds = OrgMembership::query()
             ->where('user_id', $userId)
             ->where('organization_id', $orgId)
@@ -42,21 +50,19 @@ class OrgReregDashboardController extends Controller
             ->all();
 
         $schoolYears = SchoolYear::query()
-            ->whereIn('id', $allowedSyIds ?: [-1]) // safe empty
+            ->whereIn('id', $allowedSyIds ?: [-1]) 
             ->orderByDesc('id')
             ->get();
 
-        // Determine active SY (for assigning NEXT SY president permission)
+       
         $activeSyId = (int) SchoolYear::query()
             ->where('is_active', true)
             ->value('id');
 
-        // Permissions for assignment buttons
         $canAssignNextPresident = $activeSyId > 0
             ? $this->hasRole($userId, $orgId, $activeSyId, 'president')
             : false;
 
-        // These depend on selected target SY (encode_sy_id)
         $canAssignModerator = ($syId > 0)
             ? $this->hasRole($userId, $orgId, $syId, 'president')
             : false;
@@ -65,7 +71,6 @@ class OrgReregDashboardController extends Controller
             ? $this->hasRole($userId, $orgId, $syId, 'moderator')
             : false;
 
-        // If encode SY not set yet (or invalid), show page with no checks
         if ($syId <= 0 || !in_array($syId, $allowedSyIds, true)) {
             return view('org.rereg.index', [
                 'schoolYears' => $schoolYears,
@@ -73,7 +78,6 @@ class OrgReregDashboardController extends Controller
                 'forms'       => [],
                 'allApproved' => false,
 
-                // IMPORTANT: pass these so blade won’t error
                 'canAssignNextPresident' => $canAssignNextPresident,
                 'canAssignModerator'     => false,
                 'isTargetSyModerator'    => false,
@@ -148,25 +152,24 @@ class OrgReregDashboardController extends Controller
                 ->with('user')
                 ->first();
 
-            $canAssignModerator = true; // since this dashboard route is already inside org.role:president middleware
+            $canAssignModerator = true; 
 
         return view('org.rereg.index', [
             'schoolYears' => $schoolYears,
             'encodeSyId'  => $syId,
             'forms'       => $forms,
             'allApproved' => $allApproved,
-
+            'isActivated' => $isActivated ,
           
             'canAssignNextPresident' => $canAssignNextPresident,
             'canAssignModerator'     => $canAssignModerator,
             'b5Moderator' => $b5Moderator,
             'isTargetSyModerator'    => $isTargetSyModerator,
+            
         ]);
     }
 
-    /**
-     * Simple role checker (no archived)
-     */
+
     private function hasRole(int $userId, int $orgId, int $syId, string $role): bool
     {
         return OrgMembership::query()
@@ -188,7 +191,6 @@ class OrgReregDashboardController extends Controller
 
         $targetSyId = (int) $data['encode_school_year_id'];
 
-        // Guard: user must have membership for this org+SY
         $allowed = OrgMembership::query()
             ->where('user_id', $userId)
             ->where('organization_id', $orgId)
@@ -211,7 +213,7 @@ class OrgReregDashboardController extends Controller
     {
         return in_array($status, [
             'approved_by_sacdev',
-            'approved', // if any form uses a plain "approved"
+            'approved', 
         ], true);
     }
 
@@ -231,19 +233,16 @@ class OrgReregDashboardController extends Controller
         $s = $status ?? 'not_started';
 
         return match ($s) {
-            // SACDEV final
+           
             'approved_by_sacdev', 'approved' => ['text' => 'Approved', 'class' => 'bg-emerald-100 text-emerald-800'],
 
-            // Under review (SACDEV)
             'submitted_to_sacdev', 'forwarded_to_sacdev' => ['text' => 'Under SACDEV Review', 'class' => 'bg-blue-100 text-blue-800'],
 
-            // Under review (Moderator)
             'submitted_to_moderator' => ['text' => 'Under Moderator Review', 'class' => 'bg-indigo-100 text-indigo-800'],
 
-            // Returned
+    
             'returned_by_sacdev', 'returned_by_moderator' => ['text' => 'Returned', 'class' => 'bg-amber-100 text-amber-800'],
 
-            // Draft
             'draft' => ['text' => 'Draft', 'class' => 'bg-slate-100 text-slate-800'],
 
             default => ['text' => 'Not Started', 'class' => 'bg-slate-100 text-slate-600'],

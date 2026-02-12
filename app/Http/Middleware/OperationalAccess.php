@@ -22,17 +22,9 @@ class OperationalAccess
 
         $activeSyId = SchoolYear::activeYear()?->id;
 
-        // Define what "done" means for your system
-        // If you only use "accomplished", keep it as a single item.
+  
         $doneStatuses = ['accomplished'];
 
-        /*
-        |---------------------------------------------------------
-        | A) Normal operational access
-        |   - member of active SY for org
-        |   - org is activated for active SY (has entry in organization_school_years)
-        |---------------------------------------------------------
-        */
         $hasActiveMembership = false;
         $orgActivatedInActiveSy = false;
 

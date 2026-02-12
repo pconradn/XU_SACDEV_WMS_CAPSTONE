@@ -8,7 +8,7 @@
     <div class="flex items-center justify-between">
         <div>
             <h3 class="text-base font-semibold text-slate-900">Leadership Involvement</h3>
-            <p class="mt-1 text-sm text-slate-600">Up to 4 entries (we’ll enforce max 4 in validation later).</p>
+            <p class="mt-1 text-sm text-slate-600">Up to 4 entries.</p>
         </div>
 
         <button type="button" id="addLeadershipBtn"

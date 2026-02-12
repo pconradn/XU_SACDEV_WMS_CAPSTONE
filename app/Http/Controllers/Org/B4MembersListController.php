@@ -90,7 +90,6 @@ class B4MembersListController extends Controller
             ->where('target_school_year_id', $targetSyId)
             ->firstOrFail();
 
-        // Always editable: just validate formats
         $validated = $request->validate([
             'certified' => ['nullable', 'boolean'],
 
@@ -107,7 +106,7 @@ class B4MembersListController extends Controller
             $list->certified = (bool) $request->boolean('certified');
             $list->save();
 
-            // sync rows (delete + recreate)
+       
             $list->items()->delete();
 
             foreach (($request->input('items') ?? []) as $i => $row) {
