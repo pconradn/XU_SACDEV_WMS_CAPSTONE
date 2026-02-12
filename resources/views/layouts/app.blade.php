@@ -76,12 +76,7 @@
             
                 <div class="flex items-center gap-3">
                     @auth
-                        <div class="hidden sm:flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
-                            <span class="text-xs text-slate-500">Active SY</span>
-                            <span class="text-xs font-semibold text-slate-800">
-                                {{ $activeSy?->name ?? 'None' }}
-                            </span>
-                        </div>
+
 
                         <div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
                             <div class="h-7 w-7 rounded-full bg-slate-100 flex items-center justify-center text-xs font-semibold text-slate-700">
@@ -103,7 +98,7 @@
 
                         <a href="{{ route('notifications.index') }}"
                         class="relative inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 hover:bg-slate-50">
-                            {{-- bell icon --}}
+                            
                             <svg class="h-5 w-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0m6 0H9"/>

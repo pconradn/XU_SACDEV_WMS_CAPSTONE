@@ -160,9 +160,7 @@
                     <div class="mt-4 flex flex-wrap gap-2">
 
                         {{-- Debug (keep this while testing) --}}
-                        <div class="text-xs text-red-600">
-                            isModerator: {{ isset($isModerator) ? ($isModerator ? 'true' : 'false') : 'NOT SET' }}
-                        </div>
+
                         @php
                             $reregHref = ($isModerator ?? false)
                                 ? route('org.moderator.rereg.dashboard')
@@ -177,19 +175,10 @@
 
                         {{-- Show management links if President role exists --}}
                         @if($roles->contains('president'))
-                            <a href="{{ route('org.officers.index') }}"
-                               class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                                Officers
-                            </a>
 
                             <a href="{{ route('org.projects.index') }}"
                                class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
                                 Projects
-                            </a>
-
-                            <a href="{{ route('org.assign-roles.edit') }}"
-                               class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                                Assign Roles
                             </a>
 
                             <a href="{{ route('org.assign-project-heads.index') }}"
