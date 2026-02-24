@@ -21,6 +21,11 @@
             @csrf
             <input type="hidden" name="certified" value="0">
 
+            @include('org.forms.b3_officers.partials._major_officers', [
+                'registration' => $registration,
+                'isLocked' => $isLocked,
+            ])
+
             @include('org.forms.b3_officers.partials._table', [
                 'registration' => $registration,
                 'isLocked' => $isLocked,

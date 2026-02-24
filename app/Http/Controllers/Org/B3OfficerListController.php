@@ -87,11 +87,14 @@ class B3OfficerListController extends Controller
       
         $isLocked = in_array($registration->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true);
 
+        $currentUser = auth()->user();
+
         return view('org.forms.b3_officers.edit', [
             'registration' => $registration,
             'targetSyId' => $targetSyId,
             'schoolYear' => $schoolYear,
             'isLocked' => $isLocked,
+            'currentUser' => $currentUser,
         ]);
     }
 
@@ -102,12 +105,18 @@ class B3OfficerListController extends Controller
             $row['officer_name'] ?? null,
             $row['student_id_number'] ?? null,
             $row['course_and_year'] ?? null,
-            $row['latest_qpi'] ?? null,
+
+            $row['first_sem_qpi'] ?? null,
+            $row['second_sem_qpi'] ?? null,
+            $row['intersession_qpi'] ?? null,
+
             $row['mobile_number'] ?? null,
         ];
 
         foreach ($values as $v) {
-            if ($v !== null && trim((string) $v) !== '') return false;
+            if ($v !== null && trim((string) $v) !== '') {
+                return false;
+            }
         }
 
         return true;
@@ -123,7 +132,6 @@ class B3OfficerListController extends Controller
     {
         DB::transaction(function () use ($request, $registration) {
 
-           
             $registration->certified = (bool) $request->input('certified', false);
             $registration->encoded_by_user_id = $registration->encoded_by_user_id ?? auth()->id();
             $registration->status = 'draft';
@@ -131,21 +139,48 @@ class B3OfficerListController extends Controller
 
             $registration->items()->delete();
 
-            foreach (($request->input('items') ?? []) as $i => $row) {
-                if (!is_array($row) || $this->rowEmpty($row)) continue;
+        $sort = 1;
 
+        foreach (($request->input('items') ?? []) as $i => $row) {
 
-
-                $registration->items()->create([
-                    'position' => $row['position'] ?? '',
-                    'officer_name' => $row['officer_name'] ?? '',
-                    'student_id_number' => $row['student_id_number'] ?? '',
-                    'course_and_year' => $row['course_and_year'] ?? '',
-                    'latest_qpi' => $row['latest_qpi'] ?? null,
-                    'mobile_number' => $row['mobile_number'] ?? '',
-                    'sort_order' => $i + 1,
-                ]);
+            if (!is_array($row) || $this->rowEmpty($row)) {
+                continue;
             }
+
+            $isMajorOfficer = !empty($row['major_officer_role']);
+            $majorRole = $row['major_officer_role'] ?? null;
+
+            $registration->items()->create([
+
+                'position' => $row['position'] ?? '',
+
+                'officer_name' => $row['officer_name'] ?? '',
+
+                'student_id_number' => $row['student_id_number'] ?? '',
+
+                'course_and_year' => $row['course_and_year'] ?? '',
+
+                'first_sem_qpi' => $row['first_sem_qpi'] ?? null,
+
+                'second_sem_qpi' => $row['second_sem_qpi'] ?? null,
+
+                'intersession_qpi' => $row['intersession_qpi'] ?? null,
+                'latest_qpi' => $row['second_sem_qpi'] ?? $row['latest_qpi'] ?? null,
+
+                'mobile_number' => $row['mobile_number'] ?? '',
+
+                'sort_order' => $sort++,
+
+                'is_major_officer' => $isMajorOfficer,
+
+                'major_officer_role' => $isMajorOfficer ? $majorRole : null,
+
+                'propagated_to_memberships' => false,
+            ]);
+        }
+
+
+
         });
     }
 
@@ -172,8 +207,18 @@ class B3OfficerListController extends Controller
             'items.*.officer_name' => ['nullable', 'string', 'max:255'],
             'items.*.student_id_number' => ['nullable', 'string', 'max:50'],
             'items.*.course_and_year' => ['nullable', 'string', 'max:255'],
-            'items.*.latest_qpi' => ['nullable', 'numeric', 'min:0', 'max:4'],
+            
             'items.*.mobile_number' => ['nullable', 'string', 'max:30'],
+
+            'items.*.first_sem_qpi' => ['nullable', 'numeric', 'min:0', 'max:4'],
+            'items.*.second_sem_qpi' => ['nullable', 'numeric', 'min:0', 'max:4'],
+            'items.*.intersession_qpi' => ['nullable', 'numeric', 'min:0', 'max:4'],
+
+            'items.*.major_officer_role' => [
+                'nullable',
+                Rule::in(['president', 'vice_president', 'treasurer', 'auditor'])
+            ],
+
         ]);
 
         $this->persistDraft($request, $registration);
@@ -204,8 +249,19 @@ class B3OfficerListController extends Controller
             'items.*.officer_name' => ['required_with:items.*.position,items.*.student_id_number,items.*.course_and_year,items.*.mobile_number', 'nullable', 'string', 'max:255'],
             'items.*.student_id_number' => ['required_with:items.*.position,items.*.officer_name,items.*.course_and_year,items.*.mobile_number', 'nullable', 'string', 'max:50'],
             'items.*.course_and_year' => ['required_with:items.*.position,items.*.officer_name,items.*.student_id_number,items.*.mobile_number', 'nullable', 'string', 'max:255'],
-            'items.*.latest_qpi' => ['nullable', 'numeric', 'min:0', 'max:4'],
+            
             'items.*.mobile_number' => ['required_with:items.*.position,items.*.officer_name,items.*.student_id_number,items.*.course_and_year', 'nullable', 'string', 'max:30'],
+
+            'items.*.first_sem_qpi' => ['nullable', 'numeric', 'min:0', 'max:4'],
+            'items.*.second_sem_qpi' => ['nullable', 'numeric', 'min:0', 'max:4'],
+            'items.*.intersession_qpi' => ['nullable', 'numeric', 'min:0', 'max:4'],
+
+            'items.*.major_officer_role' => [
+                'nullable',
+                Rule::in(['president', 'vice_president', 'treasurer', 'auditor'])
+            ],
+
+
         ]);
 
    

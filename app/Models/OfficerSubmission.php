@@ -15,7 +15,7 @@ class OfficerSubmission extends Model
         'target_school_year_id',
         'encoded_by_user_id',
         'status',
-        'certified',
+        'certified',                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
 
         'sacdev_reviewed_by_user_id',
         'sacdev_remarks',
@@ -41,7 +41,6 @@ class OfficerSubmission extends Model
         'edit_requested_at' => 'datetime',
     ];
 
-    // --------------------
     // Relationships
     // --------------------
 

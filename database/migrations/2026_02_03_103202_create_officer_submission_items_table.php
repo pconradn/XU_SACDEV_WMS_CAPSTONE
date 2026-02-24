@@ -16,12 +16,12 @@ return new class extends Migration
             $table->string('position');
             $table->string('officer_name');
 
-            // ✅ New: Student ID number (for future duplicate checking)
+            
             $table->string('student_id_number', 50);
 
             $table->string('course_and_year');
 
-            // Optional now (you can enforce later)
+            
             $table->decimal('latest_qpi', 3, 2)->nullable();
 
             $table->string('mobile_number');
@@ -34,7 +34,7 @@ return new class extends Migration
                 ->references('id')->on('officer_submissions')
                 ->cascadeOnDelete();
 
-            // Optional (future): index to speed up duplicate checks
+            
             $table->index('student_id_number', 'osi_student_id_idx');
         });
     }

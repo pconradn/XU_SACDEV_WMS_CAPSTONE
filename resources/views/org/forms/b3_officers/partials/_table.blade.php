@@ -1,54 +1,73 @@
 <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+
     <div class="flex items-center justify-between">
-        <h3 class="text-base font-semibold text-slate-900">List of Officers</h3>
+        <h3 class="text-base font-semibold text-slate-900">
+            Other Officers
+        </h3>
 
         <button type="button"
-                id="addRowBtn"
+                id="addOfficerBtn"
                 class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
                 {{ $isLocked ? 'disabled' : '' }}>
-            + Add row
+            + Add Officer
         </button>
     </div>
 
     <div class="mt-4 overflow-x-auto">
+
         <table class="min-w-full text-left text-sm">
+
             <thead class="text-xs uppercase text-slate-500 border-b border-slate-200">
                 <tr>
                     <th class="py-2 px-2">Position</th>
                     <th class="py-2 px-2">Officer Name</th>
                     <th class="py-2 px-2">Student ID</th>
-                    <th class="py-2 px-2">Course & Year</th>
-                    <th class="py-2 px-2">Latest QPI</th>
-                    <th class="py-2 px-2">Mobile #</th>
-                    <th class="py-2 px-2 text-right">Remove</th>
+                    <th class="py-2 px-2 text-right">Actions</th>
                 </tr>
             </thead>
 
-            <tbody id="rowsTbody" class="divide-y divide-slate-100">
+            <tbody id="officerRows" class="divide-y divide-slate-100">
+
                 @php
                     $oldItems = old('items');
+
                     $items = is_array($oldItems)
                         ? $oldItems
                         : ($registration->items?->map(fn($i) => $i->toArray())->toArray() ?? []);
-                    $items = $items ?: [];
+
+                    $items = collect($items)
+                        ->filter(fn($item) => empty($item['major_officer_role']))
+                        ->values()
+                        ->toArray();
                 @endphp
 
-                @foreach($items as $idx => $row)
+                @forelse($items as $idx => $row)
+
                     @include('org.forms.b3_officers.partials._row', [
                         'idx' => $idx,
                         'row' => $row,
                         'isLocked' => $isLocked,
                     ])
-                @endforeach
 
-                @if(count($items) === 0)
-                    <tr id="emptyRowHint">
-                        <td colspan="7" class="py-6 px-2 text-sm text-slate-600">
-                            No officer rows yet. Click <span class="font-semibold">Add row</span> to start encoding.
+                @empty
+
+                    <tr id="emptyHint">
+                        <td colspan="4" class="py-6 px-2 text-sm text-slate-600">
+                            No officers yet. Click <span class="font-semibold">Add Officer</span>.
                         </td>
                     </tr>
-                @endif
+
+                @endforelse
+
             </tbody>
+
         </table>
+
     </div>
+
 </div>
+
+
+@include('org.forms.b3_officers.partials._modal', [
+    'isLocked' => $isLocked,
+])

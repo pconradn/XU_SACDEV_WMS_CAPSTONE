@@ -79,8 +79,22 @@ class OfficerEntryController extends Controller
 
         abort_unless($officer->organization_id === $orgId && $officer->school_year_id === $syId, 404);
 
-        return view('org.officers.edit', compact('officer', 'syId'));
+        $presidentMembership = OrganizationMembership::query()
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $targetSyId)
+            ->where('major_officer_role', 'president')
+            ->with('user')
+            ->first();
+
+        $currentUser = auth()->user();
+
+
+
+        return view('org.officers.edit', compact('officer', 'syId', 'presidentMembership'));
     }
+
+
+
 
     public function update(Request $request, OfficerEntry $officer)
     {
