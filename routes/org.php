@@ -38,17 +38,17 @@ Route::prefix('org')
 
         /*
         |----------------------------------------------------------------------
-        | PROVISIONING (ACTIVE SY PRESIDENT ONLY)
+        | PROVISIONING (not being used anymore)
         |----------------------------------------------------------------------
         */
         Route::prefix('provision')
             ->middleware(['require_president_active_sy'])
             ->name('org.provision.')
             ->group(function () {
-                Route::get('/next-president', [OrgReregAssignmentsController::class, 'editNextPresident'])
-                    ->name('next_president.edit');
-                Route::post('/next-president', [OrgReregAssignmentsController::class, 'storeNextPresident'])
-                    ->name('next_president.store');
+                //Route::get('/next-president', [OrgReregAssignmentsController::class, 'editNextPresident'])
+                    //->name('next_president.edit');
+                //Route::post('/next-president', [OrgReregAssignmentsController::class, 'storeNextPresident'])
+                    //->name('next_president.store');
             });
 
         /*

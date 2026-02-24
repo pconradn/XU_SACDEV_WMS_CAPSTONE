@@ -115,4 +115,17 @@ Route::prefix('admin')
             Route::post('/{submission}/allow-edit', [SacdevB5ModeratorSubmissionController::class, 'allowEdit'])->name('allow_edit');
             Route::post('/{submission}/revert-approval', [SacdevB5ModeratorSubmissionController::class, 'revertApproval'])->name('revert_approval');
         });
+
+
+
+
+        Route::get('president-assignments', [OrganizationPresidentController::class, 'index'])
+            ->name('admin.president_assignments.index');
+
+        Route::post('president-assignments/assign', [OrganizationPresidentController::class, 'assign'])
+            ->name('admin.president_assignments.assign');
+
+
+
+
     });

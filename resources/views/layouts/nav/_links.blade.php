@@ -96,8 +96,21 @@
                 $admin[] = $item('Organizations', route('admin.organizations.index'), ['admin.organizations.*']);
             }
 
+            // Elections / Provisioning
+            if (Route::has('admin.president_assignments.index')) {
+                $admin[] = $item(
+                    'President Assignments',
+                    route('admin.president_assignments.index'),
+                    ['admin.president_assignments.*']
+                );
+            }
+
             if (Route::has('admin.organizations.assign-president')) {
-                $admin[] = $item('Assign President', route('admin.organizations.assign-president'), ['admin.organizations.assign-president*']);
+                $admin[] = $item(
+                    'Assign President (Legacy)',
+                    route('admin.organizations.assign-president'),
+                    ['admin.organizations.assign-president*']
+                );
                 // includes both GET and POST names
             }
 
