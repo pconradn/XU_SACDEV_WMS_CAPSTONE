@@ -28,14 +28,16 @@
                     $item = (object)[
                         'position' => $systemRoleLabel,
                         'officer_name' => $currentUser->full_name ?? $currentUser->name ?? '',
-                        'student_id_number' => $currentUser->student_id_number ?? '',
-                        'course_and_year' => $currentUser->course_and_year ?? '',
+                        'student_id_number' => $currentUser->officerEntries->first()?->student_id_number ?? '',
+                        'course_and_year' => $currentUser->officerEntries->first()?->course_and_year ?? '',
                         'mobile_number' => $currentUser->mobile_number ?? '',
                         'first_sem_qpi' => null,
                         'second_sem_qpi' => null,
                         'intersession_qpi' => null,
                     ];
                 }
+
+                
 
                 $idx = "major_{$roleKey}";
             @endphp

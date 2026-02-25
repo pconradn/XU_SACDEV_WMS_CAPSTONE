@@ -8,32 +8,31 @@ use Illuminate\Database\Eloquent\Builder;
 class OfficerEntry extends Model
 {
     protected $fillable = [
+
         'organization_id',
         'school_year_id',
-
         'full_name',
         'email',
-
-        // display title (Prime Minister, etc)
         'position',
-
-        // system authority role (president, treasurer, etc)
-        'major_officer_role',
-        'is_major_officer',
-
         'user_id',
 
         'student_id_number',
         'course_and_year',
 
-        'first_sem_qpi',
-        'second_sem_qpi',
-        'intersession_qpi',
+        // previous SY QPI
+        'prev_first_sem_qpi',
+        'prev_second_sem_qpi',
+        'prev_intersession_qpi',
 
-        'is_under_probation',
+        // current SY QPI
+        'current_first_sem_qpi',
+        'current_second_sem_qpi',
 
+        'latest_qpi',
         'mobile_number',
-        'sort_order',
+
+        'major_officer_role',
+        'is_major_officer',
 
         'source_officer_submission_item_id',
     ];
@@ -44,9 +43,12 @@ class OfficerEntry extends Model
         'is_major_officer' => 'boolean',
         'is_under_probation' => 'boolean',
 
-        'first_sem_qpi' => 'decimal:2',
-        'second_sem_qpi' => 'decimal:2',
-        'intersession_qpi' => 'decimal:2',
+        'prev_first_sem_qpi' => 'decimal:2',
+        'prev_second_sem_qpi' => 'decimal:2',
+        'prev_intersession_qpi' => 'decimal:2',
+        
+        'current_first_sem_qpi' => 'decimal:2',
+        'current_second_sem_qpi' => 'decimal:2',
     ];
 
     /*

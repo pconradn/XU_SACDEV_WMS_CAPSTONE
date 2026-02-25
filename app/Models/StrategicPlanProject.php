@@ -51,4 +51,9 @@ class StrategicPlanProject extends Model
     {
         return $this->hasMany(StrategicPlanPartner::class, 'project_id');
     }
+
+    public function propagatedProject()
+    {
+        return $this->hasOne(Project::class, 'source_strategic_plan_project_id');
+    }
 }

@@ -64,7 +64,7 @@ class OrganizationPresidentController extends Controller
 
         $orgId = (int) $data['organization_id'];
         $syId  = (int) $data['school_year_id'];
-        $email = trim($data['student_id_number']) . '@xu.edu.ph';
+        $email = trim($data['student_id_number']) . '@my.xu.edu.ph';
 
         
         $alreadyPresidentElsewhere = OfficerEntry::query()

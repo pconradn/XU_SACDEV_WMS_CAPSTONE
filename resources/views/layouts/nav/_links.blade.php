@@ -114,6 +114,10 @@
                 // includes both GET and POST names
             }
 
+            if (Route::has('admin.orgs_by_sy.index')) {
+                $admin[] = $item('Organizations (by SY)', route('admin.orgs_by_sy.index'), ['admin.orgs_by_sy.*']);
+            }
+
             if (Route::has('admin.audit-logs.index')) {
                 $admin[] = $item('Audit Logs', route('admin.audit-logs.index'), ['admin.audit-logs.*']);
             }

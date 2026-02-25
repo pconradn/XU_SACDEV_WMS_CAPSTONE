@@ -36,7 +36,7 @@ class Sprint1Seeder extends Seeder
         // 2) SacDev Admin account
         // ---------------------------
         $admin = User::query()->firstOrCreate(
-            ['email' => 'sacdev.admin@xu.edu.ph'],
+            ['email' => 'sacdev.admin@my.xu.edu.ph'],
             [
                 'name' => 'SacDev Admin',
                 'password' => Hash::make('Admin1234!'),
@@ -63,7 +63,7 @@ class Sprint1Seeder extends Seeder
         // 4) Presidents
         // ---------------------------
         $pres1 = User::query()->firstOrCreate(
-            ['email' => 'president.xucs@xu.edu.ph'],
+            ['email' => 'president.xucs@my.xu.edu.ph'],
             [
                 'name' => 'President - XUCS',
                 'password' => Hash::make('TempPass123!'),
@@ -74,7 +74,7 @@ class Sprint1Seeder extends Seeder
         );
 
         $pres2 = User::query()->firstOrCreate(
-            ['email' => 'president.xuti@xu.edu.ph'],
+            ['email' => 'president.xuti@my.xu.edu.ph'],
             [
                 'name' => 'President - XUTI',
                 'password' => Hash::make('TempPass123!'),
@@ -146,11 +146,11 @@ class Sprint1Seeder extends Seeder
         // 7) Officers list (5 per org) + link user_id
         // ---------------------------
         $xucsOfficers = [
-            ['full_name' => 'Treasurer XUCS', 'email' => 'treasurer.xucs@xu.edu.ph', 'position' => 'Treasurer'],
-            ['full_name' => 'Moderator XUCS', 'email' => 'moderator.xucs@xu.edu.ph', 'position' => 'Moderator'],
-            ['full_name' => 'Officer A XUCS', 'email' => 'officerA.xucs@xu.edu.ph', 'position' => 'Secretary'],
-            ['full_name' => 'Officer B XUCS', 'email' => 'officerB.xucs@xu.edu.ph', 'position' => 'PRO'],
-            ['full_name' => 'Officer C XUCS', 'email' => 'officerC.xucs@xu.edu.ph', 'position' => 'Auditor'],
+            ['full_name' => 'Treasurer XUCS', 'email' => 'treasurer.xucs@my.xu.edu.ph', 'position' => 'Treasurer'],
+            ['full_name' => 'Moderator XUCS', 'email' => 'moderator.xucs@my.xu.edu.ph', 'position' => 'Moderator'],
+            ['full_name' => 'Officer A XUCS', 'email' => 'officerA.xucs@my.xu.edu.ph', 'position' => 'Secretary'],
+            ['full_name' => 'Officer B XUCS', 'email' => 'officerB.xucs@my.xu.edu.ph', 'position' => 'PRO'],
+            ['full_name' => 'Officer C XUCS', 'email' => 'officerC.xucs@my.xu.edu.ph', 'position' => 'Auditor'],
         ];
 
         foreach ($xucsOfficers as $o) {
@@ -171,11 +171,11 @@ class Sprint1Seeder extends Seeder
         }
 
         $xutiOfficers = [
-            ['full_name' => 'Treasurer XUTI', 'email' => 'treasurer.xuti@xu.edu.ph', 'position' => 'Treasurer'],
-            ['full_name' => 'Moderator XUTI', 'email' => 'moderator.xuti@xu.edu.ph', 'position' => 'Moderator'],
-            ['full_name' => 'Officer A XUTI', 'email' => 'officerA.xuti@xu.edu.ph', 'position' => 'Secretary'],
-            ['full_name' => 'Officer B XUTI', 'email' => 'officerB.xuti@xu.edu.ph', 'position' => 'PRO'],
-            ['full_name' => 'Officer C XUTI', 'email' => 'officerC.xuti@xu.edu.ph', 'position' => 'Auditor'],
+            ['full_name' => 'Treasurer XUTI', 'email' => 'treasurer.xuti@my.xu.edu.ph', 'position' => 'Treasurer'],
+            ['full_name' => 'Moderator XUTI', 'email' => 'moderator.xuti@my.xu.edu.ph', 'position' => 'Moderator'],
+            ['full_name' => 'Officer A XUTI', 'email' => 'officerA.xuti@my.xu.edu.ph', 'position' => 'Secretary'],
+            ['full_name' => 'Officer B XUTI', 'email' => 'officerB.xuti@my.xu.edu.ph', 'position' => 'PRO'],
+            ['full_name' => 'Officer C XUTI', 'email' => 'officerC.xuti@my.xu.edu.ph', 'position' => 'Auditor'],
         ];
 
         foreach ($xutiOfficers as $o) {
@@ -198,8 +198,8 @@ class Sprint1Seeder extends Seeder
         // ---------------------------
         // 8) Assign Treasurer + Moderator memberships (optional but good)
         // ---------------------------
-        $xucsTreas = User::where('email', 'treasurer.xucs@xu.edu.ph')->first();
-        $xucsMod   = User::where('email', 'moderator.xucs@xu.edu.ph')->first();
+        $xucsTreas = User::where('email', 'treasurer.xucs@my.xu.edu.ph')->first();
+        $xucsMod   = User::where('email', 'moderator.xucs@my.xu.edu.ph')->first();
 
         if ($xucsTreas) {
             OrgMembership::query()->updateOrCreate(
@@ -229,8 +229,8 @@ class Sprint1Seeder extends Seeder
             );
         }
 
-        $xutiTreas = User::where('email', 'treasurer.xuti@xu.edu.ph')->first();
-        $xutiMod   = User::where('email', 'moderator.xuti@xu.edu.ph')->first();
+        $xutiTreas = User::where('email', 'treasurer.xuti@my.xu.edu.ph')->first();
+        $xutiMod   = User::where('email', 'moderator.xuti@my.xu.edu.ph')->first();
 
         if ($xutiTreas) {
             OrgMembership::query()->updateOrCreate(
@@ -280,9 +280,9 @@ class Sprint1Seeder extends Seeder
         }
 
         $this->command?->info('Sprint1Seeder completed successfully!');
-        $this->command?->warn('Admin Login: sacdev.admin@xu.edu.ph / Admin1234!');
-        $this->command?->warn('President Login XUCS: president.xucs@xu.edu.ph / TempPass123!');
-        $this->command?->warn('President Login XUTI: president.xuti@xu.edu.ph / TempPass123!');
-        $this->command?->warn('Officer Login Example: treasurer.xucs@xu.edu.ph / TempPass123!');
+        $this->command?->warn('Admin Login: sacdev.admin@my.xu.edu.ph / Admin1234!');
+        $this->command?->warn('President Login XUCS: president.xucs@my.xu.edu.ph / TempPass123!');
+        $this->command?->warn('President Login XUTI: president.xuti@my.xu.edu.ph / TempPass123!');
+        $this->command?->warn('Officer Login Example: treasurer.xucs@my.xu.edu.ph / TempPass123!');
     }
 }

@@ -35,4 +35,12 @@ class Project extends Model
     {
         return $this->hasMany(ProjectAssignment::class);
     }
+
+    public function strategicPlanProject()
+    {
+        return $this->belongsTo(
+            StrategicPlanProject::class,
+            'source_strategic_plan_project_id'
+        );
+    }
 }

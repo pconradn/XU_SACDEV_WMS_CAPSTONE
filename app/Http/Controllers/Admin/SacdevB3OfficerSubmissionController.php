@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\OfficerEntry;
 use App\Models\OfficerSubmission;
+use App\Models\OrgMembership;
 use App\Models\SchoolYear;
+use App\Models\User;
+use App\Support\AccountProvisioner;
+use App\Support\Audit;
+use App\Support\InAppNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\OrgMembership;
-use App\Models\User;
-use App\Support\InAppNotifier;
 use Illuminate\Support\Facades\DB;
 
 
@@ -57,9 +60,49 @@ class SacdevB3OfficerSubmissionController extends Controller
 
     public function show(OfficerSubmission $submission)
     {
-        $submission->load(['organization', 'targetSchoolYear', 'items']);
+        $submission->load([
+            'organization',
+            'targetSchoolYear',
+            'items'
+        ]);
 
-        return view('admin.forms.b3_officers.show', compact('submission'));
+        $syId  = (int) $submission->target_school_year_id;
+        $orgId = (int) $submission->organization_id;
+
+        $conflictsByItemId = [];
+
+        foreach ($submission->items as $item)
+        {
+            if (!$item->student_id_number) continue;
+
+            $conflicts = OfficerEntry::query()
+                ->with('organization')
+                ->where('student_id_number', $item->student_id_number)
+                ->where('school_year_id', $syId)
+                ->where('is_major_officer', true)
+                ->where('organization_id', '!=', $orgId)
+                ->get();
+
+            if ($conflicts->isNotEmpty())
+            {
+                $conflictsByItemId[$item->id] =
+                    $conflicts->map(function ($entry)
+                    {
+                        return [
+                            'organization_id' => $entry->organization_id,
+                            'organization_name' => $entry->organization->name ?? 'Unknown Org',
+                            'major_officer_role' => $entry->major_officer_role,
+                            'position' => $entry->position,
+                            'full_name' => $entry->full_name,
+                        ];
+                    })->values()->toArray();
+            }
+        }
+
+        return view('admin.forms.b3_officers.show', [
+            'submission' => $submission,
+            'conflictsByItemId' => $conflictsByItemId,
+        ]);
     }
 
     public function returnToOrg(Request $request, OfficerSubmission $submission)
@@ -127,9 +170,7 @@ class SacdevB3OfficerSubmissionController extends Controller
         $orgId = (int) $submission->organization_id;
         $syId  = (int) $submission->target_school_year_id;
 
-        $president = $this->presidentForSy($orgId, $syId);
-
-        DB::transaction(function () use ($submission, $data, $president, $orgId, $syId) {
+        DB::transaction(function () use ($submission, $data, $orgId, $syId) {
 
             $locked = OfficerSubmission::query()
                 ->whereKey($submission->getKey())
@@ -140,37 +181,279 @@ class SacdevB3OfficerSubmissionController extends Controller
                 abort(403, 'Only submitted forms can be approved.');
             }
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | STEP 0: Update submission status
+            |--------------------------------------------------------------------------
+            */
+
             $locked->status = 'approved_by_sacdev';
             $locked->approved_at = now();
-            $locked->sacdev_reviewed_by_user_id = Auth::id();
-            $locked->sacdev_remarks = $data['sacdev_remarks'] ?? null;
+            $locked->sacdev_reviewed_by_user_id = auth()->id();
             $locked->sacdev_reviewed_at = now();
+            $locked->sacdev_remarks = $data['sacdev_remarks'] ?? null;
             $locked->save();
 
-            $submissionId = (int) $locked->getKey();
 
-            DB::afterCommit(function () use ($president, $orgId, $syId, $submissionId) {
-                if (!$president) return;
 
-                $dedupeKey = "b3:officer_submission:{$submissionId}:approved_by_sacdev:to:{$president->getKey()}";
+            /*
+            |--------------------------------------------------------------------------
+            | STEP 1–10: Process each officer
+            |--------------------------------------------------------------------------
+            */
 
-                InAppNotifier::notifyOnce($president, [
-                    'dedupe_key'   => $dedupeKey,
-                    'title'        => 'B3 Officers List approved by SACDEV',
-                    'message'      => 'Your Officers List has been approved by SACDEV.',
-                    'org_id'       => $orgId,
-                    'target_sy_id' => $syId,
-                    'form'         => 'b3_officers_list',
-                    'status'       => 'approved_by_sacdev',
-                    'action_url'   => route('org.rereg.b3.officers-list.edit'),
-                    'meta'         => ['submission_id' => $submissionId],
-                ]);
-            });
+            foreach ($locked->items as $item) {
+
+                if ($item->isPropagated()) {
+                    continue;
+                }
+
+                $studentId = $item->student_id_number;
+                $email = $studentId . '@xu.edu.ph';
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | STEP 1: Major officer conflict blocking
+                |--------------------------------------------------------------------------
+                */
+
+                if ($item->is_major_officer) {
+
+                    $conflict = OfficerEntry::query()
+                        ->where('student_id_number', $studentId)
+                        ->where('school_year_id', $syId)
+                        ->where('is_major_officer', true)
+                        ->where('organization_id', '!=', $orgId)
+                        ->exists();
+
+                    if ($conflict) {
+                        abort(
+                            422,
+                            "{$item->officer_name} is already a major officer in another organization for this school year."
+                        );
+                    }
+                }
+
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | STEP 2: Find or create OfficerEntry
+                |--------------------------------------------------------------------------
+                */
+
+                $entry = OfficerEntry::query()
+                    ->where('organization_id', $orgId)
+                    ->where('school_year_id', $syId)
+                    ->where('student_id_number', $studentId)
+                    ->first();
+
+                if (!$entry) {
+
+                    $entry = new OfficerEntry();
+
+                    $entry->organization_id = $orgId;
+                    $entry->school_year_id = $syId;
+                    $entry->student_id_number = $studentId;
+                }
+
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | STEP 3: Update OfficerEntry snapshot
+                |--------------------------------------------------------------------------
+                */
+
+                $entry->full_name = $item->officer_name;
+                $entry->email = $email;
+                $entry->position = $item->position;
+                $entry->course_and_year = $item->course_and_year;
+                $entry->mobile_number = $item->mobile_number;
+
+                $entry->major_officer_role = $item->major_officer_role;
+                $entry->is_major_officer = $item->is_major_officer;
+
+                $entry->prev_first_sem_qpi = $item->first_sem_qpi;
+                $entry->prev_second_sem_qpi = $item->second_sem_qpi;
+                $entry->prev_intersession_qpi = $item->intersession_qpi;
+
+                $entry->latest_qpi = $item->latest_qpi;
+
+                $entry->sort_order = $item->sort_order;
+                $entry->source_officer_submission_item_id = $item->id;
+
+                $entry->save();
+
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | STEP 4: Compute probation status
+                |--------------------------------------------------------------------------
+                */
+
+                $failingCount = collect([
+                    $item->first_sem_qpi,
+                    $item->second_sem_qpi,
+                    $item->intersession_qpi
+                ])
+                ->filter()
+                ->filter(fn($qpi) => $qpi < 2.0)
+                ->count();
+
+                $isUnderProbation = $failingCount >= 2;
+
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | STEP 5: Create OrgMembership for ALL officers
+                |--------------------------------------------------------------------------
+                */
+
+                $membership = OrgMembership::query()
+                    ->where('organization_id', $orgId)
+                    ->where('school_year_id', $syId)
+                    ->where('officer_entry_id', $entry->id)
+                    ->first();
+
+                if (!$membership) {
+
+                    $membership = new OrgMembership();
+
+                    $membership->organization_id = $orgId;
+                    $membership->school_year_id = $syId;
+                    $membership->officer_entry_id = $entry->id;
+
+                    // user_id intentionally NULL
+                    $membership->user_id = null;
+                }
+
+                $membership->role = $item->major_officer_role ?? 'officer';
+                $membership->is_under_probation = $isUnderProbation;
+
+                $membership->save();
+
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | STEP 6: Provision USER ONLY if Treasurer
+                |--------------------------------------------------------------------------
+                */
+
+                if ($item->isTreasurer()) {
+
+                    [$user, $tempPassword] =
+                        AccountProvisioner::findOrCreateUser(
+                            $item->officer_name,
+                            $email
+                        );
+
+                    // Link OfficerEntry
+                    $entry->user_id = $user->id;
+                    $entry->save();
+
+                    // Link OrgMembership
+                    $membership->user_id = $user->id;
+                    $membership->save();
+
+
+                    AccountProvisioner::ensureBasicOrgAccess(
+                        $user->id,
+                        $orgId,
+                        $syId,
+                        $entry->id
+                    );
+
+
+                    Audit::log(
+                        'treasurer_provisioned',
+                        "Treasurer account provisioned: {$item->officer_name}",
+                        [
+                            'actor_user_id' => auth()->id(),
+                            'organization_id' => $orgId,
+                            'school_year_id' => $syId,
+                            'meta' => [
+                                'student_id_number' => $studentId
+                            ]
+                        ]
+                    );
+                }
+
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | STEP 7: Mark propagated
+                |--------------------------------------------------------------------------
+                */
+
+                $item->propagated_to_memberships = true;
+                $item->propagated_at = now();
+                $item->save();
+
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | STEP 8: Audit log
+                |--------------------------------------------------------------------------
+                */
+
+                Audit::log(
+                    'officer_entry_propagated',
+                    "Officer propagated: {$item->officer_name}",
+                    [
+                        'actor_user_id' => auth()->id(),
+                        'organization_id' => $orgId,
+                        'school_year_id' => $syId,
+                        'meta' => [
+                            'student_id_number' => $studentId,
+                            'role' => $item->major_officer_role,
+                            'probation' => $isUnderProbation,
+                        ]
+                    ]
+                );
+            }
+
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | STEP 9: Notify President
+            |--------------------------------------------------------------------------
+            */
+
+            $presidentEntry = OfficerEntry::query()
+                ->where('organization_id', $orgId)
+                ->where('school_year_id', $syId)
+                ->where('major_officer_role', 'president')
+                ->first();
+
+            if ($presidentEntry && $presidentEntry->user_id) {
+
+                $presidentUser = User::find($presidentEntry->user_id);
+
+                if ($presidentUser) {
+
+                    $presidentUser->notify(
+                        new \App\Notifications\OfficerSubmissionApprovedNotification(
+                            $submission
+                        )
+                    );
+                }
+            }
+
         });
 
-        return redirect()
-            ->route('admin.officer_submissions.show', $submission->id)
-            ->with('success', 'Approved successfully.');
+        return back()->with(
+            'success',
+            'Officer submission approved. Org memberships created. Treasurer account provisioned. President notified.'
+        );
     }
 
 

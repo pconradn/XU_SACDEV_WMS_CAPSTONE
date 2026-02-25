@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\OrgMembership;
+use App\Models\Project;
+use App\Models\StrategicPlanProject;
 use App\Models\StrategicPlanSubmission;
 use App\Models\User;
+use App\Support\Audit;
 use App\Support\InAppNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -151,8 +154,8 @@ class SacdevStrategicPlanController extends Controller
 
 
 
-    public function approve(Request $request, StrategicPlanSubmission $submission){
-
+    public function approve(Request $request, StrategicPlanSubmission $submission)
+    {
         $orgId = (int) $submission->organization_id;
         $syId  = (int) $submission->target_school_year_id;
 
@@ -166,18 +169,21 @@ class SacdevStrategicPlanController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-           
             $allowed = [
                 StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV,
-                
-                //StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
             ];
 
-            if (! in_array($locked->status, $allowed, true)) {
+            if (!in_array($locked->status, $allowed, true)) {
                 return redirect()
                     ->route('admin.strategic_plans.show', $locked->getKey())
                     ->with('error', 'This submission is not ready for approval.');
             }
+
+            /*
+            |--------------------------------------------------------------------------
+            | STEP 1: mark submission approved
+            |--------------------------------------------------------------------------
+            */
 
             $locked->status = StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV;
             $locked->approved_at = now();
@@ -189,10 +195,86 @@ class SacdevStrategicPlanController extends Controller
 
             $submissionId = (int) $locked->getKey();
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | STEP 2: propagate strategic plan projects → projects table
+            |--------------------------------------------------------------------------
+            */
+
+            $planProjects = StrategicPlanProject::query()
+                ->where('submission_id', $submissionId)
+                ->get();
+
+            foreach ($planProjects as $planProject) {
+
+                // find existing propagated project
+                $project = Project::query()
+                    ->where('source_strategic_plan_project_id', $planProject->id)
+                    ->first();
+
+                if (!$project) {
+
+                    $project = new Project();
+
+                    $project->organization_id = $orgId;
+                    $project->school_year_id = $syId;
+
+                    $project->source_strategic_plan_project_id = $planProject->id;
+
+                    // initial lifecycle status
+                    $project->status = 'planned';
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Only store operational fields
+                |--------------------------------------------------------------------------
+                */
+
+                $project->title = $planProject->title;
+
+                // do NOT copy budget/category/etc
+                // those remain in strategic_plan_projects
+
+                $project->save();
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Audit log
+                |--------------------------------------------------------------------------
+                */
+
+                Audit::log(
+                    'strategic_plan_project_created',
+                    "Project created from strategic plan: {$project->title}",
+                    [
+                        'actor_user_id' => auth()->id(),
+                        'organization_id' => $orgId,
+                        'school_year_id' => $syId,
+                        'meta' => [
+                            'project_id' => $project->id,
+                            'strategic_plan_project_id' => $planProject->id,
+                            'submission_id' => $submissionId,
+                        ]
+                    ]
+                );
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | STEP 3: notify president & moderator
+            |--------------------------------------------------------------------------
+            */
+
             DB::afterCommit(function () use ($president, $moderator, $orgId, $syId, $submissionId) {
 
                 if ($president) {
-                    $dedupeKey = "admin:strategic_plan:{$submissionId}:approved_by_sacdev:to:{$president->getKey()}";
+
+                    $dedupeKey =
+                        "admin:strategic_plan:{$submissionId}:approved_by_sacdev:to:{$president->getKey()}";
 
                     InAppNotifier::notifyOnce($president, [
                         'dedupe_key'   => $dedupeKey,
@@ -209,7 +291,9 @@ class SacdevStrategicPlanController extends Controller
                 }
 
                 if ($moderator) {
-                    $dedupeKey = "admin:strategic_plan:{$submissionId}:approved_by_sacdev:to:{$moderator->getKey()}";
+
+                    $dedupeKey =
+                        "admin:strategic_plan:{$submissionId}:approved_by_sacdev:to:{$moderator->getKey()}";
 
                     InAppNotifier::notifyOnce($moderator, [
                         'dedupe_key'   => $dedupeKey,
@@ -229,14 +313,20 @@ class SacdevStrategicPlanController extends Controller
             return true;
         });
 
-        // ✅ Stop if invalid state returned an error redirect
+
+        /*
+        |--------------------------------------------------------------------------
+        | Handle redirect safely
+        |--------------------------------------------------------------------------
+        */
+
         if ($result instanceof RedirectResponse) {
             return $result;
         }
 
         return redirect()
             ->route('admin.strategic_plans.show', $submission->getKey())
-            ->with('success', 'Approved by SACDEV.');
+            ->with('success', 'Approved by SACDEV and projects created successfully.');
     }
 
 

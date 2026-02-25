@@ -19,7 +19,7 @@
 
             @if($errors->any())
                 <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-                    <div class="font-semibold mb-1">Please fix the following:</div>
+                
                     <ul class="list-disc ml-5 text-sm">
                         @foreach($errors->all() as $e)
                             <li>{{ $e }}</li>
@@ -164,7 +164,7 @@
                         <div class="mt-2 text-sm text-slate-500">
                             Email will be generated:
                             <span id="modalEmailPreview" class="font-semibold text-blue-600">
-                                studentID@xu.edu.ph
+                                studentID@my.xu.edu.ph
                             </span>
                         </div>
                     </div>
@@ -216,7 +216,7 @@
 
             document.getElementById('modalPresidentName').value = '';
             modalStudentId.value = '';
-            modalEmailPreview.textContent = 'studentID@xu.edu.ph';
+            modalEmailPreview.textContent = 'studentID@my.xu.edu.ph';
 
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -239,7 +239,7 @@
 
         modalStudentId.addEventListener('input', () => {
             const id = modalStudentId.value.trim();
-            modalEmailPreview.textContent = id ? `${id}@xu.edu.ph` : 'studentID@xu.edu.ph';
+            modalEmailPreview.textContent = id ? `${id}@my.xu.edu.ph` : 'studentID@my.xu.edu.ph';
         });
     </script>
 

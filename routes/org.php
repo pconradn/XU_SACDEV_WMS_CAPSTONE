@@ -1,30 +1,24 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-
-use App\Http\Controllers\Org\OrgDashboardController;
-use App\Http\Controllers\Org\EncodeSchoolYearController;
+use App\Http\Controllers\Moderator\B5ModeratorSubmissionController;
+use App\Http\Controllers\Moderator\ModeratorReregDashboardController;
 use App\Http\Controllers\Org\ActivationStatusController;
-
-use App\Http\Controllers\Org\OfficerEntryController;
-use App\Http\Controllers\Org\OfficerInviteController;
-
-use App\Http\Controllers\Org\ProjectController;
-use App\Http\Controllers\Org\OrgRoleAssignmentController;
-use App\Http\Controllers\Org\ProjectHeadAssignmentController;
-
-use App\Http\Controllers\Org\OrgReregDashboardController;
-use App\Http\Controllers\Org\OrgReregAssignmentsController;
-use App\Http\Controllers\Org\StrategicPlanController;
-use App\Http\Controllers\Org\PresidentRegistrationController;
 use App\Http\Controllers\Org\B3OfficerListController;
 use App\Http\Controllers\Org\B4MembersListController;
-
+use App\Http\Controllers\Org\EncodeSchoolYearController;
 use App\Http\Controllers\Org\ModeratorStrategicPlanController;
-
-// Moderator
-use App\Http\Controllers\Moderator\ModeratorReregDashboardController;
-use App\Http\Controllers\Moderator\B5ModeratorSubmissionController;
+use App\Http\Controllers\Org\OfficerEntryController;
+use App\Http\Controllers\Org\OfficerInviteController;
+use App\Http\Controllers\Org\OrgDashboardController;
+use App\Http\Controllers\Org\OrgReregAssignmentsController;
+use App\Http\Controllers\Org\OrgReregDashboardController;
+use App\Http\Controllers\Org\OrgRoleAssignmentController;
+use App\Http\Controllers\Org\PresidentRegistrationController;
+use App\Http\Controllers\Org\ProjectController;
+use App\Http\Controllers\Org\ProjectHeadAssignmentController;
+use App\Http\Controllers\Org\StrategicPlanController;
+use App\Http\Controllers\OrgConstitutionSubmissionController;
+use Illuminate\Support\Facades\Route;
 
 Route::prefix('org')
     ->middleware(['auth', 'must_change_password', 'require.context'])
@@ -133,6 +127,18 @@ Route::prefix('org')
                     Route::get('/moderator', [OrgReregAssignmentsController::class, 'editModerator'])->name('moderator.edit');
                     Route::post('/moderator', [OrgReregAssignmentsController::class, 'storeModerator'])->name('moderator.store');
                 });
+
+                
+
+                Route::post('/constitution/upload',
+                    [OrgConstitutionSubmissionController::class, 'upload']
+                )->name('constitution.upload');
+
+                Route::get('/constitution/{submission}/download',
+                    [OrgConstitutionSubmissionController::class, 'download']
+                )->name('constitution.download');
+
+                
             });
 
         /*

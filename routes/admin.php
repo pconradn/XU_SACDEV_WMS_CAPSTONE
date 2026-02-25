@@ -1,20 +1,21 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-
-use App\Http\Controllers\Admin\AuditLogController;
-use App\Http\Controllers\Admin\SchoolYearController;
-use App\Http\Controllers\Admin\OrganizationController;
-use App\Http\Controllers\Admin\OrgActivationController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminMajorOfficerController;
+use App\Http\Controllers\Admin\AdminOrgBySyController;
 use App\Http\Controllers\Admin\AdminOrgReviewController;
-
-use App\Http\Controllers\Admin\SacdevB4MemberListController;
-use App\Http\Controllers\Admin\SacdevStrategicPlanController;
+use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\OrgActivationController;
+use App\Http\Controllers\Admin\OrganizationController;
 use App\Http\Controllers\Admin\OrganizationPresidentController;
 use App\Http\Controllers\Admin\SacdevB3OfficerSubmissionController;
+use App\Http\Controllers\Admin\SacdevB4MemberListController;
 use App\Http\Controllers\Admin\SacdevB5ModeratorSubmissionController;
+use App\Http\Controllers\Admin\SacdevStrategicPlanController;
+use App\Http\Controllers\Admin\SchoolYearController;
+use App\Http\Controllers\OrgConstitutionSubmissionController;
 use App\Http\Controllers\SACDEV\SacdevB2PresidentRegistrationController;
+use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')
     ->middleware(['auth', 'sacdev_admin', 'must_change_password'])
@@ -126,6 +127,38 @@ Route::prefix('admin')
             ->name('admin.president_assignments.assign');
 
 
+        Route::prefix('orgs-by-sy')->name('admin.orgs_by_sy.')->group(function () {
+            Route::get('/', [AdminOrgBySyController::class, 'index'])->name('index');
+            Route::post('/set-sy', [AdminOrgBySyController::class, 'setSy'])->name('set_sy');
+
+            Route::get('/{organization}', [AdminOrgBySyController::class, 'show'])->name('show');
+
+            Route::get('/{organization}/major-officers',
+                [AdminMajorOfficerController::class, 'index'])
+                ->name('major_officers');
+
+            Route::post('/{organization}/major-officers',
+                [AdminMajorOfficerController::class, 'update'])
+                ->name('major_officers.update');
+        });
+
+        Route::post('/orgs-by-sy/{organization}/major-officers/{role}',
+            [AdminMajorOfficerController::class, 'updateRole'])
+            ->name('admin.orgs_by_sy.major_officers.update_role');
+
+
+
+
+        Route::get(
+            '/org/constitution/{submission}/download',
+            [OrgConstitutionSubmissionController::class, 'download']
+        )->name('org.constitution.download');
+
+
+        Route::post(
+            '/admin/constitution/{submission}/approve',
+            [OrgConstitutionSubmissionController::class, 'approve']
+        )->name('admin.constitution.approve');
 
 
     });

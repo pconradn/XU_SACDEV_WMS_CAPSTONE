@@ -88,7 +88,7 @@
 
         {{-- Projects table (make sure buttons call @click="openProject(p.id)" inside this partial) --}}
         @include('admin.strategic_plans._projects', ['submission' => $submission])
-
+        
         {{-- Funds --}}
         @include('admin.strategic_plans._funds', ['submission' => $submission])
 
@@ -215,34 +215,117 @@
             </div>
         </div>
 
+        
         {{-- APPROVE MODAL --}}
         <div x-show="openApprove" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+
             <div class="absolute inset-0 bg-slate-900/50" @click="openApprove=false"></div>
-            <div class="relative w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-xl p-5">
-                <h3 class="text-lg font-semibold text-slate-900">Approve Strategic Plan</h3>
-                <p class="text-sm text-slate-600 mt-1">Confirm approval. This will lock edits (unless reverted later).</p>
 
-                <form class="mt-4 space-y-3"
-                      method="POST"
-                      action="{{ route('admin.strategic_plans.approve', $submission) }}">
-                    @csrf
-                    <textarea name="remarks" rows="4"
-                              class="w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                              placeholder="(optional) Approval note..."></textarea>
+            <div class="relative w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-xl">
 
-                    <div class="flex justify-end gap-2">
-                        <button type="button"
-                                class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
-                                @click="openApprove=false">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                                class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
-                            Confirm Approve
-                        </button>
+                {{-- Header --}}
+                <div class="px-5 py-4 border-b border-slate-200">
+                    <h3 class="text-lg font-semibold text-slate-900">
+                        Approve Strategic Plan
+                    </h3>
+
+                    <p class="text-sm text-slate-600 mt-1">
+                        Please review the effects of approval below.
+                    </p>
+                </div>
+
+
+                {{-- Effects --}}
+                <div class="p-5 space-y-4">
+
+                    <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+
+                        <div class="font-semibold mb-2">
+                            This approval will automatically:
+                        </div>
+
+                        <ul class="list-disc pl-5 space-y-1">
+
+                            <li>
+                                Create official projects for this organization and school year
+                            </li>
+
+                            <li>
+                                Allow the president to assign project heads immediately
+                            </li>
+
+                            <li>
+                                Enable project tracking and workflow in the system
+                            </li>
+
+                            <li>
+                                Lock the strategic plan as an approved institutional reference
+                            </li>
+
+                        </ul>
+
                     </div>
-                </form>
+
+
+                    <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+
+                        <div class="font-semibold mb-1">
+                            Important:
+                        </div>
+
+                        <ul class="list-disc pl-5 space-y-1">
+
+                            <li>
+                                Project heads can be assigned after approval
+                            </li>
+
+                            <li>
+                                Project submissions remain restricted until organization registration is completed
+                            </li>
+
+                            <li>
+                                This action cannot be undone
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+
+                    <form method="POST"
+                        action="{{ route('admin.strategic_plans.approve', $submission) }}"
+                        class="space-y-3">
+
+                        @csrf
+
+                        <textarea name="remarks"
+                                rows="3"
+                                class="w-full rounded-lg border-slate-300 text-sm"
+                                placeholder="Optional approval note..."></textarea>
+
+
+                        <div class="flex justify-end gap-2">
+
+                            <button type="button"
+                                    @click="openApprove=false"
+                                    class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">
+                                Cancel
+                            </button>
+
+
+                            <button type="submit"
+                                    class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                                Confirm Approval
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
             </div>
+
         </div>
 
         {{-- RETURN MODAL --}}
@@ -278,44 +361,7 @@
             </div>
         </div>
 
-        {{-- REVERT APPROVAL MODAL --}}
-        <div x-show="openRevert" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-slate-900/50" @click="openRevert=false"></div>
-            <div class="relative w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-xl p-5">
-                <h3 class="text-lg font-semibold text-slate-900">Revert Approval</h3>
 
-                <div class="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                    <div class="font-semibold">Effect of this action:</div>
-                    <ul class="list-disc pl-5 mt-2 space-y-1">
-                        <li>Status becomes <span class="font-semibold">returned_by_sacdev</span></li>
-                        <li>The organization will be able to edit again</li>
-                        <li>This requires a remark (audit trail)</li>
-                    </ul>
-                </div>
-
-                <form class="mt-4 space-y-3"
-                      method="POST"
-                      action="{{ route('admin.strategic_plans.revert_approval', $submission) }}">
-                    @csrf
-
-                    <textarea name="remarks" rows="4"
-                              class="w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                              placeholder="Why is the approval being reverted?" required></textarea>
-
-                    <div class="flex justify-end gap-2">
-                        <button type="button"
-                                class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
-                                @click="openRevert=false">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                                class="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">
-                            Confirm Revert
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
 
     </div>
 </x-app-layout>
