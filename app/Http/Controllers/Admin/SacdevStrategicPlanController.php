@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Organization;
 use App\Models\OrgMembership;
 use App\Models\Project;
 use App\Models\StrategicPlanProject;
@@ -179,11 +180,7 @@ class SacdevStrategicPlanController extends Controller
                     ->with('error', 'This submission is not ready for approval.');
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | STEP 1: mark submission approved
-            |--------------------------------------------------------------------------
-            */
+
 
             $locked->status = StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV;
             $locked->approved_at = now();
@@ -194,13 +191,39 @@ class SacdevStrategicPlanController extends Controller
             $locked->save();
 
             $submissionId = (int) $locked->getKey();
+            
+            $organization = Organization::query()
+                ->lockForUpdate()
+                ->findOrFail($orgId);
 
+            $organization->name = $locked->org_name;
+            $organization->acronym = $locked->org_acronym;
 
-            /*
-            |--------------------------------------------------------------------------
-            | STEP 2: propagate strategic plan projects → projects table
-            |--------------------------------------------------------------------------
-            */
+            $organization->mission = $locked->mission;
+            $organization->vision = $locked->vision;
+
+            $organization->logo_path = $locked->logo_path;
+            $organization->logo_original_name = $locked->logo_original_name;
+            $organization->logo_mime = $locked->logo_mime;
+            $organization->logo_size_bytes = $locked->logo_size_bytes;
+
+            $organization->last_b1_submission_id = $submissionId;
+
+            $organization->save();
+
+            Audit::log(
+                'organization_profile_updated_from_strategic_plan',
+                "Organization profile updated from approved Strategic Plan",
+                [
+                    'actor_user_id' => auth()->id(),
+                    'organization_id' => $orgId,
+                    'school_year_id' => $syId,
+                    'meta' => [
+                        'submission_id' => $submissionId,
+                    ]
+                ]
+            );
+
 
             $planProjects = StrategicPlanProject::query()
                 ->where('submission_id', $submissionId)
@@ -208,7 +231,7 @@ class SacdevStrategicPlanController extends Controller
 
             foreach ($planProjects as $planProject) {
 
-                // find existing propagated project
+               
                 $project = Project::query()
                     ->where('source_strategic_plan_project_id', $planProject->id)
                     ->first();
@@ -222,29 +245,17 @@ class SacdevStrategicPlanController extends Controller
 
                     $project->source_strategic_plan_project_id = $planProject->id;
 
-                    // initial lifecycle status
+                  
                     $project->status = 'planned';
                 }
 
-                /*
-                |--------------------------------------------------------------------------
-                | Only store operational fields
-                |--------------------------------------------------------------------------
-                */
+ 
 
                 $project->title = $planProject->title;
 
-                // do NOT copy budget/category/etc
-                // those remain in strategic_plan_projects
 
                 $project->save();
 
-
-                /*
-                |--------------------------------------------------------------------------
-                | Audit log
-                |--------------------------------------------------------------------------
-                */
 
                 Audit::log(
                     'strategic_plan_project_created',
@@ -262,12 +273,6 @@ class SacdevStrategicPlanController extends Controller
                 );
             }
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | STEP 3: notify president & moderator
-            |--------------------------------------------------------------------------
-            */
 
             DB::afterCommit(function () use ($president, $moderator, $orgId, $syId, $submissionId) {
 
@@ -314,11 +319,6 @@ class SacdevStrategicPlanController extends Controller
         });
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Handle redirect safely
-        |--------------------------------------------------------------------------
-        */
 
         if ($result instanceof RedirectResponse) {
             return $result;

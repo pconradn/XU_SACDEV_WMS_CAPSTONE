@@ -53,16 +53,19 @@
                                    {{ $isLocked ? 'disabled' : '' }}>
                         </td>
                         <td class="py-2 pr-3">
-                            <input type="date" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                                   name="trainings[{{ $i }}][date_from]"
-                                   value="{{ $row['date_from'] ?? '' }}"
-                                   {{ $isLocked ? 'disabled' : '' }}>
+                            <input type="date"
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                                name="trainings[{{ $i }}][date_from]"
+                                value="{{ !empty($row['date_from']) ? \Carbon\Carbon::parse($row['date_from'])->format('Y-m-d') : '' }}"
+                                {{ $isLocked ? 'disabled' : '' }}>
                         </td>
+
                         <td class="py-2 pr-3">
-                            <input type="date" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                                   name="trainings[{{ $i }}][date_to]"
-                                   value="{{ $row['date_to'] ?? '' }}"
-                                   {{ $isLocked ? 'disabled' : '' }}>
+                            <input type="date"
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                                name="trainings[{{ $i }}][date_to]"
+                                value="{{ !empty($row['date_to']) ? \Carbon\Carbon::parse($row['date_to'])->format('Y-m-d') : '' }}"
+                                {{ $isLocked ? 'disabled' : '' }}>
                         </td>
                         <td class="py-2 text-right">
                             <button type="button"

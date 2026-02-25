@@ -5,7 +5,7 @@
 
     <div class="absolute inset-0 bg-slate-900/50" @click="closeDetails()"></div>
 
-    <div class="relative w-full max-w-4xl rounded-2xl bg-white shadow-xl border border-slate-200">
+    <div class="relative w-full max-w-4xl rounded-2xl bg-white shadow-xl border border-slate-200 max-h-[90vh] overflow-hidden">
         <div class="flex items-start justify-between p-5 border-b border-slate-200">
             <div>
                 <h3 class="text-lg font-semibold text-slate-900"
@@ -21,7 +21,7 @@
             </button>
         </div>
 
-        <div class="p-5 space-y-5" x-show="draftProject">
+        <div class="p-5 space-y-5 overflow-y-auto max-h-[calc(90vh-140px)]" x-show="draftProject">
             {{-- Core info --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>

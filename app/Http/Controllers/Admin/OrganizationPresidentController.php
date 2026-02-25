@@ -10,7 +10,9 @@ use App\Models\OrgMembership;
 use App\Models\SchoolYear;
 use App\Models\User;
 use App\Support\AccountProvisioner;
+use App\Support\Audit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -200,7 +202,33 @@ class OrganizationPresidentController extends Controller
                     $syId,
                     $officerEntry->id
                 );
+
+                $actor = Auth::user();
+                $organization = Organization::find($orgId);
+                $schoolYear = SchoolYear::find($syId);
+
+                Audit::log(
+                    'president_assigned',
+                    "President {$data['president_name']} assigned to {$organization->name}",
+                    [
+                        'actor_user_id'   => $actor->id,
+                        'organization_id' => $orgId,     
+                        'school_year_id'  => $syId,      
+
+                        'meta' => [
+                            'actor_name'        => $actor->name,
+                            'organization_name' => $organization->name,
+                            'school_year_name'  => $schoolYear->name,
+                            'assigned_email'       => $email,
+                            'replaced_existing' => $existingPresidentEntry ? true : false,
+                        ],
+                    ]
+                );
+
+
             });
+
+
 
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();

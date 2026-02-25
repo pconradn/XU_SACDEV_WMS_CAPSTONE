@@ -27,7 +27,11 @@
 
    
     <div class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+
+
+        
+        <div class="mx-auto max-w-screen-2xl px-6 lg:px-8">
+            
             <div class="flex h-14 items-center justify-between gap-4">
 
               
@@ -126,10 +130,10 @@
     </div>
 
     {{-- Body --}}
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+    <div class="mx-auto max-w-screen-2xl px-6 lg:px-8 py-6">
         <div class="grid grid-cols-12 gap-6">
 
-            <aside class="col-span-12 lg:col-span-3">
+            <aside class="col-span-12 lg:col-span-3 xl:col-span-3">
                 <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
 
                     <div class="px-4 py-3 border-b border-slate-200 bg-slate-50">
@@ -172,7 +176,7 @@
             </aside>
 
             {{-- Main Content --}}
-            <section class="col-span-12 lg:col-span-9">
+            <section class="col-span-12 lg:col-span-9 xl:col-span-9">
                 
                 @isset($header)
                     <div class="mb-4 rounded-2xl border border-slate-200 bg-white shadow-sm">

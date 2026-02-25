@@ -1,342 +1,53 @@
 <x-app-layout>
 
-    @if(session('success'))
-        <div id="successToast"
-            class="fixed top-5 right-5 z-50 flex items-center gap-3
-                    rounded-xl border border-emerald-200 bg-white shadow-lg
-                    px-5 py-4 text-emerald-900
-                    opacity-0 translate-y-4 transition-all duration-500">
+@include('admin.rereg.partials._success_toast')
 
-            {{-- Icon --}}
-            <svg class="w-6 h-6 text-emerald-600 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M5 13l4 4L19 7"/>
-            </svg>
+<div class="mx-auto max-w-7xl px-4 py-6 space-y-6">
 
-            <div>
-                <div class="font-semibold">
-                    Organization Registered
-                </div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6">
 
-                <div class="text-sm text-slate-600">
-                    {{ session('success') }}
-                </div>
-            </div>
-
+        <div class="lg:col-span-7">
+            @include('admin.rereg.partials._header', [
+                'organization' => $organization
+            ])
         </div>
 
+        <div class="lg:col-span-5">
+            @include('admin.rereg.partials._sy_selector', [
+                'schoolYears' => $schoolYears,
+                'encodeSyId' => $encodeSyId
+            ])
+        </div>
 
-        <script>
-        document.addEventListener('DOMContentLoaded', () => {
+    </div>
 
-            const toast = document.getElementById('successToast');
 
-            if (!toast) return;
+    @if(!$encodeSyId)
 
-            // Show animation
-            setTimeout(() => {
-                toast.classList.remove('opacity-0', 'translate-y-4');
-                toast.classList.add('opacity-100', 'translate-y-0');
-            }, 100);
+        <div class="rounded-xl border border-slate-200 bg-white p-6 text-slate-700">
+            Please select a target school year to view submissions.
+        </div>
 
-            // Hide after 4 seconds
-            setTimeout(() => {
+    @else
 
-                toast.classList.remove('opacity-100', 'translate-y-0');
-                toast.classList.add('opacity-0', 'translate-y-4');
+        @include('admin.rereg.partials._forms_grid', [
+            'forms' => $forms
+        ])
 
-                setTimeout(() => toast.remove(), 500);
+        @include('admin.rereg.partials._readiness_panel', [
+            'organization' => $organization,
+            'allApproved' => $allApproved,
+            'alreadyActivated' => $alreadyActivated
+        ])
 
-            }, 4000);
-
-        });
-        </script>
     @endif
 
+</div>
 
+@includeWhen(
+    $encodeSyId && $allApproved && !$alreadyActivated,
+    'admin.rereg.partials._activate_modal',
+    ['organization' => $organization]
+)
 
-    <div class="mx-auto max-w-6xl px-4 py-6">
-        <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-                <h2 class="text-xl font-semibold text-slate-900">
-                    Re-Registration Submissions
-                </h2>
-                <div class="text-sm text-slate-600 mt-1">
-                    Review B-1 to B-5 submissions for the selected organization and target school year.
-                </div>
-
-                <div class="mt-2 text-sm text-slate-700">
-                    <span class="text-slate-500">Organization:</span>
-                    <span class="font-semibold">{{ $organization->name ?? ('Org #' . $organization->id) }}</span>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2">
-
-
-                <a href="{{ route('admin.home') }}"
-                   class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                    Back to Dashboard
-                </a>
-            </div>
-        </div>
-
-        @if (session('status'))
-            <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
-                <div class="text-sm">{{ session('status') }}</div>
-            </div>
-        @endif
-
-        {{-- Target SY selector (admin) --}}
-        <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <form method="POST" action="{{ route('rereg.setSy') }}" class="flex flex-col gap-3 sm:flex-row sm:items-end">
-                @csrf
-
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-slate-700">
-                        Target School Year
-                    </label>
-                    <select name="encode_school_year_id"
-                            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
-                            required>
-                        <option value="" disabled @selected(!$encodeSyId)>Select a school year...</option>
-                        @foreach($schoolYears as $sy)
-                            <option value="{{ $sy->id }}" @selected($encodeSyId && (int)$sy->id === (int)$encodeSyId)>
-                                {{ $sy->name ?? $sy->label ?? ('SY #' . $sy->id) }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <button class="inline-flex justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-                    Set SY
-                </button>
-            </form>
-        </div>
-
-        @if(!$encodeSyId)
-            <div class="rounded-xl border border-slate-200 bg-white p-6 text-slate-700">
-                Please select a target school year to view submissions.
-            </div>
-        @else
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                @foreach($forms as $key => $f)
-                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <div class="flex items-start justify-between gap-4">
-                            <div>
-                                <div class="text-base font-semibold text-slate-900">
-                                    {{ $f['label'] }}
-                                </div>
-
-                                <div class="mt-1">
-                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold {{ $f['badge']['class'] }}">
-                                        {{ $f['badge']['text'] }}
-                                    </span>
-                                </div>
-
-                                @if(!empty($f['meta']))
-                                    <div class="mt-2 space-y-0.5 text-xs text-slate-500">
-                                        @if(!empty($f['meta']['submitted_at']))
-                                            <div>Submitted: {{ $f['meta']['submitted_at'] }}</div>
-                                        @endif
-                                        @if(!empty($f['meta']['reviewed_at']))
-                                            <div>Reviewed: {{ $f['meta']['reviewed_at'] }}</div>
-                                        @endif
-                                    </div>
-                                @endif
-                            </div>
-
-                            @if(!empty($f['viewRoute']) && Route::has($f['viewRoute']))
-                                <div class="flex flex-col items-end gap-2">
-
-                                    {{-- View button --}}
-                                    <a href="{{ route($f['viewRoute'], $f['routeParams'] ?? []) }}"
-                                    class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                                        View
-                                    </a>
-
-                                   
-                                    @if($key === 'b6'
-                                        && !empty($f['routeParams']['submission'])
-                                        && ($f['badge']['text'] ?? '') !== 'Approved')
-
-                                        <form method="POST"
-                                            action="{{ route('admin.constitution.approve', $f['routeParams']['submission']) }}">
-                                            @csrf
-
-                                            <button type="submit"
-                                                    class="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
-                                                Approve
-                                            </button>
-                                        </form>
-
-                                    @endif
-
-                                </div>
-                            @else
-                                <span class="text-xs text-slate-500">No record</span>
-                            @endif
-                        </div>
-
-                        @if(!empty($f['remarksPreview']))
-                            <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <div class="text-xs font-semibold text-slate-700">Latest remarks</div>
-                                <div class="mt-1 text-sm text-slate-700">
-                                    {{ $f['remarksPreview'] }}
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
-
-        <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <div class="text-sm font-semibold text-slate-900">Re-registration readiness</div>
-                    <div class="text-sm text-slate-600 mt-1">
-                        All required forms must be approved by SACDEV to be considered complete.
-                    </div>
-
-                    @if(!empty($alreadyActivated) && $alreadyActivated)
-                        <div class="mt-2 text-sm text-slate-700">
-                            <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                                Registered
-                            </span>
-                            <span class="ml-2 text-xs text-slate-500">
-                                This organization is already registered for the selected school year.
-                            </span>
-                        </div>
-                    @endif
-                </div>
-
-                <div class="flex flex-col items-start gap-3 sm:items-end">
-                    {{-- Readiness badge --}}
-                    @if(!empty($allApproved) && $allApproved)
-                        <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-800">
-                            Complete
-                        </span>
-                    @else
-                        <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700">
-                            In progress
-                        </span>
-                    @endif
-
-                    {{-- Action --}}
-                    @if(!empty($allApproved) && $allApproved && (empty($alreadyActivated) || !$alreadyActivated))
-                        <button
-                            type="button"
-                            onclick="document.getElementById('activateModal').classList.remove('hidden')"
-                            class="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
-                        >
-                            Register Organization
-                        </button>
-                    @elseif(!empty($alreadyActivated) && $alreadyActivated)
-                        <button
-                            type="button"
-                            class="inline-flex items-center rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 cursor-not-allowed"
-                            disabled
-                            title="Already registered for this school year"
-                        >
-                            Register Organization
-                        </button>
-                    @endif
-                </div>
-            </div>
-
-
-            {{-- Confirm Modal --}}
-            @if(!empty($allApproved) && $allApproved && (empty($alreadyActivated) || !$alreadyActivated))
-                <div id="activateModal" class="hidden fixed inset-0 z-50">
-                    <div class="absolute inset-0 bg-black/40"></div>
-
-                    <div class="relative mx-auto mt-24 w-full max-w-lg px-4">
-                        <div class="rounded-2xl bg-white shadow-xl border border-slate-200 overflow-hidden">
-
-                            {{-- Header --}}
-                            <div class="px-6 py-5 border-b border-slate-200">
-                                <div class="text-lg font-semibold text-slate-900">
-                                    Confirm Organization Registration
-                                </div>
-
-                                <div class="mt-1 text-sm text-slate-600">
-                                    You are about to officially register
-                                    <span class="font-semibold">{{ $organization->name }}</span>
-                                    for the selected school year.
-                                </div>
-                            </div>
-
-
-                            {{-- Body --}}
-                            <div class="px-6 py-5 space-y-3 text-sm text-slate-700">
-
-                                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                    <div class="font-semibold text-slate-900">
-                                        What this will do
-                                    </div>
-
-                                    <ul class="mt-2 list-disc pl-5 space-y-1">
-                                        <li>Create the official activation record for this organization.</li>
-                                        <li>Mark the organization as registered for the selected school year.</li>
-                                        <li>Allow the organization to begin operations and submit projects.</li>
-                                    </ul>
-                                </div>
-
-
-                                <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
-                                    <div class="font-semibold">
-                                        Important
-                                    </div>
-
-                                    <div class="mt-1 text-sm">
-                                        This action confirms that all required forms (B-1 to B-6) have been reviewed and approved.
-                                        Once registered, the organization cannot be registered again for the same school year.
-                                    </div>
-                                </div>
-
-                            </div>
-
-
-                            {{-- Footer --}}
-                            <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-2">
-
-                                <button
-                                    type="button"
-                                    onclick="document.getElementById('activateModal').classList.add('hidden')"
-                                    class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-                                >
-                                    Cancel
-                                </button>
-
-
-                                <form method="POST" action="{{ route('admin.rereg.activate', $organization) }}">
-                                    @csrf
-
-                                    <button
-                                        type="submit"
-                                        class="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
-                                    >
-                                        Yes, register organization
-                                    </button>
-
-                                </form>
-
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-
-        </div>
-
-
-
-        @endif
-    </div>
 </x-app-layout>

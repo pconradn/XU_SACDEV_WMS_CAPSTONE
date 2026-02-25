@@ -51,10 +51,11 @@
                                    {{ $isLocked ? 'disabled' : '' }}>
                         </td>
                         <td class="py-2 pr-3">
-                            <input type="date" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                                   name="awards[{{ $i }}][date_received]"
-                                   value="{{ $row['date_received'] ?? '' }}"
-                                   {{ $isLocked ? 'disabled' : '' }}>
+                            <input type="date"
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                                name="awards[{{ $i }}][date_received]"
+                                value="{{ !empty($row['date_received']) ? \Carbon\Carbon::parse($row['date_received'])->format('Y-m-d') : '' }}"
+                                {{ $isLocked ? 'disabled' : '' }}>
                         </td>
                         <td class="py-2 text-right">
                             <button type="button"

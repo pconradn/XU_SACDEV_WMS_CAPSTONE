@@ -68,8 +68,27 @@
         <form method="POST" action="{{ route('org.moderator.rereg.b5.saveDraft') }}" enctype="multipart/form-data">
             @csrf
 
-            @include('moderator.forms.b5_moderator.partials._photo_id', ['submission' => $submission, 'isLocked' => $isLocked])
-            @include('moderator.forms.b5_moderator.partials._personal_info', ['submission' => $submission, 'isLocked' => $isLocked])
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+
+                {{-- Left: Photo ID --}}
+                <div class="h-full">
+                    @include('moderator.forms.b5_moderator.partials._photo_id', [
+                        'submission' => $submission,
+                        'isLocked' => $isLocked
+                    ])
+                </div>
+
+
+                {{-- Right: Personal Info --}}
+                <div class="h-full">
+                    @include('moderator.forms.b5_moderator.partials._personal_info', [
+                        'submission' => $submission,
+                        'isLocked' => $isLocked
+                    ])
+                </div>
+
+            </div>
+            
             @include('moderator.forms.b5_moderator.partials._employment_info', ['submission' => $submission, 'isLocked' => $isLocked])
             @include('moderator.forms.b5_moderator.partials._contact_info', ['submission' => $submission, 'isLocked' => $isLocked])
             @include('moderator.forms.b5_moderator.partials._leaderships', ['submission' => $submission, 'isLocked' => $isLocked])

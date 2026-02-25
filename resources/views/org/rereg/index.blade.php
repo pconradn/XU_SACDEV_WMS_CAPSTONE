@@ -14,9 +14,21 @@
 
 
         {{-- Status message --}}
-        @if (session('status'))
-            <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
-                <div class="text-sm">{{ session('status') }}</div>
+        @if(session('error'))
+            <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        @if(session('success'))
+            <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('status'))
+            <div class="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+                {{ session('status') }}
             </div>
         @endif
 
@@ -117,17 +129,44 @@
                             {{ $f['label'] }}
                         </div>
 
-                        <div class="mt-1">
-                            <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold {{ $f['badge']['class'] }}">
+                    <div class="mt-2 space-y-1">
+                        <div class="inline-flex items-center gap-2 text-sm font-medium text-slate-800">
+
+                            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100">
+                                <span class="h-2.5 w-2.5 rounded-full {{ $f['badge']['dot'] ?? 'bg-slate-400' }}"></span>
+                            </span>
+
+                            <span>
                                 {{ $f['badge']['text'] }}
                             </span>
+
                         </div>
+                        @if(!empty($f['submitted_at']))
+                            <div class="text-xs text-slate-500">
+                                Submitted:
+                                {{ \Carbon\Carbon::parse($f['submitted_at'])->format('M d, Y — h:i A') }}
+                            </div>
+                        @endif
+                        @if(!empty($f['reviewed_at']))
+                            <div class="text-xs text-slate-500">
+                                Reviewed:
+                                {{ \Carbon\Carbon::parse($f['reviewed_at'])->format('M d, Y — h:i A') }}
+                            </div>
+                        @endif
+                        @if(!empty($f['approved_at']))
+                            <div class="text-xs text-emerald-600 font-medium">
+                                Approved:
+                                {{ \Carbon\Carbon::parse($f['approved_at'])->format('M d, Y — h:i A') }}
+                            </div>
+                        @endif
+
+                    </div>
 
                     </div>
 
 
 
-                    {{-- B6 Constitution --}}
+                
                     @if($key === 'b6')
 
                         <div class="text-right space-y-2">

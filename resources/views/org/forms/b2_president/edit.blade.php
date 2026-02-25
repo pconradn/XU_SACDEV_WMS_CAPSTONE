@@ -62,8 +62,24 @@
             {{-- Default false for checkbox --}}
             <input type="hidden" name="certified" value="0">
 
-            @include('org.forms.b2_president.partials._photo_id', ['isLocked' => $isLocked])
-            @include('org.forms.b2_president.partials._personal_info', ['isLocked' => $isLocked])
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+                {{-- Left column — Photo ID --}}
+                <div>
+                    @include('org.forms.b2_president.partials._photo_id', [
+                        'isLocked' => $isLocked
+                    ])
+                </div>
+
+
+                {{-- Right column — Personal Info --}}
+                <div>
+                    @include('org.forms.b2_president.partials._personal_info', [
+                        'isLocked' => $isLocked
+                    ])
+                </div>
+
+            </div>
             @include('org.forms.b2_president.partials._contact_info', ['isLocked' => $isLocked])
             @include('org.forms.b2_president.partials._family_info', ['isLocked' => $isLocked])
             @include('org.forms.b2_president.partials._education_info', ['isLocked' => $isLocked])

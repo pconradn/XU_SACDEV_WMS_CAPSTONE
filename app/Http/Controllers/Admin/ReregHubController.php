@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\SchoolYear;
-use App\Models\Organization;
-use Illuminate\Http\Request;
-use App\Models\OfficerSubmission;
-use Illuminate\Support\Facades\DB;
-use App\Models\ModeratorSubmission;
 use App\Http\Controllers\Controller;
-use App\Models\PresidentRegistration;
-use App\Models\StrategicPlanSubmission;
+use App\Models\ModeratorSubmission;
+use App\Models\OfficerSubmission;
+use App\Models\Organization;
+use App\Models\OrganizationSchoolYear;
 use App\Models\OrgConstitutionSubmission;
+use App\Models\PresidentRegistration;
+use App\Models\SchoolYear;
+use App\Models\StrategicPlanSubmission;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReregHubController extends Controller
 {
@@ -28,208 +30,242 @@ class ReregHubController extends Controller
 
     public function hub(Request $request, Organization $organization)
     {
+     
         $encodeSyId = (int) $request->session()->get('encode_sy_id');
 
-        if (! $encodeSyId) {
-            $activeId = (int) SchoolYear::query()->where('is_active', true)->value('id');
-            if ($activeId) {
-                $encodeSyId = $activeId;
+        if (!$encodeSyId) {
+
+            $encodeSyId = (int) SchoolYear::query()
+                ->where('is_active', true)
+                ->value('id');
+
+            if ($encodeSyId) {
                 $request->session()->put('encode_sy_id', $encodeSyId);
             }
         }
+
 
         $schoolYears = SchoolYear::query()
             ->orderByDesc('id')
             ->get();
 
-        // B1
+
+
         $b1 = StrategicPlanSubmission::query()
             ->where('organization_id', $organization->id)
             ->where('target_school_year_id', $encodeSyId)
             ->latest('id')
             ->first();
 
-        // B2
         $b2 = PresidentRegistration::query()
             ->where('organization_id', $organization->id)
             ->where('target_school_year_id', $encodeSyId)
             ->latest('id')
             ->first();
 
-        // B3
         $b3 = OfficerSubmission::query()
             ->where('organization_id', $organization->id)
             ->where('target_school_year_id', $encodeSyId)
             ->latest('id')
             ->first();
 
-        // B5
         $b5 = ModeratorSubmission::query()
             ->where('organization_id', $organization->id)
             ->where('target_school_year_id', $encodeSyId)
             ->latest('id')
             ->first();
 
-        
         $b6 = OrgConstitutionSubmission::query()
             ->where('organization_id', $organization->id)
             ->where('school_year_id', $encodeSyId)
             ->latest('id')
             ->first();
 
+
         $forms = [
-            'b1' => $this->mapForm(
+
+            'b1' => $this->buildForm(
                 label: 'B-1 Strategic Plan',
                 model: $b1,
                 viewRoute: 'admin.strategic_plans.show',
-                routeParamKey: 'submission',
+                routeParamName: 'submission'
             ),
-            'b2' => $this->mapForm(
+
+            'b2' => $this->buildForm(
                 label: 'B-2 President Registration',
                 model: $b2,
                 viewRoute: 'admin.b2.president.show',
-                routeParamKey: 'registration',
+                routeParamName: 'registration' // FIX HERE
             ),
-            'b3' => $this->mapForm(
+
+            'b3' => $this->buildForm(
                 label: 'B-3 Officers List',
                 model: $b3,
                 viewRoute: 'admin.officer_submissions.show',
-                routeParamKey: 'submission',
+                routeParamName: 'submission'
             ),
-            'b5' => $this->mapForm(
+
+            'b5' => $this->buildForm(
                 label: 'B-5 Moderator Submission',
                 model: $b5,
                 viewRoute: 'admin.moderator_submissions.show',
-                routeParamKey: 'submission',
+                routeParamName: 'submission'
             ),
 
-            
-            'b6' => $this->mapForm(
-                label: 'B-6 Organization Constitution',
+            'b6' => $this->buildForm(
+                label: 'B-6 Constitution',
                 model: $b6,
                 viewRoute: 'admin.constitution.download',
-                routeParamKey: 'submission',
+                routeParamName: 'submission'
             ),
+
         ];
 
-        
-        $allApproved = collect([$b1, $b2, $b3, $b5, $b6])->every(function ($m) {
-            return $m && (string) $m->status === 'approved_by_sacdev';
+        $allApproved = collect($forms)->every(function ($form) {
+
+            return isset($form['status'])
+                && $form['status'] === 'approved_by_sacdev';
+
         });
 
-        return view('admin.rereg.hub', compact(
-            'organization',
-            'schoolYears',
-            'encodeSyId',
-            'forms',
-            'allApproved'
-        ));
+
+
+        $alreadyActivated = OrganizationSchoolYear::query()
+            ->where('organization_id', $organization->id)
+            ->where('school_year_id', $encodeSyId)
+            ->exists();
+
+
+        return view('admin.rereg.hub', [
+
+            'organization' => $organization,
+            'schoolYears' => $schoolYears,
+            'encodeSyId' => $encodeSyId,
+
+            'forms' => $forms,
+
+            'allApproved' => $allApproved,
+            'alreadyActivated' => $alreadyActivated,
+
+        ]);
     }
 
-    private function mapForm(string $label, $model, string $viewRoute, string $routeParamKey): array
-    {
-        $status = $model->status ?? null;
 
-        $badge = match ($status) {
-            null => ['text' => 'Not started', 'class' => 'bg-slate-100 text-slate-700'],
-            'draft' => ['text' => 'Draft', 'class' => 'bg-slate-100 text-slate-700'],
 
-            'submitted', 'submitted_to_sacdev', 'submitted_to_moderator' =>
-                ['text' => 'Submitted', 'class' => 'bg-blue-100 text-blue-800'],
 
-            'forwarded', 'forwarded_to_sacdev' =>
-                ['text' => 'Forwarded', 'class' => 'bg-indigo-100 text-indigo-800'],
 
-            'returned', 'returned_by_sacdev', 'returned_by_moderator' =>
-                ['text' => 'Returned', 'class' => 'bg-amber-100 text-amber-800'],
+    private function buildForm(
+        string $label,
+        $model,
+        ?string $viewRoute = null,
+        string $routeParamName = 'submission'
+    ): array {
 
-            'approved_by_sacdev' =>
-                ['text' => 'Approved', 'class' => 'bg-emerald-100 text-emerald-800'],
+        $status = $model?->status;
 
-            default => [
-                'text' => ucfirst(str_replace('_', ' ', (string) $status)),
-                'class' => 'bg-slate-100 text-slate-700'
-            ],
-        };
+        $badge = $this->statusBadge($status);
+
+
+        $submittedAtRaw =
+            $model->submitted_at
+            ?? $model->submitted_to_moderator_at
+            ?? $model->forwarded_to_sacdev_at
+            ?? $model->created_at
+            ?? null;
+
+
+        $submittedAt = $submittedAtRaw
+            ? Carbon::parse($submittedAtRaw)->format('M d, Y — h:i A')
+            : null;
+
+        $reviewedAtRaw =
+            $model->sacdev_reviewed_at
+            ?? $model->moderator_reviewed_at
+            ?? null;
+
+
+        $reviewedAt = $reviewedAtRaw
+            ? Carbon::parse($reviewedAtRaw)->format('M d, Y — h:i A')
+            : null;
+
 
         return [
+
             'label' => $label,
-            'badge' => $badge,
-            'viewRoute' => $model ? $viewRoute : null,
-            'routeParams' => $model ? [$routeParamKey => $model->id] : [],
-            'remarksPreview' => $model->sacdev_remarks
-                ?? $model->moderator_remarks
-                ?? $model->remarks
-                ?? null,
-            'meta' => [
-                'submitted_at' => optional($model?->submitted_at)?->format('M d, Y h:i A'),
-                'reviewed_at'  => optional($model?->sacdev_reviewed_at ?? $model?->approved_at)?->format('M d, Y h:i A'),
-                'filename'     => $model->original_filename ?? null,
+
+            'status' => $status,
+
+            'badge' => [
+                'text' => $badge['text'],
+                'dot'  => $badge['dot'],
+                'class'=> $badge['dot'],
             ],
+
+            'viewRoute' => $model && $viewRoute ? $viewRoute : null,
+
+            'routeParams' => $model
+                ? [$routeParamName => $model->id]
+                : null,
+
+
+            'meta' => [
+
+                'submitted_at' => $submittedAt,
+                'reviewed_at'  => $reviewedAt,
+
+            ],
+
+
+            'remarksPreview' => $model?->sacdev_remarks
+                ?? $model?->moderator_remarks
+                ?? null,
+
         ];
     }
 
-    private function actionableStatuses(): array
+
+    private function statusBadge(?string $status): array
     {
-        return ['submitted_to_sacdev', 'forwarded_to_sacdev'];
-    }
+        return match ($status) {
 
+            'draft' => [
+                'text' => 'Draft',
+                'dot'  => 'bg-slate-400',
+            ],
 
-    private function syBadgesAll(): array
-    {
-        $actionable = $this->actionableStatuses();
+            'submitted_to_sacdev',
+            'submitted' => [
+                'text' => 'Submitted to SACDEV',
+                'dot'  => 'bg-amber-500',
+            ],
 
-        $pairs = collect()
-            ->merge(
-                StrategicPlanSubmission::whereIn('status', $actionable)
-                    ->get(['organization_id', 'target_school_year_id'])
-                    ->map(fn($r) => $r->organization_id . '|' . $r->target_school_year_id)
-            )
-            ->merge(
-                PresidentRegistration::whereIn('status', $actionable)
-                    ->get(['organization_id', 'target_school_year_id'])
-                    ->map(fn($r) => $r->organization_id . '|' . $r->target_school_year_id)
-            )
-            ->merge(
-                OfficerSubmission::whereIn('status', $actionable)
-                    ->get(['organization_id', 'target_school_year_id'])
-                    ->map(fn($r) => $r->organization_id . '|' . $r->target_school_year_id)
-            )
-            ->merge(
-                ModeratorSubmission::whereIn('status', $actionable)
-                    ->get(['organization_id', 'target_school_year_id'])
-                    ->map(fn($r) => $r->organization_id . '|' . $r->target_school_year_id)
-            )
-            ->unique()
-            ->values();
+            'submitted_to_moderator' => [
+                'text' => 'Submitted to Moderator',
+                'dot'  => 'bg-amber-500',
+            ],
 
-      
-        return $pairs
-            ->map(fn($k) => (int) explode('|', $k)[1])
-            ->countBy()
-            ->all();
-    }
+            'returned',
+            'returned_by_moderator' => [
+                'text' => 'Returned',
+                'dot'  => 'bg-rose-500',
+            ],
 
+            'approved',
+            'approved_by_sacdev' => [
+                'text' => 'Approved',
+                'dot'  => 'bg-emerald-500',
+            ],
 
-    private function orgPendingCountFor(Organization $org, int $syId): int
-    {
-        $actionable = $this->actionableStatuses();
+            'forwarded_to_sacdev' => [
+                'text' => 'Forwarded to SACDEV',
+                'dot'  => 'bg-blue-500',
+            ],
 
-        $statuses = [
-            optional(StrategicPlanSubmission::where('organization_id', $org->id)
-                ->where('target_school_year_id', $syId)->latest('id')->first(['status']))->status,
-
-            optional(PresidentRegistration::where('organization_id', $org->id)
-                ->where('target_school_year_id', $syId)->latest('id')->first(['status']))->status,
-
-            optional(OfficerSubmission::where('organization_id', $org->id)
-                ->where('target_school_year_id', $syId)->latest('id')->first(['status']))->status,
-
-            optional(ModeratorSubmission::where('organization_id', $org->id)
-                ->where('target_school_year_id', $syId)->latest('id')->first(['status']))->status,
-        ];
-
-        return collect($statuses)->filter(fn($s) => in_array($s, $actionable, true))->count();
+            default => [
+                'text' => 'Not submitted',
+                'dot'  => 'bg-slate-400',
+            ],
+        };
     }
 
 

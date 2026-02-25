@@ -33,11 +33,6 @@ class OrgReregDashboardController extends Controller
     {
         ['orgId' => $orgId, 'syId' => $syId, 'userId' => $userId] = $this->ctx($request);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Activation check
-        |--------------------------------------------------------------------------
-        */
 
         $isActivated = false;
 
@@ -47,13 +42,6 @@ class OrgReregDashboardController extends Controller
                 ->where('school_year_id', $syId)
                 ->exists();
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Allowed school years
-        |--------------------------------------------------------------------------
-        */
 
         $allowedSyIds = OrgMembership::query()
             ->where('user_id', $userId)
@@ -69,13 +57,6 @@ class OrgReregDashboardController extends Controller
             ->whereIn('id', $allowedSyIds ?: [-1])
             ->orderByDesc('id')
             ->get();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Role permissions
-        |--------------------------------------------------------------------------
-        */
 
         $activeSyId = (int) SchoolYear::query()
             ->where('is_active', true)
@@ -96,13 +77,6 @@ class OrgReregDashboardController extends Controller
             ? $this->hasRole($userId, $orgId, $syId, 'moderator')
             : false;
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Stop early if invalid SY
-        |--------------------------------------------------------------------------
-        */
-
         if ($syId <= 0 || !in_array($syId, $allowedSyIds, true)) {
 
             return view('org.rereg.index', [
@@ -120,13 +94,6 @@ class OrgReregDashboardController extends Controller
                 'constitutionSubmission' => null,
             ]);
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Fetch submissions
-        |--------------------------------------------------------------------------
-        */
 
         $b1 = StrategicPlan::query()
             ->where('organization_id', $orgId)
@@ -156,11 +123,7 @@ class OrgReregDashboardController extends Controller
             ->first();
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | B6 Constitution
-        |--------------------------------------------------------------------------
-        */
+        
 
         $b6 = OrgConstitutionSubmission::query()
             ->where('organization_id', $orgId)
@@ -168,78 +131,89 @@ class OrgReregDashboardController extends Controller
             ->latest('id')
             ->first();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Forms cards
-        |--------------------------------------------------------------------------
-        */
-
         $forms = [
 
-            'b1' => $this->cardData(
-                label: 'B-1 Strategic Plan',
-                status: $b1?->status,
-                editRoute: 'org.rereg.b1.edit',
-                viewRoute: null
-            ),
+            'b1' => [
+                'label' => 'B-1 Strategic Plan',
 
-            'b2' => $this->cardData(
-                label: 'B-2 President Registration',
-                status: $b2?->status,
-                editRoute: 'org.rereg.b2.president.edit',
-                viewRoute: null
-            ),
+                'badge' => $this->statusBadge($b1?->status),
 
-            'b3' => $this->cardData(
-                label: 'B-3 Officers List',
-                status: $b3?->status,
-                editRoute: 'org.rereg.b3.officers-list.edit',
-                viewRoute: null
-            ),
+                'submitted_at' => $b1?->submitted_to_moderator_at,
+                'reviewed_at'  => $b1?->moderator_reviewed_at,
+                'approved_at'  => $b1?->approved_at,
 
-            'b5' => $this->cardData(
-                label: 'B-5 Moderator Form',
-                status: $b5?->status,
-                editRoute: null,
-                viewRoute: null
-            ),
+                'editRoute' => 'org.rereg.b1.edit',
+                'viewRoute' => null,
 
-            /*
-            |--------------------------------------------------------------------------
-            | B6 Constitution (FIXED)
-            |--------------------------------------------------------------------------
-            */
+                'submission' => $b1,
+            ],
+
+
+            'b2' => [
+                'label' => 'B-2 President Registration',
+
+                'badge' => $this->statusBadge($b2?->status),
+
+                'submitted_at' => $b2?->submitted_at,
+                'reviewed_at'  => $b2?->reviewed_at,
+                'approved_at'  => $b2?->approved_at,
+
+                'editRoute' => 'org.rereg.b2.president.edit',
+                'viewRoute' => null,
+
+                'submission' => $b2,
+            ],
+
+
+            'b3' => [
+                'label' => 'B-3 Officers List',
+
+                'badge' => $this->statusBadge($b3?->status),
+
+                'submitted_at' => $b3?->submitted_at,
+                'reviewed_at'  => $b3?->sacdev_reviewed_at,
+                'approved_at'  => $b3?->approved_at,
+
+                'editRoute' => 'org.rereg.b3.officers-list.edit',
+                'viewRoute' => null,
+
+                'submission' => $b3,
+            ],
+
+
+            'b5' => [
+                'label' => 'B-5 Moderator Form',
+
+                'badge' => $this->statusBadge($b5?->status),
+
+                'submitted_at' => $b5?->submitted_at,
+                'reviewed_at'  => $b5?->reviewed_at,
+                'approved_at'  => $b5?->approved_at,
+
+                'editRoute' => null,
+                'viewRoute' => null,
+
+                'submission' => $b5,
+            ],
+
 
             'b6' => [
-
                 'label' => 'B-6 Organization Constitution',
 
-                'badge' => $b6
-                    ? [
-                        'text' => $b6->status === 'approved_by_sacdev'
-                            ? 'Approved'
-                            : 'Submitted',
+                'badge' => $this->statusBadge($b6?->status),
 
-                        'class' => $b6->status === 'approved_by_sacdev'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-amber-100 text-amber-800',
-                    ]
-                    : [
-                        'text' => 'Not submitted',
-                        'class' => 'bg-slate-100 text-slate-700',
-                    ],
+                'submitted_at' => $b6?->created_at,
+                'reviewed_at'  => $b6?->reviewed_at,
+                'approved_at'  => $b6?->approved_at,
+
+                'editRoute' => null,
+                'viewRoute' => null,
 
                 'submission' => $b6,
             ],
+
         ];
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Approval requirement (INCLUDES Constitution)
-        |--------------------------------------------------------------------------
-        */
 
         $allApproved =
             $this->isApproved($b1?->status)
@@ -249,11 +223,6 @@ class OrgReregDashboardController extends Controller
             && $b6 !== null;
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Moderator info
-        |--------------------------------------------------------------------------
-        */
 
         $b5Moderator = OrgMembership::query()
             ->where('organization_id', $orgId)
@@ -264,11 +233,6 @@ class OrgReregDashboardController extends Controller
             ->first();
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Return view
-        |--------------------------------------------------------------------------
-        */
 
         return view('org.rereg.index', [
 
@@ -342,37 +306,60 @@ class OrgReregDashboardController extends Controller
         ], true);
     }
 
-    private function cardData(string $label, ?string $status, ?string $editRoute, ?string $viewRoute): array
+    private function statusBadge(?string $status): array
     {
-        return [
-            'label'    => $label,
-            'status'   => $status ?? 'not_started',
-            'badge'    => $this->badge($status),
-            'editRoute'=> $editRoute,
-            'viewRoute'=> $viewRoute,
-        ];
-    }
+        return match ($status) {
 
-    private function badge(?string $status): array
-    {
-        $s = $status ?? 'not_started';
+            // draft
+            'draft' => [
+                'text' => 'Draft',
+                'dot'  => 'bg-slate-400',
+            ],
 
-        return match ($s) {
-           
-            'approved_by_sacdev', 'approved' => ['text' => 'Approved', 'class' => 'bg-emerald-100 text-emerald-800'],
+            // submitted (officer_submissions)
+            'submitted_to_sacdev' => [
+                'text' => 'Submitted to SACDEV',
+                'dot'  => 'bg-amber-500',
+            ],
 
-            'submitted_to_sacdev', 'forwarded_to_sacdev' => ['text' => 'Under SACDEV Review', 'class' => 'bg-blue-100 text-blue-800'],
+            // submitted_to_moderator (strategic plan)
+            'submitted_to_moderator' => [
+                'text' => 'Submitted to Moderator',
+                'dot'  => 'bg-amber-500',
+            ],
 
-            'submitted_to_moderator' => ['text' => 'Under Moderator Review', 'class' => 'bg-indigo-100 text-indigo-800'],
+            'submitted' => [
+                'text' => 'Submitted to SACDEV',
+                'dot'  => 'bg-amber-500',
+            ],
 
-    
-            'returned_by_sacdev', 'returned_by_moderator' => ['text' => 'Returned', 'class' => 'bg-amber-100 text-amber-800'],
+            // returned
+            'returned',
+            'returned_by_moderator' => [
+                'text' => 'Returned',
+                'dot'  => 'bg-rose-500',
+            ],
 
-            'draft' => ['text' => 'Draft', 'class' => 'bg-slate-100 text-slate-800'],
+            // approved
+            'approved',
+            'approved_by_sacdev' => [
+                'text' => 'Approved',
+                'dot'  => 'bg-emerald-500',
+            ],
 
-            default => ['text' => 'Not Started', 'class' => 'bg-slate-100 text-slate-600'],
+            // forwarded
+            'forwarded_to_sacdev' => [
+                'text' => 'Forwarded to SACDEV',
+                'dot'  => 'bg-blue-500',
+            ],
+
+            default => [
+                'text' => 'Not submitted',
+                'dot'  => 'bg-slate-400',
+            ],
         };
     }
+
 
 
 }

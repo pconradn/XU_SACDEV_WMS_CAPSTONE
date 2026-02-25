@@ -321,10 +321,9 @@
                 }
             },
 
-            // ===== init hook (kept, for fund UI if needed)
+          
             init() {
-                // all funds already loaded above into fixedFundAmounts/otherSources
-                // keeping init in case your HTML uses x-init="init()"
+           
             },
         };
     }

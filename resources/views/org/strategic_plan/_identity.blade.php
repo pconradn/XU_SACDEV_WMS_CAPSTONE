@@ -3,18 +3,51 @@
     <p class="text-sm text-slate-500 mt-1">Fill in your organization’s basic details for this school year.</p>
 
     <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        
         <div class="md:col-span-1">
             <label class="block text-sm font-medium text-slate-700">Organization Logo</label>
-            <input type="file" name="logo"
-                   class="mt-1 block w-full text-sm text-slate-700 file:mr-3 file:py-2 file:px-3
-                          file:rounded-lg file:border-0 file:text-sm file:font-medium
-                          file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200
-                          border border-slate-200 rounded-lg">
-            @error('logo') <p class="text-sm text-rose-600 mt-1">{{ $message }}</p> @enderror
 
-            @if($submission->logo_path)
-                <p class="text-xs text-slate-500 mt-2">Current logo uploaded.</p>
-            @endif
+            {{-- Logo Preview --}}
+            <div class="mt-2 flex items-center justify-center border border-slate-200 rounded-lg bg-slate-50 h-40">
+                
+                @if($submission->logo_path)
+                    <img id="logoPreview"
+                        src="{{ asset('storage/'.$submission->logo_path) }}"
+                        alt="Organization Logo"
+                        class="max-h-36 object-contain">
+                @else
+                    <img id="logoPreview"
+                        src=""
+                        alt="Logo Preview"
+                        class="hidden max-h-36 object-contain">
+
+                    <span id="logoPlaceholder"
+                        class="text-sm text-slate-400">
+                        No logo uploaded
+                    </span>
+                @endif
+
+            </div>
+
+            {{-- File Input --}}
+            <input type="file"
+                name="logo"
+                accept="image/*"
+                onchange="previewLogo(event)"
+                class="mt-3 block w-full text-sm text-slate-700 file:mr-3 file:py-2 file:px-3
+                        file:rounded-lg file:border-0 file:text-sm file:font-medium
+                        file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200
+                        border border-slate-200 rounded-lg">
+
+            <p class="text-xs text-slate-500 mt-1">
+                PNG, JPG, or WEBP. Max 2MB.
+            </p>
+
+            @error('logo')
+                <p class="text-sm text-rose-600 mt-1">{{ $message }}</p>
+            @enderror
+
         </div>
 
         <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -47,3 +80,29 @@
         </div>
     </div>
 </div>
+
+<script>
+function previewLogo(event)
+{
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e)
+    {
+        const preview = document.getElementById('logoPreview');
+        const placeholder = document.getElementById('logoPlaceholder');
+
+        preview.src = e.target.result;
+        preview.classList.remove('hidden');
+
+        if (placeholder) {
+            placeholder.style.display = 'none';
+        }
+    };
+
+    reader.readAsDataURL(file);
+}
+</script>

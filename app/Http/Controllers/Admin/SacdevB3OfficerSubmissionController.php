@@ -8,6 +8,7 @@ use App\Models\OfficerSubmission;
 use App\Models\OrgMembership;
 use App\Models\SchoolYear;
 use App\Models\User;
+use App\Notifications\ReregActionNotification;
 use App\Support\AccountProvisioner;
 use App\Support\Audit;
 use App\Support\InAppNotifier;
@@ -386,11 +387,6 @@ class SacdevB3OfficerSubmissionController extends Controller
 
 
 
-                /*
-                |--------------------------------------------------------------------------
-                | STEP 7: Mark propagated
-                |--------------------------------------------------------------------------
-                */
 
                 $item->propagated_to_memberships = true;
                 $item->propagated_at = now();
@@ -398,11 +394,7 @@ class SacdevB3OfficerSubmissionController extends Controller
 
 
 
-                /*
-                |--------------------------------------------------------------------------
-                | STEP 8: Audit log
-                |--------------------------------------------------------------------------
-                */
+        
 
                 Audit::log(
                     'officer_entry_propagated',
@@ -422,11 +414,6 @@ class SacdevB3OfficerSubmissionController extends Controller
 
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | STEP 9: Notify President
-            |--------------------------------------------------------------------------
-            */
 
             $presidentEntry = OfficerEntry::query()
                 ->where('organization_id', $orgId)
@@ -434,16 +421,34 @@ class SacdevB3OfficerSubmissionController extends Controller
                 ->where('major_officer_role', 'president')
                 ->first();
 
-            if ($presidentEntry && $presidentEntry->user_id) {
-
+            if ($presidentEntry && $presidentEntry->user_id)
+            {
                 $presidentUser = User::find($presidentEntry->user_id);
 
-                if ($presidentUser) {
-
+                if ($presidentUser)
+                {
                     $presidentUser->notify(
-                        new \App\Notifications\OfficerSubmissionApprovedNotification(
-                            $submission
-                        )
+                        new ReregActionNotification([
+                            'dedupe_key' => 'b2_president_approved_' . $submission->id,
+
+                            'title'   => 'President Registration Approved',
+                            'message' => 'Your President Registration (Form B-2) has been approved by SACDEV.',
+
+                            'org_id'        => $submission->organization_id,
+                            'target_sy_id'  => $submission->target_school_year_id,
+
+                            'form'   => 'b2_president',
+                            'status' => 'approved',
+
+                            'action_url' => route('org.rereg.b2.president.edit'),
+
+                            'send_mail' => true,
+
+                            'meta' => [
+                                'submission_id' => $submission->id,
+                                'approved_at'   => now()->toDateTimeString(),
+                            ],
+                        ])
                     );
                 }
             }

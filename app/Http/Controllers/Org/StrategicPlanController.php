@@ -2,24 +2,26 @@
 
 namespace App\Http\Controllers\Org;
 
-use App\Models\User;
-use App\Models\SchoolYear;
-use Illuminate\Http\Request;
-use App\Models\OrgMembership;
-use App\Support\InAppNotifier;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use App\Models\StrategicPlanPartner;
-use App\Models\StrategicPlanProject;
-use Illuminate\Http\RedirectResponse;
-use App\Models\StrategicPlanObjective;
-use App\Models\StrategicPlanFundSource;
-use App\Models\StrategicPlanSubmission;
-use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\Org\SaveDraftStrategicPlanRequest;
+use App\Http\Requests\Org\SubmitStrategicPlanRequest;
+use App\Models\OrgMembership;
+use App\Models\SchoolYear;
 use App\Models\StrategicPlanBeneficiary;
 use App\Models\StrategicPlanDeliverable;
-use App\Http\Requests\Org\SubmitStrategicPlanRequest;
-use App\Http\Requests\Org\SaveDraftStrategicPlanRequest;
+use App\Models\StrategicPlanFundSource;
+use App\Models\StrategicPlanObjective;
+use App\Models\StrategicPlanPartner;
+use App\Models\StrategicPlanProject;
+use App\Models\StrategicPlanSubmission;
+use App\Models\User;
+use App\Support\Audit;
+use App\Support\InAppNotifier;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class StrategicPlanController extends Controller
 {
@@ -65,8 +67,8 @@ class StrategicPlanController extends Controller
 
         if (! $editable) {
             return redirect()
-                ->route('org.strategic-plans.show', $submission->id) // adjust route if needed
-                ->with('error', 'This submission is currently under review and cannot be edited.');
+                ->route('org.rereg.b1.edit', $submission->id) 
+                ->with('error', 'This submission cannot be edited.');
         }
 
         return null;
@@ -157,14 +159,25 @@ class StrategicPlanController extends Controller
             $this->assertEditableStatus($submission);
 
             if ($request->hasFile('logo')) {
+
                 $file = $request->file('logo');
 
-                $path = $file->store("public/strategic-plans/{$orgId}/{$targetSyId}");
+               
+                $filename = 'logo.' . $file->getClientOriginalExtension();
 
-                if ($submission->logo_path && Storage::exists($submission->logo_path)) {
-                    Storage::delete($submission->logo_path);
+                
+                $path = $file->storeAs(
+                    "strategic-plans/{$orgId}/{$targetSyId}",
+                    $filename,
+                    'public'
+                );
+
+              
+                if ($submission->logo_path && Storage::disk('public')->exists($submission->logo_path)) {
+                    Storage::disk('public')->delete($submission->logo_path);
                 }
 
+                
                 $submission->logo_path = $path;
                 $submission->logo_original_name = $file->getClientOriginalName();
                 $submission->logo_mime = $file->getMimeType();
@@ -212,11 +225,6 @@ class StrategicPlanController extends Controller
 
 
 
-
-
-
-
-
     public function submitToModerator(SubmitStrategicPlanRequest $request)
     {
         ['orgId' => $orgId, 'targetSy' => $targetSyId] = $this->ctx($request);
@@ -234,12 +242,13 @@ class StrategicPlanController extends Controller
         }
 
         $moderator = $this->moderatorForSy($orgId, $targetSyId);
+
         if (! $moderator) {
             return redirect()->route('org.rereg.index')
                 ->with('error', 'No moderator assigned for this organization and school year.');
         }
 
-        $result = DB::transaction(function () use ($orgId, $targetSyId) {
+        $result = DB::transaction(function () use ($request, $orgId, $targetSyId) {
 
             $submission = StrategicPlanSubmission::query()
                 ->where('organization_id', $orgId)
@@ -251,12 +260,37 @@ class StrategicPlanController extends Controller
                 StrategicPlanSubmission::STATUS_DRAFT,
                 StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
                 StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
+                StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR,
             ], true);
+
+            //dd($editable);
 
             if (! $editable) {
                 return redirect()
                     ->route('org.rereg.b1.edit')
                     ->with('error', 'This submission cannot be submitted right now.');
+            }
+
+            if ($request->hasFile('logo')) {
+
+                $file = $request->file('logo');
+
+                $filename = 'logo.' . $file->getClientOriginalExtension();
+
+                $path = $file->storeAs(
+                    "strategic-plans/{$orgId}/{$targetSyId}",
+                    $filename,
+                    'public'
+                );
+
+                if ($submission->logo_path && Storage::disk('public')->exists($submission->logo_path)) {
+                    Storage::disk('public')->delete($submission->logo_path);
+                }
+
+                $submission->logo_path = $path;
+                $submission->logo_original_name = $file->getClientOriginalName();
+                $submission->logo_mime = $file->getMimeType();
+                $submission->logo_size_bytes = $file->getSize();
             }
 
             $submission->status = StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR;
@@ -272,6 +306,20 @@ class StrategicPlanController extends Controller
             $submission->approved_at = null;
 
             $submission->save();
+
+            Audit::log(
+                'strategic_plan_submitted_to_moderator',
+                'Strategic Plan submitted to moderator',
+                [
+                    'actor_user_id'   => Auth::id(),
+                    'organization_id' => $orgId,
+                    'school_year_id'  => $targetSyId,
+                    'meta' => [
+                        'submission_id' => $submission->id,
+                        'logo_uploaded' => $submission->logo_path ? true : false,
+                    ],
+                ]
+            );
 
             return (int) $submission->getKey();
         });
