@@ -49,19 +49,31 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('officer_entries', function (Blueprint $table) {
+        Schema::table('officer_entries', function (Blueprint $table)
+        {
+            if (Schema::hasColumn('officer_entries', 'major_officer_role')) {
+                $table->dropColumn('major_officer_role');
+            }
 
-            $table->dropIndex('oe_major_role_idx');
+            if (Schema::hasColumn('officer_entries', 'is_major_officer')) {
+                $table->dropColumn('is_major_officer');
+            }
 
-            $table->dropColumn([
-                'major_officer_role',
-                'is_major_officer',
-                'first_sem_qpi',
-                'second_sem_qpi',
-                'intersession_qpi',
-                'is_under_probation',
-            ]);
+            if (Schema::hasColumn('officer_entries', 'first_sem_qpi')) {
+                $table->dropColumn('first_sem_qpi');
+            }
 
+            if (Schema::hasColumn('officer_entries', 'second_sem_qpi')) {
+                $table->dropColumn('second_sem_qpi');
+            }
+
+            if (Schema::hasColumn('officer_entries', 'intersession_qpi')) {
+                $table->dropColumn('intersession_qpi');
+            }
+
+            if (Schema::hasColumn('officer_entries', 'is_under_probation')) {
+                $table->dropColumn('is_under_probation');
+            }
         });
     }
 };
