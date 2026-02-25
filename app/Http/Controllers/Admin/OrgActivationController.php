@@ -149,7 +149,7 @@ class OrgActivationController extends Controller
 
         return back()->with(
             'success',
-            'Organization successfully registered for the selected school year.'
+            'Organization registered successfully.'
         );
     }
 
