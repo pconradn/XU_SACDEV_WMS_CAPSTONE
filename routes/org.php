@@ -177,5 +177,11 @@ Route::prefix('org')
 
                     Route::post('/use-previous', [B5ModeratorSubmissionController::class, 'usePrevious'])->name('usePrevious');
                 });
+
+                Route::get('/constitution/{submission}/download',
+                    [OrgConstitutionSubmissionController::class, 'download']
+                )->name('constitution.download');
+
+
             });
     });

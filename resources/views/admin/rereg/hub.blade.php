@@ -91,10 +91,32 @@
                             </div>
 
                             @if(!empty($f['viewRoute']) && Route::has($f['viewRoute']))
-                                <a href="{{ route($f['viewRoute'], $f['routeParams'] ?? []) }}"
-                                   class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                                    View
-                                </a>
+                                <div class="flex flex-col items-end gap-2">
+
+                                    {{-- View button --}}
+                                    <a href="{{ route($f['viewRoute'], $f['routeParams'] ?? []) }}"
+                                    class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                                        View
+                                    </a>
+
+                                   
+                                    @if($key === 'b6'
+                                        && !empty($f['routeParams']['submission'])
+                                        && ($f['badge']['text'] ?? '') !== 'Approved')
+
+                                        <form method="POST"
+                                            action="{{ route('admin.constitution.approve', $f['routeParams']['submission']) }}">
+                                            @csrf
+
+                                            <button type="submit"
+                                                    class="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                                                Approve
+                                            </button>
+                                        </form>
+
+                                    @endif
+
+                                </div>
                             @else
                                 <span class="text-xs text-slate-500">No record</span>
                             @endif
@@ -166,6 +188,7 @@
                 </div>
             </div>
 
+
             {{-- Confirm Modal --}}
             @if(!empty($allApproved) && $allApproved && (empty($alreadyActivated) || !$alreadyActivated))
                 <div id="activateModal" class="hidden fixed inset-0 z-50">
@@ -173,35 +196,54 @@
 
                     <div class="relative mx-auto mt-24 w-full max-w-lg px-4">
                         <div class="rounded-2xl bg-white shadow-xl border border-slate-200 overflow-hidden">
+
+                            {{-- Header --}}
                             <div class="px-6 py-5 border-b border-slate-200">
-                                <div class="text-lg font-semibold text-slate-900">Confirm Activation</div>
+                                <div class="text-lg font-semibold text-slate-900">
+                                    Confirm Organization Registration
+                                </div>
+
                                 <div class="mt-1 text-sm text-slate-600">
-                                    You are about to register <span class="font-semibold">{{ $organization->name }}</span>
+                                    You are about to officially register
+                                    <span class="font-semibold">{{ $organization->name }}</span>
                                     for the selected school year.
                                 </div>
                             </div>
 
+
+                            {{-- Body --}}
                             <div class="px-6 py-5 space-y-3 text-sm text-slate-700">
+
                                 <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                    <div class="font-semibold text-slate-900">What this will do</div>
+                                    <div class="font-semibold text-slate-900">
+                                        What this will do
+                                    </div>
+
                                     <ul class="mt-2 list-disc pl-5 space-y-1">
-                                        <li>Create the activation record for this organization and school year.</li>
-                                        <li>Create / update Officer List entries based on B-3.</li>
-                                        <li>Create / update Projects based on B-1 Strategic Plan projects.</li>
-                                        <li>Link President and Moderator officer entries to their user accounts.</li>
+                                        <li>Create the official activation record for this organization.</li>
+                                        <li>Mark the organization as registered for the selected school year.</li>
+                                        <li>Allow the organization to begin operations and submit projects.</li>
                                     </ul>
                                 </div>
 
+
                                 <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
-                                    <div class="font-semibold">Important</div>
+                                    <div class="font-semibold">
+                                        Important
+                                    </div>
+
                                     <div class="mt-1 text-sm">
-                                        After registration, this organization <span class="font-semibold">cannot be registered again</span>
-                                        for the same school year. Please review B-1 and B-3 details before proceeding.
+                                        This action confirms that all required forms (B-1 to B-6) have been reviewed and approved.
+                                        Once registered, the organization cannot be registered again for the same school year.
                                     </div>
                                 </div>
+
                             </div>
 
+
+                            {{-- Footer --}}
                             <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-2">
+
                                 <button
                                     type="button"
                                     onclick="document.getElementById('activateModal').classList.add('hidden')"
@@ -210,20 +252,27 @@
                                     Cancel
                                 </button>
 
+
                                 <form method="POST" action="{{ route('admin.rereg.activate', $organization) }}">
                                     @csrf
+
                                     <button
                                         type="submit"
                                         class="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
                                     >
-                                        Yes, register
+                                        Yes, register organization
                                     </button>
+
                                 </form>
+
                             </div>
+
                         </div>
                     </div>
                 </div>
             @endif
+
+
         </div>
 
 

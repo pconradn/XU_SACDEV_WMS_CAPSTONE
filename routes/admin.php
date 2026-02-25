@@ -150,13 +150,12 @@ Route::prefix('admin')
 
 
         Route::get(
-            '/org/constitution/{submission}/download',
+            '/constitution/{submission}/download',
             [OrgConstitutionSubmissionController::class, 'download']
-        )->name('org.constitution.download');
-
+        )->name('admin.constitution.download');
 
         Route::post(
-            '/admin/constitution/{submission}/approve',
+            '/constitution/{submission}/approve',
             [OrgConstitutionSubmissionController::class, 'approve']
         )->name('admin.constitution.approve');
 

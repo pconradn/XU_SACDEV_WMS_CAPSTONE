@@ -8,6 +8,7 @@ use App\Models\OfficerEntry;
 use App\Models\OfficerSubmission;
 use App\Models\Organization;
 use App\Models\OrganizationSchoolYear;
+use App\Models\OrgConstitutionSubmission;
 use App\Models\OrgMembership;
 use App\Models\PresidentRegistration;
 use App\Models\Project;
@@ -24,45 +25,58 @@ class OrgActivationController extends Controller
     public function activate(Request $request, Organization $organization)
     {
         $encodeSyId = (int) $request->session()->get('encode_sy_id', 0);
+
         abort_unless($encodeSyId > 0, 403, 'Please select a target school year first.');
 
-        // Fetch latest submissions for org+SY
+        // Fetch latest submissions
         $b1 = StrategicPlanSubmission::query()
             ->where('organization_id', $organization->id)
             ->where('target_school_year_id', $encodeSyId)
-            ->latest('id')->first();
+            ->latest('id')
+            ->first();
 
         $b2 = PresidentRegistration::query()
             ->where('organization_id', $organization->id)
             ->where('target_school_year_id', $encodeSyId)
-            ->latest('id')->first();
+            ->latest('id')
+            ->first();
 
         $b3 = OfficerSubmission::query()
             ->where('organization_id', $organization->id)
             ->where('target_school_year_id', $encodeSyId)
-            ->with('items')
-            ->latest('id')->first();
+            ->latest('id')
+            ->first();
 
         $b5 = ModeratorSubmission::query()
             ->where('organization_id', $organization->id)
             ->where('target_school_year_id', $encodeSyId)
-            ->latest('id')->first();
+            ->latest('id')
+            ->first();
 
-        $allApproved = collect([$b1, $b2, $b3, $b5])->every(
-            fn ($m) => $m && (string) $m->status === 'approved_by_sacdev'
-        );
+        $b6 = OrgConstitutionSubmission::query()
+            ->where('organization_id', $organization->id)
+            ->where('school_year_id', $encodeSyId)
+            ->latest('id')
+            ->first();
 
+
+        // Validate ALL approved
+        $allApproved = collect([$b1, $b2, $b3, $b5, $b6])
+            ->every(fn ($m) => $m && $m->status === 'approved_by_sacdev');
 
         if (! $allApproved) {
-            return back()->with('status', 'Activation blocked: All B-1, B-2, B-3, and B-5 must be approved by SAcDev.');
+            return back()->with(
+                'status',
+                'Activation blocked: All B-1, B-2, B-3, B-5, and B-6 must be approved by SAcDev.'
+            );
         }
 
-        $presidentUserId = (int) ($b1->submitted_by_user_id ?? 0);
 
         try {
-            DB::transaction(function () use ($organization, $encodeSyId, $b1, $b3, $b5) {
 
-  
+            DB::transaction(function () use ($organization, $encodeSyId, $b1) {
+
+                // Prevent duplicate activation
                 $existing = OrganizationSchoolYear::query()
                     ->where('organization_id', $organization->id)
                     ->where('school_year_id', $encodeSyId)
@@ -70,269 +84,73 @@ class OrgActivationController extends Controller
                     ->first();
 
                 if ($existing) {
-                   
                     throw new \RuntimeException('ALREADY_ACTIVATED');
                 }
 
-                $organization->update([
-                    'name'   => $b1->org_name ?: $organization->name,
-                    'acronym'=> $b1->org_acronym ?: $organization->acronym,
 
-                    'mission' => $b1->mission,
-                    'vision'  => $b1->vision,
-                    'logo_path' => $b1->logo_path,
-                    'logo_original_name' => $b1->logo_original_name,
-                    'logo_mime' => $b1->logo_mime,
-                    'logo_size_bytes' => $b1->logo_size_bytes,
-
-                    
-                    'last_b1_submission_id' => $b1->id,
-                ]);
-
-
-                $items = $b3?->items ?? collect();
-
-                foreach ($items as $item) {
-                    $studentId = trim((string) $item->student_id_number);
-                    $email = $this->makeXuEmailFromStudentId($studentId);
-
-                    OfficerEntry::query()->updateOrCreate(
-                        [
-                            'organization_id' => $organization->id,
-                            'school_year_id' => $encodeSyId,
-                            'source_officer_submission_item_id' => $item->id,
-                        ],
-                        [
-                            'full_name' => $item->officer_name,
-                            'position' => $item->position,
-                            'student_id_number' => $studentId ?: null,
-                            'course_and_year' => $item->course_and_year,
-                            'latest_qpi' => $item->latest_qpi,
-                            'mobile_number' => $item->mobile_number,
-                            'sort_order' => $item->sort_order,
-                            'email' => $email,
-                            'user_id' => null, 
-                        ]
-                    );
-                }
-
-
-                $spProjects = StrategicPlanProject::query()
-                    ->where('submission_id', $b1->id)
-                    ->get();
-
-                foreach ($spProjects as $sp) {
-                    Project::query()->updateOrCreate(
-                        [
-                            'organization_id' => $organization->id,
-                            'school_year_id' => $encodeSyId,
-                            'source_strategic_plan_project_id' => $sp->id,
-                        ],
-                        [
-                            'title' => $sp->title,
-                            'category' => $sp->category,
-                            'target_date' => $sp->target_date,
-                            'implementing_body' => $sp->implementing_body,
-                            'budget' => $sp->budget,
-                        ]
-                    );
-                }
-
-                OrganizationSchoolYear::query()->create([
+                // Create activation record ONLY
+                OrganizationSchoolYear::create([
                     'organization_id' => $organization->id,
                     'school_year_id' => $encodeSyId,
-                    'president_user_id' => (int) $b1->submitted_by_user_id,
+                    'president_user_id' => $b1->submitted_by_user_id,
                     'president_confirmed_at' => now(),
                 ]);
 
-
-                $presUser = User::find((int) $b1->submitted_by_user_id);
-
-                if ($presUser) {
-                    $presEmail = mb_strtolower(trim((string) $presUser->email));
-
-                    $presOfficer = OfficerEntry::query()
-                        ->where('organization_id', $organization->id)
-                        ->where('school_year_id', $encodeSyId)
-                        ->whereRaw('LOWER(email) = ?', [$presEmail])
-                        ->first();
-
-                    if ($presOfficer) {
-                        if ((int) $presOfficer->user_id !== (int) $presUser->id) {
-                            $presOfficer->user_id = $presUser->id;
-                            $presOfficer->save();
-                        }
-
-                        OrgMembership::query()
-                            ->where('organization_id', $organization->id)
-                            ->where('school_year_id', $encodeSyId)
-                            ->where('role', 'president')
-                            ->where('user_id', $presUser->id)
-                            ->whereNull('archived_at')
-                            ->update(['officer_entry_id' => $presOfficer->id]);
-                    }
-                }
-
-        
-                if ((int) ($b5->moderator_user_id ?? 0) > 0) {
-                    $modUser = User::find((int) $b5->moderator_user_id);
-                    $modEmail = mb_strtolower(trim((string) ($b5->email ?: ($modUser?->email ?? ''))));
-
-                    $modOfficer = OfficerEntry::query()
-                        ->where('organization_id', $organization->id)
-                        ->where('school_year_id', $encodeSyId)
-                        ->whereRaw('LOWER(email) = ?', [$modEmail])
-                        ->first();
-
-                    if (! $modOfficer) {
-                        $modOfficer = OfficerEntry::create([
-                            'organization_id' => $organization->id,
-                            'school_year_id' => $encodeSyId,
-                            'full_name' => $b5->full_name ?: ($modUser?->name ?? 'Moderator'),
-                            'position' => 'Moderator',
-                            'email' => $modEmail ?: null,
-                            'mobile_number' => $b5->mobile_number ?: null,
-                            'user_id' => $modUser?->id,
-                            'sort_order' => 9999,
-                            'source_officer_submission_item_id' => null,
-                            'student_id_number' => $this->parseStudentIdFromEmail($modEmail),
-                        ]);
-                    } else {
-                        if ($modUser && (int) $modOfficer->user_id !== (int) $modUser->id) {
-                            $modOfficer->user_id = $modUser->id;
-                            $modOfficer->save();
-                        }
-                    }
-
-                    if ($modUser && $modOfficer) {
-                        OrgMembership::query()
-                            ->where('organization_id', $organization->id)
-                            ->where('school_year_id', $encodeSyId)
-                            ->where('role', 'moderator')
-                            ->where('user_id', $modUser->id)
-                            ->whereNull('archived_at')
-                            ->update(['officer_entry_id' => $modOfficer->id]);
-                    }
-                }
-
-               
-      
-                $treasurerItem = $items->first(function ($it) {
-                    return mb_strtolower(trim((string) $it->position)) === 'treasurer';
-                });
-
-                if ($treasurerItem) {
-
-                    $treasurerOfficer = OfficerEntry::query()
-                        ->where('organization_id', $organization->id)
-                        ->where('school_year_id', $encodeSyId)
-                        ->where('source_officer_submission_item_id', $treasurerItem->id)
-                        ->first();
-
-                
-                    if ($treasurerOfficer) {
-
-                     
-                        [$treasurerUser] = AccountProvisioner::findOrCreateUser(
-                            $treasurerOfficer->full_name,
-                            $treasurerOfficer->email
-                        );
-
-                        if ((int) $treasurerOfficer->user_id !== (int) $treasurerUser->id) {
-                            $treasurerOfficer->user_id = $treasurerUser->id;
-                            $treasurerOfficer->save();
-                        }
-
-                    
-                        AccountProvisioner::ensureBasicOrgAccess($treasurerUser->id, $organization->id, $encodeSyId);
-
-                        $currentTreasurer = OrgMembership::query()
-                            ->where('organization_id', $organization->id)
-                            ->where('school_year_id', $encodeSyId)
-                            ->where('role', 'treasurer')
-                            ->whereNull('archived_at')
-                            ->first();
-
-                        if (!($currentTreasurer && (int) $currentTreasurer->user_id === (int) $treasurerUser->id)) {
-
-                            
-                            OrgMembership::query()
-                                ->where('organization_id', $organization->id)
-                                ->where('school_year_id', $encodeSyId)
-                                ->where('role', 'treasurer')
-                                ->whereNull('archived_at')
-                                ->update(['archived_at' => now()]);
-
-                            
-                            OrgMembership::query()->updateOrCreate(
-                                [
-                                    'organization_id' => $organization->id,
-                                    'school_year_id'  => $encodeSyId,
-                                    'user_id'         => $treasurerUser->id,
-                                    'role'            => 'treasurer',
-                                ],
-                                [
-                                    'archived_at'     => null,
-                                    'officer_entry_id'=> $treasurerOfficer->id, 
-                                ]
-                            );
-
-
-                        } else {
-                            
-                            OrgMembership::query()
-                                ->where('organization_id', $organization->id)
-                                ->where('school_year_id', $encodeSyId)
-                                ->where('role', 'treasurer')
-                                ->where('user_id', $treasurerUser->id)
-                                ->whereNull('archived_at')
-                                ->update(['officer_entry_id' => $treasurerOfficer->id]);
-                        }
-                    }
-                }
-            }, 3); 
+            });
 
         } catch (\RuntimeException $e) {
+
             if ($e->getMessage() === 'ALREADY_ACTIVATED') {
-                return back()->with('status', 'This organization is already registered for the selected school year.');
+
+                return back()->with(
+                    'status',
+                    'This organization is already registered for this school year.'
+                );
             }
+
             throw $e;
         }
 
-        DB::afterCommit(function () use ($organization, $encodeSyId, $presidentUserId) {
-            if ($presidentUserId <= 0) return;
 
-            $president = \App\Models\User::find($presidentUserId);
-            if (! $president) return;
+        // Notify president (optional but good UX)
+        DB::afterCommit(function () use ($organization, $encodeSyId, $b1) {
 
-            $dedupeKey = implode(':', [
-                'rereg',
-                'activation',
-                'activated',
-                'org'.$organization->id,
-                'sy'.$encodeSyId,
-                'to_user'.$president->getKey(),
-            ]);
+            if (!$b1) return;
+
+            $president = User::find($b1->submitted_by_user_id);
+
+            if (!$president) return;
 
             InAppNotifier::notifyOnce($president, [
-                'dedupe_key'   => $dedupeKey,
-                'title'        => 'Organization Activated',
-                'message'      => 'Your organization has been registered for the selected school year. You may now proceed with the next steps in the system.',
-                'org_id'       => $organization->id,
+
+                'dedupe_key' => "activation:org{$organization->id}:sy{$encodeSyId}",
+
+                'title' => 'Organization Registered',
+
+                'message' =>
+                    'Your organization has been successfully registered for the selected school year.',
+
+                'org_id' => $organization->id,
+
                 'target_sy_id' => $encodeSyId,
-                'form'         => 'activation',
-                'status'       => 'activated',
-                'action_url'   => route('org.rereg.index'),
-                'meta'         => [
-                    'organization_id' => $organization->id,
-                    'school_year_id'  => $encodeSyId,
-                ],
-                'send_mail'    => true,
+
+                'form' => 'activation',
+
+                'status' => 'activated',
+
+                'action_url' => route('org.rereg.index'),
+
+                'send_mail' => true,
+
             ]);
+
         });
 
 
-        return back()->with('success', 'Organization registered. Officers and projects were created for the selected school year.');
+        return back()->with(
+            'success',
+            'Organization successfully registered for the selected school year.'
+        );
     }
 
     private function makeXuEmailFromStudentId(?string $studentId): ?string

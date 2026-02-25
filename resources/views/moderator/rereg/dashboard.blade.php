@@ -172,6 +172,84 @@
                 </div>
             </div>
 
+
+            {{-- B6 — Organization Constitution --}}
+            @php
+                $b6Status = $badge($constitutionSubmission->status ?? '—');
+            @endphp
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+                <div class="flex items-start justify-between gap-4">
+
+                    <div>
+                        <div class="text-base font-semibold text-slate-900">
+                            B6 — Organization Constitution
+                        </div>
+
+                        <div class="mt-2">
+                            <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold {{ $b6Status['class'] }}">
+                                {{ $b6Status['text'] }}
+                            </span>
+                        </div>
+                    </div>
+
+                    @if($constitutionSubmission)
+                        <span class="text-xs text-slate-500">View only</span>
+                    @else
+                        <span class="text-xs text-slate-500">Waiting on org</span>
+                    @endif
+
+                </div>
+
+
+                <div class="mt-4 text-sm text-slate-600">
+
+                    @if($constitutionSubmission)
+
+                        Organization Constitution has been uploaded.
+
+                    @else
+
+                        No constitution submission yet.
+
+                    @endif
+
+                </div>
+
+
+                <div class="mt-4">
+
+                    @if($constitutionSubmission)
+
+                        <a href="{{ route('org.moderator.constitution.download', $constitutionSubmission) }}"
+                        class="inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+
+                            Download Constitution
+
+                        </a>
+
+                        <div class="mt-2 text-xs text-slate-500 truncate">
+                            {{ $constitutionSubmission->original_filename }}
+                        </div>
+
+                    @else
+
+                        <button disabled
+                            class="inline-flex w-full items-center justify-center rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-600">
+
+                            No Constitution Uploaded Yet
+
+                        </button>
+
+                    @endif
+
+                </div>
+
+            </div>
+
+
+
             {{-- B5 --}}
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex items-start justify-between gap-4">

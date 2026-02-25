@@ -11,6 +11,7 @@ use App\Models\ModeratorSubmission;
 use App\Http\Controllers\Controller;
 use App\Models\PresidentRegistration;
 use App\Models\StrategicPlanSubmission;
+use App\Models\OrgConstitutionSubmission;
 
 class ReregHubController extends Controller
 {
@@ -29,8 +30,7 @@ class ReregHubController extends Controller
     {
         $encodeSyId = (int) $request->session()->get('encode_sy_id');
 
-
-        if (!$encodeSyId) {
+        if (! $encodeSyId) {
             $activeId = (int) SchoolYear::query()->where('is_active', true)->value('id');
             if ($activeId) {
                 $encodeSyId = $activeId;
@@ -42,29 +42,38 @@ class ReregHubController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        
-
+        // B1
         $b1 = StrategicPlanSubmission::query()
             ->where('organization_id', $organization->id)
             ->where('target_school_year_id', $encodeSyId)
             ->latest('id')
             ->first();
 
+        // B2
         $b2 = PresidentRegistration::query()
             ->where('organization_id', $organization->id)
             ->where('target_school_year_id', $encodeSyId)
             ->latest('id')
             ->first();
 
+        // B3
         $b3 = OfficerSubmission::query()
             ->where('organization_id', $organization->id)
             ->where('target_school_year_id', $encodeSyId)
             ->latest('id')
             ->first();
 
+        // B5
         $b5 = ModeratorSubmission::query()
             ->where('organization_id', $organization->id)
             ->where('target_school_year_id', $encodeSyId)
+            ->latest('id')
+            ->first();
+
+        
+        $b6 = OrgConstitutionSubmission::query()
+            ->where('organization_id', $organization->id)
+            ->where('school_year_id', $encodeSyId)
             ->latest('id')
             ->first();
 
@@ -93,10 +102,18 @@ class ReregHubController extends Controller
                 viewRoute: 'admin.moderator_submissions.show',
                 routeParamKey: 'submission',
             ),
+
+            
+            'b6' => $this->mapForm(
+                label: 'B-6 Organization Constitution',
+                model: $b6,
+                viewRoute: 'admin.constitution.download',
+                routeParamKey: 'submission',
+            ),
         ];
 
-    
-        $allApproved = collect([$b1, $b2, $b3, $b5])->every(function ($m) {
+        
+        $allApproved = collect([$b1, $b2, $b3, $b5, $b6])->every(function ($m) {
             return $m && (string) $m->status === 'approved_by_sacdev';
         });
 
@@ -146,7 +163,8 @@ class ReregHubController extends Controller
                 ?? null,
             'meta' => [
                 'submitted_at' => optional($model?->submitted_at)?->format('M d, Y h:i A'),
-                'reviewed_at'  => optional($model?->sacdev_reviewed_at)?->format('M d, Y h:i A'),
+                'reviewed_at'  => optional($model?->sacdev_reviewed_at ?? $model?->approved_at)?->format('M d, Y h:i A'),
+                'filename'     => $model->original_filename ?? null,
             ],
         ];
     }
