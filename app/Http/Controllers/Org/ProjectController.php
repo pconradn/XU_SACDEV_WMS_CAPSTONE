@@ -23,11 +23,38 @@ class ProjectController extends Controller
     {
         ['orgId' => $orgId, 'syId' => $syId] = $this->ctx($request);
 
-        $projects = Project::query()
+        $user = auth()->user();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Base query (org + school year)
+        |--------------------------------------------------------------------------
+        */
+
+        $query = Project::query()
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
-            ->orderBy('title')
-            ->get();
+            ->orderBy('title');
+
+        $isPresident = \App\Models\OrgMembership::query()
+            ->where('user_id', $user->id)
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->whereNull('archived_at')
+            ->where('role', 'president')
+            ->exists();
+
+        if (!$isPresident) {
+
+            $query->whereHas('assignments', function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                ->where('assignment_role', 'project_head')
+                ->whereNull('archived_at');
+            });
+
+        }
+
+        $projects = $query->get();
 
         return view('org.projects.index', compact('projects', 'syId'));
     }

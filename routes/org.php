@@ -15,6 +15,7 @@ use App\Http\Controllers\Org\OrgReregDashboardController;
 use App\Http\Controllers\Org\OrgRoleAssignmentController;
 use App\Http\Controllers\Org\PresidentRegistrationController;
 use App\Http\Controllers\Org\ProjectController;
+use App\Http\Controllers\Org\ProjectDocumentHubController;
 use App\Http\Controllers\Org\ProjectHeadAssignmentController;
 use App\Http\Controllers\Org\StrategicPlanController;
 use App\Http\Controllers\OrgConstitutionSubmissionController;
@@ -31,63 +32,138 @@ Route::prefix('org')
         Route::post('/encode-school-year', [EncodeSchoolYearController::class, 'update'])->name('org.encode-sy.update');
 
         /*
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         | PROVISIONING (not being used anymore)
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         */
         Route::prefix('provision')
             ->middleware(['require_president_active_sy'])
             ->name('org.provision.')
             ->group(function () {
                 //Route::get('/next-president', [OrgReregAssignmentsController::class, 'editNextPresident'])
-                    //->name('next_president.edit');
+                //    ->name('next_president.edit');
                 //Route::post('/next-president', [OrgReregAssignmentsController::class, 'storeNextPresident'])
-                    //->name('next_president.store');
+                //    ->name('next_president.store');
             });
 
         /*
-        |----------------------------------------------------------------------
-        | OPERATIONAL MODULES (ACTIVE SY ACCESS)
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
+        | OPERATIONAL MODULES (CONTEXT-BASED ACCESS)
+        |--------------------------------------------------------------------------
+        | Accessible by operational_access:
+        | - president
+        | - project head 
+        | - treasurer/moderator 
         */
-        Route::middleware(['operational_access', 'president_encode','org.role:president'])->group(function () {
+        Route::middleware(['operational_access', 'project.access'])->group(function () {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Projects (shared access)
+            |--------------------------------------------------------------------------
+            | Project head needs access to view "My Projects"
+            | President can still use same page, but CRUD is locked to president-only routes below.
+            */
+            Route::get('projects', [ProjectController::class, 'index'])
+                ->name('org.projects.index');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Project Documents Hub 
+            |--------------------------------------------------------------------------
+            */
+            Route::get('projects/{project}/documents', [ProjectDocumentHubController::class, 'show'])
+                ->name('org.projects.documents.hub');
 
 
-            Route::resource('officers', OfficerEntryController::class)
-                ->except(['show'])
-                ->names('org.officers');
+            Route::get(
+                'projects/{project}/documents/project-proposal/create',
+                [\App\Http\Controllers\Org\ProjectProposalController::class, 'create']
+            )->name('org.projects.project-proposal.create');
 
-            Route::post('officers/{officer}/resend-invite', [OfficerInviteController::class, 'resend'])
-                ->name('org.officers.resend-invite');
+            Route::post(
+                'projects/{project}/documents/project-proposal',
+                [\App\Http\Controllers\Org\ProjectProposalController::class, 'store']
+            )->name('org.projects.project-proposal.store');
 
-            Route::resource('projects', ProjectController::class)
-                ->except(['show'])
-                ->names('org.projects');
 
-            Route::get('assign-roles', [OrgRoleAssignmentController::class, 'edit'])
-                ->name('org.assign-roles.edit');
-            Route::post('assign-roles', [OrgRoleAssignmentController::class, 'update'])
-                ->name('org.assign-roles.update');
 
-            Route::get('assign-project-heads', [ProjectHeadAssignmentController::class, 'index'])
-                ->name('org.assign-project-heads.index');
-            Route::get('assign-project-heads/{project}', [ProjectHeadAssignmentController::class, 'edit'])
-                ->name('org.assign-project-heads.edit');
-            Route::post('assign-project-heads/{project}', [ProjectHeadAssignmentController::class, 'update'])
-                ->name('org.assign-project-heads.update');
+            /*
+            |--------------------------------------------------------------------------
+            | PRESIDENT-ONLY OPERATIONAL CONTROLS
+            |--------------------------------------------------------------------------
+            */
+            Route::middleware(['president_encode', 'org.role:president', 'project.access'])->group(function () {
 
-            Route::get('activation-status', [ActivationStatusController::class, 'index'])
-                ->name('org.activation-status.index');
+                /*
+                |--------------------------------------------------------------------------
+                | Officers
+                |--------------------------------------------------------------------------
+                */
+                Route::resource('officers', OfficerEntryController::class)
+                    ->except(['show'])
+                    ->names('org.officers');
+
+                Route::post('officers/{officer}/resend-invite', [OfficerInviteController::class, 'resend'])
+                    ->name('org.officers.resend-invite');
+
+                /*
+                |--------------------------------------------------------------------------
+                | Projects CRUD (president only)
+                |--------------------------------------------------------------------------
+                | Keep index excluded since it's already defined above for shared access.
+                */
+                Route::resource('projects', ProjectController::class)
+                    ->except(['show', 'index'])
+                    ->names('org.projects');
+
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Assign roles
+                |--------------------------------------------------------------------------
+                */
+                Route::get('assign-roles', [OrgRoleAssignmentController::class, 'edit'])
+                    ->name('org.assign-roles.edit');
+
+                Route::post('assign-roles', [OrgRoleAssignmentController::class, 'update'])
+                    ->name('org.assign-roles.update');
+
+                /*
+                |--------------------------------------------------------------------------
+                | Assign Project Heads
+                |--------------------------------------------------------------------------
+                */
+                Route::get('assign-project-heads', [ProjectHeadAssignmentController::class, 'index'])
+                    ->name('org.assign-project-heads.index');
+
+                Route::get('assign-project-heads/{project}', [ProjectHeadAssignmentController::class, 'edit'])
+                    ->name('org.assign-project-heads.edit');
+
+                Route::post('assign-project-heads/{project}', [ProjectHeadAssignmentController::class, 'update'])
+                    ->name('org.assign-project-heads.update');
+
+                /*
+                |--------------------------------------------------------------------------
+                | Activation Status
+                |--------------------------------------------------------------------------
+                */
+                Route::get('activation-status', [ActivationStatusController::class, 'index'])
+                    ->name('org.activation-status.index');
+
+            });
+
         });
 
         /*
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         | RE-REGISTRATION HUB (PRESIDENT ONLY)
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         | Protect the hub itself so moderators cannot access /org/rereg.
         */
         Route::prefix('rereg')
-            ->middleware([ 'require.context', 'org.role:president'])
+            ->middleware(['require.context', 'org.role:president'])
             ->name('org.rereg.')
             ->group(function () {
 
@@ -128,23 +204,17 @@ Route::prefix('org')
                     Route::post('/moderator', [OrgReregAssignmentsController::class, 'storeModerator'])->name('moderator.store');
                 });
 
-                
+                Route::post('/constitution/upload', [OrgConstitutionSubmissionController::class, 'upload'])
+                    ->name('constitution.upload');
 
-                Route::post('/constitution/upload',
-                    [OrgConstitutionSubmissionController::class, 'upload']
-                )->name('constitution.upload');
-
-                Route::get('/constitution/{submission}/download',
-                    [OrgConstitutionSubmissionController::class, 'download']
-                )->name('constitution.download');
-
-                
+                Route::get('/constitution/{submission}/download', [OrgConstitutionSubmissionController::class, 'download'])
+                    ->name('constitution.download');
             });
 
         /*
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         | MODERATOR PORTAL
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         */
         Route::prefix('moderator')
             ->middleware(['require.context', 'org.moderator'])
@@ -178,10 +248,7 @@ Route::prefix('org')
                     Route::post('/use-previous', [B5ModeratorSubmissionController::class, 'usePrevious'])->name('usePrevious');
                 });
 
-                Route::get('/constitution/{submission}/download',
-                    [OrgConstitutionSubmissionController::class, 'download']
-                )->name('constitution.download');
-
-
+                Route::get('/constitution/{submission}/download', [OrgConstitutionSubmissionController::class, 'download'])
+                    ->name('constitution.download');
             });
     });

@@ -431,16 +431,16 @@ class SacdevB3OfficerSubmissionController extends Controller
                         new ReregActionNotification([
                             'dedupe_key' => 'b2_president_approved_' . $submission->id,
 
-                            'title'   => 'President Registration Approved',
-                            'message' => 'Your President Registration (Form B-2) has been approved by SACDEV.',
+                            'title'   => 'Officer Submission Approved',
+                            'message' => 'Your Officer Submission (Form B-3) has been approved by SACDEV.',
 
                             'org_id'        => $submission->organization_id,
                             'target_sy_id'  => $submission->target_school_year_id,
 
-                            'form'   => 'b2_president',
+                            'form'   => 'b3_officer',
                             'status' => 'approved',
 
-                            'action_url' => route('org.rereg.b2.president.edit'),
+                            'action_url' => route('org.rereg.b3.officer.edit'),
 
                             'send_mail' => true,
 

@@ -14,38 +14,62 @@ class RequirePresidentEncodeContext
     {
         $user = $request->user();
 
-      
-        $activeSy = SchoolYear::activeYear();
-        if (!$activeSy) {
-            abort(403, 'No active school year.');
-        }
+        /*
+        |--------------------------------------------------------------------------
+        | Require org context
+        |--------------------------------------------------------------------------
+        */
 
         $orgId = (int) $request->session()->get('active_org_id', 0);
+
         if (!$orgId) {
             return redirect()
                 ->route('org.home')
                 ->with('status', 'Please select an organization first.');
         }
 
-   
+
+        /*
+        |--------------------------------------------------------------------------
+        | Require encode school year context
+        |--------------------------------------------------------------------------
+        */
+
         $encodeSyId = (int) $request->session()->get('encode_sy_id', 0);
+
         if ($encodeSyId <= 0) {
-            $encodeSyId = (int) $activeSy->id;
-            $request->session()->put('encode_sy_id', $encodeSyId);
-        }
-        if ($encodeSyId !== (int) $activeSy->id) {
+
             return redirect()
-                ->route('org.home')
-                ->with('status', 'You can only encode for the active school year.');
+                ->route('org.encode-sy.show')
+                ->with('status', 'Please select a school year to encode.');
+
         }
 
-        
-        $encodeSyExists = SchoolYear::query()->whereKey($encodeSyId)->exists();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validate school year exists
+        |--------------------------------------------------------------------------
+        */
+
+        $encodeSyExists = SchoolYear::query()
+            ->whereKey($encodeSyId)
+            ->exists();
+
         if (!$encodeSyExists) {
+
             return redirect()
-                ->route('org.home')
-                ->with('status', 'Selected target school year is invalid. Please select again.');
+                ->route('org.encode-sy.show')
+                ->with('status', 'Selected school year is invalid.');
+
         }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Prevent editing if already activated
+        |--------------------------------------------------------------------------
+        */
 
         $alreadyActivated = OrganizationSchoolYear::query()
             ->where('organization_id', $orgId)
@@ -53,13 +77,21 @@ class RequirePresidentEncodeContext
             ->exists();
 
         if ($alreadyActivated) {
+
             return redirect()
-                ->route('org.rereg.index')
-                ->with('status', 'This school year is already activated and can no longer be edited.');
+                ->route('org.projects.index')
+                ->with('status', 'This school year is already activated and cannot be edited.');
+
         }
 
-     
-        $isPresidentForEncodeSy = OrgMembership::query()
+
+        /*
+        |--------------------------------------------------------------------------
+        | Ensure user is president for this org and SY
+        |--------------------------------------------------------------------------
+        */
+
+        $isPresident = OrgMembership::query()
             ->where('user_id', $user->id)
             ->where('organization_id', $orgId)
             ->where('school_year_id', $encodeSyId)
@@ -67,22 +99,15 @@ class RequirePresidentEncodeContext
             ->where('role', 'president')
             ->exists();
 
-        if (!$isPresidentForEncodeSy) {
-           
+        if (!$isPresident) {
+
             return redirect()
                 ->route('org.home')
-                ->with('status', 'You can only encode for school years where you are the President.');
+                ->with('status', 'Only the President can perform this action.');
+
         }
 
-        /* 
-        dd([
-            'user_id' => $user->id,
-            'org_id' => $orgId,
-            'active_sy_id' => $activeSy?->id,
-            'encode_sy_id' => $encodeSyId,
-            'already_activated' => $alreadyActivated,
-        ]);
-        */
+
         return $next($request);
     }
 }

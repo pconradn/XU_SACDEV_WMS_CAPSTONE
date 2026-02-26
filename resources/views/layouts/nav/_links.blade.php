@@ -27,7 +27,7 @@
         $dashboardLinks[] = $item('Dashboard', route('dashboard'), ['dashboard']);
     }
 
-    // Context link (always under dashboard, no grouping)
+
     if (Route::has('context.show') && !$isAdmin) {
         $contextLinks[] = $item('Select SY / Organization', route('context.show'), ['context.*', 'org.encode-sy.*']);
     }
@@ -214,6 +214,41 @@
                     }
                 }
 
+                // =========================
+                // PROJECT HEAD ACCESS
+                // =========================
+
+                $isProjectHead = \App\Models\ProjectAssignment::query()
+                    ->where('user_id', $user->id)
+                    ->whereNull('archived_at')
+                    ->whereHas('project', function ($q) use ($activeOrgId, $syId) {
+                        $q->where('organization_id', $activeOrgId)
+                        ->where('school_year_id', $syId);
+                    })
+                    ->exists();
+
+                if ($isProjectHead) {
+
+                    $ph = [];
+
+                    if (Route::has('org.projects.index')) {
+                        $ph[] = $item(
+                            'My Projects',
+                            route('org.projects.index'),
+                            ['org.projects.*']
+                        );
+                    }
+
+                    if (!empty($ph)) {
+                        $groups[] = [
+                            'key' => 'org_project_head',
+                            'title' => 'Project Head',
+                            'links' => $ph,
+                            'icon' => 'clipboard'
+                        ];
+                    }
+                }
+
                 if ($isModerator) {
                     $mod = [];
 
@@ -235,7 +270,7 @@
         }
     }
 
-    // If any link inside a group is active, we want the group open by default
+
     $groupShouldOpen = function (array $links): bool {
         foreach ($links as $l) {
             if (str_contains($l['class'], 'bg-blue-50')) return true;
