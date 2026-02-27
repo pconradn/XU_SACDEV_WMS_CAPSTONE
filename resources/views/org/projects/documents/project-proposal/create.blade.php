@@ -1,5 +1,9 @@
-<x-app-layout>
-    <div class="mx-auto max-w-6xl px-4 py-6">
+<x-layouts.form-only
+    title="Project Proposal — {{ $project->title }}"
+    :backRoute="route('org.projects.documents.hub', $project)"
+>
+
+    <div class="mx-auto max-w-5xl">
 
         @include('org.projects.documents.project-proposal.partials._header', [
             'project' => $project,
@@ -31,4 +35,5 @@
     </div>
 
     @include('org.projects.documents.project-proposal.partials._script')
-</x-app-layout>
+
+</x-layouts.form-only>

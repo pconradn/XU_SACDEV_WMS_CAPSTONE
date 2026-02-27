@@ -157,7 +157,7 @@
             if ($activeOrgId) {
                 $orgRole = OrgMembership::query()
                     ->where('user_id', $user->id)
-                    ->where('organization_id', $activeOrgId)
+                    //->where('organization_id', $activeOrgId)
                     ->where('school_year_id', $syId)
                     ->whereNull('archived_at')
                     ->value('role');

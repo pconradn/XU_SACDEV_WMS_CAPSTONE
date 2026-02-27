@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 
+
+
 class SacdevB3OfficerSubmissionController extends Controller
 {
 
@@ -211,7 +213,7 @@ class SacdevB3OfficerSubmissionController extends Controller
                 }
 
                 $studentId = $item->student_id_number;
-                $email = $studentId . '@xu.edu.ph';
+                $email = $studentId . '@my.xu.edu.ph';
 
 
                 /*
@@ -440,7 +442,7 @@ class SacdevB3OfficerSubmissionController extends Controller
                             'form'   => 'b3_officer',
                             'status' => 'approved',
 
-                            'action_url' => route('org.rereg.b3.officer.edit'),
+                            'action_url' => route('org.rereg.b3.officers-list.edit'),
 
                             'send_mail' => true,
 

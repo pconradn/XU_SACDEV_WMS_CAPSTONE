@@ -17,7 +17,6 @@ class OfficerSubmissionItem extends Model
         'student_id_number',
         'course_and_year',
 
-        // temporary compatibility
         'latest_qpi',
 
         'first_sem_qpi',
