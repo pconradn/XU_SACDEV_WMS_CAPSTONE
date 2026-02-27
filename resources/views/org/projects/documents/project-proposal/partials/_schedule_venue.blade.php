@@ -1,64 +1,110 @@
-<div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-    <div class="text-sm font-semibold text-slate-900">Proposed Implementation</div>
-    <div class="mt-1 text-xs text-slate-500">Dates and time of the activity.</div>
+<div class="border border-slate-300">
 
-    <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-            <label class="block text-sm font-medium text-slate-700">Start Date</label>
-            <input type="date" name="start_date" value="{{ old('start_date') }}"
-                   class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" required>
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-slate-700">End Date</label>
-            <input type="date" name="end_date" value="{{ old('end_date') }}"
-                   class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" required>
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-slate-700">Start Time (optional)</label>
-            <input type="time" name="start_time" value="{{ old('start_time') }}"
-                   class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-slate-700">End Time (optional)</label>
-            <input type="time" name="end_time" value="{{ old('end_time') }}"
-                   class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+    {{-- Top Section Label (Right Aligned, Subtle) --}}
+    <div class="flex justify-start px-4 pt-1">
+        <div class="text-[12px] font-medium text-slate-700">
+            Proposed Implementation Date(s):
         </div>
     </div>
 
-    <div class="mt-6 border-t border-slate-200 pt-5">
-        <div class="text-sm font-semibold text-slate-900">Proposed Venue</div>
+    {{-- Dates + Time --}}
+    <div class="px-4 pb-2">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 
-        <div class="mt-3 grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div class="md:col-span-1">
-                <label class="block text-sm font-medium text-slate-700">Venue Type</label>
+            <div>
+                <label class="block text-[10px] font-medium text-blue-900 italic">
+                    Start Date:
+                </label>
+                <input type="date"
+                       name="start_date"
+                       value="{{ old('start_date') }}"
+                       class="mt-1 w-full border border-slate-300 bg-white px-3 py-0.5 text-[12px]"
+                       required>
+            </div>
 
-                <div class="mt-2 space-y-2">
-                    <label class="flex items-center gap-2 text-sm text-slate-700">
-                        <input type="radio" name="venue_type" value="on_campus"
-                               class="rounded border-slate-300"
-                               @checked(old('venue_type', 'on_campus') === 'on_campus')>
+            <div>
+                <label class="block text-[10px] font-medium text-blue-900 italic">
+                    End Date:
+                </label>
+                <input type="date"
+                       name="end_date"
+                       value="{{ old('end_date') }}"
+                       class="mt-1 w-full border border-slate-300 bg-white px-3 py-0.5 text-[12px]"
+                       required>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-medium text-blue-900 italic">
+                    Time (optional):
+                </label>
+                <input type="time"
+                       name="start_time"
+                       value="{{ old('start_time') }}"
+                       class="mt-1 w-full border border-slate-300 bg-white px-3 py-0.5 text-[12px]">
+            </div>
+
+        </div>
+    </div>
+
+    {{-- Divider --}}
+    <div class="border-t border-slate-300"></div>
+
+    {{-- Venue Section --}}
+    <div class="px-4 pb-3 pt-2">
+
+        <div class="text-[12px] font-medium text-slate-700">
+            Proposed Venue
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-12 items-start">
+
+            <!-- Instruction Text -->
+            <div class="md:col-span-5 text-[10px] text-blue-900 italic">
+                For off-campus activities, please accomplish off-campus activity permit after approval of this proposal.
+            </div>
+
+            <!-- Venue Type (UNCHANGED LOGIC) -->
+            <div class="md:col-span-3">
+                <label class="block text-[12px] font-medium text-slate-700">
+                    Venue Type:
+                </label>
+
+                <div class="mt-2 space-y-2 text-[10px] text-slate-700">
+                    <label class="flex items-center gap-2">
+                        <input type="radio"
+                            name="venue_type"
+                            value="on_campus"
+                            class="border-slate-300"
+                            @checked(old('venue_type', 'on_campus') === 'on_campus')>
                         On Campus
                     </label>
 
-                    <label class="flex items-center gap-2 text-sm text-slate-700">
-                        <input type="radio" name="venue_type" value="off_campus"
-                               class="rounded border-slate-300"
-                               @checked(old('venue_type') === 'off_campus')>
+                    <label class="flex items-center gap-2">
+                        <input type="radio"
+                            name="venue_type"
+                            value="off_campus"
+                            class="border-slate-300"
+                            @checked(old('venue_type') === 'off_campus')>
                         Off Campus
                     </label>
                 </div>
             </div>
 
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-slate-700">Venue Name</label>
-                <input type="text" name="venue_name" value="{{ old('venue_name') }}"
-                       class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                       placeholder="e.g., XU Gym, AVR 1, Barangay Hall, etc."
-                       required>
+            <!-- Venue Name (UNCHANGED LOGIC) -->
+            <div class="md:col-span-4">
+                <label class="block text-[12px] font-medium text-slate-700">
+                    Venue Name:
+                </label>
+                <input type="text"
+                    name="venue_name"
+                    value="{{ old('venue_name') }}"
+                    class="mt-1 w-full border border-slate-300 bg-white px-3 py-1 text-[10px]"
+                    placeholder="e.g., XU Gym, AVR 1, Barangay Hall, etc."
+                    required>
             </div>
+
         </div>
+
     </div>
+
 </div>

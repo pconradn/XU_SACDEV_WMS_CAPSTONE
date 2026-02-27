@@ -1,24 +1,39 @@
-<div class="mb-6">
-    <div class="flex items-start justify-between gap-4">
+<div class=" border border-slate-300">
 
-        <div>
-            <h2 class="text-xl font-semibold text-slate-900">
-                Project Proposal
-            </h2>
+    {{-- Top Right Form Label --}}
+    <div class="flex justify-end px-4 pt-3">
+        <div class="text-[12px] font-semibold text-slate-500 uppercase tracking-wide">
+            Form A1
+        </div>
+    </div>
 
-            <div class="mt-1 text-sm text-slate-600">
-                {{ $project->title }}
-            </div>
+    {{-- Main Title --}}
+    <div class="px-4 pb-4 text-center">
+        <h1 class="text-[24px] font-bold tracking-wide text-slate-900">
+            PROJECT PROPOSAL
+        </h1>
+    </div>
 
-            <div class="mt-1 text-xs text-slate-500">
-                Fill out the proposal details and save as draft. You can continue editing later.
-            </div>
+    {{-- Section Header --}}
+    <div class="bg-slate-50 border-t border-b border-slate-300 px-4 py-1 text-center">
+        <div class="text-[12px] font-semibold text-slate-900 tracking-wide">
+            PROJECT DEFINITION
+        </div>
+    </div>
+
+    {{-- Title Section --}}
+    <div class="px-4 py-5">
+
+        <div class="text-[12px] font-medium text-slate-700 mb-2">
+            Name / Title of Project:
         </div>
 
-        <a href="{{ route('org.projects.documents.hub', $project) }}"
-           class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-            Back to Hub
-        </a>
+        <div class="text-center">
+            <h2 class="text-[18px] font-semibold text-slate-900">
+                {{ $project->title }}
+            </h2>
+        </div>
 
     </div>
+
 </div>

@@ -13,7 +13,7 @@
 
         <form method="POST"
               action="{{ route('org.projects.project-proposal.store', $project) }}"
-              class="space-y-6"
+              class=""
               id="proposalForm">
             @csrf
 
