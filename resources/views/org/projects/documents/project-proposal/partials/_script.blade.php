@@ -139,3 +139,37 @@
     toggleCounterpart();
     toggleGuests();
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    function addTextRow(wrapperId, inputName, placeholder) {
+        const wrap = document.getElementById(wrapperId);
+        if (!wrap) return;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.name = inputName;
+        input.placeholder = placeholder;
+        input.className = 'w-full border border-slate-300 bg-white px-3 py-1 text-[12px]';
+
+        wrap.appendChild(input);
+    }
+
+    document.getElementById('addObjectiveBtn')?.addEventListener('click', () => {
+        addTextRow('objectivesWrap', 'objectives[]', 'Enter objective');
+    });
+
+    document.getElementById('addIndicatorBtn')?.addEventListener('click', () => {
+        addTextRow('indicatorsWrap', 'success_indicators[]', 'Enter success indicator');
+    });
+
+    document.getElementById('addPartnerBtn')?.addEventListener('click', () => {
+        addTextRow('partnersWrap', 'partners[]', 'Partner name');
+    });
+
+    document.getElementById('addRoleBtn')?.addEventListener('click', () => {
+        addTextRow('rolesWrap', 'roles[]', 'Role title');
+    });
+
+});
+</script>

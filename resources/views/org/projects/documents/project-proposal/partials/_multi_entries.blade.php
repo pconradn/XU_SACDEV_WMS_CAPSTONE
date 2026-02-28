@@ -1,136 +1,126 @@
-<div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-    <div class="text-sm font-semibold text-slate-900">Details (Multiple Entries)</div>
-    <div class="mt-1 text-xs text-slate-500">
-        Use “Add” to insert more rows.
+<div class="border border-slate-300">
+
+    {{-- Top Label --}}
+    <div class="flex justify-start px-4 pt-1">
+        <div class="text-[12px] font-medium text-slate-700">
+            Project Objectives and Responsibilities
+        </div>
     </div>
 
-    {{-- Objectives --}}
-    <div class="mt-5">
-        <div class="flex items-center justify-between gap-3">
-            <div class="text-sm font-semibold text-slate-800">Objectives</div>
-            <button type="button"
-                    class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
-                    onclick="addRow('objectives')">
-                + Add
-            </button>
-        </div>
+    <div class="px-4 pb-3 pt-2 space-y-6">
 
-        <div class="mt-2 space-y-2" id="objectives">
-            @php $oldObjectives = old('objectives', ['']); @endphp
-            @foreach($oldObjectives as $i => $val)
-                <div class="flex gap-2">
+        {{-- ROW 1 --}}
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+
+            {{-- Objectives --}}
+            <div>
+                <label class="block text-[10px] font-medium text-blue-900 italic">
+                    Objectives:
+                </label>
+
+                <div class="text-[10px] text-blue-900 italic mb-1">
+                    (List the specific objectives of the project.)
+                </div>
+
+                <div id="objectivesWrap" class="space-y-2">
                     <input type="text"
                            name="objectives[]"
-                           value="{{ $val }}"
-                           class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                           placeholder="Objective {{ $i + 1 }}">
-                    <button type="button"
-                            class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
-                            onclick="removeRow(this)">
-                        Remove
-                    </button>
+                           value="{{ old('objectives.0') }}"
+                           class="w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
+                           placeholder="Enter objective">
                 </div>
-            @endforeach
+
+                <button type="button"
+                        id="addObjectiveBtn"
+                        class="mt-2 text-[10px] text-blue-700 underline">
+                    + Add Objective
+                </button>
+            </div>
+
+            {{-- Target Indicators --}}
+            <div>
+                <label class="block text-[10px] font-medium text-blue-900 italic">
+                    Target Indicators:
+                </label>
+
+                <div class="text-[10px] text-blue-900 italic mb-1">
+                    (State measurable indicators of success.)
+                </div>
+
+                <div id="indicatorsWrap" class="space-y-2">
+                    <input type="text"
+                           name="success_indicators[]"
+                           value="{{ old('success_indicators.0') }}"
+                           class="w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
+                           placeholder="Enter success indicator">
+                </div>
+
+                <button type="button"
+                        id="addIndicatorBtn"
+                        class="mt-2 text-[10px] text-blue-700 underline">
+                    + Add Indicator
+                </button>
+            </div>
+
         </div>
+
+        <div class="border-t border-slate-300"></div>
+
+        {{-- ROW 2 --}}
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 pt-4">
+
+            {{-- Partners --}}
+            <div>
+                <label class="block text-[10px] font-medium text-blue-900 italic">
+                    Partners:
+                </label>
+
+                <div class="text-[10px] text-blue-900 italic mb-1">
+                    (Internal or external collaborators.)
+                </div>
+
+                <div id="partnersWrap" class="space-y-2">
+                    <input type="text"
+                           name="partners[]"
+                           value="{{ old('partners.0') }}"
+                           class="w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
+                           placeholder="Partner name">
+                </div>
+
+                <button type="button"
+                        id="addPartnerBtn"
+                        class="mt-2 text-[10px] text-blue-700 underline">
+                    + Add Partner
+                </button>
+            </div>
+
+            {{-- Specific Roles --}}
+            <div>
+                <label class="block text-[10px] font-medium text-blue-900 italic">
+                    Specific Roles:
+                </label>
+
+                <div class="text-[10px] text-blue-900 italic mb-1">
+                    (List roles involved in the project.)
+                </div>
+
+                <div id="rolesWrap" class="space-y-2">
+                    <input type="text"
+                           name="roles[]"
+                           value="{{ old('roles.0') }}"
+                           class="w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
+                           placeholder="Role title">
+                </div>
+
+                <button type="button"
+                        id="addRoleBtn"
+                        class="mt-2 text-[10px] text-blue-700 underline">
+                    + Add Role
+                </button>
+            </div>
+
+        </div>
+
     </div>
 
-    {{-- Success Indicators --}}
-    <div class="mt-6">
-        <div class="flex items-center justify-between gap-3">
-            <div class="text-sm font-semibold text-slate-800">Target / Success Indicators</div>
-            <button type="button"
-                    class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
-                    onclick="addRow('indicators')">
-                + Add
-            </button>
-        </div>
-
-        <div class="mt-2 space-y-2" id="indicators">
-            @php $oldIndicators = old('indicators', ['']); @endphp
-            @foreach($oldIndicators as $i => $val)
-                <div class="flex gap-2">
-                    <input type="text"
-                           name="indicators[]"
-                           value="{{ $val }}"
-                           class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                           placeholder="Indicator {{ $i + 1 }}">
-                    <button type="button"
-                            class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
-                            onclick="removeRow(this)">
-                        Remove
-                    </button>
-                </div>
-            @endforeach
-        </div>
-    </div>
-
-    {{-- Partners / Sponsors --}}
-    <div class="mt-6">
-        <div class="flex items-center justify-between gap-3">
-            <div class="text-sm font-semibold text-slate-800">Target Partners / Sponsors</div>
-            <button type="button"
-                    class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
-                    onclick="addPartnerRow()">
-                + Add
-            </button>
-        </div>
-
-        <div class="mt-2 space-y-2" id="partners">
-            @php $oldPartners = old('partners', [['name' => '', 'type' => '']]); @endphp
-            @foreach($oldPartners as $i => $p)
-                <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
-                    <input type="text"
-                           name="partners[{{ $i }}][name]"
-                           value="{{ $p['name'] ?? '' }}"
-                           class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                           placeholder="Name">
-                    <input type="text"
-                           name="partners[{{ $i }}][type]"
-                           value="{{ $p['type'] ?? '' }}"
-                           class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                           placeholder="Type (optional)">
-                    <button type="button"
-                            class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
-                            onclick="removeRow(this)">
-                        Remove
-                    </button>
-                </div>
-            @endforeach
-        </div>
-    </div>
-
-    {{-- Roles specific to project --}}
-    <div class="mt-6">
-        <div class="flex items-center justify-between gap-3">
-            <div class="text-sm font-semibold text-slate-800">Roles Specific to the Project</div>
-            <button type="button"
-                    class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
-                    onclick="addRoleRow()">
-                + Add
-            </button>
-        </div>
-
-        <div class="mt-2 space-y-2" id="roles">
-            @php $oldRoles = old('roles', [['role_name' => '', 'description' => '']]); @endphp
-            @foreach($oldRoles as $i => $r)
-                <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
-                    <input type="text"
-                           name="roles[{{ $i }}][role_name]"
-                           value="{{ $r['role_name'] ?? '' }}"
-                           class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                           placeholder="Role name">
-                    <input type="text"
-                           name="roles[{{ $i }}][description]"
-                           value="{{ $r['description'] ?? '' }}"
-                           class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                           placeholder="Description (optional)">
-                    <button type="button"
-                            class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
-                            onclick="removeRow(this)">
-                        Remove
-                    </button>
-                </div>
-            @endforeach
-        </div>
-    </div>
-</div> 
+</div>
