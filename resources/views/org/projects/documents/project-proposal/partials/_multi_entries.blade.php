@@ -18,16 +18,26 @@
                     Objectives:
                 </label>
 
-                <div class="text-[10px] text-blue-900 italic mb-1">
-                    (List the specific objectives of the project.)
-                </div>
+                @php
+                    $objectives = old('objectives')
+                        ?? ($proposal?->objectives?->pluck('objective')->toArray() ?? []);
+                    if (empty($objectives)) $objectives = [''];
+                @endphp
 
                 <div id="objectivesWrap" class="space-y-2">
-                    <input type="text"
-                           name="objectives[]"
-                           value="{{ old('objectives.0') }}"
-                           class="w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
-                           placeholder="Enter objective">
+                    @foreach($objectives as $obj)
+                        <div class="flex gap-2 objective-row dynamic-row">
+                            <input type="text"
+                                   name="objectives[]"
+                                   value="{{ $obj }}"
+                                   class="w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
+                                   placeholder="Enter objective">
+                            <button type="button"
+                                    class="remove-btn text-red-600 text-[12px] px-2">
+                                ✕
+                            </button>
+                        </div>
+                    @endforeach
                 </div>
 
                 <button type="button"
@@ -43,16 +53,26 @@
                     Target Indicators:
                 </label>
 
-                <div class="text-[10px] text-blue-900 italic mb-1">
-                    (State measurable indicators of success.)
-                </div>
+                @php
+                    $indicators = old('success_indicators')
+                        ?? ($proposal?->indicators?->pluck('indicator')->toArray() ?? []);
+                    if (empty($indicators)) $indicators = [''];
+                @endphp
 
                 <div id="indicatorsWrap" class="space-y-2">
-                    <input type="text"
-                           name="success_indicators[]"
-                           value="{{ old('success_indicators.0') }}"
-                           class="w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
-                           placeholder="Enter success indicator">
+                    @foreach($indicators as $ind)
+                        <div class="flex gap-2 indicator-row dynamic-row">
+                            <input type="text"
+                                   name="success_indicators[]"
+                                   value="{{ $ind }}"
+                                   class="w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
+                                   placeholder="Enter success indicator">
+                            <button type="button"
+                                    class="remove-btn text-red-600 text-[12px] px-2">
+                                ✕
+                            </button>
+                        </div>
+                    @endforeach
                 </div>
 
                 <button type="button"
@@ -75,16 +95,26 @@
                     Partners:
                 </label>
 
-                <div class="text-[10px] text-blue-900 italic mb-1">
-                    (Internal or external collaborators.)
-                </div>
+                @php
+                    $partners = old('partners')
+                        ?? ($proposal?->partners?->pluck('name')->toArray() ?? []);
+                    if (empty($partners)) $partners = [''];
+                @endphp
 
                 <div id="partnersWrap" class="space-y-2">
-                    <input type="text"
-                           name="partners[]"
-                           value="{{ old('partners.0') }}"
-                           class="w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
-                           placeholder="Partner name">
+                    @foreach($partners as $partner)
+                        <div class="flex gap-2 partner-row dynamic-row">
+                            <input type="text"
+                                   name="partners[]"
+                                   value="{{ $partner }}"
+                                   class="w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
+                                   placeholder="Partner name">
+                            <button type="button"
+                                    class="remove-btn text-red-600 text-[12px] px-2">
+                                ✕
+                            </button>
+                        </div>
+                    @endforeach
                 </div>
 
                 <button type="button"
@@ -100,16 +130,26 @@
                     Specific Roles:
                 </label>
 
-                <div class="text-[10px] text-blue-900 italic mb-1">
-                    (List roles involved in the project.)
-                </div>
+                @php
+                    $roles = old('roles')
+                        ?? ($proposal?->roles?->pluck('role_name')->toArray() ?? []);
+                    if (empty($roles)) $roles = [''];
+                @endphp
 
                 <div id="rolesWrap" class="space-y-2">
-                    <input type="text"
-                           name="roles[]"
-                           value="{{ old('roles.0') }}"
-                           class="w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
-                           placeholder="Role title">
+                    @foreach($roles as $role)
+                        <div class="flex gap-2 role-row dynamic-row">
+                            <input type="text"
+                                   name="roles[]"
+                                   value="{{ $role }}"
+                                   class="w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
+                                   placeholder="Role title">
+                            <button type="button"
+                                    class="remove-btn text-red-600 text-[12px] px-2">
+                                ✕
+                            </button>
+                        </div>
+                    @endforeach
                 </div>
 
                 <button type="button"

@@ -6,7 +6,7 @@
 
     function addRow(containerId) {
         const wrap = document.getElementById(containerId);
-        const index = wrap.querySelectorAll('input, textarea').length; // ok for simple arrays
+        const index = wrap.querySelectorAll('input, textarea').length; 
 
         const row = document.createElement('div');
         row.className = 'flex gap-2';
@@ -139,37 +139,191 @@
     toggleCounterpart();
     toggleGuests();
 </script>
+
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function () {
 
-    function addTextRow(wrapperId, inputName, placeholder) {
-        const wrap = document.getElementById(wrapperId);
+
+
+        function createSimpleRow(name, placeholder) {
+            const row = document.createElement('div');
+            row.className = 'flex gap-2 dynamic-row';
+
+            row.innerHTML = `
+                <input type="text"
+                    name="${name}"
+                    class="w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
+                    placeholder="${placeholder}">
+                <button type="button"
+                        class="text-red-600 text-[12px] px-2 remove-btn">
+                    ✕
+                </button>
+            `;
+
+            return row;
+        }
+
+        function setupAddButton(buttonId, wrapperId, name, placeholder) {
+            const btn = document.getElementById(buttonId);
+            const wrapper = document.getElementById(wrapperId);
+
+            if (!btn || !wrapper) return;
+
+            btn.addEventListener('click', function () {
+                wrapper.appendChild(createSimpleRow(name, placeholder));
+            });
+        }
+
+       
+        document.addEventListener('click', function (e) {
+            if (!e.target.classList.contains('remove-btn')) return;
+
+            const row = e.target.closest('.dynamic-row');
+            if (!row) return;
+
+            const wrapper = row.parentElement;
+
+            if (wrapper.querySelectorAll('.dynamic-row').length > 1) {
+                row.remove();
+            }
+        });
+
+
+
+        setupAddButton('addObjectiveBtn', 'objectivesWrap', 'objectives[]', 'Enter objective');
+        setupAddButton('addIndicatorBtn', 'indicatorsWrap', 'success_indicators[]', 'Enter success indicator');
+        setupAddButton('addPartnerBtn', 'partnersWrap', 'partners[]', 'Partner name');
+        setupAddButton('addRoleBtn', 'rolesWrap', 'roles[]', 'Role title');
+
+
+
+        function toggleMainOrganizer() {
+            const eng = document.querySelector('input[name="engagement_type"]:checked')?.value;
+            const wrap = document.getElementById('mainOrganizerWrap');
+            if (!wrap) return;
+            wrap.style.display = (eng === 'participant') ? '' : 'none';
+        }
+
+        function toggleGuests() {
+            const val = document.querySelector('input[name="has_guest_speakers"]:checked')?.value;
+            const wrap = document.getElementById('guestListWrap');
+            if (!wrap) return;
+            wrap.classList.toggle('hidden', val !== '1');
+        }
+
+        document.addEventListener('change', function (e) {
+            if (e.target.name === 'engagement_type') toggleMainOrganizer();
+            if (e.target.name === 'has_guest_speakers') toggleGuests();
+        });
+
+        toggleMainOrganizer();
+        toggleGuests();
+
+    });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('.fund-source-checkbox').forEach(cb => {
+        cb.addEventListener('change', function () {
+
+            const targetId = this.dataset.target;
+            const input = document.getElementById(targetId);
+
+            if (!input) return;
+
+            if (this.checked) {
+                input.classList.remove('hidden');
+                input.required = true;
+            } else {
+                input.classList.add('hidden');
+                input.value = '';
+                input.required = false;
+            }
+        });
+    });
+
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  
+    document.addEventListener('click', function (e) {
+        if (!e.target.classList.contains('remove-btn')) return;
+
+        const row = e.target.closest('.guest-row, .plan-row');
+        if (!row) return;
+
+        const wrapper = row.parentElement;
+
+        if (wrapper.children.length > 1) {
+            row.remove();
+        }
+    });
+
+    document.getElementById('addGuestBtn')?.addEventListener('click', function () {
+
+        const wrap = document.getElementById('guestsWrap');
+        const i = wrap.querySelectorAll('.guest-row').length;
+
+        wrap.insertAdjacentHTML('beforeend', `
+            <div class="grid grid-cols-1 gap-2 md:grid-cols-4 guest-row">
+                <input type="text" name="guests[${i}][full_name]" class="border border-slate-300 bg-white px-3 py-1 text-[12px]" placeholder="Full Name">
+                <input type="text" name="guests[${i}][affiliation]" class="border border-slate-300 bg-white px-3 py-1 text-[12px]" placeholder="Affiliation">
+                <input type="text" name="guests[${i}][designation]" class="border border-slate-300 bg-white px-3 py-1 text-[12px]" placeholder="Designation">
+                <button type="button" class="remove-btn text-red-600 text-[12px] px-2">✕</button>
+            </div>
+        `);
+    });
+
+   
+    document.getElementById('addPlanBtn')?.addEventListener('click', function () {
+
+        const wrap = document.getElementById('planWrap');
+        const i = wrap.querySelectorAll('.plan-row').length;
+
+        wrap.insertAdjacentHTML('beforeend', `
+            <div class="grid grid-cols-1 gap-2 md:grid-cols-7 plan-row">
+
+                <input type="date"
+                    name="plan_of_actions[${i}][date]"
+                    class="border border-slate-300 bg-white px-3 py-1 text-[12px]">
+
+                <input type="time"
+                    name="plan_of_actions[${i}][time]"
+                    class="border border-slate-300 bg-white px-3 py-1 text-[12px]">
+
+                <input type="text"
+                    name="plan_of_actions[${i}][activity]"
+                    class="border border-slate-300 bg-white px-3 py-1 text-[12px] md:col-span-2"
+                    placeholder="Activity / Particulars">
+
+                <input type="text"
+                    name="plan_of_actions[${i}][venue]"
+                    class="border border-slate-300 bg-white px-3 py-1 text-[12px] md:col-span-2"
+                    placeholder="Venue">
+
+                <button type="button"
+                        class="remove-btn text-red-600 text-[12px] px-2">
+                    ✕
+                </button>
+
+            </div>
+        `);
+    });
+    
+    function toggleGuests() {
+        const val = document.querySelector('input[name="has_guest_speakers"]:checked')?.value;
+        const wrap = document.getElementById('guestListWrap');
         if (!wrap) return;
-
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.name = inputName;
-        input.placeholder = placeholder;
-        input.className = 'w-full border border-slate-300 bg-white px-3 py-1 text-[12px]';
-
-        wrap.appendChild(input);
+        wrap.classList.toggle('hidden', val !== '1');
     }
 
-    document.getElementById('addObjectiveBtn')?.addEventListener('click', () => {
-        addTextRow('objectivesWrap', 'objectives[]', 'Enter objective');
+    document.querySelectorAll('input[name="has_guest_speakers"]').forEach(r => {
+        r.addEventListener('change', toggleGuests);
     });
 
-    document.getElementById('addIndicatorBtn')?.addEventListener('click', () => {
-        addTextRow('indicatorsWrap', 'success_indicators[]', 'Enter success indicator');
-    });
-
-    document.getElementById('addPartnerBtn')?.addEventListener('click', () => {
-        addTextRow('partnersWrap', 'partners[]', 'Partner name');
-    });
-
-    document.getElementById('addRoleBtn')?.addEventListener('click', () => {
-        addTextRow('rolesWrap', 'roles[]', 'Role title');
-    });
-
+    toggleGuests();
 });
 </script>

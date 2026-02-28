@@ -1,91 +1,178 @@
-<div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-    <div class="text-sm font-semibold text-slate-900">Guests / Speakers / Dignitaries</div>
+<div class="border border-slate-300">
 
-    @php $hasGuests = old('has_guest_speakers', '0'); @endphp
+    {{-- =========================
+        GUESTS SECTION
+    ========================== --}}
+    <div class="px-4 pt-2">
+        <div class="text-[12px] font-medium text-slate-700">
+            Guests / Speakers / Dignitaries
+        </div>
+    </div>
 
-    <div class="mt-3 flex items-center gap-6 text-sm text-slate-700">
+    @php
+        $hasGuests = old('has_guest_speakers');
+        if ($hasGuests === null) {
+            $hasGuests = isset($proposal) ? (string)($proposal->has_guest_speakers ? '1' : '0') : '0';
+        }
+    @endphp
+
+    <div class="px-4 pt-2 text-[12px] text-slate-700 flex gap-6">
         <label class="flex items-center gap-2">
-            <input type="radio" name="has_guest_speakers" value="1"
-                   class="rounded border-slate-300"
+            <input type="radio"
+                   name="has_guest_speakers"
+                   value="1"
+                   class="border-slate-300"
                    @checked($hasGuests === '1')>
             Yes
         </label>
+
         <label class="flex items-center gap-2">
-            <input type="radio" name="has_guest_speakers" value="0"
-                   class="rounded border-slate-300"
+            <input type="radio"
+                   name="has_guest_speakers"
+                   value="0"
+                   class="border-slate-300"
                    @checked($hasGuests === '0')>
             No
         </label>
     </div>
 
-    <div class="mt-4 hidden" id="guestListWrap">
-        <div class="flex items-center justify-between gap-3">
-            <div class="text-sm font-semibold text-slate-800">
-                Guests list (Full Name, Affiliation, Designation)
+    <div class="px-4 pb-3 pt-2 {{ $hasGuests === '1' ? '' : 'hidden' }}" id="guestListWrap">
+
+        <div class="flex items-center justify-between">
+            <div class="text-[11px] font-medium text-blue-900 italic">
+                Guests List (Full Name, Affiliation, Designation)
             </div>
+
             <button type="button"
-                    class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
-                    onclick="addGuestRow()">
+                    id="addGuestBtn"
+                    class="text-[11px] text-blue-700 underline">
                 + Add
             </button>
         </div>
 
-        <div class="mt-2 space-y-2" id="guests">
-            @php $oldGuests = old('guests', [['full_name'=>'','affiliation'=>'','designation'=>'']]); @endphp
+        <div class="mt-2 space-y-2" id="guestsWrap">
+
+            @php
+                $oldGuests = old('guests')
+                    ?? ($proposal?->guests?->map(fn($g) => [
+                        'full_name' => $g->full_name,
+                        'affiliation' => $g->affiliation,
+                        'designation' => $g->designation,
+                    ])->toArray() ?? []);
+
+                if (empty($oldGuests)) {
+                    $oldGuests = [['full_name'=>'','affiliation'=>'','designation'=>'']];
+                }
+            @endphp
+
             @foreach($oldGuests as $i => $g)
-                <div class="grid grid-cols-1 gap-2 lg:grid-cols-4">
-                    <input type="text" name="guests[{{ $i }}][full_name]" value="{{ $g['full_name'] ?? '' }}"
-                           class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="Full Name">
-                    <input type="text" name="guests[{{ $i }}][affiliation]" value="{{ $g['affiliation'] ?? '' }}"
-                           class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="Affiliation">
-                    <input type="text" name="guests[{{ $i }}][designation]" value="{{ $g['designation'] ?? '' }}"
-                           class="rounded-lg border border-slate-300 bg-white px=3 py-2 text-sm" placeholder="Designation">
+                <div class="grid grid-cols-1 gap-2 md:grid-cols-4 guest-row">
+
+                    <input type="text"
+                           name="guests[{{ $i }}][full_name]"
+                           value="{{ $g['full_name'] ?? '' }}"
+                           class="border border-slate-300 bg-white px-3 py-1 text-[12px]"
+                           placeholder="Full Name">
+
+                    <input type="text"
+                           name="guests[{{ $i }}][affiliation]"
+                           value="{{ $g['affiliation'] ?? '' }}"
+                           class="border border-slate-300 bg-white px-3 py-1 text-[12px]"
+                           placeholder="Affiliation">
+
+                    <input type="text"
+                           name="guests[{{ $i }}][designation]"
+                           value="{{ $g['designation'] ?? '' }}"
+                           class="border border-slate-300 bg-white px-3 py-1 text-[12px]"
+                           placeholder="Designation">
+
                     <button type="button"
-                            class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
-                            onclick="removeRow(this)">
-                        Remove
+                            class="remove-btn text-red-600 text-[12px] px-2">
+                        ✕
                     </button>
                 </div>
             @endforeach
+
         </div>
     </div>
 
-    <div class="mt-8 border-t border-slate-200 pt-5">
-        <div class="text-sm font-semibold text-slate-900">Plan of Action</div>
-        <div class="mt-1 text-xs text-slate-500">
+    {{-- Divider --}}
+    <div class="border-t border-slate-300"></div>
+
+    {{-- =========================
+        PLAN OF ACTION
+    ========================== --}}
+    <div class="px-4 pt-2">
+        <div class="text-[12px] font-medium text-slate-700">
+            Plan of Action
+        </div>
+        <div class="text-[10px] text-blue-900 italic">
             For on-campus: program flow. For off-campus: itinerary then program flow.
         </div>
+    </div>
 
-        <div class="mt-3 flex items-center justify-between gap-3">
-            <div class="text-sm font-semibold text-slate-800">Rows</div>
+    <div class="px-4 pb-4 pt-2">
+
+        <div class="flex items-center justify-between">
+            <div class="text-[11px] font-medium text-blue-900 italic">
+                Rows
+            </div>
+
             <button type="button"
-                    class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
-                    onclick="addPlanRow()">
+                    id="addPlanBtn"
+                    class="text-[11px] text-blue-700 underline">
                 + Add
             </button>
         </div>
 
-        <div class="mt-2 space-y-2" id="planRows">
-            @php $oldPlan = old('plan', [['date'=>'','time'=>'','activity'=>'','venue'=>'']]); @endphp
+        <div class="mt-2 space-y-2" id="planWrap">
+
+            @php
+                $oldPlan = old('plan_of_actions')
+                    ?? ($proposal?->planOfActions?->map(fn($p) => [
+                        'date' => $p->date,
+                        'time' => $p->time,
+                        'activity' => $p->activity,
+                        'venue' => $p->venue,
+                    ])->toArray() ?? []);
+
+                if (empty($oldPlan)) {
+                    $oldPlan = [['date'=>'','time'=>'','activity'=>'','venue'=>'']];
+                }
+            @endphp
+
             @foreach($oldPlan as $i => $p)
-                <div class="grid grid-cols-1 gap-2 lg:grid-cols-5">
-                    <input type="date" name="plan[{{ $i }}][date]" value="{{ $p['date'] ?? '' }}"
-                           class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
-                    <input type="time" name="plan[{{ $i }}][time]" value="{{ $p['time'] ?? '' }}"
-                           class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
-                    <input type="text" name="plan[{{ $i }}][activity]" value="{{ $p['activity'] ?? '' }}"
-                           class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm lg:col-span-2"
+                <div class="grid grid-cols-1 gap-2 md:grid-cols-7 plan-row">
+
+                    <input type="date"
+                           name="plan_of_actions[{{ $i }}][date]"
+                           value="{{ isset($p['date']) ? \Carbon\Carbon::parse($p['date'])->format('Y-m-d') : '' }}"
+                           class="border border-slate-300 bg-white px-3 py-1 text-[12px]">
+
+                    <input type="time"
+                           name="plan_of_actions[{{ $i }}][time]"
+                           value="{{ isset($p['time']) ? \Illuminate\Support\Carbon::make($p['time'])->format('H:i') : '' }}"
+                           class="border border-slate-300 bg-white px-3 py-1 text-[12px]">
+
+                    <input type="text"
+                           name="plan_of_actions[{{ $i }}][activity]"
+                           value="{{ $p['activity'] ?? '' }}"
+                           class="border border-slate-300 bg-white px-3 py-1 text-[12px] md:col-span-2"
                            placeholder="Activity / Particulars">
-                    <input type="text" name="plan[{{ $i }}][venue]" value="{{ $p['venue'] ?? '' }}"
-                           class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+
+                    <input type="text"
+                           name="plan_of_actions[{{ $i }}][venue]"
+                           value="{{ $p['venue'] ?? '' }}"
+                           class="border border-slate-300 bg-white px-3 py-1 text-[12px] md:col-span-2"
                            placeholder="Venue">
+
                     <button type="button"
-                            class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
-                            onclick="removeRow(this)">
-                        Remove
+                            class="remove-btn text-red-600 text-[12px] px-2">
+                        ✕
                     </button>
                 </div>
             @endforeach
+
         </div>
     </div>
 

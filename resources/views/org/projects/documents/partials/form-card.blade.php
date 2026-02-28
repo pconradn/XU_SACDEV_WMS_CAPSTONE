@@ -96,7 +96,7 @@ if ($document) {
                 {{-- CONTINUE EDITING --}}
                 @elseif($document->status === 'draft')
 
-                    <a href="{{ route('org.projects.project-proposal.edit', [$project, $document]) }}"
+                    <a href="{{ route('org.projects.project-proposal.create', [$project, $document]) }}"
                     class="inline-flex items-center rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-600">
                         Continue
                     </a>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class ProjectDocument extends Model
 {
@@ -35,5 +36,57 @@ class ProjectDocument extends Model
     public function proposalData()
     {
         return $this->hasOne(ProjectProposalData::class, 'project_document_id');
+    }
+
+    // -----------------------------
+    // Approval Chain (per form)
+    // -----------------------------
+    public function approvalChain(): array
+    {
+        $code = $this->formType?->code;
+
+        return match ($code) {
+            'project_proposal' => [
+                'project_head',
+                'treasurer',
+                'president',
+                'moderator',
+                'sacdev_admin',
+            ],
+            default => [],
+        };
+    }
+
+    // -----------------------------
+    // Lock rule: once moderator signed
+    // -----------------------------
+    public function isLocked(): bool
+    {
+        return $this->signatures()
+            ->where('role', 'moderator')
+            ->where('status', 'signed')
+            ->exists();
+    }
+
+    // -----------------------------
+    // Next role to approve
+    // -----------------------------
+    public function nextPendingRole(): ?string
+    {
+        $chain = $this->approvalChain();
+        if (empty($chain)) return null;
+
+        $signedRoles = $this->signatures()
+            ->where('status', 'signed')
+            ->pluck('role')
+            ->all();
+
+        foreach ($chain as $role) {
+            if (!in_array($role, $signedRoles, true)) {
+                return $role;
+            }
+        }
+
+        return null; 
     }
 }

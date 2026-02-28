@@ -26,10 +26,9 @@ class ProjectProposalData extends Model
         'org_link',
         'org_cluster',
         'total_budget',
-        'source_of_funds',
-        'counterpart_amount',
         'audience_type',
         'audience_details',
+        'xu_subtypes',
         'expected_xu_participants',
         'expected_non_xu_participants',
         'has_guest_speakers',
@@ -69,5 +68,12 @@ class ProjectProposalData extends Model
     public function planOfActions()
     {
         return $this->hasMany(ProjectProposalPlanOfAction::class, 'project_document_id', 'project_document_id');
+    }
+
+
+
+    public function fundSources()
+    {
+        return $this->hasMany(ProjectProposalFundSource::class);
     }
 }

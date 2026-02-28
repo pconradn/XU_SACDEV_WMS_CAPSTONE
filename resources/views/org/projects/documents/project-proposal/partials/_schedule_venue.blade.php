@@ -17,7 +17,7 @@
                 </label>
                 <input type="date"
                        name="start_date"
-                       value="{{ old('start_date') }}"
+                       value="{{ old('start_date', $proposal->start_date ?? '') }}"
                        class="mt-1 w-full border border-slate-300 bg-white px-3 py-0.5 text-[12px]"
                        required>
             </div>
@@ -28,7 +28,7 @@
                 </label>
                 <input type="date"
                        name="end_date"
-                       value="{{ old('end_date') }}"
+                       value="{{ old('end_date', $proposal->end_date ?? '') }}"
                        class="mt-1 w-full border border-slate-300 bg-white px-3 py-0.5 text-[12px]"
                        required>
             </div>
@@ -39,7 +39,7 @@
                 </label>
                 <input type="time"
                        name="start_time"
-                       value="{{ old('start_time') }}"
+                       value="{{ old('start_time', $proposal->start_time ?? '') }}"
                        class="mt-1 w-full border border-slate-300 bg-white px-3 py-0.5 text-[12px]">
             </div>
 
@@ -69,13 +69,17 @@
                     Venue Type:
                 </label>
 
+                @php
+                    $venueType = old('venue_type', $proposal->venue_type ?? 'on_campus');
+                @endphp
+
                 <div class="mt-2 space-y-2 text-[10px] text-slate-700">
                     <label class="flex items-center gap-2">
                         <input type="radio"
                             name="venue_type"
                             value="on_campus"
                             class="border-slate-300"
-                            @checked(old('venue_type', 'on_campus') === 'on_campus')>
+                            @checked($venueType === 'on_campus')>
                         On Campus
                     </label>
 
@@ -84,7 +88,7 @@
                             name="venue_type"
                             value="off_campus"
                             class="border-slate-300"
-                            @checked(old('venue_type') === 'off_campus')>
+                            @checked($venueType === 'off_campus')>
                         Off Campus
                     </label>
                 </div>
@@ -97,7 +101,7 @@
                 </label>
                 <input type="text"
                     name="venue_name"
-                    value="{{ old('venue_name') }}"
+                    value="{{ old('venue_name', $proposal->venue_name ?? '') }}"
                     class="mt-1 w-full border border-slate-300 bg-white px-3 py-1 text-[10px]"
                     placeholder="e.g., XU Gym, AVR 1, Barangay Hall, etc."
                     required>

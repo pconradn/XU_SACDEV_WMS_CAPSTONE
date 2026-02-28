@@ -9,7 +9,9 @@
             </div>
         </div>
 
-        @php $eng = old('engagement_type'); @endphp
+        @php 
+            $eng = old('engagement_type', $proposal->engagement_type ?? null); 
+        @endphp
 
         <div class="mt-2 grid grid-cols-1 gap-4 md:grid-cols-12 items-start">
 
@@ -37,7 +39,7 @@
 
                 <input type="text"
                        name="main_organizer"
-                       value="{{ old('main_organizer') }}"
+                       value="{{ old('main_organizer', $proposal->main_organizer ?? '') }}"
                        class="mt-1 w-full border border-slate-300 bg-white px-3 py-1 text-[10px]"
                        placeholder="Name of main organizer">
             </div>
@@ -68,7 +70,10 @@
                 'other' => 'Other',
             ];
 
-            $nature = old('project_nature', []);
+            $nature = old('project_nature');
+            if (is_null($nature) && isset($proposal->project_nature)) {
+                $nature = explode(', ', $proposal->project_nature);
+            }
             if (!is_array($nature)) $nature = [];
         @endphp
 
@@ -88,7 +93,7 @@
 
                         <input type="text"
                             name="project_nature_other"
-                            value="{{ old('project_nature_other') }}"
+                            value="{{ old('project_nature_other', $proposal->project_nature_other ?? '') }}"
                             class="border border-slate-300 bg-white px-2 py-1 text-[10px] w-32"
                             placeholder="Specify">
                     </div>
@@ -141,7 +146,10 @@
                         'Partnerships for the Goals',
                     ];
 
-                    $sdg = old('sdg', []);
+                    $sdg = old('sdg');
+                    if (is_null($sdg) && isset($proposal->sdg)) {
+                        $sdg = explode(', ', $proposal->sdg);
+                    }
                     if (!is_array($sdg)) $sdg = [];
                 @endphp
 
@@ -167,7 +175,10 @@
                 </div>
 
                 @php
-                    $af = old('area_focus', []);
+                    $af = old('area_focus');
+                    if (is_null($af) && isset($proposal->area_focus)) {
+                        $af = explode(', ', $proposal->area_focus);
+                    }
                     if (!is_array($af)) $af = [];
                 @endphp
 
@@ -206,6 +217,7 @@
     </div>
 
 </div>
+
 <!-- Toggle Script -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {

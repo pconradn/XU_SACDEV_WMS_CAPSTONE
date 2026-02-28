@@ -4,25 +4,139 @@ namespace App\Http\Controllers\Org;
 
 use App\Http\Controllers\Controller;
 use App\Models\FormType;
+use App\Models\OrgMembership;
 use App\Models\Project;
+use App\Models\ProjectAssignment;
 use App\Models\ProjectDocument;
+use App\Models\ProjectDocumentSignature;
+use App\Models\ProjectProposalData;
+use App\Models\ProjectProposalGuest;
+use App\Models\ProjectProposalObjective;
+use App\Models\ProjectProposalPartner;
+use App\Models\ProjectProposalPlanOfAction;
+use App\Models\ProjectProposalRole;
+use App\Models\ProjectProposalSuccessIndicator;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ProjectProposalController extends Controller
 {
+
+
     public function create(Request $request, Project $project)
+    {
+        $formType = FormType::where('code', 'project_proposal')->firstOrFail();
+
+        $document = ProjectDocument::with([
+                'proposalData.planOfActions',
+                'proposalData.objectives',
+                'proposalData.indicators',
+                'proposalData.partners',
+                'proposalData.roles',
+                'proposalData.guests',
+                'proposalData.fundSources',
+                'signatures'
+            ])
+            ->where('project_id', $project->id)
+            ->where('form_type_id', $formType->id)
+            ->first();
+
+        $proposal = $document?->proposalData;
+
+        return view('org.projects.documents.project-proposal.create', [
+            'project'   => $project,
+            'document'  => $document,
+            'proposal'  => $proposal,
+        ]);
+    }
+
+    public function submit(Project $project)
     {
         $formType = FormType::where('code', 'project_proposal')->firstOrFail();
 
         $document = ProjectDocument::where('project_id', $project->id)
             ->where('form_type_id', $formType->id)
-            ->first();
+            ->firstOrFail();
 
-        return view('org.projects.documents.project-proposal.create', [
-            'project' => $project,
-            'document' => $document,
-        ]);
+        if ($document->isLocked()) {
+            abort(403, 'This proposal is already finalized.');
+        }
+
+        DB::transaction(function () use ($project, $document) {
+
+            $document->update([
+                'status' => 'submitted',
+                'submitted_at' => now(),
+            ]);
+
+           
+            $document->signatures()->delete();
+
+            // 🔹 1. Project Head (auto signed)
+            $projectHead = ProjectAssignment::where('project_id', $project->id)
+                ->where('assignment_role', 'project_head')
+                ->firstOrFail();
+
+            ProjectDocumentSignature::create([
+                'project_document_id' => $document->id,
+                'user_id' => $projectHead->user_id,
+                'role' => 'project_head',
+                'status' => 'signed',
+                'signed_at' => now(),
+            ]);
+
+            // 🔹 2. Treasurer
+            $treasurer = OrgMembership::where('organization_id', $project->organization_id)
+                ->where('role', 'treasurer')
+                ->whereNull('archived_at')
+                ->firstOrFail();
+
+            ProjectDocumentSignature::create([
+                'project_document_id' => $document->id,
+                'user_id' => $treasurer->user_id,
+                'role' => 'treasurer',
+                'status' => 'pending',
+            ]);
+
+            // 🔹 3. President
+            $president = OrgMembership::where('organization_id', $project->organization_id)
+                ->where('role', 'president')
+                ->whereNull('archived_at')
+                ->firstOrFail();
+
+            ProjectDocumentSignature::create([
+                'project_document_id' => $document->id,
+                'user_id' => $president->user_id,
+                'role' => 'president',
+                'status' => 'pending',
+            ]);
+
+            // 🔹 4. Moderator
+            $moderator = OrgMembership::where('organization_id', $project->organization_id)
+                ->where('role', 'moderator')
+                ->whereNull('archived_at')
+                ->firstOrFail();
+
+            ProjectDocumentSignature::create([
+                'project_document_id' => $document->id,
+                'user_id' => $moderator->user_id,
+                'role' => 'moderator',
+                'status' => 'pending',
+            ]);
+
+            // 🔹 5. SACDEV Admin
+            $admin = User::where('system_role', 'sacdev_admin')->firstOrFail();
+
+            ProjectDocumentSignature::create([
+                'project_document_id' => $document->id,
+                'user_id' => $admin->id,
+                'role' => 'sacdev_admin',
+                'status' => 'pending',
+            ]);
+        });
+
+        return back()->with('success', 'Project Proposal submitted successfully.');
     }
 
 
@@ -32,25 +146,67 @@ class ProjectProposalController extends Controller
             ->where('code', 'project_proposal')
             ->firstOrFail();
 
-        // -------------------------
-        // Validation
-        // -------------------------
-        $data = $request->validate([
-            // schedule + venue
+        $data = $this->validateRequest($request);
+
+        [$data, $clean] = $this->normalizeData($data);
+
+        DB::transaction(function () use ($project, $formType, $data, $clean) {
+
+            $document = $this->saveDocument($project, $formType);
+
+           
+            if ($document->isLocked()) {
+                abort(403, 'This proposal is already approved by the moderator and is locked.');
+            }
+
+            $proposal = $this->saveMainProposal($document->id, $data);
+
+            $this->saveFundSources($proposal, $data['fund_sources'] ?? []);
+
+            $this->saveMultiEntries($document->id, $clean, $data);
+
+            
+            $this->resetApprovalsAfterEdit($document);
+        });
+
+        return redirect()
+            ->route('org.projects.documents.hub', $project)
+            ->with('success', 'Project Proposal saved as draft.');
+    }
+
+    private function resetApprovalsAfterEdit(ProjectDocument $document): void
+    {
+       
+        if ($document->status === 'draft') {
+            return;
+        }
+
+       
+        $document->signatures()
+            ->whereIn('role', [
+                'treasurer',
+                'president',
+                'moderator',
+                'sacdev_admin',
+            ])
+            ->delete();
+    }
+
+
+    private function validateRequest(Request $request): array
+    {
+        return $request->validate([
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
-            'start_time' => ['nullable', 'date_format:H:i'],
+            'start_time' => ['nullable', 'date_format:H:i:s'],
             'venue_type' => ['required', 'in:on_campus,off_campus'],
             'venue_name' => ['required', 'string', 'max:255'],
 
-            // engagement
             'engagement_type' => ['required', 'in:organizer,partner,participant'],
             'main_organizer' => ['nullable', 'string', 'max:255'],
 
-            // multiple selections (checkbox arrays)
             'project_nature' => ['nullable', 'array'],
             'project_nature.*' => ['string', 'max:100'],
-            'project_nature_other' => ['nullable', 'string', 'max:255'],
 
             'sdg' => ['nullable', 'array'],
             'sdg.*' => ['string', 'max:255'],
@@ -58,22 +214,23 @@ class ProjectProposalController extends Controller
             'area_focus' => ['nullable', 'array'],
             'area_focus.*' => ['string', 'max:100'],
 
-            // description + links
             'description' => ['required', 'string'],
             'org_link' => ['required', 'string'],
             'org_cluster' => ['nullable', 'string', 'max:255'],
 
-            // budget + audience (adjust if your blade names differ)
             'total_budget' => ['nullable', 'numeric', 'min:0'],
-            'source_of_funds' => ['required', 'string', 'max:255'],
-            'counterpart_amount' => ['nullable', 'numeric', 'min:0'],
-            'audience_type' => ['required', 'string', 'max:255'],
-            'audience_details' => ['nullable', 'string', 'max:255'],
-            'expected_xu_participants' => ['nullable', 'integer', 'min:0'],
-            'expected_non_xu_participants' => ['nullable', 'integer', 'min:0'],
+            'fund_sources' => ['nullable', 'array'],
+            'fund_sources.*' => ['nullable', 'numeric', 'min:0'],
+
+            'audience_type' => ['required', 'string'],
+            'xu_subtypes' => ['nullable', 'array'],
+            'xu_subtypes.*' => ['string'],
+            'audience_details' => ['nullable', 'string'],
+
+            'expected_xu_participants' => ['nullable', 'integer'],
+            'expected_non_xu_participants' => ['nullable', 'integer'],
             'has_guest_speakers' => ['nullable', 'boolean'],
 
-            // multi-entry sections (arrays)
             'objectives' => ['nullable', 'array'],
             'objectives.*' => ['nullable', 'string'],
 
@@ -81,243 +238,287 @@ class ProjectProposalController extends Controller
             'success_indicators.*' => ['nullable', 'string'],
 
             'partners' => ['nullable', 'array'],
-            'partners.*.name' => ['nullable', 'string', 'max:255'],
-            'partners.*.type' => ['nullable', 'string', 'max:255'],
+            'partners.*' => ['nullable', 'string'],
+            'roles.*' => ['nullable', 'string'],
 
             'guests' => ['nullable', 'array'],
-            'guests.*.full_name' => ['nullable', 'string', 'max:255'],
-            'guests.*.affiliation' => ['nullable', 'string', 'max:255'],
-            'guests.*.designation' => ['nullable', 'string', 'max:255'],
+            'guests.*.full_name' => ['nullable', 'string'],
+            'guests.*.affiliation' => ['nullable', 'string'],
+            'guests.*.designation' => ['nullable', 'string'],
 
             'plan_of_actions' => ['nullable', 'array'],
             'plan_of_actions.*.date' => ['nullable', 'date'],
-            'plan_of_actions.*.time' => ['nullable', 'date_format:H:i'],
-            'plan_of_actions.*.activity' => ['nullable', 'string', 'max:255'],
-            'plan_of_actions.*.venue' => ['nullable', 'string', 'max:255'],
-
+            'plan_of_actions.*.time' => ['nullable'],
+            'plan_of_actions.*.activity' => ['nullable', 'string'],
+            'plan_of_actions.*.venue' => ['nullable', 'string'],
             'roles' => ['nullable', 'array'],
-            'roles.*.role_name' => ['nullable', 'string', 'max:255'],
-            'roles.*.description' => ['nullable', 'string'],
         ]);
+    }
+    
+    public function approve(ProjectDocument $document)
+    {
+        $user = auth()->user();
 
-        // -------------------------
-        // Small rules
-        // -------------------------
-        if (($data['engagement_type'] ?? null) !== 'participant') {
-            $data['main_organizer'] = null;
+        $nextRole = $document->nextPendingRole();
+
+        $signature = $document->signatures()
+            ->where('user_id', $user->id)
+            ->where('role', $nextRole)
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        DB::transaction(function () use ($signature, $document, $nextRole) {
+
+            $signature->update([
+                'status' => 'signed',
+                'signed_at' => now(),
+            ]);
+
+            
+            if ($document->nextPendingRole() === null) {
+                $document->update([
+                    'status' => 'approved_by_sacdev',
+                    'reviewed_at' => now(),
+                    'reviewed_by_user_id' => auth()->id(),
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Document approved.');
+    }
+
+    private function saveDocument(Project $project, $formType)
+    {
+        return ProjectDocument::updateOrCreate(
+            [
+                'project_id' => $project->id,
+                'form_type_id' => $formType->id,
+            ],
+            [
+                'created_by_user_id' => auth()->id(),
+                'status' => 'draft',
+            ]
+        );
+    }
+
+
+    private function saveMainProposal(int $documentId, array $data)
+    {
+        return ProjectProposalData::updateOrCreate(
+            ['project_document_id' => $documentId],
+            [
+                'start_date' => $data['start_date'],
+                'end_date' => $data['end_date'],
+                'start_time' => $data['start_time'] ?? null,
+                'venue_type' => $data['venue_type'],
+                'venue_name' => $data['venue_name'],
+                'engagement_type' => $data['engagement_type'],
+                'main_organizer' => $data['main_organizer'] ?? null,
+                'project_nature' => implode(', ', $data['project_nature'] ?? []),
+                'sdg' => implode(', ', $data['sdg'] ?? []),
+                'area_focus' => implode(', ', $data['area_focus'] ?? []),
+                'description' => $data['description'],
+                'org_link' => $data['org_link'],
+
+                'xu_subtypes' => isset($data['xu_subtypes'])
+                    ? implode(', ', $data['xu_subtypes'])
+                    : null,
+
+
+                'org_cluster' => $data['org_cluster'] ?? null,
+                'total_budget' => $data['total_budget'] ?? null,
+                'audience_type' => $data['audience_type'],
+                'audience_details' => $data['audience_details'] ?? null,
+                'expected_xu_participants' => $data['expected_xu_participants'] ?? null,
+                'expected_non_xu_participants' => $data['expected_non_xu_participants'] ?? null,
+                'has_guest_speakers' => (bool) ($data['has_guest_speakers'] ?? false),
+            ]
+        );
+    }
+
+    private function saveFundSources(ProjectProposalData $proposal, array $fundSources)
+    {
+        $proposal->fundSources()->delete();
+
+        foreach ($fundSources as $source => $amount) {
+
+            if ($amount === null || $amount === '') {
+                continue;
+            }
+
+            $proposal->fundSources()->create([
+                'source_name' => $source,
+                'amount' => $amount,
+            ]);
+        }
+    }
+
+
+    private function saveMultiEntries(int $documentId, array $clean, array $data): void
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | OBJECTIVES
+        |--------------------------------------------------------------------------
+        */
+        ProjectProposalObjective::where('project_document_id', $documentId)->delete();
+
+        if (!empty($clean['objectives'])) {
+            ProjectProposalObjective::insert(
+                array_map(fn($txt) => [
+                    'project_document_id' => $documentId,
+                    'objective' => trim($txt),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ], $clean['objectives'])
+            );
         }
 
-        $data['has_guest_speakers'] = (bool) ($data['has_guest_speakers'] ?? false);
+        /*
+        |--------------------------------------------------------------------------
+        | SUCCESS INDICATORS
+        |--------------------------------------------------------------------------
+        */
+        ProjectProposalSuccessIndicator::where('project_document_id', $documentId)->delete();
 
-        // Clean array inputs: trim + remove empties
+        if (!empty($clean['indicators'])) {
+            ProjectProposalSuccessIndicator::insert(
+                array_map(fn($txt) => [
+                    'project_document_id' => $documentId,
+                    'indicator' => trim($txt),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ], $clean['indicators'])
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | PARTNERS (simple string array)
+        |--------------------------------------------------------------------------
+        */
+        ProjectProposalPartner::where('project_document_id', $documentId)->delete();
+
+        if (!empty($clean['partners'])) {
+            ProjectProposalPartner::insert(
+                array_map(fn($name) => [
+                    'project_document_id' => $documentId,
+                    'name' => trim($name),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ], $clean['partners'])
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | GUESTS (structured array)
+        |--------------------------------------------------------------------------
+        */
+        ProjectProposalGuest::where('project_document_id', $documentId)->delete();
+
+        if (!empty($clean['guests'])) {
+            ProjectProposalGuest::insert(
+                array_map(fn($g) => [
+                    'project_document_id' => $documentId,
+                    'full_name' => trim((string)($g['full_name'] ?? '')),
+                    'affiliation' => !empty($g['affiliation']) ? trim($g['affiliation']) : null,
+                    'designation' => !empty($g['designation']) ? trim($g['designation']) : null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ], $clean['guests'])
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | PLAN OF ACTION
+        |--------------------------------------------------------------------------
+        */
+        ProjectProposalPlanOfAction::where('project_document_id', $documentId)->delete();
+
+        if (!empty($clean['plan'])) {
+            ProjectProposalPlanOfAction::insert(
+                array_map(fn($row) => [
+                    'project_document_id' => $documentId,
+                    'date' => !empty($row['date']) ? $row['date'] : $data['start_date'],
+                    'time' => !empty($row['time']) ? substr($row['time'], 0, 5) : null,
+                    'activity' => trim((string)($row['activity'] ?? '')),
+                    'venue' => !empty($row['venue']) ? trim($row['venue']) : null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ], $clean['plan'])
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | ROLES (simple string array)
+        |--------------------------------------------------------------------------
+        */
+        ProjectProposalRole::where('project_document_id', $documentId)->delete();
+
+        if (!empty($clean['roles'])) {
+            ProjectProposalRole::insert(
+                array_map(fn($role) => [
+                    'project_document_id' => $documentId,
+                    'role_name' => trim($role),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ], $clean['roles'])
+            );
+        }
+    }
+
+
+    private function normalizeData(array $data): array
+    {
         $cleanStrings = function (?array $arr): array {
             $arr = is_array($arr) ? $arr : [];
             $arr = array_map(fn($v) => is_string($v) ? trim($v) : $v, $arr);
             return array_values(array_filter($arr, fn($v) => is_string($v) ? $v !== '' : !empty($v)));
         };
 
-        $objectives = $cleanStrings($data['objectives'] ?? []);
-        $indicators = $cleanStrings($data['success_indicators'] ?? []);
+        $clean = [];
 
-        $projectNature = $cleanStrings($data['project_nature'] ?? []);
-        $sdg = $cleanStrings($data['sdg'] ?? []);
-        $areaFocus = $cleanStrings($data['area_focus'] ?? []);
+        /*
+        |--------------------------------------------------------------------------
+        | SIMPLE STRING ARRAYS
+        |--------------------------------------------------------------------------
+        */
+        $clean['objectives'] = $cleanStrings($data['objectives'] ?? []);
+        $clean['indicators'] = $cleanStrings($data['success_indicators'] ?? []);
+        $clean['partners'] = $cleanStrings($data['partners'] ?? []);
+        $clean['roles'] = $cleanStrings($data['roles'] ?? []);
 
-        $partners = array_values(array_filter($data['partners'] ?? [], function ($p) {
-            return isset($p['name']) && trim((string)$p['name']) !== '';
-        }));
-
-        $guests = array_values(array_filter($data['guests'] ?? [], function ($g) {
-            return isset($g['full_name']) && trim((string)$g['full_name']) !== '';
-        }));
-
-        $plan = array_values(array_filter($data['plan_of_actions'] ?? [], function ($row) {
-            return isset($row['activity']) && trim((string)$row['activity']) !== '';
-        }));
-
-        $roles = array_values(array_filter($data['roles'] ?? [], function ($r) {
-            return isset($r['role_name']) && trim((string)$r['role_name']) !== '';
-        }));
-
-        DB::transaction(function () use (
-            $project,
-            $formType,
-            $data,
-            $projectNature,
-            $sdg,
-            $areaFocus,
-            $objectives,
-            $indicators,
-            $partners,
-            $guests,
-            $plan,
-            $roles
-        ) {
-            // Document row
-            $document = ProjectDocument::query()->updateOrCreate(
-                [
-                    'project_id' => $project->id,
-                    'form_type_id' => $formType->id,
-                ],
-                [
-                    'created_by_user_id' => auth()->id(),
-                    'status' => 'draft',
-                ]
-            );
-
-            // ---- IMPORTANT ----
-            // If your DB columns for project_nature/sdg/area_focus are NOT json yet,
-            // this fallback stores as a comma-separated string.
-            // Once you migrate them to JSON, you can store arrays directly.
-            $storeProjectNature = $projectNature;
-            $storeSdg = $sdg;
-            $storeAreaFocus = $areaFocus;
-
-            $asStringIfNeeded = function ($value) {
-                return is_array($value) ? implode(', ', $value) : $value;
-            };
-
-            // Main proposal data
-            \App\Models\ProjectProposalData::query()->updateOrCreate(
-                ['project_document_id' => $document->id],
-                [
-                    'start_date' => $data['start_date'],
-                    'end_date' => $data['end_date'],
-                    'start_time' => $data['start_time'] ?? null,
-                    'end_time' => null, // you removed end_time earlier
-
-                    'venue_type' => $data['venue_type'],
-                    'venue_name' => $data['venue_name'],
-
-                    'engagement_type' => $data['engagement_type'],
-                    'main_organizer' => $data['main_organizer'] ?? null,
-
-                    // If JSON columns exist: replace $asStringIfNeeded(...) with $storeProjectNature etc
-                    'project_nature' => $asStringIfNeeded($storeProjectNature),
-                    'project_nature_other' => $data['project_nature_other'] ?? null,
-
-                    'sdg' => $asStringIfNeeded($storeSdg),
-                    'area_focus' => $asStringIfNeeded($storeAreaFocus),
-
-                    'description' => $data['description'],
-                    'org_link' => $data['org_link'],
-                    'org_cluster' => $data['org_cluster'] ?? null,
-
-                    'total_budget' => $data['total_budget'] ?? null,
-                    'source_of_funds' => $data['source_of_funds'],
-                    'counterpart_amount' => $data['counterpart_amount'] ?? null,
-
-                    'audience_type' => $data['audience_type'],
-                    'audience_details' => $data['audience_details'] ?? null,
-
-                    'expected_xu_participants' => $data['expected_xu_participants'] ?? null,
-                    'expected_non_xu_participants' => $data['expected_non_xu_participants'] ?? null,
-
-                    'has_guest_speakers' => (bool) ($data['has_guest_speakers'] ?? false),
-                ]
-            );
-
-            // ---- Refresh multi rows (delete then insert) ----
-            \App\Models\ProjectProposalObjective::query()
-                ->where('project_document_id', $document->id)
-                ->delete();
-
-            if (!empty($objectives)) {
-                \App\Models\ProjectProposalObjective::query()->insert(
-                    array_map(fn($txt) => [
-                        'project_document_id' => $document->id,
-                        'objective' => $txt,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ], $objectives)
-                );
+        /*
+        |--------------------------------------------------------------------------
+        | GUESTS (structured)
+        |--------------------------------------------------------------------------
+        */
+        $clean['guests'] = array_values(array_filter(
+            $data['guests'] ?? [],
+            function ($g) {
+                return isset($g['full_name']) && trim((string)$g['full_name']) !== '';
             }
+        ));
 
-            \App\Models\ProjectProposalSuccessIndicator::query()
-                ->where('project_document_id', $document->id)
-                ->delete();
-
-            if (!empty($indicators)) {
-                \App\Models\ProjectProposalSuccessIndicator::query()->insert(
-                    array_map(fn($txt) => [
-                        'project_document_id' => $document->id,
-                        'indicator' => $txt,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ], $indicators)
-                );
+        /*
+        |--------------------------------------------------------------------------
+        | PLAN OF ACTION (structured)
+        |--------------------------------------------------------------------------
+        */
+        $clean['plan'] = array_values(array_filter(
+            $data['plan_of_actions'] ?? [],
+            function ($row) {
+                return isset($row['activity']) && trim((string)$row['activity']) !== '';
             }
+        ));
 
-            \App\Models\ProjectProposalPartner::query()
-                ->where('project_document_id', $document->id)
-                ->delete();
-
-            if (!empty($partners)) {
-                \App\Models\ProjectProposalPartner::query()->insert(
-                    array_map(fn($p) => [
-                        'project_document_id' => $document->id,
-                        'name' => trim((string)($p['name'] ?? '')),
-                        'type' => isset($p['type']) ? trim((string)$p['type']) : null,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ], $partners)
-                );
-            }
-
-            \App\Models\ProjectProposalGuest::query()
-                ->where('project_document_id', $document->id)
-                ->delete();
-
-            if (!empty($guests)) {
-                \App\Models\ProjectProposalGuest::query()->insert(
-                    array_map(fn($g) => [
-                        'project_document_id' => $document->id,
-                        'full_name' => trim((string)($g['full_name'] ?? '')),
-                        'affiliation' => isset($g['affiliation']) ? trim((string)$g['affiliation']) : null,
-                        'designation' => isset($g['designation']) ? trim((string)$g['designation']) : null,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ], $guests)
-                );
-            }
-
-            \App\Models\ProjectProposalPlanOfAction::query()
-                ->where('project_document_id', $document->id)
-                ->delete();
-
-            if (!empty($plan)) {
-                \App\Models\ProjectProposalPlanOfAction::query()->insert(
-                    array_map(fn($row) => [
-                        'project_document_id' => $document->id,
-                        'date' => $row['date'] ?? $data['start_date'],
-                        'time' => $row['time'] ?? null,
-                        'activity' => trim((string)($row['activity'] ?? '')),
-                        'venue' => isset($row['venue']) ? trim((string)$row['venue']) : null,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ], $plan)
-                );
-            }
-
-            \App\Models\ProjectProposalRole::query()
-                ->where('project_document_id', $document->id)
-                ->delete();
-
-            if (!empty($roles)) {
-                \App\Models\ProjectProposalRole::query()->insert(
-                    array_map(fn($r) => [
-                        'project_document_id' => $document->id,
-                        'role_name' => trim((string)($r['role_name'] ?? '')),
-                        'description' => isset($r['description']) ? trim((string)$r['description']) : null,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ], $roles)
-                );
-            }
-        });
-
-        return redirect()
-            ->route('org.projects.documents.hub', $project)
-            ->with('success', 'Project Proposal saved as draft.');
+        return [$data, $clean];
     }
+
+
+
+
 }
