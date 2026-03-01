@@ -5,8 +5,8 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use App\Models\OrgMembership;
-
 use App\Models\OrganizationSchoolYear;
+use App\Models\ProjectAssignment;
 
 class OrgRoleMiddleware
 {
@@ -20,7 +20,10 @@ class OrgRoleMiddleware
             abort(403, 'Missing organization or school year context.');
         }
 
-        $hasRole = OrgMembership::query()
+        $hasRole = false;
+
+   
+        $orgRoleMatch = OrgMembership::query()
             ->where('user_id', $userId)
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
@@ -28,12 +31,32 @@ class OrgRoleMiddleware
             ->whereIn('role', $roles)
             ->exists();
 
+        if ($orgRoleMatch) {
+            $hasRole = true;
+        }
+
+      
         if (!$hasRole && in_array('president', $roles, true)) {
             $hasRole = OrganizationSchoolYear::query()
                 ->where('organization_id', $orgId)
                 ->where('school_year_id', $syId)
                 ->where('president_user_id', $userId)
                 ->exists();
+        }
+
+   
+        if (!$hasRole && in_array('project_head', $roles, true)) {
+
+            $project = $request->route('project');
+
+            if ($project) {
+                $hasRole = ProjectAssignment::query()
+                    ->where('project_id', $project->id)
+                    ->where('user_id', $userId)
+                    ->where('assignment_role', 'project_head')
+                    ->whereNull('archived_at')
+                    ->exists();
+            }
         }
 
         if (!$hasRole) {

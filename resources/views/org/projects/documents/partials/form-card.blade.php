@@ -104,7 +104,7 @@ if ($document) {
                 {{-- VIEW ONLY --}}
                 @else
 
-                    <a href="{{ route('org.projects.project-proposal.show', [$project, $document]) }}"
+                    <a href="{{ route('org.projects.project-proposal.create', [$project, $document]) }}"
                     class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
                         View
                     </a>
@@ -117,7 +117,7 @@ if ($document) {
 
                 @if($document)
 
-                    <a href="{{ route('org.projects.project-proposal.show', [$project, $document]) }}"
+                    <a href="{{ route('org.projects.project-proposal.create', [$project, $document]) }}"
                     class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
                         View
                     </a>

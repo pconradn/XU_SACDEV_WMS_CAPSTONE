@@ -9,17 +9,25 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Project extends Model
 {
     protected $fillable = [
-        'organization_id','school_year_id','title',
-        'category','target_date','implementing_body','budget',
+        'organization_id',
+        'school_year_id',
+        'title',
+        'category',
+        'target_date',
+        'implementing_body',
+        'budget',
         'source_strategic_plan_project_id',
     ];
-
 
     protected $casts = [
         'completed_at' => 'datetime',
         'target_date' => 'date',
         'budget' => 'decimal:2',
     ];
+
+    // =========================
+    // RELATIONSHIPS
+    // =========================
 
     public function organization(): BelongsTo
     {
@@ -36,11 +44,31 @@ class Project extends Model
         return $this->hasMany(ProjectAssignment::class);
     }
 
-    public function strategicPlanProject()
+    public function getProposalStatusAttribute()
+    {
+        return $this->proposalDocument?->status ?? 'not_created';
+    }
+
+    public function strategicPlanProject(): BelongsTo
     {
         return $this->belongsTo(
             StrategicPlanProject::class,
             'source_strategic_plan_project_id'
         );
+    }
+
+    // all project documents
+    public function documents(): HasMany
+    {
+        return $this->hasMany(ProjectDocument::class);
+    }
+
+    // for project proposal document
+    public function proposalDocument()
+    {
+        return $this->hasOne(ProjectDocument::class)
+            ->whereHas('formType', function ($q) {
+                $q->where('code', 'project_proposal');
+            });
     }
 }

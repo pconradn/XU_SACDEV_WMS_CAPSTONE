@@ -44,10 +44,67 @@ class ProjectProposalController extends Controller
 
         $proposal = $document?->proposalData;
 
+        $user = auth()->user();
+
+        $orgId = session('active_org_id');
+        $syId  = session('encode_sy_id');
+
+        // 🔹 Determine org role
+        $orgRole = \App\Models\OrgMembership::query()
+            ->where('user_id', $user->id)
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->whereNull('archived_at')
+            ->value('role');
+
+        $isPresident  = $orgRole === 'president';
+        $isTreasurer  = $orgRole === 'treasurer';
+        $isModerator  = $orgRole === 'moderator';
+
+        $isProjectHead = \App\Models\ProjectAssignment::query()
+            ->where('project_id', $project->id)
+            ->where('user_id', $user->id)
+            ->where('assignment_role', 'project_head')
+            ->whereNull('archived_at')
+            ->exists();
+
+       
+        $currentSignature = $document?->signatures
+            ->where('user_id', $user->id)
+            ->first();
+
+        $isReadOnly = false;
+
+        if ($document) {
+
+          
+            if ($document->status === 'draft') {
+                if (!$isProjectHead) {
+                    $isReadOnly = true;
+                }
+            }
+
+  
+            if ($document->status === 'submitted') {
+                $isReadOnly = true;
+            }
+
+            if ($document->status === 'approved') {
+                $isReadOnly = true;
+            }
+        }
+        //dd($document->signatures);
+
         return view('org.projects.documents.project-proposal.create', [
-            'project'   => $project,
-            'document'  => $document,
-            'proposal'  => $proposal,
+            'project'          => $project,
+            'document'         => $document,
+            'proposal'         => $proposal,
+            'currentSignature' => $currentSignature,
+            'isReadOnly'       => $isReadOnly,
+            'isPresident'      => $isPresident,
+            'isTreasurer'      => $isTreasurer,
+            'isModerator'      => $isModerator,
+            'isProjectHead'    => $isProjectHead,
         ]);
     }
 
@@ -59,8 +116,8 @@ class ProjectProposalController extends Controller
             ->where('form_type_id', $formType->id)
             ->firstOrFail();
 
-        if ($document->isLocked()) {
-            abort(403, 'This proposal is already finalized.');
+        if ($document->status !== 'draft') {
+            return back()->with('error', 'This proposal is already submitted.');
         }
 
         DB::transaction(function () use ($project, $document) {
@@ -70,12 +127,15 @@ class ProjectProposalController extends Controller
                 'submitted_at' => now(),
             ]);
 
-           
             $document->signatures()->delete();
 
-            // 🔹 1. Project Head (auto signed)
+            // ==============================
+            // 🔹 PROJECT HEAD (AUTO SIGNED)
+            // ==============================
+
             $projectHead = ProjectAssignment::where('project_id', $project->id)
                 ->where('assignment_role', 'project_head')
+                ->whereNull('archived_at')
                 ->firstOrFail();
 
             ProjectDocumentSignature::create([
@@ -86,8 +146,12 @@ class ProjectProposalController extends Controller
                 'signed_at' => now(),
             ]);
 
-            // 🔹 2. Treasurer
+            // ==============================
+            // 🔹 TREASURER (FILTERED BY SY)
+            // ==============================
+
             $treasurer = OrgMembership::where('organization_id', $project->organization_id)
+                ->where('school_year_id', $project->school_year_id)
                 ->where('role', 'treasurer')
                 ->whereNull('archived_at')
                 ->firstOrFail();
@@ -99,8 +163,12 @@ class ProjectProposalController extends Controller
                 'status' => 'pending',
             ]);
 
-            // 🔹 3. President
+            // ==============================
+            // 🔹 PRESIDENT (FILTERED BY SY)
+            // ==============================
+
             $president = OrgMembership::where('organization_id', $project->organization_id)
+                ->where('school_year_id', $project->school_year_id)
                 ->where('role', 'president')
                 ->whereNull('archived_at')
                 ->firstOrFail();
@@ -112,8 +180,12 @@ class ProjectProposalController extends Controller
                 'status' => 'pending',
             ]);
 
-            // 🔹 4. Moderator
+            // ==============================
+            // 🔹 MODERATOR (FILTERED BY SY)
+            // ==============================
+
             $moderator = OrgMembership::where('organization_id', $project->organization_id)
+                ->where('school_year_id', $project->school_year_id)
                 ->where('role', 'moderator')
                 ->whereNull('archived_at')
                 ->firstOrFail();
@@ -125,7 +197,10 @@ class ProjectProposalController extends Controller
                 'status' => 'pending',
             ]);
 
-            // 🔹 5. SACDEV Admin
+            // ==============================
+            // 🔹 SACDEV ADMIN
+            // ==============================
+
             $admin = User::where('system_role', 'sacdev_admin')->firstOrFail();
 
             ProjectDocumentSignature::create([
@@ -146,6 +221,8 @@ class ProjectProposalController extends Controller
             ->where('code', 'project_proposal')
             ->firstOrFail();
 
+        //dd($project);
+
         $data = $this->validateRequest($request);
 
         [$data, $clean] = $this->normalizeData($data);
@@ -154,7 +231,6 @@ class ProjectProposalController extends Controller
 
             $document = $this->saveDocument($project, $formType);
 
-           
             if ($document->isLocked()) {
                 abort(403, 'This proposal is already approved by the moderator and is locked.');
             }
@@ -165,9 +241,15 @@ class ProjectProposalController extends Controller
 
             $this->saveMultiEntries($document->id, $clean, $data);
 
-            
             $this->resetApprovalsAfterEdit($document);
         });
+
+        // 🔥 THIS IS THE IMPORTANT PART
+        $action = $request->input('action');
+
+        if ($action === 'submit') {
+            return $this->submit($project);
+        }
 
         return redirect()
             ->route('org.projects.documents.hub', $project)
@@ -255,37 +337,7 @@ class ProjectProposalController extends Controller
         ]);
     }
     
-    public function approve(ProjectDocument $document)
-    {
-        $user = auth()->user();
 
-        $nextRole = $document->nextPendingRole();
-
-        $signature = $document->signatures()
-            ->where('user_id', $user->id)
-            ->where('role', $nextRole)
-            ->where('status', 'pending')
-            ->firstOrFail();
-
-        DB::transaction(function () use ($signature, $document, $nextRole) {
-
-            $signature->update([
-                'status' => 'signed',
-                'signed_at' => now(),
-            ]);
-
-            
-            if ($document->nextPendingRole() === null) {
-                $document->update([
-                    'status' => 'approved_by_sacdev',
-                    'reviewed_at' => now(),
-                    'reviewed_by_user_id' => auth()->id(),
-                ]);
-            }
-        });
-
-        return back()->with('success', 'Document approved.');
-    }
 
     private function saveDocument(Project $project, $formType)
     {
@@ -518,6 +570,109 @@ class ProjectProposalController extends Controller
         return [$data, $clean];
     }
 
+    public function show(Project $project)
+    {
+        $formType = FormType::where('code', 'project_proposal')->firstOrFail();
+
+        $document = ProjectDocument::where('project_id', $project->id)
+            ->where('form_type_id', $formType->id)
+            ->with([
+                'proposalData',
+                'signatures',
+                'proposalData.objectives',
+                'proposalData.indicators',
+                'proposalData.partners',
+                'proposalData.roles',
+                'proposalData.guests',
+                'proposalData.planOfActions',
+            ])
+            ->firstOrFail();
+
+        return view('org.projects.documents.project-proposal.show', [
+            'project' => $project,
+            'document' => $document,
+            'proposal' => $document->proposalData,
+        ]);
+    }
+
+
+    public function approve(Project $project)
+    {
+        $formType = FormType::where('code', 'project_proposal')->firstOrFail();
+
+        $document = ProjectDocument::where('project_id', $project->id)
+            ->where('form_type_id', $formType->id)
+            ->firstOrFail();
+
+        if ($document->status !== 'submitted') {
+            return back()->with('error', 'This proposal is not awaiting approval.');
+        }
+
+        $userId = auth()->id();
+
+        // STRICT ORDER: get first pending signature by id
+        $currentPending = ProjectDocumentSignature::query()
+            ->where('project_document_id', $document->id)
+            ->where('status', 'pending')
+            ->orderBy('id')
+            ->first();
+
+        if (!$currentPending || $currentPending->user_id !== $userId) {
+            return back()->with('error', 'It is not your turn to approve.');
+        }
+
+        DB::transaction(function () use ($document, $currentPending) {
+
+            $currentPending->update([
+                'status' => 'signed',
+                'signed_at' => now(),
+            ]);
+
+            $remaining = ProjectDocumentSignature::query()
+                ->where('project_document_id', $document->id)
+                ->where('status', 'pending')
+                ->exists();
+
+            if (!$remaining) {
+                $document->update([
+                    'status' => 'approved',
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Proposal approved successfully.');
+    }
+
+    public function return(Request $request, Project $project)
+    {
+        $request->validate([
+            'remarks' => ['required', 'string'],
+        ]);
+
+        $formType = FormType::where('code', 'project_proposal')->firstOrFail();
+
+        $document = ProjectDocument::with('signatures')
+            ->where('project_id', $project->id)
+            ->where('form_type_id', $formType->id)
+            ->firstOrFail();
+
+        if ($document->status !== 'submitted') {
+            return back()->with('error', 'This proposal cannot be returned.');
+        }
+
+        DB::transaction(function () use ($document, $request) {
+
+            $document->signatures()
+                ->where('role', '!=', 'project_head')
+                ->delete();
+
+            $document->update([
+                'status' => 'returned',
+            ]);
+        });
+
+        return back()->with('success', 'Proposal returned for revision.');
+    }
 
 
 

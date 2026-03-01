@@ -25,36 +25,36 @@ class ProjectController extends Controller
 
         $user = auth()->user();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Base query (org + school year)
-        |--------------------------------------------------------------------------
-        */
-
         $query = Project::query()
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
             ->orderBy('title');
 
-        $isPresident = \App\Models\OrgMembership::query()
+        $orgRole = \App\Models\OrgMembership::query()
             ->where('user_id', $user->id)
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
             ->whereNull('archived_at')
-            ->where('role', 'president')
-            ->exists();
+            ->value('role');
 
-        if (!$isPresident) {
+        $isPresident = ($orgRole === 'president');
+        $isTreasurer = ($orgRole === 'treasurer');
+        $isModerator = ($orgRole === 'moderator');
+
+        if (!$isPresident && !$isTreasurer && !$isModerator) {
 
             $query->whereHas('assignments', function ($q) use ($user) {
                 $q->where('user_id', $user->id)
                 ->where('assignment_role', 'project_head')
                 ->whereNull('archived_at');
             });
-
         }
 
-        $projects = $query->get();
+        $projects = $query
+            ->with([
+                'documents.signatures'
+            ])
+            ->get();
 
         return view('org.projects.index', compact('projects', 'syId'));
     }

@@ -146,7 +146,7 @@
 
 
         // =========================
-        // ORG / MODERATOR
+        // ORG 
         // =========================
         if (!$isAdmin) {
             $activeOrgId = (int) session('active_org_id');
@@ -161,6 +161,9 @@
                     ->where('school_year_id', $syId)
                     ->whereNull('archived_at')
                     ->value('role');
+
+                $isTreasurer = ($orgRole === 'treasurer');
+                $isModerator = ($orgRole === 'moderator');
 
                 $isPresident = ($orgRole === 'president');
 
@@ -249,6 +252,60 @@
                     }
                 }
 
+
+                // =========================
+                // TREASURER ACCESS
+                // =========================
+
+                if ($isTreasurer) {
+
+                    $treasurer = [];
+
+                    if (Route::has('org.projects.index')) {
+                        $treasurer[] = $item(
+                            'Projects',
+                            route('org.projects.index'),
+                            ['org.projects.*']
+                        );
+                    }
+
+                    if (!empty($treasurer)) {
+                        $groups[] = [
+                            'key' => 'org_treasurer',
+                            'title' => 'Treasurer',
+                            'links' => $treasurer,
+                            'icon' => 'clipboard'
+                        ];
+                    }
+                }
+
+
+                // =========================
+                // MODERATOR ACCESS (PROJECTS)
+                // =========================
+
+                if ($isModerator) {
+
+                    $modProjects = [];
+
+                    if (Route::has('org.projects.index')) {
+                        $modProjects[] = $item(
+                            'Projects',
+                            route('org.projects.index'),
+                            ['org.projects.*']
+                        );
+                    }
+
+                    if (!empty($modProjects)) {
+                        $groups[] = [
+                            'key' => 'org_mod_projects',
+                            'title' => 'Moderator Projects',
+                            'links' => $modProjects,
+                            'icon' => 'clipboard'
+                        ];
+                    }
+                }
+
                 if ($isModerator) {
                     $mod = [];
 
@@ -290,10 +347,10 @@
     };
 @endphp
 
-{{-- Dashboard (always) --}}
+
 @include('layouts.nav._menu', ['links' => $dashboardLinks])
 
-{{-- Context selector (org portal only, directly under dashboard) --}}
+
 @if (!empty($contextLinks))
     @include('layouts.nav._menu', ['links' => $contextLinks])
 @endif

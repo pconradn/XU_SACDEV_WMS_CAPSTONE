@@ -28,7 +28,7 @@ Route::get(
 
 /*
 |--------------------------------------------------------------------------
-| Project Proposal — PROJECT HEAD ONLY
+| Project Proposal 
 |--------------------------------------------------------------------------
 */
 Route::get(
@@ -36,7 +36,7 @@ Route::get(
     [ProjectProposalController::class, 'create']
 )->middleware([
     'project.access',
-    'project.role:project_head'
+    'org.role:project_head,treasurer,president,moderator'
 ])->name('org.projects.project-proposal.create');
 
 
@@ -47,3 +47,23 @@ Route::post(
     'project.access',
     'project.role:project_head'
 ])->name('org.projects.project-proposal.store');
+
+
+
+
+Route::post(
+    'projects/{project}/documents/project-proposal/approve',
+    [ProjectProposalController::class, 'approve']
+)->middleware([
+    'project.access',
+    'project.role:treasurer,president,moderator'
+])->name('org.projects.project-proposal.approve');
+
+
+Route::post(
+    'projects/{project}/documents/project-proposal/return',
+    [ProjectProposalController::class, 'return']
+)->middleware([
+    'project.access',
+    'project.role:treasurer,president,moderator'
+])->name('org.projects.project-proposal.return');
