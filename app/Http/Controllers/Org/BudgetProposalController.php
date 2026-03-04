@@ -13,6 +13,7 @@ use App\Models\Project;
 use App\Models\ProjectAssignment;
 use App\Models\ProjectDocument;
 use App\Models\ProjectDocumentSignature;
+use App\Models\SchoolYear;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +42,11 @@ class BudgetProposalController extends BaseProjectDocumentController
         $currentSignature = $this->getCurrentSignature($document, $user->id);
 
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
+
+        $document = ProjectDocument::with('signatures.user')
+            ->where('project_id', $project->id)
+            ->where('form_type_id', 2)
+            ->first();
 
         return view('org.projects.documents.budget-proposal.create', [
             'project'          => $project,
@@ -112,6 +118,13 @@ class BudgetProposalController extends BaseProjectDocumentController
 
         if ($document->status !== 'draft') {
             return back()->with('error', 'This budget proposal is already submitted.');
+        }
+
+        
+        $activeSy = SchoolYear::activeYear();
+
+        if (!$activeSy) {
+            return back()->with('error', 'No active school year is currently set.');
         }
 
         DB::transaction(function () use ($project, $document) {

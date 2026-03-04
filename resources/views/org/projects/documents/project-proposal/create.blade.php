@@ -108,6 +108,8 @@
 
         </form>
 
+        @include('org.projects.documents.project-proposal.partials._signatures')
+
         @include('org.projects.documents.project-proposal.partials._actions')
 
     </div>

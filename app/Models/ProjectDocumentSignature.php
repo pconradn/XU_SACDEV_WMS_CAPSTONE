@@ -15,6 +15,10 @@ class ProjectDocumentSignature extends Model
         'remarks',
     ];
 
+    protected $casts = [
+        'signed_at' => 'datetime',
+    ];
+
     public function document()
     {
         return $this->belongsTo(ProjectDocument::class, 'project_document_id');

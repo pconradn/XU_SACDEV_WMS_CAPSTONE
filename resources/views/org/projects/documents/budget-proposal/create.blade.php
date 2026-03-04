@@ -101,6 +101,7 @@
 @endif
 
 </form>
+@include('org.projects.documents.budget-proposal.partials._signatures')
 
 @include('org.projects.documents.budget-proposal.partials._actions')
 
