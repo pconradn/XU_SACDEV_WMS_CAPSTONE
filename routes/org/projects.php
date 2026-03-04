@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\Org\BudgetProposalController;
 use App\Http\Controllers\Org\ProjectController;
 use App\Http\Controllers\Org\ProjectDocumentHubController;
 use App\Http\Controllers\Org\ProjectProposalController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Documents\BaseProjectDocumentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -67,3 +69,14 @@ Route::post(
     'project.access',
     'project.role:treasurer,president,moderator'
 ])->name('org.projects.project-proposal.return');
+
+
+Route::get(
+    'projects/{project}/documents/budget-proposal/create',
+    [BudgetProposalController::class, 'create']
+)->name('org.projects.budget-proposal.create');
+
+Route::post(
+    'projects/{project}/documents/budget-proposal',
+    [BudgetProposalController::class, 'store']
+)->name('org.projects.budget-proposal.store');

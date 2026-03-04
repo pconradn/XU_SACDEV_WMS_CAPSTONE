@@ -25,9 +25,6 @@ class Project extends Model
         'budget' => 'decimal:2',
     ];
 
-    // =========================
-    // RELATIONSHIPS
-    // =========================
 
     public function organization(): BelongsTo
     {
@@ -57,13 +54,15 @@ class Project extends Model
         );
     }
 
-    // all project documents
+
+
+    
     public function documents(): HasMany
     {
         return $this->hasMany(ProjectDocument::class);
     }
 
-    // for project proposal document
+    
     public function proposalDocument()
     {
         return $this->hasOne(ProjectDocument::class)

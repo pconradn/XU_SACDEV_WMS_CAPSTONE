@@ -38,9 +38,12 @@ class ProjectDocument extends Model
         return $this->hasOne(ProjectProposalData::class, 'project_document_id');
     }
 
-    // -----------------------------
-    // Approval Chain (per form)
-    // -----------------------------
+    public function budgetProposal()
+    {
+        return $this->hasOne(BudgetProposalData::class);
+    }
+
+
     public function approvalChain(): array
     {
         $code = $this->formType?->code;
@@ -57,9 +60,7 @@ class ProjectDocument extends Model
         };
     }
 
-    // -----------------------------
-    // Lock rule: once moderator signed
-    // -----------------------------
+
     public function isLocked(): bool
     {
         return $this->signatures()
@@ -68,9 +69,6 @@ class ProjectDocument extends Model
             ->exists();
     }
 
-    // -----------------------------
-    // Next role to approve
-    // -----------------------------
     public function nextPendingRole(): ?string
     {
         $chain = $this->approvalChain();

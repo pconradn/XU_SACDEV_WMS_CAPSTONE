@@ -12,12 +12,6 @@ class ProjectProposalFormSeeder extends Seeder
     {
         $now = Carbon::now();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Insert Project Proposal Form Type
-        |--------------------------------------------------------------------------
-        */
-
         DB::table('form_types')->updateOrInsert(
             ['code' => 'PROJECT_PROPOSAL'],
             [
@@ -29,37 +23,16 @@ class ProjectProposalFormSeeder extends Seeder
             ]
         );
 
-        $formTypeId = DB::table('form_types')
-            ->where('code', 'PROJECT_PROPOSAL')
-            ->value('id');
+        DB::table('form_types')->updateOrInsert(
+            ['code' => 'BUDGET_PROPOSAL'],
+            [
+                'name' => 'Budget Proposal',
+                'phase' => 'pre_implementation',
+                'description' => 'Detailed financial breakdown of project expenses and funding sources.',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
 
-        if (!$formTypeId) {
-            throw new \RuntimeException('PROJECT_PROPOSAL form type not found.');
-        }
-
-
-        $roles = [
-            'project_head',
-            'finance_officer',
-            'treasurer',
-            'president',
-            'moderator',
-            'sacdev_admin',
-            'osa_admin',
-        ];
-
-        foreach ($roles as $role) {
-
-            DB::table('form_type_required_roles')->updateOrInsert(
-                [
-                    'form_type_id' => $formTypeId,
-                    'role' => $role,
-                ],
-                [
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]
-            );
-        }
     }
 }

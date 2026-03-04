@@ -11,9 +11,7 @@ use App\Models\ProjectDocumentRequirement;
 
 class ProjectDocumentHubController extends Controller
 {
-    /**
-     * Show Project Documents Hub
-     */
+
     public function show(Project $project)
     {
         $activeOrgId = (int) session('active_org_id');

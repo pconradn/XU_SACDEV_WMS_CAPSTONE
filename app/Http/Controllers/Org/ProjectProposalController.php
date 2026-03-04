@@ -21,28 +21,15 @@ use App\Models\SchoolYear;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Documents\BaseProjectDocumentController;
 
-class ProjectProposalController extends Controller
+class ProjectProposalController extends BaseProjectDocumentController
 {
 
 
     public function create(Request $request, Project $project)
     {
-        $formType = FormType::where('code', 'project_proposal')->firstOrFail();
-
-        $document = ProjectDocument::with([
-                'proposalData.planOfActions',
-                'proposalData.objectives',
-                'proposalData.indicators',
-                'proposalData.partners',
-                'proposalData.roles',
-                'proposalData.guests',
-                'proposalData.fundSources',
-                'signatures'
-            ])
-            ->where('project_id', $project->id)
-            ->where('form_type_id', $formType->id)
-            ->first();
+        $document = $this->getDocument($project, 'project_proposal');
 
         $proposal = $document?->proposalData;
 
@@ -51,51 +38,15 @@ class ProjectProposalController extends Controller
         $orgId = session('active_org_id');
         $syId  = session('encode_sy_id');
 
-        // 🔹 Determine org role
-        $orgRole = \App\Models\OrgMembership::query()
-            ->where('user_id', $user->id)
-            ->where('organization_id', $orgId)
-            ->where('school_year_id', $syId)
-            ->whereNull('archived_at')
-            ->value('role');
+        $orgRole = $this->getOrgRole($user->id, $orgId, $syId);
 
-        $isPresident  = $orgRole === 'president';
-        $isTreasurer  = $orgRole === 'treasurer';
-        $isModerator  = $orgRole === 'moderator';
+        $roles = $this->resolveRoleFlags($orgRole);
 
-        $isProjectHead = \App\Models\ProjectAssignment::query()
-            ->where('project_id', $project->id)
-            ->where('user_id', $user->id)
-            ->where('assignment_role', 'project_head')
-            ->whereNull('archived_at')
-            ->exists();
+        $isProjectHead = $this->isProjectHead($project, $user->id);
 
-       
-        $currentSignature = $document?->signatures
-            ->where('user_id', $user->id)
-            ->first();
+        $currentSignature = $this->getCurrentSignature($document, $user->id);
 
-        $isReadOnly = false;
-
-        if ($document) {
-
-          
-            if ($document->status === 'draft') {
-                if (!$isProjectHead) {
-                    $isReadOnly = true;
-                }
-            }
-
-  
-            if ($document->status === 'submitted') {
-                $isReadOnly = true;
-            }
-
-            if ($document->status === 'approved') {
-                $isReadOnly = true;
-            }
-        }
-        //dd($document->signatures);
+        $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
 
         return view('org.projects.documents.project-proposal.create', [
             'project'          => $project,
@@ -103,10 +54,8 @@ class ProjectProposalController extends Controller
             'proposal'         => $proposal,
             'currentSignature' => $currentSignature,
             'isReadOnly'       => $isReadOnly,
-            'isPresident'      => $isPresident,
-            'isTreasurer'      => $isTreasurer,
-            'isModerator'      => $isModerator,
             'isProjectHead'    => $isProjectHead,
+            ...$roles
         ]);
     }
 

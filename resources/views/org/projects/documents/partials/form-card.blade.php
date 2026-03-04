@@ -4,6 +4,13 @@ $formType = $form->formType;
 $document = $form->document;
 $required = $form->required;
 
+$formRoutes = [
+    'PROJECT_PROPOSAL' => 'org.projects.project-proposal.create',
+    'BUDGET_PROPOSAL'  => 'org.projects.budget-proposal.create',
+];
+
+$routeName = $formRoutes[$formType->code] ?? null;
+
 $statusText = 'Not created';
 $statusColor = 'bg-slate-400';
 
@@ -35,16 +42,12 @@ if ($document) {
 
     <div class="flex items-start justify-between gap-4">
 
-
-        {{-- Label --}}
         <div>
 
             <div class="text-base font-semibold text-slate-900">
                 {{ $formType->name }}
             </div>
 
-
-            {{-- Status --}}
             <div class="mt-2 flex items-center gap-2 text-sm text-slate-700">
 
                 <span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100">
@@ -58,7 +61,6 @@ if ($document) {
             </div>
 
 
-            {{-- Requirement --}}
             <div class="mt-1 text-xs">
 
                 @if($required)
@@ -80,31 +82,28 @@ if ($document) {
         </div>
 
 
-        
         <div>
 
             @if($isProjectHead)
 
-                {{-- CREATE --}}
                 @if(!$document)
 
-                    <a href="{{ route('org.projects.project-proposal.create', $project) }}"
+                    <a href="{{ route($routeName, $project) }}"
                     class="inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
                         Create
                     </a>
 
-                {{-- CONTINUE EDITING --}}
                 @elseif($document->status === 'draft')
 
-                    <a href="{{ route('org.projects.project-proposal.create', [$project, $document]) }}"
+                    <a href="{{ route($routeName, [$project, $document]) }}"
                     class="inline-flex items-center rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-600">
                         Continue
                     </a>
 
-                {{-- VIEW ONLY --}}
+            
                 @else
 
-                    <a href="{{ route('org.projects.project-proposal.create', [$project, $document]) }}"
+                    <a href="{{ route($routeName, [$project, $document]) }}"
                     class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
                         View
                     </a>
@@ -113,11 +112,9 @@ if ($document) {
 
             @else
 
-                {{-- NON PROJECT HEAD USERS --}}
-
                 @if($document)
 
-                    <a href="{{ route('org.projects.project-proposal.create', [$project, $document]) }}"
+                    <a href="{{ route($routeName, [$project, $document]) }}"
                     class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
                         View
                     </a>
