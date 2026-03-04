@@ -11,7 +11,6 @@ use App\Models\ProjectDocumentRequirement;
 
 class ProjectDocumentHubController extends Controller
 {
-
     public function show(Project $project)
     {
         $activeOrgId = (int) session('active_org_id');
@@ -26,22 +25,14 @@ class ProjectDocumentHubController extends Controller
 
         $user = auth()->user();
 
-
-
         $projectHeadAssignment = ProjectAssignment::with('user')
             ->where('project_id', $project->id)
             ->where('assignment_role', 'project_head')
             ->whereNull('archived_at')
             ->first();
 
-        //dd($projectHeadAssignment);
-
         $projectHead = $projectHeadAssignment?->user;
-
         $isProjectHead = $projectHead?->id === $user->id;
-
-
-
 
         $requirements = ProjectDocumentRequirement::with('formType')
             ->where('project_id', $project->id)
@@ -57,7 +48,6 @@ class ProjectDocumentHubController extends Controller
         $preImplementationForms = $formTypes
             ->where('phase', 'pre_implementation')
             ->map(function ($formType) use ($requirements, $documents) {
-
                 return (object)[
                     'formType' => $formType,
                     'required' => isset($requirements[$formType->id]),
@@ -68,7 +58,6 @@ class ProjectDocumentHubController extends Controller
         $postImplementationForms = $formTypes
             ->where('phase', 'post_implementation')
             ->map(function ($formType) use ($requirements, $documents) {
-
                 return (object)[
                     'formType' => $formType,
                     'required' => isset($requirements[$formType->id]),
@@ -76,9 +65,12 @@ class ProjectDocumentHubController extends Controller
                 ];
             });
 
+        $budgetFormType = $formTypes->firstWhere('code', 'BUDGET_PROPOSAL');
+        $budgetDocument = $budgetFormType
+            ? ($documents[$budgetFormType->id] ?? null)
+            : null;
 
         return view('org.projects.documents.hub', [
-
             'project' => $project,
 
             'projectHead' => $projectHead,
@@ -87,6 +79,7 @@ class ProjectDocumentHubController extends Controller
             'preForms' => $preImplementationForms,
             'postForms' => $postImplementationForms,
 
+            'budgetDocument' => $budgetDocument,
         ]);
     }
 }

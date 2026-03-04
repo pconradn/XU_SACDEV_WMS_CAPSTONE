@@ -30,4 +30,9 @@ class BudgetItem extends Model
         return $this->belongsTo(BudgetProposalData::class, 'budget_proposal_data_id');
     }
 
+    public function budgetProposalData()
+    {
+        return $this->belongsTo(\App\Models\BudgetProposalData::class, 'budget_proposal_data_id');
+    }
+
 }

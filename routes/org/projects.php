@@ -105,3 +105,24 @@ Route::post(
     'project.access',
     'project.role:treasurer,president,moderator'
 ])->name('org.projects.budget-proposal.return');
+
+
+/*
+|--------------------------------------------------------------------------
+| Disbursement Voucher Generator
+|--------------------------------------------------------------------------
+*/
+Route::get(
+    'projects/{project}/documents/disbursement-voucher',
+    [\App\Http\Controllers\Org\DisbursementVoucherController::class, 'create']
+)->middleware([
+    'project.access'
+])->name('org.projects.disbursement-voucher.create');
+
+
+Route::post(
+    'projects/{project}/documents/disbursement-voucher/generate',
+    [\App\Http\Controllers\Org\DisbursementVoucherController::class, 'generate']
+)->middleware([
+    'project.access'
+])->name('org.projects.disbursement-voucher.generate');

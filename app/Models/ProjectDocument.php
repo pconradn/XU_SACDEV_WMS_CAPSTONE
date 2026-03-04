@@ -87,4 +87,10 @@ class ProjectDocument extends Model
 
         return null; 
     }
+
+
+    public function budgetProposalData()
+    {
+        return $this->hasOne(\App\Models\BudgetProposalData::class);
+    }
 }
