@@ -33,7 +33,6 @@
         ->first();
 @endphp
 
-
 <div class="border border-slate-300 {{ $style }} px-4 py-3 text-sm mb-6">
 
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
@@ -73,11 +72,11 @@
         @endif
 
     </div>
+
 </div>
 
 
 @include('org.projects.documents.budget-proposal.partials._header')
-
 @include('org.projects.documents.budget-proposal.partials._flash')
 
 
@@ -86,7 +85,6 @@
       id="budgetForm">
 
 @csrf
-
 
 @if($isReadOnly)
 <fieldset disabled class="space-y-6">
@@ -102,10 +100,10 @@
 </fieldset>
 @endif
 
+</form>
 
 @include('org.projects.documents.budget-proposal.partials._actions')
 
-</form>
 
 </div>
 

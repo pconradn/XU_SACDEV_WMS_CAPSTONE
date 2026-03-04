@@ -74,9 +74,34 @@ Route::post(
 Route::get(
     'projects/{project}/documents/budget-proposal/create',
     [BudgetProposalController::class, 'create']
-)->name('org.projects.budget-proposal.create');
+)->middleware([
+    'project.access',
+    'org.role:project_head,treasurer,president,moderator'
+])->name('org.projects.budget-proposal.create');
+
 
 Route::post(
     'projects/{project}/documents/budget-proposal',
     [BudgetProposalController::class, 'store']
-)->name('org.projects.budget-proposal.store');
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.budget-proposal.store');
+
+
+Route::post(
+    'projects/{project}/documents/budget-proposal/approve',
+    [BudgetProposalController::class, 'approve']
+)->middleware([
+    'project.access',
+    'project.role:treasurer,president,moderator'
+])->name('org.projects.budget-proposal.approve');
+
+
+Route::post(
+    'projects/{project}/documents/budget-proposal/return',
+    [BudgetProposalController::class, 'return']
+)->middleware([
+    'project.access',
+    'project.role:treasurer,president,moderator'
+])->name('org.projects.budget-proposal.return');

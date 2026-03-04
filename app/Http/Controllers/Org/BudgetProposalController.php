@@ -12,6 +12,7 @@ use App\Models\OrgMembership;
 use App\Models\Project;
 use App\Models\ProjectAssignment;
 use App\Models\ProjectDocument;
+use App\Models\ProjectDocumentSignature;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -52,23 +53,31 @@ class BudgetProposalController extends BaseProjectDocumentController
         ]);
     }
 
-
     public function store(Request $request, Project $project)
     {
         $document = $this->getOrCreateDocument($project, 'budget_proposal');
 
         $action = $request->input('action', 'draft');
+        //dd($request);
 
         if ($action === 'submit') {
 
             $request->validate([
-                'counterpart_amount' => ['required','numeric','min:0'],
-                'counterpart_pax'    => ['required','numeric','min:0'],
+                'counterpart_amount_per_pax' => ['required','numeric','min:0'],
+                'counterpart_pax'            => ['required','numeric','min:0'],
+                'pta_amount'                 => ['nullable','numeric','min:0'],
+                'raised_funds'               => ['nullable','numeric','min:0'],
             ]);
 
         }
 
+
+        if ($document->isLocked()) {
+            abort(403, 'This document is already approved and cannot be edited.');
+        }
+
         DB::transaction(function () use ($request, $document) {
+
 
             $budget = $this->storeBudgetMeta($request, $document);
 
@@ -76,7 +85,13 @@ class BudgetProposalController extends BaseProjectDocumentController
 
             $this->recalculateBudgetTotals($budget);
 
+    
+
+            $this->resetApprovalsAfterEdit($document);
+
         });
+
+
 
         if ($action === 'submit') {
             return $this->submit($project);
@@ -87,27 +102,93 @@ class BudgetProposalController extends BaseProjectDocumentController
             ->with('success', 'Budget proposal saved as draft.');
     }
 
-
-
     public function submit(Project $project)
     {
-        $document = $this->getBudgetDocument($project);
+        $formType = FormType::where('code', 'budget_proposal')->firstOrFail();
+
+        $document = ProjectDocument::where('project_id', $project->id)
+            ->where('form_type_id', $formType->id)
+            ->firstOrFail();
 
         if ($document->status !== 'draft') {
-            return back()->with('error', 'This budget proposal has already been submitted.');
+            return back()->with('error', 'This budget proposal is already submitted.');
         }
 
         DB::transaction(function () use ($project, $document) {
 
-            $this->markSubmitted($document);
+            $document->update([
+                'status' => 'submitted',
+                'submitted_at' => now(),
+            ]);
 
-            $this->generateApprovalChain($project, $document);
+            $document->signatures()->delete();
 
+
+            $projectHead = ProjectAssignment::where('project_id', $project->id)
+                ->where('assignment_role', 'project_head')
+                ->whereNull('archived_at')
+                ->firstOrFail();
+
+            $this->createSignature(
+                $document->id,
+                $projectHead->user_id,
+                'project_head',
+                'signed'
+            );
+
+    
+
+            $treasurer = OrgMembership::where('organization_id', $project->organization_id)
+                ->where('school_year_id', $project->school_year_id)
+                ->where('role', 'treasurer')
+                ->whereNull('archived_at')
+                ->firstOrFail();
+
+            $this->createSignature(
+                $document->id,
+                $treasurer->user_id,
+                'treasurer'
+            );
+
+
+            $president = OrgMembership::where('organization_id', $project->organization_id)
+                ->where('school_year_id', $project->school_year_id)
+                ->where('role', 'president')
+                ->whereNull('archived_at')
+                ->firstOrFail();
+
+            $this->createSignature(
+                $document->id,
+                $president->user_id,
+                'president'
+            );
+
+
+            $moderator = OrgMembership::where('organization_id', $project->organization_id)
+                ->where('school_year_id', $project->school_year_id)
+                ->where('role', 'moderator')
+                ->whereNull('archived_at')
+                ->firstOrFail();
+
+            $this->createSignature(
+                $document->id,
+                $moderator->user_id,
+                'moderator'
+            );
+
+    
+
+            $admin = User::where('system_role', 'sacdev_admin')->firstOrFail();
+
+            $this->createSignature(
+                $document->id,
+                $admin->id,
+                'sacdev_admin'
+            );
         });
 
         return back()->with('success', 'Budget proposal submitted successfully.');
     }
-
 
     protected function getBudgetDocument(Project $project): ProjectDocument
     {
@@ -231,64 +312,52 @@ class BudgetProposalController extends BaseProjectDocumentController
     }
 
 
-    protected function generateApprovalChain(Project $project, ProjectDocument $document)
+    private function resetApprovalsAfterEdit(ProjectDocument $document): void
     {
-        $projectHead = ProjectAssignment::where('project_id', $project->id)
-            ->where('assignment_role', 'project_head')
-            ->whereNull('archived_at')
-            ->firstOrFail();
+        if ($document->status === 'draft') {
+            return;
+        }
 
-        $treasurer = OrgMembership::where('organization_id', $project->organization_id)
-            ->where('school_year_id', $project->school_year_id)
-            ->where('role', 'treasurer')
-            ->whereNull('archived_at')
-            ->firstOrFail();
+        $document->signatures()
+            ->whereIn('role', [
+                'treasurer',
+                'president',
+                'moderator',
+                'sacdev_admin',
+            ])
+            ->delete();
 
-        $president = OrgMembership::where('organization_id', $project->organization_id)
-            ->where('school_year_id', $project->school_year_id)
-            ->where('role', 'president')
-            ->whereNull('archived_at')
-            ->firstOrFail();
-
-        $moderator = OrgMembership::where('organization_id', $project->organization_id)
-            ->where('school_year_id', $project->school_year_id)
-            ->where('role', 'moderator')
-            ->whereNull('archived_at')
-            ->firstOrFail();
-
-        $admin = User::where('system_role', 'sacdev_admin')->firstOrFail();
-
-        $document->signatures()->create([
-            'user_id' => $projectHead->user_id,
-            'role' => 'project_head',
-            'status' => 'signed',
-            'signed_at' => now()
-        ]);
-
-        $document->signatures()->create([
-            'user_id' => $treasurer->user_id,
-            'role' => 'treasurer',
-            'status' => 'pending'
-        ]);
-
-        $document->signatures()->create([
-            'user_id' => $president->user_id,
-            'role' => 'president',
-            'status' => 'pending'
-        ]);
-
-        $document->signatures()->create([
-            'user_id' => $moderator->user_id,
-            'role' => 'moderator',
-            'status' => 'pending'
-        ]);
-
-        $document->signatures()->create([
-            'user_id' => $admin->id,
-            'role' => 'sacdev_admin',
-            'status' => 'pending'
+        $document->update([
+            'status' => 'draft',
+            'submitted_at' => null,
         ]);
     }
+
+
+    private function createSignature(
+        int $documentId,
+        int $userId,
+        string $role,
+        string $status = 'pending'
+    ): void {
+
+        ProjectDocumentSignature::create([
+            'project_document_id' => $documentId,
+            'user_id' => $userId,
+            'role' => $role,
+            'status' => $status,
+            'signed_at' => $status === 'signed' ? now() : null,
+        ]);
+
+    }
+
+
+
+
+
+
+
+
 
 }
 
