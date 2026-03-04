@@ -28,11 +28,7 @@ class ProjectDocumentHubController extends Controller
 
         $user = auth()->user();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Get project head assignment
-        |--------------------------------------------------------------------------
-        */
+
 
         $projectHeadAssignment = ProjectAssignment::with('user')
             ->where('project_id', $project->id)
@@ -47,11 +43,7 @@ class ProjectDocumentHubController extends Controller
         $isProjectHead = $projectHead?->id === $user->id;
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Existing logic
-        |--------------------------------------------------------------------------
-        */
+
 
         $requirements = ProjectDocumentRequirement::with('formType')
             ->where('project_id', $project->id)
