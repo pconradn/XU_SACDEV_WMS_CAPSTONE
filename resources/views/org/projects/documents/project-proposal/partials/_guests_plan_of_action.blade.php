@@ -151,7 +151,7 @@
 
                     <input type="time"
                            name="plan_of_actions[{{ $i }}][time]"
-                           value="{{ isset($p['time']) ? \Illuminate\Support\Carbon::make($p['time'])->format('H:i') : '' }}"
+                           value="{{ optional(\Illuminate\Support\Carbon::make($p['time'] ?? null))->format('H:i') }}"
                            class="border border-slate-300 bg-white px-3 py-1 text-[12px]">
 
                     <input type="text"

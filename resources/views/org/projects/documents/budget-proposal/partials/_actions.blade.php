@@ -2,7 +2,11 @@
 
 <div class="px-4 py-3 flex justify-end gap-3 flex-wrap">
 
-@if($isProjectHead && in_array($document->status, ['draft','returned']))
+@php
+$status = $document->status ?? 'draft';
+@endphp
+
+@if($isProjectHead && in_array($status, ['draft','returned']))
 
 <button
     type="submit"

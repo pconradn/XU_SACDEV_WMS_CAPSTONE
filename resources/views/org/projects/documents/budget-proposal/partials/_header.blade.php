@@ -46,10 +46,12 @@
                     Implementation Date
                 </div>
 
+                @php
+                $startDate = $project->proposalDocument?->proposalData?->start_date;
+                @endphp
+
                 <div class="mt-1 font-medium text-slate-900">
-                    {{ $project->proposalDocument->proposalData->start_date 
-                        ? \Carbon\Carbon::parse($project->proposalDocument->proposalData->start_date)->format('F d, Y') 
-                        : 'Not specified' }}
+                    {{ $startDate ? \Carbon\Carbon::parse($startDate)->format('F d, Y') : 'Not specified' }}
                 </div>
             </div>
 
