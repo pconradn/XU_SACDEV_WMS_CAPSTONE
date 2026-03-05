@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\Route;
 Route::resource('officers', OfficerEntryController::class)
     ->except(['show'])
     ->names('org.officers');
-
 Route::post(
     'officers/{officer}/resend-invite',
     [OfficerInviteController::class, 'resend']

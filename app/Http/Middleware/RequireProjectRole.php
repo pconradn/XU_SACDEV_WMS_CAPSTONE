@@ -57,4 +57,8 @@ class RequireProjectRole
 
         return $next($request);
     }
+
+
+    
+
 }

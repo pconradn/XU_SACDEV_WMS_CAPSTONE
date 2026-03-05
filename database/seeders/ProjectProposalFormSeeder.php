@@ -34,5 +34,15 @@ class ProjectProposalFormSeeder extends Seeder
             ]
         );
 
+        DB::table('form_types')->updateOrInsert(
+            ['code' => 'OFF_CAMPUS_APPLICATION'],
+            [
+                'name' => 'Off-Campus Activity Form',
+                'phase' => 'pre_implementation',
+                'description' => 'Required form for student organization activities conducted outside the university campus.',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
     }
 }

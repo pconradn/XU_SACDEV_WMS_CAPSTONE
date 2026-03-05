@@ -76,6 +76,7 @@ Route::middleware(['auth'])->group(function () {
 
 
 require __DIR__ . '/admin.php';
+
 require __DIR__ . '/org.php';
 
 require __DIR__ . '/auth.php';

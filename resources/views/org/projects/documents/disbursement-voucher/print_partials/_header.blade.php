@@ -2,7 +2,6 @@
 
     <tr>
 
-        <!-- BOX 1 : UNIVERSITY HEADER -->
         <td style="width:55%; vertical-align:top; border:0px solid #ccc; padding:12px; padding-top:25px;">
 
             <table style="width:100%; border-collapse:collapse;">
@@ -40,7 +39,6 @@
         </td>
 
 
-        <!-- BOX 2 : FORM HEADER -->
         <td style="width:35%; vertical-align:top; border:0px solid #ccc; padding:12px;">
 
             <table style="width:100%; border-collapse:collapse;">
@@ -101,7 +99,6 @@
 
 <tr>
 
-    <!-- BOX 3 : PLEASE PAY -->
     <td style="vertical-align:top; border:0px solid #ccc; padding-top:20px;">
 
         <table style="width:100%; border-collapse:collapse;">
@@ -153,7 +150,6 @@
     </td>
 
 
-    <!-- BOX 4 : SAP DOCUMENTS -->
     <td style="vertical-align:top; border:0px solid #ccc; padding:0px;">
 
         <table style="border:0px solid #ccc; width:100%; border-collapse:collapse; font-size:12px;">

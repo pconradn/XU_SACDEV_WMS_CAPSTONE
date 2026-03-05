@@ -93,4 +93,9 @@ class ProjectDocument extends Model
     {
         return $this->hasOne(\App\Models\BudgetProposalData::class);
     }
+
+    public function offCampusActivity()
+    {
+        return $this->hasOne(OffCampusActivityData::class);
+    }
 }

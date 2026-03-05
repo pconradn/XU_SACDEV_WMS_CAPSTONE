@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Org\BudgetProposalController;
+use App\Http\Controllers\Org\OffCampusApplicationController;
 use App\Http\Controllers\Org\ProjectController;
 use App\Http\Controllers\Org\ProjectDocumentHubController;
 use App\Http\Controllers\Org\ProjectProposalController;
@@ -30,7 +31,7 @@ Route::get(
 
 /*
 |--------------------------------------------------------------------------
-| Project Proposal 
+| Project Proposal
 |--------------------------------------------------------------------------
 */
 Route::get(
@@ -51,8 +52,6 @@ Route::post(
 ])->name('org.projects.project-proposal.store');
 
 
-
-
 Route::post(
     'projects/{project}/documents/project-proposal/approve',
     [ProjectProposalController::class, 'approve']
@@ -71,6 +70,11 @@ Route::post(
 ])->name('org.projects.project-proposal.return');
 
 
+/*
+|--------------------------------------------------------------------------
+| Budget Proposal
+|--------------------------------------------------------------------------
+*/
 Route::get(
     'projects/{project}/documents/budget-proposal/create',
     [BudgetProposalController::class, 'create']
@@ -105,6 +109,64 @@ Route::post(
     'project.access',
     'project.role:treasurer,president,moderator'
 ])->name('org.projects.budget-proposal.return');
+
+
+/*
+|--------------------------------------------------------------------------
+| Off-Campus Activity Form
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    'projects/{project}/documents/off-campus/guidelines',
+    [OffCampusApplicationController::class, 'guidelines']
+)->middleware([
+    'project.access'
+])->name('org.projects.off-campus.guidelines');
+
+
+Route::post(
+    'projects/{project}/documents/off-campus/acknowledge',
+    [OffCampusApplicationController::class, 'acknowledgeGuidelines']
+)->middleware([
+    'project.access'
+])->name('org.projects.off-campus.acknowledge');
+
+
+Route::get(
+    'projects/{project}/documents/off-campus/create',
+    [OffCampusApplicationController::class, 'create']
+)->middleware([
+    'project.access',
+    'org.role:project_head,president,moderator'
+])->name('org.projects.off-campus.create');
+
+
+Route::post(
+    'projects/{project}/documents/off-campus',
+    [OffCampusApplicationController::class, 'store']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.off-campus.store');
+
+
+Route::post(
+    'projects/{project}/documents/off-campus/approve',
+    [OffCampusApplicationController::class, 'approve']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.off-campus.approve');
+
+
+Route::post(
+    'projects/{project}/documents/off-campus/return',
+    [OffCampusApplicationController::class, 'return']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.off-campus.return');
 
 
 /*

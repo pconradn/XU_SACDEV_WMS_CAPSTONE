@@ -195,7 +195,8 @@ class ProjectProposalController extends BaseProjectDocumentController
             $this->resetApprovalsAfterEdit($document);
         });
 
-     
+        $this->ensureOffCampusDocument($project);
+
         $action = $request->input('action');
 
         if ($action === 'submit') {
@@ -206,6 +207,40 @@ class ProjectProposalController extends BaseProjectDocumentController
             ->route('org.projects.documents.hub', $project)
             ->with('success', 'Project Proposal saved as draft.');
     }
+
+    protected function ensureOffCampusDocument(Project $project): void
+    {
+        $proposal = $project->proposalDocument?->proposalData;
+
+        if (!$proposal) {
+            return;
+        }
+
+        $formType = FormType::where('code', 'OFF_CAMPUS_APPLICATION')->first();
+
+        if (!$formType) {
+            return;
+        }
+
+        $document = ProjectDocument::firstOrCreate(
+            [
+                'project_id' => $project->id,
+                'form_type_id' => $formType->id
+            ],
+            [
+                'status' => 'draft'
+            ]
+        );
+
+        if ($proposal->venue_type === 'off_campus') {
+            $document->update(['is_active' => true]);
+        } else {
+            $document->update(['is_active' => false]);
+        }
+    }
+
+
+
 
     private function resetApprovalsAfterEdit(ProjectDocument $document): void
     {

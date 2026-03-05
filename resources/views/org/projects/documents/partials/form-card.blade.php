@@ -86,22 +86,21 @@ if ($document) {
 
             @if($isProjectHead)
 
-                @if(!$document)
+                @if(!$document && $routeName)
 
                     <a href="{{ route($routeName, $project) }}"
                     class="inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
                         Create
                     </a>
 
-                @elseif($document->status === 'draft')
+                @elseif($document && $document->status === 'draft' && $routeName)
 
                     <a href="{{ route($routeName, [$project, $document]) }}"
                     class="inline-flex items-center rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-600">
                         Continue
                     </a>
 
-            
-                @else
+                @elseif($document && $routeName)
 
                     <a href="{{ route($routeName, [$project, $document]) }}"
                     class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
@@ -112,7 +111,7 @@ if ($document) {
 
             @else
 
-                @if($document)
+                @if($document && $routeName)
 
                     <a href="{{ route($routeName, [$project, $document]) }}"
                     class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
