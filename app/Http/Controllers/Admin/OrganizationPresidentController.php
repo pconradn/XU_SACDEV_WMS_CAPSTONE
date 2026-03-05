@@ -196,12 +196,7 @@ class OrganizationPresidentController extends Controller
                 );
 
             
-                AccountProvisioner::ensureBasicOrgAccess(
-                    $user->id,
-                    $orgId,
-                    $syId,
-                    $officerEntry->id
-                );
+
 
                 $actor = Auth::user();
                 $organization = Organization::find($orgId);

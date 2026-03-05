@@ -71,7 +71,6 @@ class OrgRoleAssignmentController extends Controller
                 $treasurerOfficer->save();
             }
 
-            AccountProvisioner::ensureBasicOrgAccess($treasurerUser->id, $orgId, $syId);
 
             $currentTreasurer = OrgMembership::query()
                 ->where('organization_id', $orgId)
@@ -113,7 +112,6 @@ class OrgRoleAssignmentController extends Controller
                 $moderatorOfficer->save();
             }
 
-            AccountProvisioner::ensureBasicOrgAccess($moderatorUser->id, $orgId, $syId);
 
             $currentModerator = OrgMembership::query()
                 ->where('organization_id', $orgId)

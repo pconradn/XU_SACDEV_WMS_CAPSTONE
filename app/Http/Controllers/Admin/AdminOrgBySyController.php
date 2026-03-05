@@ -19,7 +19,6 @@ class AdminOrgBySyController extends Controller
 
     private function activeSy(): ?SchoolYear
     {
-        // adjust if you use a different “active” mechanism
         return SchoolYear::query()->where('is_active', true)->first();
     }
 
@@ -33,7 +32,6 @@ class AdminOrgBySyController extends Controller
 
         $syId = (int) $request->query('sy_id', $this->selectedSyId($request));
 
-        // if none selected yet, default to active SY if available
         if ($syId <= 0 && $activeSy) {
             $syId = (int) $activeSy->id;
             $request->session()->put(self::SESSION_KEY, $syId);
@@ -47,7 +45,7 @@ class AdminOrgBySyController extends Controller
             ->when($q !== '', function ($qq) use ($q) {
                 $qq->whereHas('organization', function ($oq) use ($q) {
                     $oq->where('name', 'like', "%{$q}%")
-                       ->orWhere('acronym', 'like', "%{$q}%");
+                    ->orWhere('acronym', 'like', "%{$q}%");
                 });
             })
             ->orderByDesc('id');
@@ -87,7 +85,7 @@ class AdminOrgBySyController extends Controller
         $activeSy = $this->activeSy();
         $selectedSy = SchoolYear::find($syId);
 
-        // ensure org is registered in that SY
+ 
         $orgSy = OrganizationSchoolYear::query()
             ->with(['president'])
             ->where('organization_id', $organization->id)

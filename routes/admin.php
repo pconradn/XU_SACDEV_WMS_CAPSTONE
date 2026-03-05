@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminMajorOfficerController;
 use App\Http\Controllers\Admin\AdminOrgBySyController;
 use App\Http\Controllers\Admin\AdminOrgReviewController;
+use App\Http\Controllers\Admin\AdminProjectController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\OrgActivationController;
 use App\Http\Controllers\Admin\OrganizationController;
@@ -158,6 +159,12 @@ Route::prefix('admin')
             '/constitution/{submission}/approve',
             [OrgConstitutionSubmissionController::class, 'approve']
         )->name('admin.constitution.approve');
+
+
+        Route::get(
+            '/orgs/{organization}/sy/{sy}/projects',
+            [AdminProjectController::class, 'index']
+        )->name('admin.org.projects.index');
 
 
     });

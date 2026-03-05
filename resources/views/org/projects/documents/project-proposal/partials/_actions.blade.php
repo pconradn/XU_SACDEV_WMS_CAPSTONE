@@ -42,6 +42,7 @@ status: {{ $currentSignature->status }}
             @if(in_array($status, ['draft', 'returned']))
 
                 <button type="submit"
+                        form="proposalForm"
                         name="action"
                         value="draft"
                         class="border border-slate-500 px-4 py-2 text-[12px] text-slate-800 hover:bg-slate-100">
@@ -49,6 +50,7 @@ status: {{ $currentSignature->status }}
                 </button>
 
                 <button type="submit"
+                        form="proposalForm"
                         name="action"
                         value="submit"
                         class="bg-blue-900 px-4 py-2 text-[12px] text-white hover:bg-blue-800">
@@ -102,11 +104,12 @@ status: {{ $currentSignature->status }}
                 Cancel
             </button>
 
+
             <button type="submit"
-                    name="action"
-                    value="submit"
                     form="proposalForm"
-                    class="bg-amber-600 px-4 py-2 text-[12px] text-white hover:bg-amber-700">
+                    name="action"
+                    value="draft"
+                    class="border border-slate-500 px-4 py-2 text-[12px] text-slate-800 hover:bg-slate-100">
                 Yes, Resubmit
             </button>
 

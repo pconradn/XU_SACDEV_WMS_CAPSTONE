@@ -7,6 +7,7 @@ $required = $form->required;
 $formRoutes = [
     'PROJECT_PROPOSAL' => 'org.projects.project-proposal.create',
     'BUDGET_PROPOSAL'  => 'org.projects.budget-proposal.create',
+    'OFF_CAMPUS_APPLICATION' => 'org.projects.off-campus.guidelines',
 ];
 
 $routeName = $formRoutes[$formType->code] ?? null;
@@ -95,14 +96,14 @@ if ($document) {
 
                 @elseif($document && $document->status === 'draft' && $routeName)
 
-                    <a href="{{ route($routeName, [$project, $document]) }}"
+                    <a href="{{ route($routeName, $project) }}"
                     class="inline-flex items-center rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-600">
                         Continue
                     </a>
 
                 @elseif($document && $routeName)
 
-                    <a href="{{ route($routeName, [$project, $document]) }}"
+                    <a href="{{ route($routeName, $project) }}"
                     class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
                         View
                     </a>
@@ -113,7 +114,7 @@ if ($document) {
 
                 @if($document && $routeName)
 
-                    <a href="{{ route($routeName, [$project, $document]) }}"
+                    <a href="{{ route($routeName, $project) }}"
                     class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
                         View
                     </a>

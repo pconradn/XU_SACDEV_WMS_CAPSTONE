@@ -41,6 +41,8 @@ class ProjectController extends Controller
         $isTreasurer = ($orgRole === 'treasurer');
         $isModerator = ($orgRole === 'moderator');
 
+        //dd($orgRole);
+
         if (!$isPresident && !$isTreasurer && !$isModerator) {
 
             $query->whereHas('assignments', function ($q) use ($user) {

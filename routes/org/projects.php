@@ -152,21 +152,14 @@ Route::post(
 
 
 Route::post(
-    'projects/{project}/documents/off-campus/approve',
+    '/projects/{project}/documents/off-campus/approve',
     [OffCampusApplicationController::class, 'approve']
-)->middleware([
-    'project.access',
-    'project.role:president,moderator'
-])->name('org.projects.off-campus.approve');
-
+)->name('org.projects.off-campus.approve');
 
 Route::post(
-    'projects/{project}/documents/off-campus/return',
+    '/projects/{project}/documents/off-campus/return',
     [OffCampusApplicationController::class, 'return']
-)->middleware([
-    'project.access',
-    'project.role:president,moderator'
-])->name('org.projects.off-campus.return');
+)->name('org.projects.off-campus.return');
 
 
 /*

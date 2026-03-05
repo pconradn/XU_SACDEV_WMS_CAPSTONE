@@ -199,13 +199,7 @@ class AdminMajorOfficerController extends Controller
                 (int) $newEntry->id
             );
 
-            // (optional) ensure basic org access too
-            AccountProvisioner::ensureBasicOrgAccess(
-                (int) $newEntry->user_id,
-                (int) $organization->id,
-                (int) $syId,
-                (int) $newEntry->id
-            );
+
 
             // AUDIT LOG
             Audit::log(

@@ -1,4 +1,5 @@
 <x-app-layout>
+
     <x-slot name="header">
         <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
@@ -35,7 +36,9 @@
         @endif
 
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
                 <div>
                     <div class="text-xs text-slate-500">Acronym</div>
                     <div class="font-semibold text-slate-900">{{ $organization->acronym ?? '—' }}</div>
@@ -54,7 +57,9 @@
                         {{ $orgSy->president_confirmed_at ? $orgSy->president_confirmed_at->format('M d, Y') : 'No' }}
                     </div>
                 </div>
+
             </div>
+
         </div>
 
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -62,14 +67,14 @@
 
             <div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
 
-                {{-- Re-Registration Hub (needs selected SY in session used by your rereg hub) --}}
+       
                 <a href="{{ route('rereg.hub', $organization->id) }}"
                    class="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
                     <div class="font-semibold text-slate-900">Re-Registration Hub</div>
                     <div class="text-sm text-slate-600 mt-1">Review B1–B5 for this org + SY</div>
                 </a>
 
-                {{-- Operational Officers (placeholder route name) --}}
+                
                 <a href="#"
                    class="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
                     <div class="font-semibold text-slate-900">Officers (Operational)</div>
@@ -77,15 +82,15 @@
                     <div class="text-xs text-slate-500 mt-2">Wire route later</div>
                 </a>
 
-                {{-- Operational Projects (placeholder route name) --}}
-                <a href="#"
+               
+                <a href="{{ route('admin.org.projects.index', [$organization->id, $selectedSy->id]) }}"
                    class="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
                     <div class="font-semibold text-slate-900">Projects (Operational)</div>
                     <div class="text-sm text-slate-600 mt-1">View projects for this SY</div>
                     <div class="text-xs text-slate-500 mt-2">Wire route later</div>
                 </a>
 
-                {{-- Major Officer Roles (Active SY only) --}}
+               
                 @php
                     $canEditMajor = $activeSy && $selectedSy && (int)$activeSy->id === (int)$selectedSy->id;
                 @endphp
@@ -105,5 +110,8 @@
                 </div>
             @endif
         </div>
-    </div>
+    </div>   
+    
+    
+
 </x-app-layout>

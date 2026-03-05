@@ -195,7 +195,6 @@ class OrgReregAssignmentsController extends Controller
             }
 
        
-            AccountProvisioner::ensureBasicOrgAccess($user->id, $orgId, $targetSyId);
 
        
             OrgMembership::query()
@@ -288,7 +287,6 @@ class OrgReregAssignmentsController extends Controller
             [$user, $tempPassword] = AccountProvisioner::findOrCreateUser($data['full_name'], $data['email']);
 
          
-            AccountProvisioner::ensureBasicOrgAccess($user->id, $orgId, $targetSyId);
 
       
             OrgMembership::query()

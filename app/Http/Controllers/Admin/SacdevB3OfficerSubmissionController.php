@@ -365,12 +365,7 @@ class SacdevB3OfficerSubmissionController extends Controller
                     $membership->save();
 
 
-                    AccountProvisioner::ensureBasicOrgAccess(
-                        $user->id,
-                        $orgId,
-                        $syId,
-                        $entry->id
-                    );
+
 
 
                     Audit::log(

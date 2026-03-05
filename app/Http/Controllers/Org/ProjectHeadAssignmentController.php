@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\OfficerEntry;
 use App\Models\Project;
 use App\Models\ProjectAssignment;
+use App\Models\ProjectDocument;
+use App\Models\ProjectDocumentSignature;
+use App\Support\AccountProvisioner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Support\AccountProvisioner;
 
 class ProjectHeadAssignmentController extends Controller
 {
@@ -65,17 +67,30 @@ class ProjectHeadAssignmentController extends Controller
         ]);
 
         $officer = OfficerEntry::findOrFail($data['officer_id']);
-        abort_unless($officer->organization_id === $orgId && $officer->school_year_id === $syId, 403);
+
+        abort_unless(
+            $officer->organization_id === $orgId &&
+            $officer->school_year_id === $syId,
+            403
+        );
 
         DB::transaction(function () use ($project, $officer, $orgId, $syId) {
-            [$user, $tempPassword] = AccountProvisioner::findOrCreateUser($officer->full_name, $officer->email);
+
+            [$user, $tempPassword] =
+                AccountProvisioner::findOrCreateUser($officer->full_name, $officer->email);
 
             if ((int) $officer->user_id !== (int) $user->id) {
                 $officer->user_id = $user->id;
                 $officer->save();
             }
 
-            AccountProvisioner::ensureBasicOrgAccess($user->id, $orgId, $syId, $officer->id);
+            // Ensure member access (project heads must be members)
+            AccountProvisioner::ensureBasicOrgAccess(
+                $user->id,
+                $orgId,
+                $syId,
+                $officer->id
+            );
 
             $currentHead = ProjectAssignment::query()
                 ->where('project_id', $project->id)
@@ -83,25 +98,55 @@ class ProjectHeadAssignmentController extends Controller
                 ->whereNull('archived_at')
                 ->first();
 
+            // If same head, do nothing
             if ($currentHead && (int) $currentHead->user_id === (int) $user->id) {
                 return;
             }
 
+            // Archive old head
             ProjectAssignment::query()
                 ->where('project_id', $project->id)
                 ->where('assignment_role', 'project_head')
                 ->whereNull('archived_at')
-                ->update(['archived_at' => now()]);
+                ->update([
+                    'archived_at' => now()
+                ]);
 
+            // Create new head
             ProjectAssignment::query()->create([
                 'project_id' => $project->id,
                 'user_id' => $user->id,
                 'assignment_role' => 'project_head',
                 'archived_at' => null,
             ]);
+
+            // 🔥 Reset all project documents
+            $documents = ProjectDocument::query()
+                ->where('project_id', $project->id)
+                ->get();
+
+            foreach ($documents as $document) {
+
+                // Delete all signatures
+                ProjectDocumentSignature::query()
+                    ->where('project_document_id', $document->id)
+                    ->delete();
+
+                // Reset document status
+                $document->update([
+                    'status' => 'draft',
+                    'submitted_at' => null,
+                ]);
+            }
+
         });
 
-        return redirect()->route('org.assign-project-heads.index')
-            ->with('status', 'Project head assigned (existing users keep their password).');
+        return redirect()
+            ->route('org.assign-project-heads.index')
+            ->with('status', 'Project head updated. All related documents were reset.');
     }
+
+
+
+    
 }

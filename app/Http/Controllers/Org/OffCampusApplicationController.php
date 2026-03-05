@@ -7,6 +7,7 @@ use App\Http\Controllers\Documents\BaseProjectDocumentController;
 use App\Models\FormType;
 use App\Models\OffCampusActivityData;
 use App\Models\OffCampusGuidelineAck;
+use App\Models\OffCampusParticipant;
 use App\Models\OrgMembership;
 use App\Models\Project;
 use App\Models\ProjectAssignment;
@@ -16,6 +17,7 @@ use App\Models\SchoolYear;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class OffCampusApplicationController extends BaseProjectDocumentController
 {
@@ -24,7 +26,20 @@ class OffCampusApplicationController extends BaseProjectDocumentController
     {
         $document = $this->getDocument($project, 'OFF_CAMPUS_APPLICATION');
 
-        $activity = $document?->offCampus;
+        $activity = null;
+        $participants = collect();
+
+        if ($document) {
+
+            $activity = \App\Models\OffCampusActivityData::with('participants')
+                ->where('project_document_id', $document->id)
+                ->first();
+
+            if ($activity) {
+                $participants = $activity->participants;
+            }
+
+        }
 
         $user = auth()->user();
 
@@ -45,6 +60,7 @@ class OffCampusApplicationController extends BaseProjectDocumentController
             'project'          => $project,
             'document'         => $document,
             'activity'         => $activity,
+            'participants'     => $participants,
             'currentSignature' => $currentSignature,
             'isReadOnly'       => $isReadOnly,
             'isProjectHead'    => $isProjectHead,
@@ -55,6 +71,30 @@ class OffCampusApplicationController extends BaseProjectDocumentController
 
     public function store(Request $request, Project $project)
     {
+
+        $request->validate([
+
+            'activity_name' => ['required','string','max:255'],
+
+            'inclusive_dates' => ['nullable','string','max:255'],
+
+            'venue_destination' => ['required','string','max:255'],
+
+            'remarks' => ['nullable','string'],
+
+            'participants.*.student_name' => ['nullable','string','max:255'],
+
+            'participants.*.course_year' => ['nullable','string','max:255'],
+
+            'participants.*.student_mobile' => ['nullable','string','max:30'],
+
+            'participants.*.parent_name' => ['nullable','string','max:255'],
+
+            'participants.*.parent_mobile' => ['nullable','string','max:30'],
+
+        ]);
+
+
         $document = $this->getOrCreateDocument($project, 'OFF_CAMPUS_APPLICATION');
 
         if ($document->isLocked()) {
@@ -63,18 +103,19 @@ class OffCampusApplicationController extends BaseProjectDocumentController
 
         DB::transaction(function () use ($request, $document) {
 
-            OffCampusActivityData::updateOrCreate(
+            $activity = OffCampusActivityData::updateOrCreate(
                 [
                     'project_document_id' => $document->id
                 ],
                 [
-                    'organization_name' => $request->organization_name,
                     'activity_name' => $request->activity_name,
                     'inclusive_dates' => $request->inclusive_dates,
                     'venue_destination' => $request->venue_destination,
                     'remarks' => $request->remarks
                 ]
             );
+
+            $this->saveParticipants($activity, $request->participants ?? []);
 
             $this->resetApprovalsAfterEdit($document);
         });
@@ -88,6 +129,28 @@ class OffCampusApplicationController extends BaseProjectDocumentController
         return redirect()
             ->route('org.projects.documents.hub', $project)
             ->with('success', 'Off-campus form saved as draft.');
+    }
+
+
+    private function saveParticipants(OffCampusActivityData $activity, array $participants): void
+    {
+
+        $activity->participants()->delete();
+
+        foreach ($participants as $p) {
+
+            if (empty($p['student_name'])) {
+                continue;
+            }
+
+            $activity->participants()->create([
+                'student_name' => $p['student_name'],
+                'course_year' => $p['course_year'] ?? null,
+                'student_mobile' => $p['student_mobile'] ?? null,
+                'parent_name' => $p['parent_name'] ?? null,
+                'parent_mobile' => $p['parent_mobile'] ?? null,
+            ]);
+        }
     }
 
 
@@ -203,11 +266,19 @@ class OffCampusApplicationController extends BaseProjectDocumentController
         ]);
     }
 
+
     public function guidelines(Project $project)
     {
         $document = $this->getOrCreateDocument($project, 'OFF_CAMPUS_APPLICATION');
 
         $user = auth()->user();
+
+        if (!$this->isProjectHead($project, $user->id)) {
+            return redirect()->route(
+                'org.projects.off-campus.create',
+                $project
+            );
+        }
 
         $ack = OffCampusGuidelineAck::where('project_document_id', $document->id)
             ->where('user_id', $user->id)
@@ -215,12 +286,12 @@ class OffCampusApplicationController extends BaseProjectDocumentController
 
         if ($ack) {
             return redirect()->route(
-                'org.projects.documents.off-campus.create',
+                'org.projects.off-campus.create',
                 $project
             );
         }
 
-        return view('org.projects.documents.off-campus.guidelines', [
+        return view('org..documents.off-campus.guidelines', [
             'project' => $project,
             'document' => $document
         ]);
@@ -238,7 +309,9 @@ class OffCampusApplicationController extends BaseProjectDocumentController
 
         $user = auth()->user();
 
-        if ($request->student_id !== $user->student_id) {
+        $studentId = Str::before($user->email, '@');
+
+        if ($request->student_id !== $studentId) {
             return back()->withErrors([
                 'student_id' => 'Student ID does not match your account.'
             ]);
@@ -252,12 +325,108 @@ class OffCampusApplicationController extends BaseProjectDocumentController
         ]);
 
         return redirect()->route(
-            'org.projects.documents.off-campus.create',
+            'org.projects.off-campus.create',
             $project
         );
     }
 
 
+    public function approve(Project $project)
+    {
+        $formType = FormType::where('code', 'OFF_CAMPUS_APPLICATION')->firstOrFail();
+
+        $document = ProjectDocument::where('project_id', $project->id)
+            ->where('form_type_id', $formType->id)
+            ->firstOrFail();
+
+        if ($document->status !== 'submitted') {
+            return back()->with('error', 'This off-campus form is not awaiting approval.');
+        }
+
+        $userId = auth()->id();
+
+        $userSignature = ProjectDocumentSignature::query()
+            ->where('project_document_id', $document->id)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$userSignature) {
+            return back()->with('error', 'You are not part of the approval workflow.');
+        }
+
+        if ($userSignature->status === 'signed') {
+            return back()->with('error', 'You have already approved this off-campus form.');
+        }
+
+        $currentPending = ProjectDocumentSignature::query()
+            ->where('project_document_id', $document->id)
+            ->where('status', 'pending')
+            ->orderBy('id')
+            ->first();
+
+        if (!$currentPending) {
+            return back()->with('error', 'No pending approvals remain.');
+        }
+
+        if ($currentPending->user_id !== $userId) {
+            return back()->with('error', 'It is not your turn to approve yet.');
+        }
+
+        DB::transaction(function () use ($document, $currentPending) {
+
+            $currentPending->update([
+                'status' => 'signed',
+                'signed_at' => now(),
+            ]);
+
+            $remaining = ProjectDocumentSignature::query()
+                ->where('project_document_id', $document->id)
+                ->where('status', 'pending')
+                ->exists();
+
+            if (!$remaining) {
+                $document->update([
+                    'status' => 'approved',
+                ]);
+            }
+
+        });
+
+        return back()->with('success', 'Off-campus form approved successfully.');
+    }
+
+
+    public function return(Request $request, Project $project)
+    {
+        $request->validate([
+            'remarks' => ['required', 'string'],
+        ]);
+
+        $formType = FormType::where('code', 'OFF_CAMPUS_APPLICATION')->firstOrFail();
+
+        $document = ProjectDocument::with('signatures')
+            ->where('project_id', $project->id)
+            ->where('form_type_id', $formType->id)
+            ->firstOrFail();
+
+        if ($document->status !== 'submitted') {
+            return back()->with('error', 'This off-campus form cannot be returned.');
+        }
+
+        DB::transaction(function () use ($document) {
+
+            $document->signatures()
+                ->where('role', '!=', 'project_head')
+                ->delete();
+
+            $document->update([
+                'status' => 'returned',
+            ]);
+
+        });
+
+        return back()->with('success', 'Off-campus form returned for revision.');
+    }
 
 
 }

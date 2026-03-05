@@ -365,7 +365,100 @@ class BudgetProposalController extends BaseProjectDocumentController
     }
 
 
+    public function approve(Project $project)
+    {
+        $formType = FormType::where('code', 'budget_proposal')->firstOrFail();
 
+        $document = ProjectDocument::where('project_id', $project->id)
+            ->where('form_type_id', $formType->id)
+            ->firstOrFail();
+
+        if ($document->status !== 'submitted') {
+            return back()->with('error', 'This budget proposal is not awaiting approval.');
+        }
+
+        $userId = auth()->id();
+
+        $userSignature = ProjectDocumentSignature::query()
+            ->where('project_document_id', $document->id)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$userSignature) {
+            return back()->with('error', 'You are not part of the approval workflow.');
+        }
+
+        if ($userSignature->status === 'signed') {
+            return back()->with('error', 'You have already approved this budget proposal.');
+        }
+
+
+        $currentPending = ProjectDocumentSignature::query()
+            ->where('project_document_id', $document->id)
+            ->where('status', 'pending')
+            ->orderBy('id')
+            ->first();
+
+        if (!$currentPending) {
+            return back()->with('error', 'No pending approvals remain.');
+        }
+
+        if ($currentPending->user_id !== $userId) {
+            return back()->with('error', 'It is not your turn to approve yet.');
+        }
+
+        DB::transaction(function () use ($document, $currentPending) {
+
+            $currentPending->update([
+                'status' => 'signed',
+                'signed_at' => now(),
+            ]);
+
+            $remaining = ProjectDocumentSignature::query()
+                ->where('project_document_id', $document->id)
+                ->where('status', 'pending')
+                ->exists();
+
+            if (!$remaining) {
+                $document->update([
+                    'status' => 'approved',
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Budget proposal approved successfully.');
+    }
+
+    public function return(Request $request, Project $project)
+    {
+        $request->validate([
+            'remarks' => ['required', 'string'],
+        ]);
+
+        $formType = FormType::where('code', 'budget_proposal')->firstOrFail();
+
+        $document = ProjectDocument::with('signatures')
+            ->where('project_id', $project->id)
+            ->where('form_type_id', $formType->id)
+            ->firstOrFail();
+
+        if ($document->status !== 'submitted') {
+            return back()->with('error', 'This budget proposal cannot be returned.');
+        }
+
+        DB::transaction(function () use ($document) {
+
+            $document->signatures()
+                ->where('role', '!=', 'project_head')
+                ->delete();
+
+            $document->update([
+                'status' => 'returned',
+            ]);
+        });
+
+        return back()->with('success', 'Budget proposal returned for revision.');
+    }
 
 
 

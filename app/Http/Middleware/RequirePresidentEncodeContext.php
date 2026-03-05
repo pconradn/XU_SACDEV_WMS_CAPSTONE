@@ -70,19 +70,20 @@ class RequirePresidentEncodeContext
         | Prevent editing if already activated
         |--------------------------------------------------------------------------
         */
-
+/*
         $alreadyActivated = OrganizationSchoolYear::query()
             ->where('organization_id', $orgId)
             ->where('school_year_id', $encodeSyId)
             ->exists();
-
+ 
         if ($alreadyActivated) {
 
             return redirect()
                 ->route('org.projects.index')
                 ->with('status', 'This school year is already activated and cannot be edited.');
 
-        }
+        }  */
+
 
 
         /*
