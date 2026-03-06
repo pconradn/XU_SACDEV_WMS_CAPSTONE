@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminProjectDocumentController;
 use App\Http\Controllers\Admin\AdminMajorOfficerController;
 use App\Http\Controllers\Admin\AdminOrgBySyController;
 use App\Http\Controllers\Admin\AdminOrgReviewController;
@@ -165,6 +166,11 @@ Route::prefix('admin')
             '/orgs/{organization}/sy/{sy}/projects',
             [AdminProjectController::class, 'index']
         )->name('admin.org.projects.index');
+
+        Route::get(
+            '/projects/{project}/documents',
+            [AdminProjectDocumentController::class, 'hub']
+        )->name('admin.projects.documents.hub');
 
 
     });
