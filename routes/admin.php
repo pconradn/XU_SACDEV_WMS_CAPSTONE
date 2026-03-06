@@ -172,5 +172,9 @@ Route::prefix('admin')
             [AdminProjectDocumentController::class, 'hub']
         )->name('admin.projects.documents.hub');
 
+        Route::get(
+            '/projects/{project}/documents/{formType}',
+            [AdminProjectDocumentController::class, 'open']
+        )->name('admin.projects.documents.open');
 
     });

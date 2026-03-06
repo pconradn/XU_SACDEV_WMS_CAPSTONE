@@ -1,160 +1,176 @@
 <x-app-layout>
 
-<x-slot name="header">
+    <x-slot name="header">
 
-<div class="flex items-center justify-between">
+        <div class="flex items-center justify-between">
 
-<div>
+            <div>
 
-<h2 class="font-semibold text-xl text-slate-900">
-{{ $project->title }}
-</h2>
+                <h2 class="font-semibold text-xl text-slate-900">
+                    {{ $project->title }}
+                </h2>
 
-<div class="text-sm text-slate-600 mt-1">
-Project Documents — SACDEV Review
-</div>
+                <div class="text-sm text-slate-600 mt-1">
+                    Project Documents — SACDEV Review
+                </div>
 
-</div>
+            </div>
 
-<a href="{{ route('admin.org.projects.index', [$project->organization_id, $project->school_year_id]) }}"
-   class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+            <a href="{{ route('admin.org.projects.index', [$project->organization_id, $project->school_year_id]) }}"
+               class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
 
-← Back to Projects
+                ← Back to Projects
 
-</a>
+            </a>
 
-</div>
+        </div>
 
-</x-slot>
-
-
-<div class="py-8">
-
-<div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
-
-<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    </x-slot>
 
 
-<table class="min-w-full text-sm">
+    <div class="py-8">
 
-<thead class="bg-slate-50 border-b border-slate-200">
+        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
 
-<tr class="text-left text-slate-700 font-semibold">
+            <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
 
-<th class="px-6 py-4">Document</th>
-<th class="px-6 py-4 w-[160px]">Status</th>
-<th class="px-6 py-4 w-[220px] text-right">Action</th>
+                <table class="min-w-full text-sm">
 
-</tr>
+                    <thead class="bg-slate-50 border-b border-slate-200">
 
-</thead>
+                        <tr class="text-left text-slate-700 font-semibold">
 
-<tbody class="divide-y divide-slate-200">
+                            <th class="px-6 py-4">
+                                Document
+                            </th>
 
+                            <th class="px-6 py-4 w-[160px]">
+                                Status
+                            </th>
 
-@php
-$types = [
-    'PROJECT_PROPOSAL' => 'Project Proposal',
-    'BUDGET_PROPOSAL' => 'Budget Proposal',
-    'OFF_CAMPUS_APPLICATION' => 'Off-Campus Form',
-];
-@endphp
+                            <th class="px-6 py-4 w-[220px] text-right">
+                                Action
+                            </th>
 
+                        </tr>
 
-@foreach($types as $code => $label)
+                    </thead>
 
-@php
-$doc = $documents[$code] ?? null;
-$status = $doc->status ?? 'not_created';
-@endphp
+                    <tbody class="divide-y divide-slate-200">
 
 
-<tr>
+                        @php
 
-<td class="px-6 py-5">
+                            $types = [
+                                'PROJECT_PROPOSAL'       => 'Project Proposal',
+                                'BUDGET_PROPOSAL'        => 'Budget Proposal',
+                                'OFF_CAMPUS_APPLICATION' => 'Off-Campus Form',
+                            ];
 
-<div class="font-semibold text-slate-900">
-{{ $label }}
-</div>
+                            $formRoutes = [
+                                'PROJECT_PROPOSAL'       => 'org.projects.project-proposal.create',
+                                'BUDGET_PROPOSAL'        => 'org.projects.budget-proposal.create',
+                                'OFF_CAMPUS_APPLICATION' => 'org.projects.off-campus.create',
+                            ];
 
-@if(!$doc)
-
-<div class="text-xs text-slate-500 mt-1">
-Not created yet
-</div>
-
-@endif
-
-</td>
+                        @endphp
 
 
-<td class="px-6 py-5">
+                        @foreach($types as $code => $label)
 
-@switch($status)
-
-@case('draft')
-<span class="px-2 py-1 rounded bg-slate-100 text-slate-700 text-xs">
-Draft
-</span>
-@break
-
-@case('submitted')
-<span class="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs">
-Submitted
-</span>
-@break
-
-@case('returned')
-<span class="px-2 py-1 rounded bg-rose-100 text-rose-700 text-xs">
-Returned
-</span>
-@break
-
-@case('approved')
-<span class="px-2 py-1 rounded bg-emerald-100 text-emerald-700 text-xs">
-Approved
-</span>
-@break
-
-@default
-<span class="text-xs text-slate-500">
-—
-</span>
-
-@endswitch
-
-</td>
+                            @php
+                                $doc = $documents[$code] ?? null;
+                                $status = $doc->status ?? 'not_created';
+                                $routeName = $formRoutes[$code] ?? null;
+                            @endphp
 
 
-<td class="px-6 py-5 text-right">
+                            <tr>
 
-@if($doc)
+                                <td class="px-6 py-5">
 
-<a href="{{ route('org.projects.documents.show', [$project, $doc->form_type_id]) }}"
-   class="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 transition">
+                                    <div class="font-semibold text-slate-900">
+                                        {{ $label }}
+                                    </div>
 
-Open
+                                    @if(!$doc)
 
-</a>
+                                        <div class="text-xs text-slate-500 mt-1">
+                                            Not created yet
+                                        </div>
 
-@endif
+                                    @endif
 
-</td>
-
-
-</tr>
-
-@endforeach
+                                </td>
 
 
-</tbody>
+                                <td class="px-6 py-5">
 
-</table>
+                                    @switch($status)
 
-</div>
+                                        @case('draft')
+                                            <span class="px-2 py-1 rounded bg-slate-100 text-slate-700 text-xs">
+                                                Draft
+                                            </span>
+                                        @break
 
-</div>
+                                        @case('submitted')
+                                            <span class="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs">
+                                                Submitted
+                                            </span>
+                                        @break
 
-</div>
+                                        @case('returned')
+                                            <span class="px-2 py-1 rounded bg-rose-100 text-rose-700 text-xs">
+                                                Returned
+                                            </span>
+                                        @break
+
+                                        @case('approved')
+                                            <span class="px-2 py-1 rounded bg-emerald-100 text-emerald-700 text-xs">
+                                                Approved
+                                            </span>
+                                        @break
+
+                                        @default
+                                            <span class="text-xs text-slate-500">
+                                                —
+                                            </span>
+
+                                    @endswitch
+
+                                </td>
+
+
+                                <td class="px-6 py-5 text-right">
+
+                                    @if($doc && $routeName)
+
+                                        <a href="{{ route('admin.projects.documents.open', [$project, $code]) }}"
+                                           class="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 transition">
+
+                                            Open
+
+                                        </a>
+
+                                    @endif
+
+                                </td>
+
+
+                            </tr>
+
+                        @endforeach
+
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
 
 </x-app-layout>
