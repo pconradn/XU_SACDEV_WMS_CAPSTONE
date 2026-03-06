@@ -6,6 +6,8 @@
 $status = $document->status ?? 'draft';
 @endphp
 
+
+{{-- PROJECT HEAD ACTIONS --}}
 @if($isProjectHead && in_array($status, ['draft','returned']))
 
 <button
@@ -28,6 +30,8 @@ Submit Budget
 
 @endif
 
+
+{{-- APPROVER ACTIONS --}}
 @if(
     $document &&
     $document->status === 'submitted' &&
@@ -35,8 +39,16 @@ Submit Budget
     $currentSignature->status === 'pending'
 )
 
+@php
+$isSacdev = $currentSignature->role === 'sacdev_admin';
+@endphp
+
+
 <form method="POST"
-      action="{{ route('org.projects.budget-proposal.approve', $project) }}">
+      action="{{ $isSacdev
+        ? route('admin.projects.documents.approve', [$project, 'BUDGET_PROPOSAL'])
+        : route('org.projects.budget-proposal.approve', $project)
+      }}">
 @csrf
 
 <button
@@ -62,6 +74,7 @@ Return
 </div>
 
 
+{{-- RETURN MODAL --}}
 <div id="returnModal"
      class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
 
@@ -72,7 +85,10 @@ Return Budget Proposal
 </div>
 
 <form method="POST"
-      action="{{ route('org.projects.budget-proposal.return', $project) }}">
+      action="{{ isset($currentSignature) && $currentSignature->role === 'sacdev_admin'
+        ? route('admin.projects.documents.return', [$project, 'BUDGET_PROPOSAL'])
+        : route('org.projects.budget-proposal.return', $project)
+      }}">
 
 @csrf
 
@@ -116,6 +132,7 @@ Return Document
 
 
 <script>
+
 function openReturnModal() {
     const modal = document.getElementById('returnModal');
     modal.classList.remove('hidden');
@@ -127,4 +144,5 @@ function closeReturnModal() {
     modal.classList.add('hidden');
     modal.classList.remove('flex');
 }
+
 </script>

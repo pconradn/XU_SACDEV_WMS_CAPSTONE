@@ -177,4 +177,16 @@ Route::prefix('admin')
             [AdminProjectDocumentController::class, 'open']
         )->name('admin.projects.documents.open');
 
+
+        Route::post(
+            '/projects/{project}/documents/{formCode}/approve',
+            [AdminProjectDocumentController::class, 'approve']
+        )->name('admin.projects.documents.approve');
+
+        Route::post(
+            '/projects/{project}/documents/{formCode}/return',
+            [AdminProjectDocumentController::class, 'return']
+        )->name('admin.projects.documents.return');
+
+
     });

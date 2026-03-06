@@ -15,6 +15,8 @@ status: {{ $currentSignature->status }}
 @endif
 </pre>
 
+
+
 @if($isProjectHead)
 
 <div class="border border-slate-300 bg-white sticky bottom-0 z-50 shadow-md">
@@ -136,8 +138,13 @@ status: {{ $currentSignature->status }}
 
         <div class="px-4 py-3 flex items-center justify-end gap-3">
 
+
+
             <form method="POST"
-                action="{{ route('org.projects.project-proposal.approve', $project) }}">
+                action="{{ $currentSignature->role === 'sacdev_admin'
+                    ? route('admin.projects.documents.approve', [$project, 'project_proposal'])
+                    : route('org.projects.project-proposal.approve', $project)
+                }}">
                 @csrf
                 <button
                     class="bg-emerald-600 px-4 py-2 text-[12px] text-white hover:bg-emerald-700">
@@ -145,20 +152,84 @@ status: {{ $currentSignature->status }}
                 </button>
             </form>
 
-            <form method="POST"
-                action="{{ route('org.projects.project-proposal.return', $project) }}">
-                @csrf
-                <button
-                    class="bg-rose-600 px-4 py-2 text-[12px] text-white hover:bg-rose-700">
-                    Return with Remarks
-                </button>
-            </form>
+            <button
+                type="button"
+                onclick="openReturnModal()"
+                class="bg-rose-600 px-4 py-2 text-[12px] text-white hover:bg-rose-700">
+                Return with Remarks
+            </button>
 
         </div>
 
     </div>
 
 @endif
+
+
+<div id="returnModal"
+     class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+
+    <div class="bg-white w-full max-w-md rounded shadow-lg p-6">
+
+        <h2 class="text-[14px] font-semibold mb-3">
+            Return Budget Proposal
+        </h2>
+
+        <p class="text-[12px] text-slate-600 mb-4">
+            Please provide remarks explaining why this proposal is being returned.
+        </p>
+
+        <form method="POST"
+            action="{{ $currentSignature->role === 'sacdev_admin'
+                ? route('admin.projects.documents.return', [$project, 'project_proposal'])
+                : route('org.projects.project-proposal.return', $project)
+            }}">
+
+            @csrf
+
+            <textarea
+                name="remarks"
+                required
+                rows="4"
+                class="w-full border border-slate-300 px-3 py-2 text-[12px]"></textarea>
+
+            <div class="flex justify-end gap-3 mt-4">
+
+                <button type="button"
+                        onclick="closeReturnModal()"
+                        class="border border-slate-400 px-4 py-2 text-[12px] text-slate-700 hover:bg-slate-100">
+                    Cancel
+                </button>
+
+                <button type="submit"
+                        class="bg-rose-600 px-4 py-2 text-[12px] text-white hover:bg-rose-700">
+                    Return Proposal
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+
+function openReturnModal() {
+    document.getElementById('returnModal')?.classList.remove('hidden');
+    document.getElementById('returnModal')?.classList.add('flex');
+}
+
+function closeReturnModal() {
+    document.getElementById('returnModal')?.classList.add('hidden');
+    document.getElementById('returnModal')?.classList.remove('flex');
+}
+
+
+
+</script>
+
 
 
 

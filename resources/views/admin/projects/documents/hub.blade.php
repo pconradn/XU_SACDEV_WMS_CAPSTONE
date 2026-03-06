@@ -126,7 +126,7 @@
                                             </span>
                                         @break
 
-                                        @case('approved')
+                                        @case('approved_by_sacdev')
                                             <span class="px-2 py-1 rounded bg-emerald-100 text-emerald-700 text-xs">
                                                 Approved
                                             </span>
@@ -173,4 +173,4 @@
 
     </div>
 
-</x-app-layout>
+</x-app-layout> 

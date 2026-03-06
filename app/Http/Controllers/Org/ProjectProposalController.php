@@ -399,11 +399,7 @@ class ProjectProposalController extends BaseProjectDocumentController
 
     private function saveMultiEntries(int $documentId, array $clean, array $data): void
     {
-        /*
-        |--------------------------------------------------------------------------
-        | OBJECTIVES
-        |--------------------------------------------------------------------------
-        */
+  
         ProjectProposalObjective::where('project_document_id', $documentId)->delete();
 
         if (!empty($clean['objectives'])) {
@@ -417,11 +413,6 @@ class ProjectProposalController extends BaseProjectDocumentController
             );
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | SUCCESS INDICATORS
-        |--------------------------------------------------------------------------
-        */
         ProjectProposalSuccessIndicator::where('project_document_id', $documentId)->delete();
 
         if (!empty($clean['indicators'])) {
@@ -435,11 +426,6 @@ class ProjectProposalController extends BaseProjectDocumentController
             );
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | PARTNERS (simple string array)
-        |--------------------------------------------------------------------------
-        */
         ProjectProposalPartner::where('project_document_id', $documentId)->delete();
 
         if (!empty($clean['partners'])) {
@@ -453,11 +439,7 @@ class ProjectProposalController extends BaseProjectDocumentController
             );
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | GUESTS (structured array)
-        |--------------------------------------------------------------------------
-        */
+     
         ProjectProposalGuest::where('project_document_id', $documentId)->delete();
 
         if (!empty($clean['guests'])) {
@@ -473,11 +455,7 @@ class ProjectProposalController extends BaseProjectDocumentController
             );
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | PLAN OF ACTION
-        |--------------------------------------------------------------------------
-        */
+   
         ProjectProposalPlanOfAction::where('project_document_id', $documentId)->delete();
 
         if (!empty($clean['plan'])) {
@@ -494,11 +472,7 @@ class ProjectProposalController extends BaseProjectDocumentController
             );
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | ROLES (simple string array)
-        |--------------------------------------------------------------------------
-        */
+     
         ProjectProposalRole::where('project_document_id', $documentId)->delete();
 
         if (!empty($clean['roles'])) {
@@ -523,21 +497,13 @@ class ProjectProposalController extends BaseProjectDocumentController
 
         $clean = [];
 
-        /*
-        |--------------------------------------------------------------------------
-        | SIMPLE STRING ARRAYS
-        |--------------------------------------------------------------------------
-        */
+        
         $clean['objectives'] = $cleanStrings($data['objectives'] ?? []);
         $clean['indicators'] = $cleanStrings($data['success_indicators'] ?? []);
         $clean['partners'] = $cleanStrings($data['partners'] ?? []);
         $clean['roles'] = $cleanStrings($data['roles'] ?? []);
 
-        /*
-        |--------------------------------------------------------------------------
-        | GUESTS (structured)
-        |--------------------------------------------------------------------------
-        */
+     
         $clean['guests'] = array_values(array_filter(
             $data['guests'] ?? [],
             function ($g) {
@@ -545,11 +511,7 @@ class ProjectProposalController extends BaseProjectDocumentController
             }
         ));
 
-        /*
-        |--------------------------------------------------------------------------
-        | PLAN OF ACTION (structured)
-        |--------------------------------------------------------------------------
-        */
+  
         $clean['plan'] = array_values(array_filter(
             $data['plan_of_actions'] ?? [],
             function ($row) {
@@ -593,15 +555,17 @@ class ProjectProposalController extends BaseProjectDocumentController
             ->where('form_type_id', $formType->id)
             ->firstOrFail();
 
+
+        //dd($document);
+
         if ($document->status !== 'submitted') {
-            return back()->with('error', 'This proposal is not awaiting approval.');
+            return back()->with('error', 'This document is not currently awaiting approval.');
         }
 
+       
         $userId = auth()->id();
 
-
-        $userSignature = ProjectDocumentSignature::query()
-            ->where('project_document_id', $document->id)
+        $userSignature = ProjectDocumentSignature::where('project_document_id', $document->id)
             ->where('user_id', $userId)
             ->first();
 
@@ -610,12 +574,10 @@ class ProjectProposalController extends BaseProjectDocumentController
         }
 
         if ($userSignature->status === 'signed') {
-            return back()->with('error', 'You have already approved this proposal.');
+            return back()->with('error', 'You have already approved this document.');
         }
 
-    
-        $currentPending = ProjectDocumentSignature::query()
-            ->where('project_document_id', $document->id)
+        $currentPending = ProjectDocumentSignature::where('project_document_id', $document->id)
             ->where('status', 'pending')
             ->orderBy('id')
             ->first();
@@ -635,8 +597,7 @@ class ProjectProposalController extends BaseProjectDocumentController
                 'signed_at' => now(),
             ]);
 
-            $remaining = ProjectDocumentSignature::query()
-                ->where('project_document_id', $document->id)
+            $remaining = ProjectDocumentSignature::where('project_document_id', $document->id)
                 ->where('status', 'pending')
                 ->exists();
 
@@ -647,7 +608,7 @@ class ProjectProposalController extends BaseProjectDocumentController
             }
         });
 
-        return back()->with('success', 'Proposal approved successfully.');
+        return back()->with('success', 'Project proposal approved successfully.');
     }
 
     public function return(Request $request, Project $project)
@@ -664,23 +625,52 @@ class ProjectProposalController extends BaseProjectDocumentController
             ->firstOrFail();
 
         if ($document->status !== 'submitted') {
-            return back()->with('error', 'This proposal cannot be returned.');
+            return back()->with('error', 'This document cannot be returned unless it is submitted.');
+        }
+
+        $userId = auth()->id();
+
+        $userSignature = $document->signatures
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$userSignature) {
+            return back()->with('error', 'You are not part of the approval workflow.');
+        }
+
+        $currentPending = $document->signatures
+            ->where('status', 'pending')
+            ->sortBy('id')
+            ->first();
+
+        if (!$currentPending) {
+            return back()->with('error', 'No pending approvals remain.');
+        }
+
+        if ($currentPending->user_id !== $userId) {
+            return back()->with('error', 'It is not your turn to return this document yet.');
         }
 
         DB::transaction(function () use ($document, $request) {
 
-            $document->signatures()
-                ->where('role', '!=', 'project_head')
-                ->delete();
+            foreach ($document->signatures as $signature) {
+                $signature->update([
+                    'status' => 'pending',
+                    'signed_at' => null,
+                ]);
+            }
 
             $document->update([
-                'status' => 'returned',
+                'status' => 'draft',
+                'remarks' => $request->remarks,
+                'returned_by' => auth()->id(),
+                'returned_at' => now(),
             ]);
+
         });
 
-        return back()->with('success', 'Proposal returned for revision.');
+        return back()->with('success', 'Project proposal returned for revision.');
     }
-
 
 
 }
