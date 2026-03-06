@@ -98,4 +98,10 @@ class ProjectDocument extends Model
     {
         return $this->hasOne(OffCampusActivityData::class);
     }
+    public function returnedBy()
+    {
+        return $this->belongsTo(User::class, 'returned_by');
+    }
+
+
 }

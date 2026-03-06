@@ -92,6 +92,9 @@ class ProjectProposalController extends BaseProjectDocumentController
             $document->update([
                 'status' => 'submitted',
                 'submitted_at' => now(),
+                'remarks' => null,
+                'returned_by' => null,
+                'returned_at' => null,
             ]);
 
             $document->signatures()->delete();
