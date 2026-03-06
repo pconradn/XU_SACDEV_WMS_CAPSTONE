@@ -291,7 +291,7 @@ class OffCampusApplicationController extends BaseProjectDocumentController
             );
         }
 
-        return view('org..documents.off-campus.guidelines', [
+        return view('org.projects.documents.off-campus.guidelines', [
             'project' => $project,
             'document' => $document
         ]);

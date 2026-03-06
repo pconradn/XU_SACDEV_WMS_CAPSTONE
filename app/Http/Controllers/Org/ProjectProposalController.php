@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Org;
 
 use App\Http\Controllers\Controller;
+ use Illuminate\Validation\Rule;
 use App\Models\FormType;
 use App\Models\OrganizationSchoolYear;
 use App\Models\OrgMembership;
@@ -266,7 +267,15 @@ class ProjectProposalController extends BaseProjectDocumentController
         return $request->validate([
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
-            'start_time' => ['nullable', 'date_format:H:i:s'],
+           
+
+            'start_time' => [
+                'nullable',
+                Rule::anyOf([
+                    'date_format:H:i',
+                    'date_format:H:i:s',
+                ]),
+            ],
             'venue_type' => ['required', 'in:on_campus,off_campus'],
             'venue_name' => ['required', 'string', 'max:255'],
 

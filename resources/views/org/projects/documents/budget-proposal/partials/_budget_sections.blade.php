@@ -102,7 +102,7 @@ $sections = [
                             Section Total
                         </div>
                         <div class="text-[12px] font-semibold text-slate-900 tabular-nums">
-                            ₱ <span id="{{ $code }}_total">
+                            ₱ <span id="{{ $code }}_total" data-section-total>
                                 {{ number_format($budget?->section_totals[$code] ?? 0, 2) }}
                             </span>
                         </div>
