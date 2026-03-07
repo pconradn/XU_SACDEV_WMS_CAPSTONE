@@ -55,5 +55,19 @@ class ProjectProposalFormSeeder extends Seeder
                 'updated_at' => $now,
             ]
         );
+
+        DB::table('form_types')->updateOrInsert(
+            ['code' => 'SELLING_APPLICATION'],
+            [
+                'name' => 'Application for Selling',
+                'phase' => 'pre_implementation',
+                'description' => 'Application form for student organization selling activities.',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
+
+
+
     }
 }

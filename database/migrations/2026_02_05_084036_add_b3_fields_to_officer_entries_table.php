@@ -16,12 +16,9 @@ return new class extends Migration
             $table->string('mobile_number', 32)->nullable()->after('latest_qpi');
             $table->unsignedInteger('sort_order')->nullable()->after('mobile_number');
 
-            // Traceability back to B-3 item (optional but highly recommended)
             $table->unsignedBigInteger('source_officer_submission_item_id')->nullable()->after('sort_order');
             $table->index('source_officer_submission_item_id');
 
-            // (Optional) Stronger uniqueness to prevent duplicates per org+sy
-            // If you already enforce uniqueness elsewhere, skip this.
             $table->unique(['organization_id', 'school_year_id', 'email'], 'officer_entries_org_sy_email_unique');
         });
     }
@@ -29,7 +26,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('officer_entries', function (Blueprint $table) {
-            // Drop unique if added
+       
             $table->dropUnique('officer_entries_org_sy_email_unique');
 
             $table->dropIndex(['source_officer_submission_item_id']);
