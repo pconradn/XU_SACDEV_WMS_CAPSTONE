@@ -14,18 +14,12 @@
         <div class="text-[11px] text-slate-600">
 
             @if($status === 'submitted')
-
                 Editing and resubmitting will reset President and Moderator approvals.
-
             @elseif($status === 'approved')
-
                 This form is finalized and cannot be modified.
-
             @else
-
                 Saving will store this form as a draft.
                 Submitting will forward this document for approval.
-
             @endif
 
         </div>
@@ -52,7 +46,7 @@
                 <button type="button"
                         onclick="openAgreementModal()"
                         class="bg-blue-900 px-4 py-2 text-[12px] text-white hover:bg-blue-800">
-                Submit for Approval
+                    Submit for Approval
                 </button>
 
             @endif
@@ -121,6 +115,37 @@
 
 
 
+{{-- ADMIN RETRACT APPROVAL --}}
+@if(
+    $document &&
+    $isAdmin &&
+    $document->status === 'approved_by_sacdev'
+)
+
+<div class="border border-slate-300 bg-white sticky bottom-0 z-50 shadow-md">
+
+    <div class="px-4 py-3 flex justify-end">
+
+        <form method="POST"
+              action="{{ route('admin.projects.documents.retract', [$project, $document->formType->code]) }}">
+
+            @csrf
+
+            <button
+            class="bg-amber-600 px-4 py-2 text-[12px] text-white hover:bg-amber-700">
+                Retract SACDEV Approval
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+@endif
+
+
+
 {{-- APPROVAL ACTIONS --}}
 @if(
     $document &&
@@ -134,19 +159,31 @@
 
     <div class="px-4 py-3 flex items-center justify-end gap-3">
 
-        <form method="POST"
-            action="{{ $isAdmin
-                ? route('admin.projects.documents.approve', [$project, $document->formType->code])
-                : route('org.projects.solicitation.approve', $project) }}">
-
-            @csrf
+        {{-- ADMIN APPROVAL --}}
+        @if($isAdmin)
 
             <button
-                class="bg-emerald-600 px-4 py-2 text-[12px] text-white hover:bg-emerald-700">
-                Approve
+            type="button"
+            onclick="openApprovalModal()"
+            class="bg-emerald-600 px-4 py-2 text-white text-[12px] hover:bg-emerald-700">
+                Approve & Assign Control Numbers
             </button>
 
-        </form>
+        @else
+
+            <form method="POST"
+                action="{{ route('org.projects.solicitation.approve', $project) }}">
+
+                @csrf
+
+                <button
+                class="bg-emerald-600 px-4 py-2 text-white text-[12px] hover:bg-emerald-700">
+                    Approve
+                </button>
+
+            </form>
+
+        @endif
 
 
         <button type="button"
@@ -179,15 +216,11 @@
         </p>
 
         <form method="POST"
-            action="{{ $isAdmin
+              action="{{ $isAdmin
                 ? route('admin.projects.documents.return', [$project, $document->formType->code])
                 : route('org.projects.solicitation.return', $project) }}">
 
             @csrf
-
-            @php
-            $project
-            @endphp
 
             <textarea name="remarks"
                       required
@@ -215,3 +248,101 @@
     </div>
 
 </div>
+
+
+
+{{-- APPROVAL MODAL --}}
+<div id="approvalModal"
+class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+
+<div class="bg-white rounded-lg shadow-lg w-full max-w-xl">
+
+<div class="border-b px-4 py-3 font-semibold text-sm">
+Assign Solicitation Letter Control Numbers
+</div>
+
+<form method="POST"
+action="{{ route('admin.projects.documents.approve', [$project,$document->formType->code]) }}">
+
+@csrf
+
+<div class="p-4 space-y-4">
+
+<div>
+
+<label class="text-[12px] font-medium">
+Approved Number of Letters
+</label>
+
+<input
+type="number"
+name="approved_letter_count"
+required
+class="w-full border border-slate-300 px-3 py-2 text-[12px]">
+
+</div>
+
+<div class="grid grid-cols-2 gap-3">
+
+<div>
+<label class="text-[12px] font-medium">Control Series Start</label>
+<input
+type="text"
+name="control_series_start"
+required
+class="w-full border border-slate-300 px-3 py-2 text-[12px]">
+</div>
+
+<div>
+<label class="text-[12px] font-medium">Control Series End</label>
+<input
+type="text"
+name="control_series_end"
+required
+class="w-full border border-slate-300 px-3 py-2 text-[12px]">
+</div>
+
+</div>
+
+</div>
+
+<div class="border-t px-4 py-3 flex justify-end gap-2">
+
+<button
+type="button"
+onclick="closeApprovalModal()"
+class="border border-slate-300 px-4 py-2 text-[12px]">
+Cancel
+</button>
+
+<button
+type="submit"
+class="bg-emerald-600 text-white px-4 py-2 text-[12px]">
+Approve
+</button>
+
+</div>
+
+</form>
+
+</div>
+
+</div>
+
+
+
+<script>
+
+function openApprovalModal() {
+    const modal = document.getElementById('approvalModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeApprovalModal() {
+    const modal = document.getElementById('approvalModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+</script>

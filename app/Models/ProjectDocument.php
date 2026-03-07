@@ -108,5 +108,13 @@ class ProjectDocument extends Model
         return $this->hasOne(SolicitationApplicationData::class);
     }
 
+    
+    public function solicitationBatches()
+    {
+        return $this->hasMany(
+            \App\Models\SolicitationLetterBatch::class,
+            'project_document_id'
+        );
+    }
 
 }

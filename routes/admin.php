@@ -206,5 +206,10 @@ Route::prefix('admin')
             [AdminProjectClearanceController::class, 'return']
         )->name('admin.projects.clearance.return');
 
+        Route::post(
+            '/projects/{project}/documents/{form}/retract',
+            [AdminProjectDocumentController::class,'retract']
+        )->name('admin.projects.documents.retract');
+
 
     });

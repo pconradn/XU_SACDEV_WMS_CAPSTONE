@@ -69,7 +69,7 @@ class SolicitationApplicationController extends BaseProjectDocumentController
             'target_amount' => ['nullable','numeric'],
             'desired_letter_count' => ['required','integer'],
 
-            'letter_draft' => ['nullable','file','mimes:pdf','max:10240'],
+            'letter_draft_link' => ['nullable','url','max:500'],
 
         ]);
 
@@ -83,7 +83,7 @@ class SolicitationApplicationController extends BaseProjectDocumentController
 
         DB::transaction(function () use ($request, $document) {
 
-            $data = SolicitationApplicationData::updateOrCreate(
+            SolicitationApplicationData::updateOrCreate(
                 [
                     'project_document_id' => $document->id
                 ],
@@ -104,22 +104,11 @@ class SolicitationApplicationController extends BaseProjectDocumentController
                     'target_private_companies' => $request->boolean('target_private_companies'),
 
                     'target_others' => $request->boolean('target_others'),
-                    'target_others_specify' => $request->target_others_specify
+                    'target_others_specify' => $request->target_others_specify,
+
+                    'letter_draft_link' => $request->letter_draft_link
                 ]
             );
-
-
-            if ($request->hasFile('letter_draft')) {
-
-                $path = $request->file('letter_draft')
-                    ->store('solicitation_letters','public');
-
-                $data->update([
-                    'letter_draft_path' => $path
-                ]);
-
-            }
-
 
             $this->resetApprovalsAfterEdit($document);
 

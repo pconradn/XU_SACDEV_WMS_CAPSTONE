@@ -68,6 +68,84 @@ $currentApprover = $document?->signatures
     @endif
 
 
+
+
+@if($isProjectHead)
+
+<div id="instructionModal"
+class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+<div class="bg-white rounded-lg shadow-lg w-full max-w-xl">
+
+<div class="border-b px-4 py-3 font-semibold text-sm">
+Solicitation Application Instructions
+</div>
+
+<div class="p-4 text-[12px] text-slate-700 space-y-3">
+
+<p>
+Before proceeding with this application, please take note of the following:
+</p>
+
+<ul class="list-disc ml-5 space-y-1">
+
+<li>
+Print and submit this completed application form together with a draft
+of the solicitation letter.
+</li>
+
+<li>
+The solicitation letter must include the clause:
+<br><br>
+<span class="italic">
+“This letter is considered invalid unless audited by SACDEV-OSA,
+Xavier University – Ateneo de Cagayan.”
+</span>
+</li>
+
+<li>
+Mass production of solicitation letters is only allowed AFTER this
+application has been approved by SACDEV.
+</li>
+
+<li>
+After approval, the mass-produced letters must be submitted to
+SACDEV-OSA for assignment of official control numbers.
+</li>
+
+<li>
+A Solicitation Report must later be submitted together with the
+liquidation report of the activity.
+</li>
+
+</ul>
+
+</div>
+
+<div class="border-t px-4 py-3 flex justify-end">
+
+<button
+onclick="closeInstructionModal()"
+class="bg-blue-900 text-white px-4 py-2 text-[12px] hover:bg-blue-800">
+I Understand
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+@endif
+
+
+
+
+
+
+
+
+
 {{-- STATUS BANNER --}}
 <div class="border border-slate-300 {{ $style }} px-4 py-3 text-sm mb-6">
 
@@ -217,5 +295,18 @@ Pending
 @include('org.projects.documents.solicitation.partials._scripts')
 
 </div>
+
+
+<script>
+
+function closeInstructionModal() {
+
+    const modal = document.getElementById('instructionModal');
+
+    modal.classList.add('hidden');
+
+}
+
+</script>
 
 </x-layouts.form-only>

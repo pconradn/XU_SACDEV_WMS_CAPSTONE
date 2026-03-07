@@ -29,7 +29,7 @@ class SolicitationApplicationData extends Model
         'target_others',
         'target_others_specify',
 
-        'letter_draft_path',
+        'letter_draft_link',
 
         'approved_letter_count',
         'control_numbers_series',

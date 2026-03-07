@@ -103,9 +103,8 @@ class AdminProjectDocumentController extends Controller
         ]);
     }
 
-    public function approve(Project $project, $formCode)
-    {
-        
+    public function approve(Request $request, Project $project, $formCode){
+
         $allowedForms = [
             'PROJECT_PROPOSAL',
             'BUDGET_PROPOSAL',
@@ -113,7 +112,6 @@ class AdminProjectDocumentController extends Controller
             'SOLICITATION_APPLICATION'
         ];
 
-        //dd($formCode);
         if (!in_array($formCode, $allowedForms)) {
             abort(404);
         }
@@ -156,7 +154,38 @@ class AdminProjectDocumentController extends Controller
             return back()->with('error', 'It is not your turn to approve yet.');
         }
 
-        DB::transaction(function () use ($document, $currentPending) {
+        /*
+        |--------------------------------------------------------------------------
+        | Validate extra fields for solicitation approval
+        |--------------------------------------------------------------------------
+        */
+
+        if ($formCode === 'SOLICITATION_APPLICATION') {
+
+            $request->validate([
+                'approved_letter_count' => ['required','integer','min:1'],
+                'control_series_start' => ['required','string','max:255'],
+                'control_series_end' => ['required','string','max:255'],
+            ]);
+
+        }
+
+        DB::transaction(function () use ($request, $document, $currentPending, $formCode) {
+
+            if ($formCode === 'SOLICITATION_APPLICATION') {
+
+                \App\Models\SolicitationLetterBatch::updateOrCreate(
+                    [
+                        'project_document_id' => $document->id
+                    ],
+                    [
+                        'approved_letter_count' => $request->approved_letter_count,
+                        'control_series_start' => $request->control_series_start,
+                        'control_series_end' => $request->control_series_end,
+                    ]
+                );
+
+            }
 
             $currentPending->update([
                 'status' => 'signed',
@@ -168,14 +197,17 @@ class AdminProjectDocumentController extends Controller
                 ->exists();
 
             if (!$remaining) {
+
                 $document->update([
                     'status' => 'approved_by_sacdev',
                 ]);
+
             }
 
         });
 
         return back()->with('success', 'Document approved successfully.');
+
     }
 
     public function return(Request $request, Project $project, $formCode)
@@ -229,6 +261,10 @@ class AdminProjectDocumentController extends Controller
             return back()->with('error', 'It is not your turn to return this document yet.');
         }
 
+
+
+
+
         DB::transaction(function () use ($document, $request) {
 
             foreach ($document->signatures as $signature) {
@@ -248,6 +284,44 @@ class AdminProjectDocumentController extends Controller
         });
 
         return back()->with('success', 'Document returned for revision.');
+    }
+
+    public function retract(Project $project, $formCode)
+    {
+
+        $formType = FormType::where('code', $formCode)->firstOrFail();
+
+        $document = ProjectDocument::where('project_id', $project->id)
+            ->where('form_type_id', $formType->id)
+            ->firstOrFail();
+
+        if ($document->status !== 'approved_by_sacdev') {
+            return back()->with('error', 'Only approved documents can be retracted.');
+        }
+
+        DB::transaction(function () use ($document) {
+
+            $document->signatures()
+                ->where('role', 'sacdev_admin')
+                ->update([
+                    'status' => 'pending',
+                    'signed_at' => null
+                ]);
+
+            $document->update([
+                'status' => 'submitted'
+            ]);
+
+            if ($document->formType->code === 'SOLICITATION_APPLICATION') {
+
+                $document->solicitationBatches()->delete();
+
+            }
+
+        });
+
+        return back()->with('success', 'SACDEV approval has been retracted.');
+
     }
 
 
