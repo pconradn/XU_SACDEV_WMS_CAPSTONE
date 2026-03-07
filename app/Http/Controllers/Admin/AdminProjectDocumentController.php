@@ -39,6 +39,7 @@ class AdminProjectDocumentController extends Controller
             'PROJECT_PROPOSAL'       => 'org.projects.documents.project-proposal.create',
             'BUDGET_PROPOSAL'        => 'org.projects.documents.budget-proposal.create',
             'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.create',
+            'SOLICITATION_APPLICATION' => 'org.projects.documents.solicitation.create',
         ];
 
         $view = $viewMap[$formType] ?? abort(404);
@@ -47,6 +48,7 @@ class AdminProjectDocumentController extends Controller
         $budget = null;
         $activity = null;
         $participants = collect();
+        $solicitation = null;
 
         if ($formType === 'PROJECT_PROPOSAL') {
 
@@ -72,6 +74,15 @@ class AdminProjectDocumentController extends Controller
 
         }
 
+        if ($formType === 'SOLICITATION_APPLICATION') {
+
+            $solicitation = \App\Models\SolicitationApplicationData::where(
+                'project_document_id',
+                $document->id
+            )->first();
+
+        }
+
         $userId = auth()->id();
 
         $currentSignature = $document->signatures
@@ -85,6 +96,7 @@ class AdminProjectDocumentController extends Controller
             'budget' => $budget,
             'activity' => $activity,
             'participants' => $participants,
+            'data' => $solicitation,
             'isReadOnly' => true,
             'isProjectHead' => false,
             'currentSignature' => $currentSignature
@@ -95,9 +107,10 @@ class AdminProjectDocumentController extends Controller
     {
         
         $allowedForms = [
-            'project_proposal',
+            'PROJECT_PROPOSAL',
             'BUDGET_PROPOSAL',
-            'off_campus_application'
+            'OFF_CAMPUS_APPLICATION',
+            'SOLICITATION_APPLICATION'
         ];
 
         //dd($formCode);
@@ -174,7 +187,8 @@ class AdminProjectDocumentController extends Controller
         $allowedForms = [
             'PROJECT_PROPOSAL',
             'BUDGET_PROPOSAL',
-            'off_campus_application'
+            'OFF_CAMPUS_APPLICATION',
+            'SOLICITATION_APPLICATION'
         ];
 
         if (!in_array($formCode, $allowedForms)) {

@@ -27,15 +27,17 @@ Action
 @php
 
 $types = [
-    'PROJECT_PROPOSAL'       => 'Project Proposal',
-    'BUDGET_PROPOSAL'        => 'Budget Proposal',
-    'OFF_CAMPUS_APPLICATION' => 'Off-Campus Form',
+    'PROJECT_PROPOSAL'         => 'Project Proposal',
+    'BUDGET_PROPOSAL'          => 'Budget Proposal',
+    'OFF_CAMPUS_APPLICATION'   => 'Off-Campus Form',
+    'SOLICITATION_APPLICATION' => 'Solicitation / Sponsorship Application',
 ];
 
 $formRoutes = [
-    'PROJECT_PROPOSAL'       => 'org.projects.project-proposal.create',
-    'BUDGET_PROPOSAL'        => 'org.projects.budget-proposal.create',
-    'OFF_CAMPUS_APPLICATION' => 'org.projects.off-campus.create',
+    'PROJECT_PROPOSAL'         => 'org.projects.project-proposal.create',
+    'BUDGET_PROPOSAL'          => 'org.projects.budget-proposal.create',
+    'OFF_CAMPUS_APPLICATION'   => 'org.projects.off-campus.create',
+    'SOLICITATION_APPLICATION' => 'org.projects.solicitation.create',
 ];
 
 @endphp

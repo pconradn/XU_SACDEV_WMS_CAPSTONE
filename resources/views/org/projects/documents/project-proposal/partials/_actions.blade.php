@@ -142,9 +142,9 @@ status: {{ $currentSignature->status }}
 
             <form method="POST"
                 action="{{ $currentSignature->role === 'sacdev_admin'
-                    ? route('admin.projects.documents.approve', [$project, 'project_proposal'])
-                    : route('org.projects.project-proposal.approve', $project)
-                }}">
+                    ? route('admin.projects.documents.approve', [$project, $document->formType->code])
+                    : route('org.projects.project-proposal.approve', $project) }}">
+
                 @csrf
                 <button
                     class="bg-emerald-600 px-4 py-2 text-[12px] text-white hover:bg-emerald-700">
@@ -181,9 +181,8 @@ status: {{ $currentSignature->status }}
 
         <form method="POST"
             action="{{ $currentSignature->role === 'sacdev_admin'
-                ? route('admin.projects.documents.return', [$project, 'project_proposal'])
-                : route('org.projects.project-proposal.return', $project)
-            }}">
+                ? route('admin.projects.documents.return', [$project, $document->formType->code])
+                : route('org.projects.project-proposal.return', $project) }}">
 
             @csrf
 

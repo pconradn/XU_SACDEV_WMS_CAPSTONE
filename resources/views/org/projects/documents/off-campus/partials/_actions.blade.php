@@ -137,8 +137,8 @@
     <div class="px-4 py-3 flex items-center justify-end gap-3">
 
         <form method="POST"
-              action="{{ $isAdmin
-                ? route('admin.projects.documents.approve', [$project, 'off_campus_application'])
+            action="{{ $isAdmin
+                ? route('admin.projects.documents.approve', [$project, $document->formType->code])
                 : route('org.projects.off-campus.approve', $project) }}">
 
             @csrf
@@ -182,8 +182,8 @@
         </p>
 
         <form method="POST"
-              action="{{ $isAdmin
-                ? route('admin.projects.documents.return', [$project, 'off_campus_application'])
+            action="{{ $isAdmin
+                ? route('admin.projects.documents.return', [$project, $document->formType->code])
                 : route('org.projects.off-campus.return', $project) }}">
 
             @csrf
