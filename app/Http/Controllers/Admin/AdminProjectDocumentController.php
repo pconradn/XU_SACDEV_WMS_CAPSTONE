@@ -35,20 +35,26 @@ class AdminProjectDocumentController extends Controller
             ->whereHas('formType', fn($q) => $q->where('code', $formType))
             ->firstOrFail();
 
+
         $viewMap = [
             'PROJECT_PROPOSAL'       => 'org.projects.documents.project-proposal.create',
             'BUDGET_PROPOSAL'        => 'org.projects.documents.budget-proposal.create',
             'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.create',
             'SOLICITATION_APPLICATION' => 'org.projects.documents.solicitation.create',
+            'SELLING_APPLICATION'    => 'org.projects.documents.selling.create',
         ];
 
         $view = $viewMap[$formType] ?? abort(404);
+
 
         $proposal = null;
         $budget = null;
         $activity = null;
         $participants = collect();
         $solicitation = null;
+        $selling = null;
+        $items = collect();
+
 
         if ($formType === 'PROJECT_PROPOSAL') {
 
@@ -56,11 +62,13 @@ class AdminProjectDocumentController extends Controller
 
         }
 
+
         if ($formType === 'BUDGET_PROPOSAL') {
 
             $budget = $document->budgetProposal()->with('items')->first();
 
         }
+
 
         if ($formType === 'OFF_CAMPUS_APPLICATION') {
 
@@ -74,6 +82,7 @@ class AdminProjectDocumentController extends Controller
 
         }
 
+
         if ($formType === 'SOLICITATION_APPLICATION') {
 
             $solicitation = \App\Models\SolicitationApplicationData::where(
@@ -83,25 +92,56 @@ class AdminProjectDocumentController extends Controller
 
         }
 
+
+        if ($formType === 'SELLING_APPLICATION') {
+
+            $user = auth()->user();
+
+            $isAdmin = $user->system_role === 'sacdev_admin';
+
+            //dd($isAdmin);
+
+            $selling = \App\Models\SellingApplicationData::where(
+                'project_document_id',
+                $document->id
+            )->first();
+
+            if ($selling) {
+                $items = $selling->items;
+            }
+
+        }
+
+
         $userId = auth()->id();
 
         $currentSignature = $document->signatures
             ->where('user_id', $userId)
             ->first();
 
+
         return view($view, [
+
             'project' => $project,
             'document' => $document,
+
             'proposal' => $proposal,
             'budget' => $budget,
             'activity' => $activity,
             'participants' => $participants,
-            'data' => $solicitation,
+
+            'data' => $solicitation ?? $selling,
+            'items' => $items,
+
             'isReadOnly' => true,
             'isProjectHead' => false,
-            'currentSignature' => $currentSignature
+            'currentSignature' => $currentSignature,
+
+            'isAdmin' => $isAdmin,
+
         ]);
     }
+
 
     public function approve(Request $request, Project $project, $formCode){
 
@@ -109,7 +149,8 @@ class AdminProjectDocumentController extends Controller
             'PROJECT_PROPOSAL',
             'BUDGET_PROPOSAL',
             'OFF_CAMPUS_APPLICATION',
-            'SOLICITATION_APPLICATION'
+            'SOLICITATION_APPLICATION',
+            'SELLING_APPLICATION'
         ];
 
         if (!in_array($formCode, $allowedForms)) {
@@ -186,6 +227,39 @@ class AdminProjectDocumentController extends Controller
                 );
 
             }
+            
+            
+
+
+            if ($formCode === 'SELLING_APPLICATION') {
+
+                $data = \App\Models\SellingApplicationData::where(
+                    'project_document_id',
+                    $document->id
+                )->first();
+
+                if ($data && $request->has('items')) {
+
+                    foreach ($request->items as $itemId => $row) {
+
+                        if (!empty($row['remarks'])) {
+
+                            \App\Models\SellingApplicationItem::where('id', $itemId)
+                                ->update([
+                                    'remarks' => $row['remarks']
+                                ]);
+
+                        }
+
+                        
+
+                    }
+
+                }
+
+            //dd($request->has('items'));   
+
+            }
 
             $currentPending->update([
                 'status' => 'signed',
@@ -220,7 +294,8 @@ class AdminProjectDocumentController extends Controller
             'PROJECT_PROPOSAL',
             'BUDGET_PROPOSAL',
             'OFF_CAMPUS_APPLICATION',
-            'SOLICITATION_APPLICATION'
+            'SOLICITATION_APPLICATION',
+            'SELLING_APPLICATION'
         ];
 
         if (!in_array($formCode, $allowedForms)) {
@@ -317,6 +392,28 @@ class AdminProjectDocumentController extends Controller
                 $document->solicitationBatches()->delete();
 
             }
+
+            if ($document->formType->code === 'SELLING_APPLICATION') {
+
+                $data = \App\Models\SellingApplicationData::where(
+                    'project_document_id',
+                    $document->id
+                )->first();
+
+                if ($data) {
+
+                    \App\Models\SellingApplicationItem::where(
+                        'selling_application_data_id',
+                        $data->id
+                    )->update([
+                        'remarks' => null
+                    ]);
+
+                }
+
+            }
+
+
 
         });
 

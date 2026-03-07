@@ -7,6 +7,7 @@ use App\Http\Controllers\Org\OffCampusApplicationController;
 use App\Http\Controllers\Org\ProjectController;
 use App\Http\Controllers\Org\ProjectDocumentHubController;
 use App\Http\Controllers\Org\ProjectProposalController;
+use App\Http\Controllers\Org\SellingApplicationController;
 use App\Http\Controllers\Org\SolicitationApplicationController;
 use Illuminate\Support\Facades\Route;
 
@@ -203,6 +204,48 @@ Route::post(
     'project.access',
     'project.role:president,moderator'
 ])->name('org.projects.solicitation.return');
+
+
+/*
+|--------------------------------------------------------------------------
+| Application for Selling
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    'projects/{project}/documents/selling/create',
+    [SellingApplicationController::class, 'create']
+)->middleware([
+    'project.access',
+    'org.role:project_head,president,moderator'
+])->name('org.projects.selling.create');
+
+
+Route::post(
+    'projects/{project}/documents/selling',
+    [SellingApplicationController::class, 'store']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.selling.store');
+
+
+Route::post(
+    'projects/{project}/documents/selling/approve',
+    [SellingApplicationController::class, 'approve']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.selling.approve');
+
+
+Route::post(
+    'projects/{project}/documents/selling/return',
+    [SellingApplicationController::class, 'return']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.selling.return');
 
 
 

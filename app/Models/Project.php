@@ -77,6 +77,14 @@ class Project extends Model
         return $this->hasMany(ProjectDocument::class);
     }
 
+
+    public function projectHead()
+    {
+        return $this->hasOne(ProjectAssignment::class)
+            ->where('assignment_role', 'project_head')
+            ->whereNull('archived_at');
+    }
+
     
     public function proposalDocument()
     {

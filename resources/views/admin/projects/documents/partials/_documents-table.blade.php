@@ -31,6 +31,7 @@ $types = [
     'BUDGET_PROPOSAL'          => 'Budget Proposal',
     'OFF_CAMPUS_APPLICATION'   => 'Off-Campus Form',
     'SOLICITATION_APPLICATION' => 'Solicitation / Sponsorship Application',
+    'SELLING_APPLICATION' => 'Selling Application',
 ];
 
 $formRoutes = [
@@ -38,6 +39,7 @@ $formRoutes = [
     'BUDGET_PROPOSAL'          => 'org.projects.budget-proposal.create',
     'OFF_CAMPUS_APPLICATION'   => 'org.projects.off-campus.create',
     'SOLICITATION_APPLICATION' => 'org.projects.solicitation.create',
+    'SELLING_APPLICATION' => 'org.projects.selling.create',
 ];
 
 @endphp
