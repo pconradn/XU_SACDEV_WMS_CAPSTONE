@@ -64,6 +64,8 @@
         </div>
     @endif
 
+    @include('org.projects.documents.partials._clearance-card')
+
 
     @include('org.projects.documents.partials.section', [
         'title' => 'Post-Implementation Documents',

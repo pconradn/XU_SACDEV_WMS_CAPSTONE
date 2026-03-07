@@ -1,12 +1,13 @@
 <?php
 
+use App\Http\Controllers\Documents\BaseProjectDocumentController;
 use App\Http\Controllers\Org\BudgetProposalController;
+use App\Http\Controllers\Org\ClearanceController;
 use App\Http\Controllers\Org\OffCampusApplicationController;
 use App\Http\Controllers\Org\ProjectController;
 use App\Http\Controllers\Org\ProjectDocumentHubController;
 use App\Http\Controllers\Org\ProjectProposalController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Documents\BaseProjectDocumentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -181,3 +182,13 @@ Route::post(
 )->middleware([
     'project.access'
 ])->name('org.projects.disbursement-voucher.generate');
+
+
+
+
+Route::get(
+    '/projects/{project}/clearance/print',
+    [ClearanceController::class, 'print']
+    )->middleware([
+    'project.access'
+])->name('org.projects.clearance.print');

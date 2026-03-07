@@ -189,4 +189,10 @@ Route::prefix('admin')
         )->name('admin.projects.documents.return');
 
 
+        Route::post(
+            '/projects/{project}/require-clearance',
+            [AdminProjectController::class, 'requireClearance']
+        )->name('admin.projects.require-clearance');
+
+
     });
