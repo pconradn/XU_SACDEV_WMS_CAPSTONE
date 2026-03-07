@@ -1,10 +1,11 @@
 <?php
 
+use App\Http\Controllers\ContextController;
+use App\Http\Controllers\ForcedPasswordController;
+use App\Http\Controllers\Org\ClearanceController;
 use App\Models\OrgMembership;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ContextController;
-use App\Http\Controllers\ForcedPasswordController;
 
 
 /*
@@ -13,6 +14,12 @@ use App\Http\Controllers\ForcedPasswordController;
 |--------------------------------------------------------------------------
 */
 Route::get('/', fn () => view('auth.login'));
+
+
+Route::get(
+    '/clearance/verify/{reference}',
+    [ClearanceController::class,'verify']
+)->name('clearance.verify');
 
 
 /*

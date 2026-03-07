@@ -7,6 +7,7 @@ use App\Http\Controllers\Org\OffCampusApplicationController;
 use App\Http\Controllers\Org\ProjectController;
 use App\Http\Controllers\Org\ProjectDocumentHubController;
 use App\Http\Controllers\Org\ProjectProposalController;
+use App\Http\Controllers\Org\SolicitationApplicationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -162,6 +163,48 @@ Route::post(
     [OffCampusApplicationController::class, 'return']
 )->name('org.projects.off-campus.return');
 
+/*
+|--------------------------------------------------------------------------
+| Application for Solicitation / Sponsorship
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    'projects/{project}/documents/solicitation/create',
+    [SolicitationApplicationController::class, 'create']
+)->middleware([
+    'project.access',
+    'org.role:project_head,president,moderator'
+])->name('org.projects.solicitation.create');
+
+
+Route::post(
+    'projects/{project}/documents/solicitation',
+    [SolicitationApplicationController::class, 'store']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.solicitation.store');
+
+
+Route::post(
+    'projects/{project}/documents/solicitation/approve',
+    [SolicitationApplicationController::class, 'approve']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.solicitation.approve');
+
+
+Route::post(
+    'projects/{project}/documents/solicitation/return',
+    [SolicitationApplicationController::class, 'return']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.solicitation.return');
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -192,3 +235,11 @@ Route::get(
     )->middleware([
     'project.access'
 ])->name('org.projects.clearance.print');
+
+Route::post(
+    '/projects/{project}/clearance/upload',
+    [ClearanceController::class,'upload']
+        )->middleware([
+    'project.access'
+]
+)->name('org.projects.clearance.upload');

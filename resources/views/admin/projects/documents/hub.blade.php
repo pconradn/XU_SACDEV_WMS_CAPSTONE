@@ -34,9 +34,12 @@ Project Documents — SACDEV Review
 
 {{-- CLEARANCE PANEL --}}
 @include('admin.projects.documents.partials._clearance-panel')
+@include('admin.projects.partials._clearance-actions')
 
 {{-- DOCUMENT TABLE --}}
 @include('admin.projects.documents.partials._documents-table')
+
+
 
 </div>
 

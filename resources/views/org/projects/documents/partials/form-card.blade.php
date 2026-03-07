@@ -8,6 +8,7 @@ $formRoutes = [
     'PROJECT_PROPOSAL' => 'org.projects.project-proposal.create',
     'BUDGET_PROPOSAL'  => 'org.projects.budget-proposal.create',
     'OFF_CAMPUS_APPLICATION' => 'org.projects.off-campus.guidelines',
+    'SOLICITATION_APPLICATION' => 'org.projects.solicitation.create',
 ];
 
 $routeName = $formRoutes[$formType->code] ?? null;

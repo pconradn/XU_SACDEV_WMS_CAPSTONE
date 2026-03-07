@@ -1,11 +1,12 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Admin\AdminProjectDocumentController;
 use App\Http\Controllers\Admin\AdminMajorOfficerController;
 use App\Http\Controllers\Admin\AdminOrgBySyController;
 use App\Http\Controllers\Admin\AdminOrgReviewController;
+use App\Http\Controllers\Admin\AdminProjectClearanceController;
 use App\Http\Controllers\Admin\AdminProjectController;
+use App\Http\Controllers\Admin\AdminProjectDocumentController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\OrgActivationController;
 use App\Http\Controllers\Admin\OrganizationController;
@@ -193,6 +194,17 @@ Route::prefix('admin')
             '/projects/{project}/require-clearance',
             [AdminProjectController::class, 'requireClearance']
         )->name('admin.projects.require-clearance');
+
+
+        Route::post(
+            '/projects/{project}/clearance/verify',
+            [AdminProjectClearanceController::class, 'verify']
+        )->name('admin.projects.clearance.verify');
+
+        Route::post(
+            '/projects/{project}/clearance/return',
+            [AdminProjectClearanceController::class, 'return']
+        )->name('admin.projects.clearance.return');
 
 
     });

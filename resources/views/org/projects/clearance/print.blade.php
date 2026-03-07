@@ -192,4 +192,31 @@ Verification Hash:
 
 </body>
 
+<div style="margin-top:40px; text-align:center">
+
+{!! QrCode::size(120)->generate($verificationUrl) !!}
+
+<div style="margin-top:6px; font-size:10px;">
+Scan to verify clearance authenticity
+</div>
+
+</div>
+
+<div class="footer">
+
+Reference: {{ $project->clearance_reference }}
+
+<br>
+
+Verification URL:
+{{ $verificationUrl }}
+
+<br><br>
+
+Verification Hash:
+{{ $hash }}
+
+</div>
+
+
 </html>

@@ -44,5 +44,16 @@ class ProjectProposalFormSeeder extends Seeder
                 'updated_at' => $now,
             ]
         );
+
+        DB::table('form_types')->updateOrInsert(
+            ['code' => 'SOLICITATION_APPLICATION'],
+            [
+                'name' => 'Application for Solicitation / Sponsorship',
+                'phase' => 'pre_implementation',
+                'description' => 'Application form required before student organizations conduct solicitation or sponsorship activities using the name of the university.',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
     }
 }

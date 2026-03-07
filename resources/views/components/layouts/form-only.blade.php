@@ -13,6 +13,7 @@
 
 <body class="bg-slate-100 min-h-screen font-sans antialiased">
 
+
     
     <div class="bg-white border-b border-slate-200">
         <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">

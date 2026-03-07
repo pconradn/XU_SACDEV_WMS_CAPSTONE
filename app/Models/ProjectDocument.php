@@ -103,5 +103,10 @@ class ProjectDocument extends Model
         return $this->belongsTo(User::class, 'returned_by');
     }
 
+    public function solicitationData()
+    {
+        return $this->hasOne(SolicitationApplicationData::class);
+    }
+
 
 }
