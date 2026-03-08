@@ -42,6 +42,7 @@ class AdminProjectDocumentController extends Controller
             'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.create',
             'SOLICITATION_APPLICATION' => 'org.projects.documents.solicitation.create',
             'SELLING_APPLICATION'    => 'org.projects.documents.selling.create',
+            'REQUEST_TO_PURCHASE'    => 'org.projects.documents.request-to-purchase.create',
         ];
 
         $view = $viewMap[$formType] ?? abort(404);
@@ -53,6 +54,8 @@ class AdminProjectDocumentController extends Controller
         $participants = collect();
         $solicitation = null;
         $selling = null;
+        $purchase = null;
+
         $items = collect();
 
 
@@ -95,12 +98,6 @@ class AdminProjectDocumentController extends Controller
 
         if ($formType === 'SELLING_APPLICATION') {
 
-            $user = auth()->user();
-
-            $isAdmin = $user->system_role === 'sacdev_admin';
-
-            //dd($isAdmin);
-
             $selling = \App\Models\SellingApplicationData::where(
                 'project_document_id',
                 $document->id
@@ -113,7 +110,25 @@ class AdminProjectDocumentController extends Controller
         }
 
 
-        $userId = auth()->id();
+        if ($formType === 'REQUEST_TO_PURCHASE') {
+
+            $purchase = \App\Models\RequestToPurchaseData::where(
+                'project_document_id',
+                $document->id
+            )->first();
+
+            if ($purchase) {
+                $items = $purchase->items;
+            }
+
+        }
+
+
+        $user = auth()->user();
+        $userId = $user->id;
+
+        $isAdmin = $user->system_role === 'sacdev_admin';
+
 
         $currentSignature = $document->signatures
             ->where('user_id', $userId)
@@ -130,7 +145,7 @@ class AdminProjectDocumentController extends Controller
             'activity' => $activity,
             'participants' => $participants,
 
-            'data' => $solicitation ?? $selling,
+            'data' => $purchase ?? $solicitation ?? $selling,
             'items' => $items,
 
             'isReadOnly' => true,
@@ -150,8 +165,11 @@ class AdminProjectDocumentController extends Controller
             'BUDGET_PROPOSAL',
             'OFF_CAMPUS_APPLICATION',
             'SOLICITATION_APPLICATION',
-            'SELLING_APPLICATION'
+            'SELLING_APPLICATION',
+            'REQUEST_TO_PURCHASE',
         ];
+
+        
 
         if (!in_array($formCode, $allowedForms)) {
             abort(404);
@@ -295,7 +313,8 @@ class AdminProjectDocumentController extends Controller
             'BUDGET_PROPOSAL',
             'OFF_CAMPUS_APPLICATION',
             'SOLICITATION_APPLICATION',
-            'SELLING_APPLICATION'
+            'SELLING_APPLICATION',
+            'REQUEST_TO_PURCHASE',
         ];
 
         if (!in_array($formCode, $allowedForms)) {

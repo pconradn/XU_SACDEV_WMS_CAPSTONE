@@ -37,8 +37,7 @@ Cancel
 
 @if(in_array($status, ['draft','returned']))
 
-<button
-type="submit"
+<button type="submit"
 form="purchaseForm"
 name="action"
 value="draft"
@@ -46,8 +45,7 @@ class="border border-slate-500 px-4 py-2 text-[12px] text-slate-800 hover:bg-sla
 Save as Draft
 </button>
 
-<button
-type="button"
+<button type="button"
 onclick="openAgreementModal()"
 class="bg-blue-900 px-4 py-2 text-[12px] text-white hover:bg-blue-800">
 Submit for Approval
@@ -58,8 +56,7 @@ Submit for Approval
 
 @if($status === 'submitted')
 
-<button
-type="button"
+<button type="button"
 onclick="openResubmitModal()"
 class="bg-amber-600 px-4 py-2 text-[12px] text-white hover:bg-amber-700">
 Resubmit with Changes
@@ -96,15 +93,13 @@ They will be required to review and approve this document again.
 
 <div class="flex justify-end gap-3">
 
-<button
-type="button"
+<button type="button"
 onclick="closeResubmitModal()"
 class="border border-slate-400 px-4 py-2 text-[12px] text-slate-700 hover:bg-slate-100">
 Cancel
 </button>
 
-<button
-type="submit"
+<button type="submit"
 form="purchaseForm"
 name="action"
 value="draft"
@@ -135,6 +130,7 @@ $currentSignature->user_id === auth()->id()
 
 <div class="px-4 py-3 flex items-center justify-end gap-3">
 
+{{-- APPROVE --}}
 @if($isAdmin)
 
 <button
@@ -161,6 +157,7 @@ Approve
 @endif
 
 
+{{-- RETURN --}}
 <button
 type="button"
 onclick="openReturnModal()"
@@ -192,7 +189,9 @@ Please provide remarks explaining the required changes.
 </p>
 
 <form method="POST"
-action="{{ route('org.projects.request-to-purchase.return', $project) }}">
+action="{{ $isAdmin
+? route('admin.projects.documents.return', [$project, $document->formType->code])
+: route('org.projects.request-to-purchase.return', $project) }}">
 
 @csrf
 
@@ -228,7 +227,7 @@ Return Form
 
 
 
-{{-- SUBMIT CONFIRMATION MODAL --}}
+{{-- SUBMIT CONFIRMATION --}}
 <div id="agreementModal"
 class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
 
@@ -277,44 +276,61 @@ Yes, Submit
 
 
 
+{{-- ADMIN APPROVE MODAL --}}
+@if($isAdmin)
+@include('org.projects.documents.request-to-purchase.partials._approve-modal')
+@endif
+
+
+
 <script>
 
 function openAgreementModal() {
-    const modal = document.getElementById('agreementModal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+const modal = document.getElementById('agreementModal');
+modal.classList.remove('hidden');
+modal.classList.add('flex');
 }
 
 function closeAgreementModal() {
-    const modal = document.getElementById('agreementModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+const modal = document.getElementById('agreementModal');
+modal.classList.add('hidden');
+modal.classList.remove('flex');
 }
 
-
 function openReturnModal() {
-    const modal = document.getElementById('returnModal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+const modal = document.getElementById('returnModal');
+modal.classList.remove('hidden');
+modal.classList.add('flex');
 }
 
 function closeReturnModal() {
-    const modal = document.getElementById('returnModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+const modal = document.getElementById('returnModal');
+modal.classList.add('hidden');
+modal.classList.remove('flex');
 }
 
-
 function openResubmitModal() {
-    const modal = document.getElementById('resubmitModal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+const modal = document.getElementById('resubmitModal');
+modal.classList.remove('hidden');
+modal.classList.add('flex');
 }
 
 function closeResubmitModal() {
-    const modal = document.getElementById('resubmitModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+const modal = document.getElementById('resubmitModal');
+modal.classList.add('hidden');
+modal.classList.remove('flex');
+}
+
+function openApproveModal() {
+const modal = document.getElementById('approveModal');
+modal.classList.remove('hidden');
+modal.classList.add('flex');
+}
+
+function closeApproveModal() {
+const modal = document.getElementById('approveModal');
+modal.classList.add('hidden');
+modal.classList.remove('flex');
 }
 
 </script>

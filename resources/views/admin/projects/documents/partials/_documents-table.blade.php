@@ -32,6 +32,8 @@ $types = [
     'OFF_CAMPUS_APPLICATION'   => 'Off-Campus Form',
     'SOLICITATION_APPLICATION' => 'Solicitation / Sponsorship Application',
     'SELLING_APPLICATION' => 'Selling Application',
+    'REQUEST_TO_PURCHASE' => 'Request to Purchase'
+
 ];
 
 $formRoutes = [
@@ -40,6 +42,7 @@ $formRoutes = [
     'OFF_CAMPUS_APPLICATION'   => 'org.projects.off-campus.create',
     'SOLICITATION_APPLICATION' => 'org.projects.solicitation.create',
     'SELLING_APPLICATION' => 'org.projects.selling.create',
+    'REQUEST_TO_PURCHASE' => 'org.projects.request-to-purchase.create',
 ];
 
 @endphp
