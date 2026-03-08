@@ -10,6 +10,7 @@ $formRoutes = [
     'OFF_CAMPUS_APPLICATION' => 'org.projects.off-campus.guidelines',
     'SOLICITATION_APPLICATION' => 'org.projects.solicitation.create',
     'SELLING_APPLICATION' => 'org.projects.selling.create',
+    'REQUEST_TO_PURCHASE' => 'org.projects.request-to-purchase.create',
 ];
 
 $routeName = $formRoutes[$formType->code] ?? null;

@@ -7,6 +7,7 @@ use App\Http\Controllers\Org\OffCampusApplicationController;
 use App\Http\Controllers\Org\ProjectController;
 use App\Http\Controllers\Org\ProjectDocumentHubController;
 use App\Http\Controllers\Org\ProjectProposalController;
+use App\Http\Controllers\Org\RequestToPurchaseController;
 use App\Http\Controllers\Org\SellingApplicationController;
 use App\Http\Controllers\Org\SolicitationApplicationController;
 use Illuminate\Support\Facades\Route;
@@ -247,6 +248,48 @@ Route::post(
     'project.role:president,moderator'
 ])->name('org.projects.selling.return');
 
+
+
+/*
+|--------------------------------------------------------------------------
+| Request to Purchase
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    'projects/{project}/documents/request-to-purchase/create',
+    [RequestToPurchaseController::class, 'create']
+)->middleware([
+    'project.access',
+    'org.role:project_head,president,moderator,treasurer'
+])->name('org.projects.request-to-purchase.create');
+
+
+Route::post(
+    'projects/{project}/documents/request-to-purchase',
+    [RequestToPurchaseController::class, 'store']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.request-to-purchase.store');
+
+
+Route::post(
+    'projects/{project}/documents/request-to-purchase/approve',
+    [RequestToPurchaseController::class, 'approve']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator,treasurer'
+])->name('org.projects.request-to-purchase.approve');
+
+
+Route::post(
+    'projects/{project}/documents/request-to-purchase/return',
+    [RequestToPurchaseController::class, 'return']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator,treasurer'
+])->name('org.projects.request-to-purchase.return');
 
 
 /*

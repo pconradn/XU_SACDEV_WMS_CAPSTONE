@@ -66,6 +66,16 @@ class ProjectProposalFormSeeder extends Seeder
                 'updated_at' => $now,
             ]
         );
+        DB::table('form_types')->updateOrInsert(
+            ['code' => 'REQUEST_TO_PURCHASE'],
+            [
+                'name' => 'Request to Purchase',
+                'phase' => 'pre_implementation',
+                'description' => 'Form used by student organizations to request the purchase of equipment, materials, or other items needed for a project activity.',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
 
 
 

@@ -122,4 +122,10 @@ class ProjectDocument extends Model
         return $this->hasOne(\App\Models\SellingApplicationData::class, 'project_document_id');
     }
 
+
+    public function requestToPurchase()
+    {
+        return $this->hasOne(\App\Models\RequestToPurchaseData::class, 'project_document_id');
+    }
+
 }
