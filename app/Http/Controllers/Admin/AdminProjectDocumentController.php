@@ -172,8 +172,8 @@ class AdminProjectDocumentController extends Controller
             'currentSignature' => $currentSignature,
 
             'isAdmin' => $isAdmin,
-            'cancellation' => $cancellation,
-            'postponement' => $postponement,
+            //'cancellation' => $cancellation,
+            //'postponement' => $postponement,
 
         ]);
     }
