@@ -78,6 +78,90 @@ class ProjectProposalFormSeeder extends Seeder
             ]
         );
 
+        /*
+        |--------------------------------------------------------------------------
+        | Additional "Other" Phase Forms
+        |--------------------------------------------------------------------------
+        */
+
+        DB::table('form_types')->updateOrInsert(
+            ['code' => 'SOLICITATION_COLLECTION_REPORT'],
+            [
+                'name' => 'Solicitation Collection Report',
+                'phase' => 'other',
+                'description' => 'Report summarizing all funds collected from solicitation or sponsorship activities.',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
+
+        DB::table('form_types')->updateOrInsert(
+            ['code' => 'TICKET_SELLING_REPORT'],
+            [
+                'name' => 'Ticket Selling Report',
+                'phase' => 'other',
+                'description' => 'Report documenting ticket sales and total collections from ticket-based activities.',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
+
+        DB::table('form_types')->updateOrInsert(
+            ['code' => 'SELLING_ACTIVITY_REPORT'],
+            [
+                'name' => 'Selling Activity Report',
+                'phase' => 'other',
+                'description' => 'Summary report of goods sold during student organization selling activities.',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
+
+        DB::table('form_types')->updateOrInsert(
+            ['code' => 'FEES_COLLECTION_REPORT'],
+            [
+                'name' => 'Fees Collection Report',
+                'phase' => 'other',
+                'description' => 'Report detailing collections from membership fees or other organizational fees.',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Post Implementation Forms
+        |--------------------------------------------------------------------------
+        */
+
+        DB::table('form_types')->updateOrInsert(
+            ['code' => 'DOCUMENTATION_REPORT'],
+            [
+                'name' => 'Documentation Report',
+                'phase' => 'post_implementation',
+                'description' => 'Report documenting the implementation of the activity including photos, narrative summary, and outcomes.',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
+
+        DB::table('form_types')->updateOrInsert(
+            ['code' => 'LIQUIDATION_REPORT'],
+            [
+                'name' => 'Liquidation Report',
+                'phase' => 'post_implementation',
+                'description' => 'Financial liquidation report showing actual expenses and supporting receipts after the activity.',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Notices
+        |--------------------------------------------------------------------------
+        */
+
         DB::table('form_types')->updateOrInsert(
             ['code' => 'POSTPONEMENT_NOTICE'],
             [
@@ -99,8 +183,5 @@ class ProjectProposalFormSeeder extends Seeder
                 'updated_at' => $now,
             ]
         );
-
-
-
     }
 }

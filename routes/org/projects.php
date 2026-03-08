@@ -312,7 +312,8 @@ Route::get(
     'projects/{project}/documents/postponement/{document}',
     [ActivityNoticeController::class, 'editPostponement']
 )->middleware([
-    'project.access'
+    'project.access',
+    'document.type:POSTPONEMENT_NOTICE'
 ])->name('org.projects.postponement.edit');
 
 
@@ -321,7 +322,8 @@ Route::post(
     [ActivityNoticeController::class, 'storePostponement']
 )->middleware([
     'project.access',
-    'project.role:project_head'
+    'project.role:project_head',
+    'document.type:POSTPONEMENT_NOTICE'
 ])->name('org.projects.postponement.store');
 
 
@@ -330,7 +332,8 @@ Route::post(
     [ActivityNoticeController::class, 'approve']
 )->middleware([
     'project.access',
-    'project.role:president,moderator'
+    'project.role:president,moderator',
+    'document.type:POSTPONEMENT_NOTICE'
 ])->name('org.projects.postponement.approve');
 
 
@@ -339,7 +342,8 @@ Route::post(
     [ActivityNoticeController::class, 'return']
 )->middleware([
     'project.access',
-    'project.role:president,moderator'
+    'project.role:president,moderator',
+    'document.type:POSTPONEMENT_NOTICE'
 ])->name('org.projects.postponement.return');
 
 
@@ -363,7 +367,8 @@ Route::get(
     'projects/{project}/documents/cancellation/{document}',
     [ActivityNoticeController::class, 'editCancellation']
 )->middleware([
-    'project.access'
+    'project.access',
+    'document.type:CANCELLATION_NOTICE'
 ])->name('org.projects.cancellation.edit');
 
 
@@ -372,7 +377,8 @@ Route::post(
     [ActivityNoticeController::class, 'storeCancellation']
 )->middleware([
     'project.access',
-    'project.role:project_head'
+    'project.role:project_head',
+    'document.type:CANCELLATION_NOTICE'
 ])->name('org.projects.cancellation.store');
 
 
@@ -381,7 +387,8 @@ Route::post(
     [ActivityNoticeController::class, 'approve']
 )->middleware([
     'project.access',
-    'project.role:president,moderator'
+    'project.role:president,moderator',
+    'document.type:CANCELLATION_NOTICE'
 ])->name('org.projects.cancellation.approve');
 
 
@@ -390,8 +397,24 @@ Route::post(
     [ActivityNoticeController::class, 'return']
 )->middleware([
     'project.access',
-    'project.role:president,moderator'
+    'project.role:president,moderator',
+    'document.type:CANCELLATION_NOTICE'
 ])->name('org.projects.cancellation.return');
+
+
+/*
+|--------------------------------------------------------------------------
+| Archive Notice (Postponement / Cancellation)
+|--------------------------------------------------------------------------
+*/
+
+Route::delete(
+    'projects/{project}/documents/notices/{document}',
+    [ActivityNoticeController::class, 'archive']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.notices.archive');
 
 
 

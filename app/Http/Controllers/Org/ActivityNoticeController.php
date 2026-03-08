@@ -20,11 +20,22 @@ use App\Models\User;
 class ActivityNoticeController extends Controller
 {
 
+
     public function createPostponement(Project $project)
     {
 
         $formType = FormType::where('code','POSTPONEMENT_NOTICE')->firstOrFail();
 
+        $existing = ProjectDocument::where('project_id',$project->id)
+            ->where('form_type_id',$formType->id)
+            ->whereNull('archived_at')
+            ->where('status','!=','approved_by_sacdev')
+            ->exists();
+
+        if($existing){
+            return back()->with('error','A postponement notice already exists and is still pending approval.');
+        }
+
         $document = ProjectDocument::create([
             'project_id' => $project->id,
             'form_type_id' => $formType->id,
@@ -33,16 +44,25 @@ class ActivityNoticeController extends Controller
         ]);
 
         return redirect()->route(
-            'org.projects.activity-notices.postponement.edit',
+            'org.projects.postponement.edit',
             [$project,$document]
         );
     }
 
-    public function createCancellation(Project $project)
-    {
+
+    public function createCancellation(Project $project){
 
         $formType = FormType::where('code','CANCELLATION_NOTICE')->firstOrFail();
 
+        $exists = ProjectDocument::where('project_id',$project->id)
+            ->where('form_type_id',$formType->id)
+            ->whereNull('archived_at')
+            ->exists();
+
+        if($exists){
+            return back()->with('error','A cancellation notice already exists for this project.');
+        }
+
         $document = ProjectDocument::create([
             'project_id' => $project->id,
             'form_type_id' => $formType->id,
@@ -51,13 +71,18 @@ class ActivityNoticeController extends Controller
         ]);
 
         return redirect()->route(
-            'org.projects.activity-notices.cancellation.edit',
+            'org.projects.cancellation.edit',
             [$project,$document]
         );
     }
 
+
     public function editPostponement(Project $project, ProjectDocument $document)
     {
+
+        if($document->status !== 'draft'){
+            return back()->with('error','This notice can no longer be edited.');
+        }
 
         $data = PostponementNoticeData::where(
             'project_document_id',
@@ -73,6 +98,10 @@ class ActivityNoticeController extends Controller
     public function editCancellation(Project $project, ProjectDocument $document)
     {
 
+        if($document->status !== 'draft'){
+            return back()->with('error','This notice can no longer be edited.');
+        }
+
         $data = CancellationNoticeData::where(
             'project_document_id',
             $document->id
@@ -86,10 +115,12 @@ class ActivityNoticeController extends Controller
 
 
 
-
-
     public function storePostponement(Request $request, Project $project, ProjectDocument $document)
     {
+
+        if($document->status !== 'draft'){
+            return back()->with('error','This notice can no longer be modified.');
+        }
 
         $data = $request->validate([
 
@@ -106,14 +137,13 @@ class ActivityNoticeController extends Controller
 
         DB::transaction(function() use ($data,$document,$request,$project) {
 
-            $notice = PostponementNoticeData::updateOrCreate(
+            PostponementNoticeData::updateOrCreate(
 
                 ['project_document_id'=>$document->id],
 
                 $data
 
             );
-
 
             if ($request->action === 'submit') {
 
@@ -126,8 +156,14 @@ class ActivityNoticeController extends Controller
         return back()->with('success','Postponement notice saved.');
     }
 
+
+
     public function storeCancellation(Request $request, Project $project, ProjectDocument $document)
     {
+
+        if($document->status !== 'draft'){
+            return back()->with('error','This notice can no longer be modified.');
+        }
 
         $data = $request->validate([
 
@@ -145,7 +181,6 @@ class ActivityNoticeController extends Controller
 
             );
 
-
             if ($request->action === 'submit') {
 
                 $this->submitDocument($project,$document);
@@ -156,6 +191,23 @@ class ActivityNoticeController extends Controller
 
         return back()->with('success','Cancellation notice saved.');
     }
+
+
+    public function archive(Project $project, ProjectDocument $document)
+    {
+
+        if($document->status !== 'draft'){
+            return back()->with('error','Only draft notices can be removed.');
+        }
+
+        $document->update([
+            'archived_at'=>now()
+        ]);
+
+        return back()->with('success','Notice removed.');
+    }
+
+
 
     public function approve(Project $project, ProjectDocument $document)
     {
@@ -177,7 +229,7 @@ class ActivityNoticeController extends Controller
         if (!$document->nextPendingRole()) {
 
             $document->update([
-                'status'=>'approved',
+                'status'=>'approved_by_sacdev',
                 'reviewed_at'=>now(),
                 'reviewed_by_user_id'=>auth()->id()
             ]);
@@ -192,30 +244,30 @@ class ActivityNoticeController extends Controller
 
         $data = $request->validate([
             'remarks'=>'required|string'
-
         ]);
 
 
         $document->update([
-            'status'=>'returned',
+            'status'=>'draft',
             'remarks'=>$data['remarks'],
             'returned_by'=>auth()->id(),
             'returned_at'=>now()
-
         ]);
 
         return back()->with('success','Document returned for revision.');
     }
 
+
+
     protected function submitDocument(Project $project, ProjectDocument $document)
     {
+
         $document->update([
             'status'=>'submitted',
             'submitted_at'=>now(),
             'remarks'=>null,
             'returned_by'=>null,
             'returned_at'=>null
-
         ]);
 
 
@@ -269,9 +321,11 @@ class ActivityNoticeController extends Controller
 
         );
 
+
         $admin = User::where('system_role','sacdev_admin')->firstOrFail();
 
         $this->createSignature(
+
             $document->id,
             $admin->id,
             'sacdev_admin'
@@ -283,7 +337,9 @@ class ActivityNoticeController extends Controller
 
     protected function createSignature($documentId,$userId,$role,$status='pending')
     {
+
         DB::table('project_document_signatures')->insert([
+
             'project_document_id'=>$documentId,
             'user_id'=>$userId,
             'role'=>$role,

@@ -16,6 +16,7 @@ class ProjectDocument extends Model
         'reviewed_at',
         'reviewed_by_user_id',
         'remarks',
+        'archived_at'
     ];
 
     public function project()
@@ -143,6 +144,17 @@ class ProjectDocument extends Model
     public function cancellationNotice()
     {
         return $this->hasOne(\App\Models\CancellationNoticeData::class,'project_document_id');
+    }
+
+
+    public function nextPendingRole2()
+    {
+        $sig = $this->signatures()
+            ->where('status','pending')
+            ->orderBy('id')
+            ->first();
+
+        return $sig?->role;
     }
 
 }

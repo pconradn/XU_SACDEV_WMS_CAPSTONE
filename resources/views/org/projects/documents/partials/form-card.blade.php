@@ -2,7 +2,9 @@
 
 $formType = $form->formType;
 $document = $form->document;
-$required = $form->required;
+$required = $form->required ?? false;
+$allowed = $form->allowed ?? true;
+
 
 $formRoutes = [
     'PROJECT_PROPOSAL' => 'org.projects.project-proposal.create',
@@ -11,32 +13,88 @@ $formRoutes = [
     'SOLICITATION_APPLICATION' => 'org.projects.solicitation.create',
     'SELLING_APPLICATION' => 'org.projects.selling.create',
     'REQUEST_TO_PURCHASE' => 'org.projects.request-to-purchase.create',
-    //'POSTPONEMENT_NOTICE' => 'org.projects.postponement.create',
-    //'CANCELLATION_NOTICE' => 'org.projects.cancellation.create',
 ];
 
 $routeName = $formRoutes[$formType->code] ?? null;
 
+
+/*
+|--------------------------------------------------------------------------
+| Status Logic
+|--------------------------------------------------------------------------
+*/
+
 $statusText = 'Not created';
 $statusColor = 'bg-slate-400';
+$awaitingText = null;
 
 if ($document) {
 
     if ($document->status === 'draft') {
-        $statusText = 'Draft';
-        $statusColor = 'bg-amber-400';
 
-    } elseif ($document->status === 'submitted') {
+        if ($document->remarks) {
+            $statusText = 'Returned for Revision';
+            $statusColor = 'bg-rose-500';
+        } else {
+            $statusText = 'Draft';
+            $statusColor = 'bg-amber-400';
+        }
+
+    }
+
+    elseif ($document->status === 'submitted') {
+
         $statusText = 'Submitted';
-        $statusColor = 'bg-blue-400';
+        $statusColor = 'bg-blue-500';
 
-    } elseif ($document->status === 'approved_by_sacdev') {
+        if(method_exists($document,'nextPendingRole')){
+            $awaitingText = $document->nextPendingRole2();
+        }
+
+    }
+
+    elseif ($document->status === 'approved_by_sacdev') {
+
         $statusText = 'Approved';
         $statusColor = 'bg-emerald-500';
 
-    } elseif ($document->status === 'returned_by_sacdev') {
-        $statusText = 'Returned';
-        $statusColor = 'bg-rose-500';
+    }
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Awaiting Role Color
+|--------------------------------------------------------------------------
+*/
+
+$awaitingColor = 'bg-slate-500 text-white';
+
+if($awaitingText){
+
+    switch($awaitingText){
+
+        case 'project_head':
+            $awaitingColor = 'bg-blue-500 text-white';
+            break;
+
+        case 'treasurer':
+            $awaitingColor = 'bg-purple-500 text-white';
+            break;
+
+        case 'president':
+            $awaitingColor = 'bg-indigo-500 text-white';
+            break;
+
+        case 'moderator':
+            $awaitingColor = 'bg-orange-500 text-white';
+            break;
+
+        case 'sacdev_admin':
+            $awaitingColor = 'bg-emerald-600 text-white';
+            break;
+
     }
 
 }
@@ -44,98 +102,127 @@ if ($document) {
 @endphp
 
 
+
 <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
-    <div class="flex items-start justify-between gap-4">
+<div class="flex items-start justify-between gap-4">
 
-        <div>
+{{-- LEFT SIDE --}}
+<div>
 
-            <div class="text-base font-semibold text-slate-900">
-                {{ $formType->name }}
-            </div>
-
-            <div class="mt-2 flex items-center gap-2 text-sm text-slate-700">
-
-                <span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100">
-                    <span class="h-2.5 w-2.5 rounded-full {{ $statusColor }}"></span>
-                </span>
-
-                <span>
-                    {{ $statusText }}
-                </span>
-
-            </div>
+<div class="text-base font-semibold text-slate-900">
+{{ $formType->name }}
+</div>
 
 
-            <div class="mt-1 text-xs">
+{{-- STATUS --}}
+<div class="mt-2 flex items-center gap-2 text-sm text-slate-700">
 
-                @if($required)
+<span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100">
+<span class="h-2.5 w-2.5 rounded-full {{ $statusColor }}"></span>
+</span>
 
-                    <span class="text-rose-600 font-medium">
-                        Required
-                    </span>
+<span>
+{{ $statusText }}
+</span>
 
-                @else
-
-                    <span class="text-slate-500">
-                        Optional
-                    </span>
-
-                @endif
-
-            </div>
-
-        </div>
+</div>
 
 
-        <div>
 
-            @if($isProjectHead)
+{{-- AWAITING APPROVAL --}}
+@if($document && $document->status === 'submitted' && $awaitingText)
 
-                @if(!$document && $routeName)
+<div class="mt-2">
 
-                    <a href="{{ route($routeName, $project) }}"
-                    class="inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                        Create
-                    </a>
+<span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold {{ $awaitingColor }}">
 
-                @elseif($document && $document->status === 'draft' && $routeName)
+Awaiting {{ ucfirst(str_replace('_',' ',$awaitingText)) }}
 
-                    <a href="{{ route($routeName, $project) }}"
-                    class="inline-flex items-center rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-600">
-                        Continue
-                    </a>
+</span>
 
-                @elseif($document && $routeName)
+</div>
 
-                    <a href="{{ route($routeName, $project) }}"
-                    class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                        View
-                    </a>
+@endif
 
-                @endif
 
-            @else
 
-                @if($document && $routeName)
+{{-- APPROVED DATE --}}
+@if($document && $document->status === 'approved_by_sacdev')
 
-                    <a href="{{ route($routeName, $project) }}"
-                    class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                        View
-                    </a>
+<div class="mt-2 text-xs text-emerald-600 font-medium">
+Approved {{ $document->updated_at->format('M d, Y') }}
+</div>
 
-                @else
+@endif
 
-                    <span class="text-xs text-slate-400">
-                        Waiting for Project Head
-                    </span>
+</div>
 
-                @endif
 
-            @endif
 
-        </div>
+{{-- RIGHT SIDE ACTION --}}
+<div>
 
-    </div>
+@if($isProjectHead)
+
+{{-- CREATE --}}
+@if(!$document && $routeName && $allowed)
+
+<a href="{{ route($routeName,$project) }}"
+class="inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+Create
+</a>
+
+
+{{-- REQUIREMENT NOT MET --}}
+@elseif(!$document && !$allowed)
+
+<span class="text-xs text-slate-400">
+Requirement not met
+</span>
+
+
+{{-- CONTINUE --}}
+@elseif($document && $document->status === 'draft' && $routeName)
+
+<a href="{{ route($routeName,$project) }}"
+class="inline-flex items-center rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-600">
+Continue
+</a>
+
+
+{{-- VIEW --}}
+@elseif($document && $routeName)
+
+<a href="{{ route($routeName,$project) }}"
+class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+View
+</a>
+
+@endif
+
+@else
+
+{{-- NON PROJECT HEAD --}}
+@if($document && $routeName)
+
+<a href="{{ route($routeName,$project) }}"
+class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+View
+</a>
+
+@else
+
+<span class="text-xs text-slate-400">
+Waiting for Project Head
+</span>
+
+@endif
+
+@endif
+
+</div>
+
+</div>
 
 </div>

@@ -1,6 +1,6 @@
 @if($project->requires_clearance)
 
-<div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+<div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm mb-6">
 
     <div class="flex items-start justify-between">
 
