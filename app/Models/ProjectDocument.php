@@ -94,14 +94,18 @@ class ProjectDocument extends Model
         return $this->hasOne(\App\Models\BudgetProposalData::class);
     }
 
+    
     public function offCampusActivity()
     {
         return $this->hasOne(OffCampusActivityData::class);
     }
+
+
     public function returnedBy()
     {
         return $this->belongsTo(User::class, 'returned_by');
     }
+
 
     public function solicitationData()
     {
@@ -117,6 +121,7 @@ class ProjectDocument extends Model
         );
     }
 
+
     public function sellingApplication()
     {
         return $this->hasOne(\App\Models\SellingApplicationData::class, 'project_document_id');
@@ -126,6 +131,18 @@ class ProjectDocument extends Model
     public function requestToPurchase()
     {
         return $this->hasOne(\App\Models\RequestToPurchaseData::class, 'project_document_id');
+    }
+
+
+    public function postponementNotice()
+    {
+        return $this->hasOne(\App\Models\PostponementNoticeData::class,'project_document_id');
+    }
+
+
+    public function cancellationNotice()
+    {
+        return $this->hasOne(\App\Models\CancellationNoticeData::class,'project_document_id');
     }
 
 }

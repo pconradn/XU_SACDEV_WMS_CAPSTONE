@@ -38,7 +38,7 @@ class ProjectProposalFormSeeder extends Seeder
             ['code' => 'OFF_CAMPUS_APPLICATION'],
             [
                 'name' => 'Off-Campus Activity Form',
-                'phase' => 'pre_implementation',
+                'phase' => 'off-campus',
                 'description' => 'Required form for student organization activities conducted outside the university campus.',
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -49,7 +49,7 @@ class ProjectProposalFormSeeder extends Seeder
             ['code' => 'SOLICITATION_APPLICATION'],
             [
                 'name' => 'Application for Solicitation / Sponsorship',
-                'phase' => 'pre_implementation',
+                'phase' => 'other',
                 'description' => 'Application form required before student organizations conduct solicitation or sponsorship activities using the name of the university.',
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -60,18 +60,41 @@ class ProjectProposalFormSeeder extends Seeder
             ['code' => 'SELLING_APPLICATION'],
             [
                 'name' => 'Application for Selling',
-                'phase' => 'pre_implementation',
+                'phase' => 'other',
                 'description' => 'Application form for student organization selling activities.',
                 'created_at' => $now,
                 'updated_at' => $now,
             ]
         );
+
         DB::table('form_types')->updateOrInsert(
             ['code' => 'REQUEST_TO_PURCHASE'],
             [
                 'name' => 'Request to Purchase',
-                'phase' => 'pre_implementation',
+                'phase' => 'other',
                 'description' => 'Form used by student organizations to request the purchase of equipment, materials, or other items needed for a project activity.',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
+
+        DB::table('form_types')->updateOrInsert(
+            ['code' => 'POSTPONEMENT_NOTICE'],
+            [
+                'name' => 'Notice of Postponement',
+                'phase' => 'notice',
+                'description' => 'Notice submitted when a project activity must be postponed.',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
+
+        DB::table('form_types')->updateOrInsert(
+            ['code' => 'CANCELLATION_NOTICE'],
+            [
+                'name' => 'Notice of Cancellation',
+                'phase' => 'notice',
+                'description' => 'Notice submitted when a project activity is cancelled.',
                 'created_at' => $now,
                 'updated_at' => $now,
             ]

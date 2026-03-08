@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Documents\BaseProjectDocumentController;
+use App\Http\Controllers\Org\ActivityNoticeController;
 use App\Http\Controllers\Org\BudgetProposalController;
 use App\Http\Controllers\Org\ClearanceController;
 use App\Http\Controllers\Org\OffCampusApplicationController;
@@ -290,6 +291,108 @@ Route::post(
     'project.access',
     'project.role:president,moderator,treasurer'
 ])->name('org.projects.request-to-purchase.return');
+
+
+/*
+|--------------------------------------------------------------------------
+| Notice of Postponement
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    'projects/{project}/documents/postponement/create',
+    [ActivityNoticeController::class, 'createPostponement']
+)->middleware([
+    'project.access',
+    'org.role:project_head,president,moderator'
+])->name('org.projects.postponement.create');
+
+
+Route::get(
+    'projects/{project}/documents/postponement/{document}',
+    [ActivityNoticeController::class, 'editPostponement']
+)->middleware([
+    'project.access'
+])->name('org.projects.postponement.edit');
+
+
+Route::post(
+    'projects/{project}/documents/postponement/{document}',
+    [ActivityNoticeController::class, 'storePostponement']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.postponement.store');
+
+
+Route::post(
+    'projects/{project}/documents/postponement/{document}/approve',
+    [ActivityNoticeController::class, 'approve']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.postponement.approve');
+
+
+Route::post(
+    'projects/{project}/documents/postponement/{document}/return',
+    [ActivityNoticeController::class, 'return']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.postponement.return');
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Notice of Cancellation
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    'projects/{project}/documents/cancellation/create',
+    [ActivityNoticeController::class, 'createCancellation']
+)->middleware([
+    'project.access',
+    'org.role:project_head,president,moderator'
+])->name('org.projects.cancellation.create');
+
+
+Route::get(
+    'projects/{project}/documents/cancellation/{document}',
+    [ActivityNoticeController::class, 'editCancellation']
+)->middleware([
+    'project.access'
+])->name('org.projects.cancellation.edit');
+
+
+Route::post(
+    'projects/{project}/documents/cancellation/{document}',
+    [ActivityNoticeController::class, 'storeCancellation']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.cancellation.store');
+
+
+Route::post(
+    'projects/{project}/documents/cancellation/{document}/approve',
+    [ActivityNoticeController::class, 'approve']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.cancellation.approve');
+
+
+Route::post(
+    'projects/{project}/documents/cancellation/{document}/return',
+    [ActivityNoticeController::class, 'return']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.cancellation.return');
+
 
 
 /*

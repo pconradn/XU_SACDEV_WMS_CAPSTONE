@@ -124,6 +124,25 @@ class AdminProjectDocumentController extends Controller
         }
 
 
+        if ($formType === 'POSTPONEMENT_NOTICE') {
+
+            $postponement = \App\Models\PostponementNoticeData::where(
+                'project_document_id',
+                $document->id
+            )->first();
+
+        }
+
+        if ($formType === 'CANCELLATION_NOTICE') {
+
+            $cancellation = \App\Models\CancellationNoticeData::where(
+                'project_document_id',
+                $document->id
+            )->first();
+
+        }
+
+
         $user = auth()->user();
         $userId = $user->id;
 
@@ -153,6 +172,8 @@ class AdminProjectDocumentController extends Controller
             'currentSignature' => $currentSignature,
 
             'isAdmin' => $isAdmin,
+            'cancellation' => $cancellation,
+            'postponement' => $postponement,
 
         ]);
     }
