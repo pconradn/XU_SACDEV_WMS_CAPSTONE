@@ -140,6 +140,9 @@ status: {{ $currentSignature->status }}
 
 
 
+
+
+
             <form method="POST"
                 action="{{ $currentSignature->role === 'sacdev_admin'
                     ? route('admin.projects.documents.approve', [$project, $document->formType->code])
@@ -179,8 +182,10 @@ status: {{ $currentSignature->status }}
             Please provide remarks explaining why this proposal is being returned.
         </p>
 
+
+
         <form method="POST"
-            action="{{ $currentSignature->role === 'sacdev_admin'
+            action="{{ optional($currentSignature)->role === 'sacdev_admin' 
                 ? route('admin.projects.documents.return', [$project, $document->formType->code])
                 : route('org.projects.project-proposal.return', $project) }}">
 
