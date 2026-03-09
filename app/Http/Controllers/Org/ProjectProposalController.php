@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Org;
 
 use App\Http\Controllers\Controller;
- use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rule;
 use App\Models\FormType;
 use App\Models\OrganizationSchoolYear;
 use App\Models\OrgMembership;
@@ -23,6 +23,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Documents\BaseProjectDocumentController;
+use App\Notifications\ReregActionNotification;
+use App\Support\Audit;
 
 class ProjectProposalController extends BaseProjectDocumentController
 {
@@ -168,6 +170,25 @@ class ProjectProposalController extends BaseProjectDocumentController
             ]);
         });
 
+        $document->load('signatures','formType','project');
+        //dd($document->load('signatures','formType','project'));
+
+        $this->notifyNextApprover($document);
+
+        Audit::log(
+            'document.submitted',
+            'Project Proposal submitted',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'project_proposal'
+                ]
+            ]
+        );
+
         return back()->with('success', 'Project Proposal submitted successfully.');
     }
 
@@ -242,9 +263,6 @@ class ProjectProposalController extends BaseProjectDocumentController
             $document->update(['is_active' => false]);
         }
     }
-
-
-
 
     private function resetApprovalsAfterEdit(ProjectDocument $document): void
     {
@@ -593,7 +611,7 @@ class ProjectProposalController extends BaseProjectDocumentController
             return back()->with('error', 'It is not your turn to approve yet.');
         }
 
-        DB::transaction(function () use ($document, $currentPending) {
+        DB::transaction(function () use ($document, $currentPending, $project) {
 
             $currentPending->update([
                 'status' => 'signed',
@@ -609,7 +627,37 @@ class ProjectProposalController extends BaseProjectDocumentController
                     'status' => 'approved',
                 ]);
             }
+
+            $document->load('signatures','formType','project');
+
+            $this->notifyProjectHead(
+                $project,
+                $document,
+                auth()->user()->name . ' approved the Project Proposal.'
+            );
+
+
+
+
         });
+
+
+
+        $this->notifyNextApprover($document);
+
+        Audit::log(
+            'document.approved',
+            'Project Proposal approved',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'project_proposal'
+                ]
+            ]
+        );
 
         return back()->with('success', 'Project proposal approved successfully.');
     }
@@ -671,6 +719,28 @@ class ProjectProposalController extends BaseProjectDocumentController
             ]);
 
         });
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            'Your Project Proposal was returned for revision.'
+        );
+
+        Audit::log(
+            'document.returned',
+            'Project Proposal returned for revision',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'project_proposal'
+                ]
+            ]
+        );
+
+
 
         return back()->with('success', 'Project proposal returned for revision.');
     }

@@ -57,16 +57,7 @@ function closeAgreementModal() {
     modal?.classList.remove('flex');
 }
 
-document.addEventListener('DOMContentLoaded', function() {
 
-    const isProjectHead = @json($isProjectHead);
-    const status = @json($status);
-
-    if (isProjectHead && status === 'draft') {
-        openInstructionsModal();
-    }
-
-});
 
 
 

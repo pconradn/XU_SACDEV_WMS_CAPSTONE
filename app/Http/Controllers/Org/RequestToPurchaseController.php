@@ -34,6 +34,7 @@ class RequestToPurchaseController extends BaseProjectDocumentController
                 $document->id
             )->first();
 
+
             if ($data) {
                 $items = $data->items;
             }
@@ -213,11 +214,6 @@ class RequestToPurchaseController extends BaseProjectDocumentController
             $document->signatures()->delete();
 
 
-            /*
-            |---------------------------------------
-            | Project Head (auto-signed)
-            |---------------------------------------
-            */
             $projectHead = ProjectAssignment::where('project_id', $project->id)
                 ->where('assignment_role', 'project_head')
                 ->whereNull('archived_at')
@@ -231,11 +227,6 @@ class RequestToPurchaseController extends BaseProjectDocumentController
             );
 
 
-            /*
-            |---------------------------------------
-            | Treasurer
-            |---------------------------------------
-            */
             $treasurer = OrgMembership::where('organization_id', $project->organization_id)
                 ->where('school_year_id', $project->school_year_id)
                 ->where('role', 'treasurer')
@@ -249,11 +240,6 @@ class RequestToPurchaseController extends BaseProjectDocumentController
             );
 
 
-            /*
-            |---------------------------------------
-            | President
-            |---------------------------------------
-            */
             $president = OrgMembership::where('organization_id', $project->organization_id)
                 ->where('school_year_id', $project->school_year_id)
                 ->where('role', 'president')
@@ -267,11 +253,6 @@ class RequestToPurchaseController extends BaseProjectDocumentController
             );
 
 
-            /*
-            |---------------------------------------
-            | Moderator
-            |---------------------------------------
-            */
             $moderator = OrgMembership::where('organization_id', $project->organization_id)
                 ->where('school_year_id', $project->school_year_id)
                 ->where('role', 'moderator')
@@ -285,11 +266,6 @@ class RequestToPurchaseController extends BaseProjectDocumentController
             );
 
 
-            /*
-            |---------------------------------------
-            | SACDEV Admin
-            |---------------------------------------
-            */
             $admin = User::where('system_role','sacdev_admin')->firstOrFail();
 
             $this->createSignature(
@@ -299,6 +275,25 @@ class RequestToPurchaseController extends BaseProjectDocumentController
             );
 
         });
+
+
+        $document->load('signatures','formType','project');
+
+        $this->notifyNextApprover($document);
+
+        Audit::log(
+            'document.submitted',
+            'Request to Purchase submitted',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'request_to_purchase'
+                ]
+            ]
+        );
 
 
         return back()->with('success', 'Request to Purchase submitted successfully.');
@@ -377,11 +372,50 @@ class RequestToPurchaseController extends BaseProjectDocumentController
         }
 
 
-        $currentPending->update([
-            'status' => 'signed',
-            'signed_at' => now(),
-        ]);
+        DB::transaction(function () use ($document,$currentPending,$project) {
 
+            $currentPending->update([
+                'status' => 'signed',
+                'signed_at' => now(),
+            ]);
+
+            $remaining = $document->signatures()
+                ->where('status','pending')
+                ->exists();
+
+            if (!$remaining) {
+
+                $document->update([
+                    'status' => 'approved'
+                ]);
+
+            }
+
+        });
+
+        $document->load('signatures','formType','project');
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            auth()->user()->name . ' approved the Request to Purchase.'
+        );
+
+        $this->notifyNextApprover($document);
+
+        Audit::log(
+            'document.approved',
+            'Request to Purchase approved',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'request_to_purchase'
+                ]
+            ]
+        );
 
         return back()->with('success', 'Approval recorded.');
 
@@ -459,6 +493,26 @@ class RequestToPurchaseController extends BaseProjectDocumentController
             ]);
 
         });
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            'Your Request to Purchase was returned for revision.'
+        );
+
+        Audit::log(
+            'document.returned',
+            'Request to Purchase returned for revision',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'request_to_purchase'
+                ]
+            ]
+        );
 
 
         return back()->with('success', 'Request to Purchase returned for revision.');

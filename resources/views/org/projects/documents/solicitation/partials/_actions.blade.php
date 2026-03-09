@@ -199,7 +199,7 @@
 @endif
 
 
-
+@if($isAdmin)
 {{-- RETURN MODAL --}}
 <div id="returnModal"
      class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
@@ -328,7 +328,7 @@ Approve
 </div>
 
 </div>
-
+@endif
 
 
 <script>

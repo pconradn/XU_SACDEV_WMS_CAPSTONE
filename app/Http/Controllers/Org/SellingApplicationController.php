@@ -268,6 +268,24 @@ class SellingApplicationController extends BaseProjectDocumentController
 
         });
 
+        $document->load('signatures','formType','project');
+
+        $this->notifyNextApprover($document);
+
+        Audit::log(
+            'document.submitted',
+            'Selling application submitted',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'selling_application'
+                ]
+            ]
+        );
+
         return back()->with('success', 'Selling application submitted successfully.');
 
     }
@@ -342,10 +360,51 @@ class SellingApplicationController extends BaseProjectDocumentController
         }
 
 
-        $currentPending->update([
-            'status' => 'signed',
-            'signed_at' => now(),
-        ]);
+        DB::transaction(function () use ($document,$currentPending,$project) {
+
+            $currentPending->update([
+                'status' => 'signed',
+                'signed_at' => now(),
+            ]);
+
+            $remaining = $document->signatures()
+                ->where('status','pending')
+                ->exists();
+
+            if (!$remaining) {
+
+                $document->update([
+                    'status' => 'approved'
+                ]);
+
+            }
+
+        });
+
+        $document->load('signatures','formType','project');
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            auth()->user()->name . ' approved the Selling Application.'
+        );
+
+        $this->notifyNextApprover($document);
+
+        Audit::log(
+            'document.approved',
+            'Selling application approved',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'selling_application'
+                ]
+            ]
+        );
+
 
 
         return back()->with('success', 'Approval recorded.');
@@ -422,6 +481,26 @@ class SellingApplicationController extends BaseProjectDocumentController
             ]);
 
         });
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            'Your Selling Application was returned for revision.'
+        );
+
+        Audit::log(
+            'document.returned',
+            'Selling application returned for revision',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'selling_application'
+                ]
+            ]
+        );
 
 
         return back()->with('success', 'Application returned for revision.');

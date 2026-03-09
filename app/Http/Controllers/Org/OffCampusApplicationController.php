@@ -18,6 +18,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Support\Audit;
 
 class OffCampusApplicationController extends BaseProjectDocumentController
 {
@@ -241,6 +242,25 @@ class OffCampusApplicationController extends BaseProjectDocumentController
 
         });
 
+
+        $document->load('signatures','formType','project');
+
+        $this->notifyNextApprover($document);
+
+        Audit::log(
+            'document.submitted',
+            'Off-campus application submitted',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'off_campus_application'
+                ]
+            ]
+        );
+
         return back()->with('success', 'Off-campus form submitted successfully.');
     }
 
@@ -365,7 +385,7 @@ class OffCampusApplicationController extends BaseProjectDocumentController
             return back()->with('error', 'It is not your turn to approve yet.');
         }
 
-        DB::transaction(function () use ($document, $currentPending) {
+        DB::transaction(function () use ($document, $currentPending, $project) {
 
             $currentPending->update([
                 'status' => 'signed',
@@ -382,6 +402,32 @@ class OffCampusApplicationController extends BaseProjectDocumentController
                 ]);
             }
         });
+
+        $document->load('signatures','formType','project');
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            auth()->user()->name . ' approved the Off-Campus Application.'
+        );
+
+        $this->notifyNextApprover($document);
+
+        Audit::log(
+            'document.approved',
+            'Off-campus application approved',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'off_campus_application'
+                ]
+            ]
+        );
+
+
 
         return back()->with('success', 'Off-campus form approved successfully.');
     }
@@ -443,6 +489,26 @@ class OffCampusApplicationController extends BaseProjectDocumentController
             ]);
 
         });
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            'Your Off-Campus Application was returned for revision.'
+        );
+
+        Audit::log(
+            'document.returned',
+            'Off-campus application returned for revision',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'off_campus_application'
+                ]
+            ]
+        );
 
         return back()->with('success', 'Off-campus form returned for revision.');
     }
