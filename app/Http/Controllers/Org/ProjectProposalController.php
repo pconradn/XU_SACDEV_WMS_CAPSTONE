@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Org;
 
 use App\Http\Controllers\Controller;
- use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rule;
 use App\Models\FormType;
 use App\Models\OrganizationSchoolYear;
 use App\Models\OrgMembership;
