@@ -39,7 +39,7 @@ class AdminMajorOfficerController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        // THIS IS THE FIX
+       
         $currentByRole = [];
 
         foreach (['president','vice_president','treasurer','auditor'] as $role) {
@@ -58,7 +58,7 @@ class AdminMajorOfficerController extends Controller
 
                 if ($entry) {
 
-                    // auto-sync OfficerEntry flags (important)
+                 
                     if (!$entry->is_major_officer || $entry->major_officer_role !== $role) {
 
                         $entry->update([
@@ -121,7 +121,7 @@ class AdminMajorOfficerController extends Controller
 
         DB::transaction(function () use ($organization, $syId, $role, $newEntryId, $request) {
 
-            // current assigned entry for this role (if any)
+        
             $current = OfficerEntry::query()
                 ->where('organization_id', $organization->id)
                 ->where('school_year_id', $syId)
@@ -135,7 +135,7 @@ class AdminMajorOfficerController extends Controller
                 ->where('school_year_id', $syId)
                 ->firstOrFail();
 
-            // RULE: officer cannot hold multiple major roles in same org+SY
+           
             $alreadyMajorInOrg = OfficerEntry::query()
                 ->where('organization_id', $organization->id)
                 ->where('school_year_id', $syId)
@@ -150,7 +150,7 @@ class AdminMajorOfficerController extends Controller
                 ]);
             }
 
-            // if assigning president, block if already president in ANOTHER org same SY
+           
             if ($role === 'president') {
                 $alreadyPresidentElsewhere = OfficerEntry::query()
                     ->where('school_year_id', $syId)
@@ -167,14 +167,16 @@ class AdminMajorOfficerController extends Controller
                 }
             }
 
-            // un-assign current role holder (if any)
+
+
+
+           
             if ($current) {
                 $current->update([
                     'major_officer_role' => null,
                     'is_major_officer' => false,
                 ]);
 
-                // archive their membership for this role
                 OrgMembership::query()
                     ->where('organization_id', $organization->id)
                     ->where('school_year_id', $syId)
@@ -184,13 +186,44 @@ class AdminMajorOfficerController extends Controller
                     ->update(['archived_at' => now()]);
             }
 
-            // assign new role holder
+        
             $newEntry->update([
                 'major_officer_role' => $role,
                 'is_major_officer' => true,
             ]);
 
-            // ensure membership exists for the new holder
+            //dd($newEntry->full_name);
+          
+            $newEntry->update([
+                'major_officer_role' => $role,
+                'is_major_officer' => true,
+            ]);
+
+            // Ensure the new officer has a user account
+            if (!$newEntry->user_id) {
+
+                [$user, $tempPassword] = AccountProvisioner::provisionUser(
+                    $newEntry->full_name,
+                    $newEntry->email
+                );
+
+                $newEntry->user_id = $user->id;
+                $newEntry->save();
+            }
+
+            // Transfer pending signatures from old officer to new officer
+            if ($current && $current->user_id) {
+
+                DB::table('project_document_signatures')
+                    ->where('user_id', $current->user_id)
+                    ->where('role', $role)
+                    ->where('status', 'pending')
+                    ->update([
+                        'user_id' => $newEntry->user_id,
+                        'updated_at' => now(),
+                    ]);
+            }
+            
             AccountProvisioner::ensureMembership(
                 (int) $newEntry->user_id,
                 (int) $organization->id,

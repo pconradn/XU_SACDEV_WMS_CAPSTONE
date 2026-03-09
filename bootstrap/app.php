@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'operational_access' => \App\Http\Middleware\OperationalAccess::class,
             'project.access' => \App\Http\Middleware\EnsureUserCanAccessProject::class,
             'project.role' => \App\Http\Middleware\RequireProjectRole::class,
+            'document.type' => \App\Http\Middleware\EnsureDocumentType::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

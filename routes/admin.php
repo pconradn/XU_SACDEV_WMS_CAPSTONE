@@ -4,7 +4,9 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminMajorOfficerController;
 use App\Http\Controllers\Admin\AdminOrgBySyController;
 use App\Http\Controllers\Admin\AdminOrgReviewController;
+use App\Http\Controllers\Admin\AdminProjectClearanceController;
 use App\Http\Controllers\Admin\AdminProjectController;
+use App\Http\Controllers\Admin\AdminProjectDocumentController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\OrgActivationController;
 use App\Http\Controllers\Admin\OrganizationController;
@@ -165,6 +167,49 @@ Route::prefix('admin')
             '/orgs/{organization}/sy/{sy}/projects',
             [AdminProjectController::class, 'index']
         )->name('admin.org.projects.index');
+
+        Route::get(
+            '/projects/{project}/documents',
+            [AdminProjectDocumentController::class, 'hub']
+        )->name('admin.projects.documents.hub');
+
+        Route::get(
+            '/projects/{project}/documents/{formType}',
+            [AdminProjectDocumentController::class, 'open']
+        )->name('admin.projects.documents.open');
+
+
+        Route::post(
+            '/projects/{project}/documents/{formCode}/approve',
+            [AdminProjectDocumentController::class, 'approve']
+        )->name('admin.projects.documents.approve');
+
+        Route::post(
+            '/projects/{project}/documents/{formCode}/return',
+            [AdminProjectDocumentController::class, 'return']
+        )->name('admin.projects.documents.return');
+
+
+        Route::post(
+            '/projects/{project}/require-clearance',
+            [AdminProjectController::class, 'requireClearance']
+        )->name('admin.projects.require-clearance');
+
+
+        Route::post(
+            '/projects/{project}/clearance/verify',
+            [AdminProjectClearanceController::class, 'verify']
+        )->name('admin.projects.clearance.verify');
+
+        Route::post(
+            '/projects/{project}/clearance/return',
+            [AdminProjectClearanceController::class, 'return']
+        )->name('admin.projects.clearance.return');
+
+        Route::post(
+            '/projects/{project}/documents/{form}/retract',
+            [AdminProjectDocumentController::class,'retract']
+        )->name('admin.projects.documents.retract');
 
 
     });

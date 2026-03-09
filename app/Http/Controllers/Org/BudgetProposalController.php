@@ -132,6 +132,9 @@ class BudgetProposalController extends BaseProjectDocumentController
             $document->update([
                 'status' => 'submitted',
                 'submitted_at' => now(),
+                'remarks' => null,
+                'returned_by' => null,
+                'returned_at' => null,
             ]);
 
             $document->signatures()->delete();
@@ -364,23 +367,22 @@ class BudgetProposalController extends BaseProjectDocumentController
 
     }
 
-
     public function approve(Project $project)
     {
         $formType = FormType::where('code', 'budget_proposal')->firstOrFail();
 
-        $document = ProjectDocument::where('project_id', $project->id)
+        $document = ProjectDocument::with('signatures')
+            ->where('project_id', $project->id)
             ->where('form_type_id', $formType->id)
             ->firstOrFail();
 
         if ($document->status !== 'submitted') {
-            return back()->with('error', 'This budget proposal is not awaiting approval.');
+            return back()->with('error', 'This document is not awaiting approval.');
         }
 
         $userId = auth()->id();
 
-        $userSignature = ProjectDocumentSignature::query()
-            ->where('project_document_id', $document->id)
+        $userSignature = $document->signatures
             ->where('user_id', $userId)
             ->first();
 
@@ -389,14 +391,12 @@ class BudgetProposalController extends BaseProjectDocumentController
         }
 
         if ($userSignature->status === 'signed') {
-            return back()->with('error', 'You have already approved this budget proposal.');
+            return back()->with('error', 'You have already approved this document.');
         }
 
-
-        $currentPending = ProjectDocumentSignature::query()
-            ->where('project_document_id', $document->id)
+        $currentPending = $document->signatures
             ->where('status', 'pending')
-            ->orderBy('id')
+            ->sortBy('id')
             ->first();
 
         if (!$currentPending) {
@@ -414,8 +414,7 @@ class BudgetProposalController extends BaseProjectDocumentController
                 'signed_at' => now(),
             ]);
 
-            $remaining = ProjectDocumentSignature::query()
-                ->where('project_document_id', $document->id)
+            $remaining = $document->signatures()
                 ->where('status', 'pending')
                 ->exists();
 
@@ -424,6 +423,7 @@ class BudgetProposalController extends BaseProjectDocumentController
                     'status' => 'approved',
                 ]);
             }
+
         });
 
         return back()->with('success', 'Budget proposal approved successfully.');
@@ -446,15 +446,45 @@ class BudgetProposalController extends BaseProjectDocumentController
             return back()->with('error', 'This budget proposal cannot be returned.');
         }
 
-        DB::transaction(function () use ($document) {
+        $userId = auth()->id();
 
-            $document->signatures()
-                ->where('role', '!=', 'project_head')
-                ->delete();
+        $userSignature = $document->signatures
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$userSignature) {
+            return back()->with('error', 'You are not part of the approval workflow.');
+        }
+
+        $currentPending = $document->signatures
+            ->where('status', 'pending')
+            ->sortBy('id')
+            ->first();
+
+        if (!$currentPending) {
+            return back()->with('error', 'No pending approvals remain.');
+        }
+
+        if ($currentPending->user_id !== $userId) {
+            return back()->with('error', 'It is not your turn to return this document yet.');
+        }
+
+        DB::transaction(function () use ($document, $request) {
+
+            foreach ($document->signatures as $signature) {
+                $signature->update([
+                    'status' => 'pending',
+                    'signed_at' => null,
+                ]);
+            }
 
             $document->update([
-                'status' => 'returned',
+                'status' => 'draft',
+                'remarks' => $request->remarks,
+                'returned_by' => auth()->id(),
+                'returned_at' => now(),
             ]);
+
         });
 
         return back()->with('success', 'Budget proposal returned for revision.');

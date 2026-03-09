@@ -28,4 +28,23 @@ class AdminProjectController extends Controller
             'projects'     => $projects
         ]);
     }
+
+    public function requireClearance(Project $project)
+    {
+        if ($project->requires_clearance) {
+            return back()->with('error', 'Clearance already required for this project.');
+        }
+
+        $project->update([
+            'requires_clearance' => true,
+            'clearance_reference' => Project::generateClearanceReference(),
+            'clearance_status' => 'required',
+            'clearance_required_at' => now(),
+        ]);
+
+        return back()->with('success', 'Off-campus clearance requirement enabled.');
+    }
+
+
+
 }

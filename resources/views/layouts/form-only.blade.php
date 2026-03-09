@@ -13,6 +13,39 @@
 
 <body class="bg-slate-100 min-h-screen font-sans antialiased">
 
+
+    @if(isset($document) && $document->remarks && $isProjectHead)
+
+    <div class="remarks-card border border-amber-200 bg-amber-50 shadow-lg rounded-xl p-4 text-sm text-amber-800 relative mb-6">
+
+        <button
+            onclick="this.closest('.remarks-card').remove()"
+            class="absolute top-2 right-3 text-amber-500 hover:text-amber-700 text-[14px]">
+            ×
+        </button>
+
+        <div class="font-semibold mb-2 flex items-center gap-2">
+            <span class="text-amber-600">⚠</span>
+            Returned for Revision
+        </div>
+
+        <div class="text-[12px] leading-relaxed mb-2">
+            {{ $document->remarks }}
+        </div>
+
+        @if($document->returnedBy)
+            <div class="text-[11px] text-amber-700 italic">
+                Returned by {{ $document->returnedBy->name }}
+                @if($document->returned_at)
+                    on {{ \Carbon\Carbon::parse($document->returned_at)->format('F d, Y h:i A') }}
+                @endif
+            </div>
+        @endif
+
+    </div>
+
+    @endif
+
     
     <div class="bg-white border-b border-slate-200">
         <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">

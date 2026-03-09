@@ -2,74 +2,87 @@
 
 <div class="mx-auto max-w-6xl px-4 py-6">
 
-    @include('org.projects.documents.partials.header', [
-        'project' => $project
-    ])
+@include('org.projects.documents.partials.header', [
+    'project' => $project,
+    'proposalData' => $proposalData ?? null
+])
 
 
-    @if(session('error'))
-        <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {{ session('error') }}
-        </div>
-    @endif
-
-    @if(session('success'))
-        <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if(session('status'))
-        <div class="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-            {{ session('status') }}
-        </div>
-    @endif
+{{-- PROJECT MILESTONE --}}
+@include('org.projects.documents.partials.milestone-slider', [
+    'stage' => $projectStage
+])
 
 
-    @include('org.projects.documents.partials.section', [
-        'title' => 'Pre-Implementation Documents',
-        'forms' => $preForms,
-        'phase' => 'pre'
-    ])
+{{-- PRE IMPLEMENTATION --}}
+@include('org.projects.documents.partials.section', [
+    'title' => 'Pre-Implementation Documents',
+    'forms' => $preForms,
+    'phase' => 'pre'
+])
 
 
-    @if($budgetDocument)
-        <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+{{-- DV --}}
+@if($budgetDocument)
 
-            <div class="flex items-start justify-between gap-4">
+@include('org.projects.documents.partials.dv-card', [
+    'project' => $project
+])
 
-                <div>
-                    <div class="text-base font-semibold text-slate-900">
-                        Disbursement Voucher
-                    </div>
+@endif
 
-                    <div class="mt-2 text-sm text-slate-700">
-                        Generate a printable DV for submission to the Finance Office.
-                    </div>
+{{-- OFF CAMPUS --}}
+@if($showOffCampus)
 
-                    <div class="mt-1 text-xs text-slate-500">
-                        Available once a Budget Proposal exists (draft/submitted/returned/approved).
-                    </div>
-                </div>
-
-                <div>
-                    <a href="{{ route('org.projects.disbursement-voucher.create', $project) }}"
-                       class="inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                        Generate DV
-                    </a>
-                </div>
-
-            </div>
-
-        </div>
-    @endif
+@include('org.projects.documents.partials.section', [
+    'title' => 'Off-Campus Documents',
+    'forms' => $offCampusForms ?? [],
+    'phase' => 'offcampus'
+])
 
 
-    @include('org.projects.documents.partials.section', [
-        'title' => 'Post-Implementation Documents',
-        'forms' => $postForms,
-        'phase' => 'post'
-    ])
+{{-- CLEARANCE --}}
+@if($showOffCampus)
+
+@include('org.projects.documents.partials._clearance-card')
+
+@endif
+
+@endif
+
+
+{{-- OTHER FORMS --}}
+@if($showOtherForms)
+
+@include('org.projects.documents.partials.section', [
+    'title' => 'Other Forms',
+    'forms' => $otherForms ?? [],
+    'phase' => 'other'
+])
+
+@endif
+
+
+{{-- NOTICES --}}
+@include('org.projects.documents.partials.notice-section', [
+    'project' => $project,
+    'postponements' => $postponements,
+    'cancellations' => $cancellations
+])
+
+
+
+
+
+
+
+
+{{-- POST IMPLEMENTATION --}}
+@include('org.projects.documents.partials.section', [
+    'title' => 'Post-Implementation Documents',
+    'forms' => $postForms,
+    'phase' => 'post'
+])
 
 </div>
 

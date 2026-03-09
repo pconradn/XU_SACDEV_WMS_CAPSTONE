@@ -36,6 +36,7 @@ class EnsureUserCanAccessProject
         | Ensure project belongs to context
         |--------------------------------------------------------------------------
         */
+        //dd($request->route('project'));
 
         if (
             (int) $project->organization_id !== $orgId ||

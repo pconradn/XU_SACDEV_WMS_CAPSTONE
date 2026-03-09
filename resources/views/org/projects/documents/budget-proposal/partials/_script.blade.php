@@ -151,7 +151,9 @@ function recalcAllSections() {
 
 function recalcGrandTotal() {
     let grand = 0;
-    document.querySelectorAll('[id$="_total"]').forEach(el => {
+
+    document.querySelectorAll('[data-section-total]').forEach(el => {
+        console.log(el.id, el.textContent);
         grand += num(el.textContent);
     });
 

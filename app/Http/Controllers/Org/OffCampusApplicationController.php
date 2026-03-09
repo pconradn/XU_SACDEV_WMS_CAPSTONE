@@ -75,21 +75,13 @@ class OffCampusApplicationController extends BaseProjectDocumentController
         $request->validate([
 
             'activity_name' => ['required','string','max:255'],
-
             'inclusive_dates' => ['nullable','string','max:255'],
-
             'venue_destination' => ['required','string','max:255'],
-
             'remarks' => ['nullable','string'],
-
             'participants.*.student_name' => ['nullable','string','max:255'],
-
             'participants.*.course_year' => ['nullable','string','max:255'],
-
             'participants.*.student_mobile' => ['nullable','string','max:30'],
-
             'participants.*.parent_name' => ['nullable','string','max:255'],
-
             'participants.*.parent_mobile' => ['nullable','string','max:30'],
 
         ]);
@@ -192,6 +184,9 @@ class OffCampusApplicationController extends BaseProjectDocumentController
             $document->update([
                 'status' => 'submitted',
                 'submitted_at' => now(),
+                'remarks' => null,
+                'returned_by' => null,
+                'returned_at' => null,
             ]);
 
             $document->signatures()->delete();
@@ -291,7 +286,7 @@ class OffCampusApplicationController extends BaseProjectDocumentController
             );
         }
 
-        return view('org..documents.off-campus.guidelines', [
+        return view('org.projects.documents.off-campus.guidelines', [
             'project' => $project,
             'document' => $document
         ]);
@@ -345,8 +340,7 @@ class OffCampusApplicationController extends BaseProjectDocumentController
 
         $userId = auth()->id();
 
-        $userSignature = ProjectDocumentSignature::query()
-            ->where('project_document_id', $document->id)
+        $userSignature = ProjectDocumentSignature::where('project_document_id', $document->id)
             ->where('user_id', $userId)
             ->first();
 
@@ -358,8 +352,7 @@ class OffCampusApplicationController extends BaseProjectDocumentController
             return back()->with('error', 'You have already approved this off-campus form.');
         }
 
-        $currentPending = ProjectDocumentSignature::query()
-            ->where('project_document_id', $document->id)
+        $currentPending = ProjectDocumentSignature::where('project_document_id', $document->id)
             ->where('status', 'pending')
             ->orderBy('id')
             ->first();
@@ -379,8 +372,7 @@ class OffCampusApplicationController extends BaseProjectDocumentController
                 'signed_at' => now(),
             ]);
 
-            $remaining = ProjectDocumentSignature::query()
-                ->where('project_document_id', $document->id)
+            $remaining = ProjectDocumentSignature::where('project_document_id', $document->id)
                 ->where('status', 'pending')
                 ->exists();
 
@@ -389,12 +381,10 @@ class OffCampusApplicationController extends BaseProjectDocumentController
                     'status' => 'approved',
                 ]);
             }
-
         });
 
         return back()->with('success', 'Off-campus form approved successfully.');
     }
-
 
     public function return(Request $request, Project $project)
     {
@@ -413,14 +403,43 @@ class OffCampusApplicationController extends BaseProjectDocumentController
             return back()->with('error', 'This off-campus form cannot be returned.');
         }
 
-        DB::transaction(function () use ($document) {
+        $userId = auth()->id();
 
-            $document->signatures()
-                ->where('role', '!=', 'project_head')
-                ->delete();
+        $userSignature = $document->signatures
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$userSignature) {
+            return back()->with('error', 'You are not part of the approval workflow.');
+        }
+
+        $currentPending = $document->signatures
+            ->where('status', 'pending')
+            ->sortBy('id')
+            ->first();
+
+        if (!$currentPending) {
+            return back()->with('error', 'No pending approvals remain.');
+        }
+
+        if ($currentPending->user_id !== $userId) {
+            return back()->with('error', 'It is not your turn to return this document yet.');
+        }
+
+        DB::transaction(function () use ($document, $request) {
+
+            foreach ($document->signatures as $signature) {
+                $signature->update([
+                    'status' => 'pending',
+                    'signed_at' => null,
+                ]);
+            }
 
             $document->update([
-                'status' => 'returned',
+                'status' => 'draft',
+                'remarks' => $request->remarks,
+                'returned_by' => auth()->id(),
+                'returned_at' => now(),
             ]);
 
         });
