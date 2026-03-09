@@ -229,6 +229,24 @@ class SolicitationApplicationController extends BaseProjectDocumentController
 
         });
 
+        $document->load('signatures','formType','project');
+
+        $this->notifyNextApprover($document);
+
+        Audit::log(
+            'document.submitted',
+            'Solicitation application submitted',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'solicitation_application'
+                ]
+            ]
+        );
+
         return back()->with('success', 'Solicitation application submitted successfully.');
     }
 
@@ -270,7 +288,7 @@ class SolicitationApplicationController extends BaseProjectDocumentController
             return back()->with('error','It is not your turn to approve yet.');
         }
 
-        DB::transaction(function () use ($document,$currentPending) {
+        DB::transaction(function () use ($document,$currentPending,$project) {
 
             $currentPending->update([
                 'status' => 'signed',
@@ -288,6 +306,30 @@ class SolicitationApplicationController extends BaseProjectDocumentController
             }
 
         });
+
+        $document->load('signatures','formType','project');
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            auth()->user()->name . ' approved the Solicitation Application.'
+        );
+
+        $this->notifyNextApprover($document);
+
+        Audit::log(
+            'document.approved',
+            'Solicitation application approved',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'solicitation_application'
+                ]
+            ]
+        );
 
         return back()->with('success','Solicitation application approved.');
     }
@@ -329,6 +371,26 @@ class SolicitationApplicationController extends BaseProjectDocumentController
             ]);
 
         });
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            'Your Solicitation Application was returned for revision.'
+        );
+
+        Audit::log(
+            'document.returned',
+            'Solicitation application returned for revision',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'solicitation_application'
+                ]
+            ]
+        );
 
         return back()->with('success','Solicitation form returned for revision.');
     }
