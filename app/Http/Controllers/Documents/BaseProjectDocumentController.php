@@ -9,10 +9,11 @@ use App\Models\Project;
 use App\Models\ProjectAssignment;
 use App\Models\ProjectDocument;
 use App\Models\ProjectDocumentSignature;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\User;
 use App\Notifications\ReregActionNotification;
 use App\Support\Audit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 abstract class BaseProjectDocumentController extends Controller
 {
@@ -173,7 +174,7 @@ abstract class BaseProjectDocumentController extends Controller
 
     protected function approvalFlow(string $formCode): array
     {
-        return [
+        $flows = [
 
             'PROJECT_PROPOSAL' => [
                 'project_head',
@@ -219,8 +220,9 @@ abstract class BaseProjectDocumentController extends Controller
                 'moderator',
                 'sacdev_admin'
             ]
-
         ];
+
+        return $flows[$formCode] ?? [];
     }
 
     protected function resolveUserByRole(Project $project, string $role): int
