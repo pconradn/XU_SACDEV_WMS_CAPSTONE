@@ -115,60 +115,64 @@ abstract class BaseProjectDocumentController extends Controller
 
 
 
-protected function notifyNextApprover(ProjectDocument $document){
-    $nextRole = $document->nextPendingRole();
+    protected function notifyNextApprover(ProjectDocument $document){
+        
+        $nextRole = $document->nextPendingRole2();
+        //dd($nextRole);
+        if (!$nextRole || $nextRole === 'sacdev_admin') {
+            return;
+        }
 
-    if (!$nextRole || $nextRole === 'sacdev_admin') {
-        return;
+        $signature = $document->signatures()
+            ->where('role', $nextRole)
+            ->with('user')
+            ->first();
+
+        //dd($signature->user);
+        if (!$signature || !$signature->user) {
+            return;
+        }
+
+        
+
+        $signature->user->notify(new ReregActionNotification([
+            'title' => 'Document awaiting review',
+            'message' => $document->formType->name .
+                ' for project "' . $document->project->title . '" requires your approval.',
+            'action_url' => route('org.projects.documents.hub', $document->project),
+            'meta' => [
+                'document_id' => $document->id,
+                'form_type'   => $document->formType->code,
+                'project_id'  => $document->project->id
+            ]
+        ]));
     }
 
-    $signature = $document->signatures()
-        ->where('role', $nextRole)
-        ->with('user')
-        ->first();
 
-    if (!$signature || !$signature->user) {
-        return;
+
+    protected function notifyProjectHead(Project $project, ProjectDocument $document, string $message){
+        
+        $assignment = ProjectAssignment::where('project_id', $project->id)
+            ->where('assignment_role', 'project_head')
+            ->whereNull('archived_at')
+            ->with('user')
+            ->first();
+
+        if (!$assignment || !$assignment->user) {
+            return;
+        }
+
+        $assignment->user->notify(new ReregActionNotification([
+            'title' => 'Project Document Update',
+            'message' => $message,
+            'action_url' => route('org.projects.documents.hub', $project),
+            'meta' => [
+                'document_id' => $document->id,
+                'form_type'   => $document->formType->code,
+                'project_id'  => $project->id
+            ]
+        ]));
     }
-
-    $signature->user->notify(new ReregActionNotification([
-        'title' => 'Document awaiting review',
-        'message' => $document->formType->name .
-            ' for project "' . $document->project->title . '" requires your approval.',
-        'action_url' => route('org.projects.documents.hub', $document->project),
-        'meta' => [
-            'document_id' => $document->id,
-            'form_type'   => $document->formType->code,
-            'project_id'  => $document->project->id
-        ]
-    ]));
-}
-
-
-
-protected function notifyProjectHead(Project $project, ProjectDocument $document, string $message){
-    
-    $assignment = ProjectAssignment::where('project_id', $project->id)
-        ->where('assignment_role', 'project_head')
-        ->whereNull('archived_at')
-        ->with('user')
-        ->first();
-
-    if (!$assignment || !$assignment->user) {
-        return;
-    }
-
-    $assignment->user->notify(new ReregActionNotification([
-        'title' => 'Project Document Update',
-        'message' => $message,
-        'action_url' => route('org.projects.documents.hub', $project),
-        'meta' => [
-            'document_id' => $document->id,
-            'form_type'   => $document->formType->code,
-            'project_id'  => $project->id
-        ]
-    ]));
-}
 
 
 

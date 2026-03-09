@@ -17,6 +17,7 @@ use App\Models\SchoolYear;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Support\Audit;
 
 class BudgetProposalController extends BaseProjectDocumentController
 {
@@ -202,6 +203,24 @@ class BudgetProposalController extends BaseProjectDocumentController
                 'sacdev_admin'
             );
         });
+
+        $document->load('signatures','formType','project');
+
+        $this->notifyNextApprover($document);
+
+        Audit::log(
+            'document.submitted',
+            'Budget Proposal submitted',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'budget_proposal'
+                ]
+            ]
+        );
 
         return back()->with('success', 'Budget proposal submitted successfully.');
     }
@@ -407,7 +426,7 @@ class BudgetProposalController extends BaseProjectDocumentController
             return back()->with('error', 'It is not your turn to approve yet.');
         }
 
-        DB::transaction(function () use ($document, $currentPending) {
+        DB::transaction(function () use ($document, $currentPending, $project) {
 
             $currentPending->update([
                 'status' => 'signed',
@@ -425,6 +444,31 @@ class BudgetProposalController extends BaseProjectDocumentController
             }
 
         });
+
+
+        $document->load('signatures','formType','project');
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            auth()->user()->name . ' approved the Budget Proposal.'
+        );
+
+        $this->notifyNextApprover($document);
+
+        Audit::log(
+            'document.approved',
+            'Budget Proposal approved',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'budget_proposal'
+                ]
+            ]
+        );
 
         return back()->with('success', 'Budget proposal approved successfully.');
     }
@@ -486,6 +530,27 @@ class BudgetProposalController extends BaseProjectDocumentController
             ]);
 
         });
+
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            'Your Budget Proposal was returned for revision.'
+        );
+
+        Audit::log(
+            'document.returned',
+            'Budget Proposal returned for revision',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'budget_proposal'
+                ]
+            ]
+);
 
         return back()->with('success', 'Budget proposal returned for revision.');
     }

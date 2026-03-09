@@ -171,6 +171,7 @@ class ProjectProposalController extends BaseProjectDocumentController
         });
 
         $document->load('signatures','formType','project');
+        //dd($document->load('signatures','formType','project'));
 
         $this->notifyNextApprover($document);
 
@@ -635,25 +636,28 @@ class ProjectProposalController extends BaseProjectDocumentController
                 auth()->user()->name . ' approved the Project Proposal.'
             );
 
-            $this->notifyNextApprover($document);
-
-            Audit::log(
-                'document.approved',
-                'Project Proposal approved',
-                [
-                    'actor_user_id' => auth()->id(),
-                    'organization_id' => $project->organization_id,
-                    'school_year_id' => $project->school_year_id,
-                    'meta' => [
-                        'document_id' => $document->id,
-                        'form_type' => 'project_proposal'
-                    ]
-                ]
-            );
 
 
 
         });
+
+
+
+        $this->notifyNextApprover($document);
+
+        Audit::log(
+            'document.approved',
+            'Project Proposal approved',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'project_proposal'
+                ]
+            ]
+        );
 
         return back()->with('success', 'Project proposal approved successfully.');
     }
