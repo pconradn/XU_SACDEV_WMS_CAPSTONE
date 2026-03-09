@@ -101,9 +101,6 @@ abstract class BaseProjectDocumentController extends Controller
     }
 
 
-    /**
-     * Resolve role flags
-     */
     protected function resolveRoleFlags(?string $orgRole): array
     {
         return [
@@ -174,6 +171,211 @@ abstract class BaseProjectDocumentController extends Controller
         ]));
     }
 
+    protected function approvalFlow(string $formCode): array
+    {
+        return [
+
+            'PROJECT_PROPOSAL' => [
+                'project_head',
+                'treasurer',
+                'president',
+                'moderator',
+                'sacdev_admin'
+            ],
+
+            'BUDGET_PROPOSAL' => [
+                'project_head',
+                'treasurer',
+                'president',
+                'moderator',
+                'sacdev_admin'
+            ],
+
+            'OFF_CAMPUS_APPLICATION' => [
+                'project_head',
+                'president',
+                'moderator',
+                'sacdev_admin'
+            ],
+
+            'SOLICITATION_APPLICATION' => [
+                'project_head',
+                'president',
+                'moderator',
+                'sacdev_admin'
+            ],
+
+            'SELLING_APPLICATION' => [
+                'project_head',
+                'president',
+                'moderator',
+                'sacdev_admin'
+            ],
+
+            'REQUEST_TO_PURCHASE' => [
+                'project_head',
+                'treasurer',
+                'president',
+                'moderator',
+                'sacdev_admin'
+            ]
+
+        ];
+    }
+
+    protected function resolveUserByRole(Project $project, string $role): int
+    {
+        if ($role === 'project_head') {
+
+            $assignment = ProjectAssignment::where('project_id',$project->id)
+                ->where('assignment_role','project_head')
+                ->whereNull('archived_at')
+                ->firstOrFail();
+
+            return $assignment->user_id;
+        }
+
+        if ($role === 'sacdev_admin') {
+
+            return User::where('system_role','sacdev_admin')
+                ->firstOrFail()
+                ->id;
+        }
+
+        $member = OrgMembership::where('organization_id',$project->organization_id)
+            ->where('school_year_id',$project->school_year_id)
+            ->where('role',$role)
+            ->whereNull('archived_at')
+            ->firstOrFail();
+
+        return $member->user_id;
+    }
+
+    protected function createWorkflow(ProjectDocument $document): void
+    {
+        $flow = $this->approvalFlow($document->formType->code);
+
+        foreach ($flow as $index => $role) {
+
+            $userId = $this->resolveUserByRole($document->project,$role);
+
+            ProjectDocumentSignature::create([
+                'project_document_id' => $document->id,
+                'user_id' => $userId,
+                'role' => $role,
+                'status' => $index === 0 ? 'signed' : 'pending',
+                'signed_at' => $index === 0 ? now() : null
+            ]);
+
+        }
+    }
+
+
+    protected function handleApproval(Project $project, ProjectDocument $document): void
+    {
+        $userId = auth()->id();
+
+        $signature = $document->signatures()
+            ->where('user_id',$userId)
+            ->firstOrFail();
+
+        if ($signature->status === 'signed') {
+            abort(403,'You have already approved this document.');
+        }
+
+        $currentPending = $document->signatures()
+            ->where('status','pending')
+            ->orderBy('id')
+            ->first();
+
+        if ($currentPending->user_id !== $userId) {
+            abort(403,'It is not your turn to approve yet.');
+        }
+
+        DB::transaction(function () use ($document,$signature) {
+
+            $signature->update([
+                'status'=>'signed',
+                'signed_at'=>now()
+            ]);
+
+            $remaining = $document->signatures()
+                ->where('status','pending')
+                ->exists();
+
+            if (!$remaining) {
+                $document->update([
+                    'status'=>'approved'
+                ]);
+            }
+
+        });
+
+        $document->load('signatures','formType','project');
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            auth()->user()->name.' approved the '.$document->formType->name.'.'
+        );
+
+        $this->notifyNextApprover($document);
+
+        Audit::log(
+            'document.approved',
+            $document->formType->name.' approved',
+            [
+                'actor_user_id'=>auth()->id(),
+                'organization_id'=>$project->organization_id,
+                'school_year_id'=>$project->school_year_id,
+                'meta'=>[
+                    'document_id'=>$document->id
+                ]
+            ]
+        );
+    }
+
+    protected function handleReturn(Project $project, ProjectDocument $document, string $remarks): void
+    {
+        DB::transaction(function () use ($document,$remarks){
+
+            foreach ($document->signatures as $signature) {
+
+                $signature->update([
+                    'status'=>'pending',
+                    'signed_at'=>null
+                ]);
+
+            }
+
+            $document->update([
+                'status'=>'draft',
+                'remarks'=>$remarks,
+                'returned_by'=>auth()->id(),
+                'returned_at'=>now()
+            ]);
+
+        });
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            'Your '.$document->formType->name.' was returned for revision.'
+        );
+
+        Audit::log(
+            'document.returned',
+            $document->formType->name.' returned for revision',
+            [
+                'actor_user_id'=>auth()->id(),
+                'organization_id'=>$project->organization_id,
+                'school_year_id'=>$project->school_year_id,
+                'meta'=>[
+                    'document_id'=>$document->id
+                ]
+            ]
+        );
+    }
 
 
 
