@@ -24,7 +24,13 @@ return new class extends Migration {
     public function down(): void
     {
         DB::statement("
-            ALTER TABLE form_types 
+            UPDATE form_types
+            SET phase = 'pre_implementation'
+            WHERE phase NOT IN ('pre_implementation', 'post_implementation')
+        ");
+
+        DB::statement("
+            ALTER TABLE form_types
             MODIFY phase ENUM(
                 'pre_implementation',
                 'post_implementation'

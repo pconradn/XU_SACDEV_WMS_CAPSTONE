@@ -24,6 +24,11 @@ return new class extends Migration {
     public function down(): void
     {
         DB::statement("
+            DELETE FROM project_document_signatures
+            WHERE role = 'project_head'
+        ");
+
+        DB::statement("
             ALTER TABLE project_document_signatures
             MODIFY role ENUM(
                 'president',
