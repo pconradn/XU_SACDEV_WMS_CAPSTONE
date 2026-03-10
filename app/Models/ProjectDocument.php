@@ -165,4 +165,10 @@ class ProjectDocument extends Model
         );
     }
 
+
+    public function sellingActivityReport()
+    {
+        return $this->hasOne(SellingActivityReportData::class, 'project_document_id');
+    }
+
 }
