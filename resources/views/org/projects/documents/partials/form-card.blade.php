@@ -16,6 +16,8 @@ $formRoutes = [
 
     
     'FEES_COLLECTION_REPORT' => 'org.projects.fees-collection.create',
+    'SELLING_ACTIVITY_REPORT' => 'org.projects.selling-activity-report.create',
+
 ];
 
 $routeName = $formRoutes[$formType->code] ?? null;

@@ -4,14 +4,15 @@ use App\Http\Controllers\Documents\BaseProjectDocumentController;
 use App\Http\Controllers\Org\ActivityNoticeController;
 use App\Http\Controllers\Org\BudgetProposalController;
 use App\Http\Controllers\Org\ClearanceController;
+use App\Http\Controllers\Org\FeesCollectionReportController;
 use App\Http\Controllers\Org\OffCampusApplicationController;
 use App\Http\Controllers\Org\ProjectController;
 use App\Http\Controllers\Org\ProjectDocumentHubController;
 use App\Http\Controllers\Org\ProjectProposalController;
 use App\Http\Controllers\Org\RequestToPurchaseController;
+use App\Http\Controllers\Org\SellingActivityReportController;
 use App\Http\Controllers\Org\SellingApplicationController;
 use App\Http\Controllers\Org\SolicitationApplicationController;
-use App\Http\Controllers\Org\FeesCollectionReportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -335,6 +336,49 @@ Route::post(
     'project.role:president,moderator'
 ])->name('org.projects.fees-collection.return');
 
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Selling Activity Report
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    'projects/{project}/documents/selling-activity-report',
+    [SellingActivityReportController::class, 'create']
+)->middleware([
+    'project.access',
+    'org.role:project_head,president,moderator'
+])->name('org.projects.selling-activity-report.create');
+
+
+Route::post(
+    'projects/{project}/documents/selling-activity-report',
+    [SellingActivityReportController::class, 'store']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.selling-activity-report.store');
+
+
+Route::post(
+    'projects/{project}/documents/selling-activity-report/approve',
+    [SellingActivityReportController::class, 'approve']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.selling-activity-report.approve');
+
+
+Route::post(
+    'projects/{project}/documents/selling-activity-report/return',
+    [SellingActivityReportController::class, 'return']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.selling-activity-report.return');
 
 
 
