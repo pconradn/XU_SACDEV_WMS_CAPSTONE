@@ -11,6 +11,7 @@ use App\Http\Controllers\Org\ProjectProposalController;
 use App\Http\Controllers\Org\RequestToPurchaseController;
 use App\Http\Controllers\Org\SellingApplicationController;
 use App\Http\Controllers\Org\SolicitationApplicationController;
+use App\Http\Controllers\Org\FeesCollectionReportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -291,6 +292,51 @@ Route::post(
     'project.access',
     'project.role:president,moderator,treasurer'
 ])->name('org.projects.request-to-purchase.return');
+
+
+/*
+|--------------------------------------------------------------------------
+| Fees Collection Report
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    'projects/{project}/documents/fees-collection/create',
+    [FeesCollectionReportController::class, 'create']
+)->middleware([
+    'project.access',
+    'org.role:project_head,president,moderator'
+])->name('org.projects.fees-collection.create');
+
+
+Route::post(
+    'projects/{project}/documents/fees-collection',
+    [FeesCollectionReportController::class, 'store']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.fees-collection.store');
+
+
+Route::post(
+    'projects/{project}/documents/fees-collection/approve',
+    [FeesCollectionReportController::class, 'approve']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.fees-collection.approve');
+
+
+Route::post(
+    'projects/{project}/documents/fees-collection/return',
+    [FeesCollectionReportController::class, 'return']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.fees-collection.return');
+
+
+
 
 
 /*

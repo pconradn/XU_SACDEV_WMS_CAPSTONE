@@ -13,6 +13,9 @@ $formRoutes = [
     'SOLICITATION_APPLICATION' => 'org.projects.solicitation.create',
     'SELLING_APPLICATION' => 'org.projects.selling.create',
     'REQUEST_TO_PURCHASE' => 'org.projects.request-to-purchase.create',
+
+    
+    'FEES_COLLECTION_REPORT' => 'org.projects.fees-collection.create',
 ];
 
 $routeName = $formRoutes[$formType->code] ?? null;

@@ -3,57 +3,72 @@
 namespace App\Http\Controllers\Org;
 
 use App\Http\Controllers\Documents\BaseProjectDocumentController;
+use App\Models\FeesCollectionReportData;
+use App\Models\FeesCollectionItem;
 use App\Models\FormType;
-use App\Models\OrgMembership;
 use App\Models\Project;
-use App\Models\ProjectAssignment;
 use App\Models\ProjectDocument;
-use App\Models\ProjectDocumentSignature;
-use App\Models\SolicitationApplicationData;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Support\Audit;
 
-class SolicitationApplicationController extends BaseProjectDocumentController
+class FeesCollectionReportController extends BaseProjectDocumentController
 {
 
     public function create(Project $project)
     {
-        $document = $this->getDocument($project, 'SOLICITATION_APPLICATION');
+
+        $document = $this->getDocument($project, 'FEES_COLLECTION_REPORT');
 
         $data = null;
+        $items = collect();
 
         if ($document) {
-            $data = SolicitationApplicationData::where(
+
+            $data = FeesCollectionReportData::where(
                 'project_document_id',
                 $document->id
             )->first();
+
+            if ($data) {
+                $items = $data->items;
+            }
+
         }
 
         $user = auth()->user();
+
+        $isAdmin = $user->system_role === 'sacdev_admin';
 
         $orgId = session('active_org_id');
         $syId  = session('encode_sy_id');
 
         $orgRole = $this->getOrgRole($user->id, $orgId, $syId);
-        $roles   = $this->resolveRoleFlags($orgRole);
+
+        $roles = $this->resolveRoleFlags($orgRole);
 
         $isProjectHead = $this->isProjectHead($project, $user->id);
+
         $currentSignature = $this->getCurrentSignature($document, $user->id);
 
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
 
-        return view('org.projects.documents.solicitation.create', [
-            'project'          => $project,
-            'document'         => $document,
-            'data'             => $data,
+        return view('org.projects.documents.fees-collection.create', [
+
+            'project' => $project,
+            'document' => $document,
+            'data' => $data,
+            'items' => $items,
             'currentSignature' => $currentSignature,
-            'isReadOnly'       => $isReadOnly,
-            'isProjectHead'    => $isProjectHead,
+            'isReadOnly' => $isReadOnly,
+            'isProjectHead' => $isProjectHead,
+            'isAdmin' => $isAdmin,
+
             ...$roles
+
         ]);
     }
+
 
 
     public function store(Request $request, Project $project)
@@ -64,18 +79,17 @@ class SolicitationApplicationController extends BaseProjectDocumentController
             'activity_name' => ['required','string','max:255'],
             'purpose' => ['required','string'],
 
-            'duration_from' => ['required','date'],
-            'duration_to' => ['required','date'],
+            'collection_from' => ['required','date'],
+            'collection_to' => ['required','date'],
 
-            'target_amount' => ['nullable','numeric'],
-            'desired_letter_count' => ['required','integer'],
-
-            'letter_draft_link' => ['nullable','url','max:500'],
+            'items.*.number_of_payers' => ['required','integer'],
+            'items.*.amount_paid' => ['required','numeric'],
+            'items.*.receipt_series' => ['nullable','string','max:255'],
 
         ]);
 
 
-        $document = $this->getOrCreateDocument($project, 'SOLICITATION_APPLICATION');
+        $document = $this->getOrCreateDocument($project, 'FEES_COLLECTION_REPORT');
 
         if ($document->isLocked()) {
             abort(403, 'This document is already approved and cannot be edited.');
@@ -84,32 +98,40 @@ class SolicitationApplicationController extends BaseProjectDocumentController
 
         DB::transaction(function () use ($request, $document) {
 
-            SolicitationApplicationData::updateOrCreate(
+            $data = FeesCollectionReportData::updateOrCreate(
+
                 [
                     'project_document_id' => $document->id
                 ],
+
                 [
                     'activity_name' => $request->activity_name,
                     'purpose' => $request->purpose,
 
-                    'duration_from' => $request->duration_from,
-                    'duration_to' => $request->duration_to,
-
-                    'target_amount' => $request->target_amount,
-                    'desired_letter_count' => $request->desired_letter_count,
-
-                    'target_student_orgs' => $request->boolean('target_student_orgs'),
-                    'target_xu_officers' => $request->boolean('target_xu_officers'),
-                    'target_private_individuals' => $request->boolean('target_private_individuals'),
-                    'target_alumni' => $request->boolean('target_alumni'),
-                    'target_private_companies' => $request->boolean('target_private_companies'),
-
-                    'target_others' => $request->boolean('target_others'),
-                    'target_others_specify' => $request->target_others_specify,
-
-                    'letter_draft_link' => $request->letter_draft_link
+                    'collection_from' => $request->collection_from,
+                    'collection_to' => $request->collection_to
                 ]
+
             );
+
+
+            $data->items()->delete();
+
+            foreach ($request->items as $item) {
+
+                FeesCollectionItem::create([
+
+                    'fees_collection_report_id' => $data->id,
+
+                    'number_of_payers' => $item['number_of_payers'],
+                    'amount_paid' => $item['amount_paid'],
+                    'receipt_series' => $item['receipt_series'] ?? null,
+                    'remarks' => $item['remarks'] ?? null
+
+                ]);
+
+            }
+
 
             $this->resetApprovalsAfterEdit($document);
 
@@ -124,7 +146,8 @@ class SolicitationApplicationController extends BaseProjectDocumentController
 
         return redirect()
             ->route('org.projects.documents.hub', $project)
-            ->with('success', 'Solicitation application saved as draft.');
+            ->with('success', 'Fees collection report saved as draft.');
+
     }
 
 
@@ -155,25 +178,32 @@ class SolicitationApplicationController extends BaseProjectDocumentController
 
     public function submit(Project $project)
     {
-        $formType = FormType::where('code', 'SOLICITATION_APPLICATION')->firstOrFail();
+
+        $formType = FormType::where('code', 'FEES_COLLECTION_REPORT')->firstOrFail();
 
         $document = ProjectDocument::where('project_id', $project->id)
             ->where('form_type_id', $formType->id)
             ->firstOrFail();
 
+
         if ($document->status !== 'draft') {
             return back()->with('error', 'This form is already submitted.');
         }
 
+
         DB::transaction(function () use ($document) {
 
             $document->update([
+
                 'status' => 'submitted',
                 'submitted_at' => now(),
+
                 'remarks' => null,
                 'returned_by' => null,
                 'returned_at' => null,
+
             ]);
+
 
             $document->signatures()->delete();
 
@@ -181,55 +211,63 @@ class SolicitationApplicationController extends BaseProjectDocumentController
 
         });
 
+
         $document->load('signatures','formType','project');
 
         $this->notifyNextApprover($document);
 
         Audit::log(
             'document.submitted',
-            'Solicitation application submitted',
+            'Fees collection report submitted',
             [
                 'actor_user_id' => auth()->id(),
                 'organization_id' => $project->organization_id,
                 'school_year_id' => $project->school_year_id,
                 'meta' => [
                     'document_id' => $document->id,
-                    'form_type' => 'solicitation_application'
+                    'form_type' => 'fees_collection_report'
                 ]
             ]
         );
 
-        return back()->with('success', 'Solicitation application submitted successfully.');
+
+        return back()->with('success', 'Fees collection report submitted successfully.');
+
     }
 
 
 
     public function approve(Project $project)
     {
-        $document = $this->getDocument($project,'SOLICITATION_APPLICATION');
+
+        $document = $this->getDocument($project,'FEES_COLLECTION_REPORT');
 
         if ($document->status !== 'submitted') {
-            return back()->with('error','This form is not awaiting approval.');
+            return back()->with('error','This document is not awaiting approval.');
         }
 
         $this->handleApproval($project,$document);
 
-        return back()->with('success','Solicitation application approved.');
+        return back()->with('success','Approval recorded.');
+
     }
 
 
 
     public function return(Request $request, Project $project)
     {
+
         $request->validate([
             'remarks' => ['required','string']
         ]);
 
-        $document = $this->getDocument($project,'SOLICITATION_APPLICATION');
+
+        $document = $this->getDocument($project,'FEES_COLLECTION_REPORT');
 
         if ($document->status !== 'submitted') {
-            return back()->with('error','This form cannot be returned.');
+            return back()->with('error','This document cannot be returned.');
         }
+
 
         $this->handleReturn(
             $project,
@@ -237,24 +275,8 @@ class SolicitationApplicationController extends BaseProjectDocumentController
             $request->remarks
         );
 
-        return back()->with('success','Solicitation form returned for revision.');
-    }
 
-
-    private function createSignature(
-        int $documentId,
-        int $userId,
-        string $role,
-        string $status = 'pending'
-    ): void {
-
-        ProjectDocumentSignature::create([
-            'project_document_id' => $documentId,
-            'user_id' => $userId,
-            'role' => $role,
-            'status' => $status,
-            'signed_at' => $status === 'signed' ? now() : null,
-        ]);
+        return back()->with('success','Report returned for revision.');
 
     }
 
