@@ -157,4 +157,12 @@ class ProjectDocument extends Model
         return $sig?->role;
     }
 
+    public function feesCollectionReport()
+    {
+        return $this->hasOne(
+            \App\Models\FeesCollectionReportData::class,
+            'project_document_id'
+        );
+    }
+
 }
