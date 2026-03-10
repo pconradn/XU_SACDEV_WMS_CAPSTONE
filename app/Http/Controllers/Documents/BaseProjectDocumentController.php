@@ -362,7 +362,7 @@ abstract class BaseProjectDocumentController extends Controller
         $this->notifyProjectHead(
             $project,
             $document,
-            'Your '.$document->formType->name.' was returned for revision.'
+            'Your '.$document->formType->name.' was returned for revision by'
         );
 
         Audit::log(

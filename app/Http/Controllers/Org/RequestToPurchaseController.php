@@ -15,6 +15,7 @@ use App\Models\RequestToPurchaseItem;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Support\Audit;
 
 class RequestToPurchaseController extends BaseProjectDocumentController
 {
@@ -180,102 +181,33 @@ class RequestToPurchaseController extends BaseProjectDocumentController
 
     }
 
-
-
     public function submit(Project $project)
     {
-
         $formType = FormType::where('code', 'REQUEST_TO_PURCHASE')->firstOrFail();
 
         $document = ProjectDocument::where('project_id', $project->id)
             ->where('form_type_id', $formType->id)
             ->firstOrFail();
 
-
         if ($document->status !== 'draft') {
             return back()->with('error', 'This form is already submitted.');
         }
 
-
-        DB::transaction(function () use ($project, $document) {
+        DB::transaction(function () use ($document) {
 
             $document->update([
-
                 'status' => 'submitted',
                 'submitted_at' => now(),
-
                 'remarks' => null,
                 'returned_by' => null,
                 'returned_at' => null,
-
             ]);
-
 
             $document->signatures()->delete();
 
-
-            $projectHead = ProjectAssignment::where('project_id', $project->id)
-                ->where('assignment_role', 'project_head')
-                ->whereNull('archived_at')
-                ->firstOrFail();
-
-            $this->createSignature(
-                $document->id,
-                $projectHead->user_id,
-                'project_head',
-                'signed'
-            );
-
-
-            $treasurer = OrgMembership::where('organization_id', $project->organization_id)
-                ->where('school_year_id', $project->school_year_id)
-                ->where('role', 'treasurer')
-                ->whereNull('archived_at')
-                ->firstOrFail();
-
-            $this->createSignature(
-                $document->id,
-                $treasurer->user_id,
-                'treasurer'
-            );
-
-
-            $president = OrgMembership::where('organization_id', $project->organization_id)
-                ->where('school_year_id', $project->school_year_id)
-                ->where('role', 'president')
-                ->whereNull('archived_at')
-                ->firstOrFail();
-
-            $this->createSignature(
-                $document->id,
-                $president->user_id,
-                'president'
-            );
-
-
-            $moderator = OrgMembership::where('organization_id', $project->organization_id)
-                ->where('school_year_id', $project->school_year_id)
-                ->where('role', 'moderator')
-                ->whereNull('archived_at')
-                ->firstOrFail();
-
-            $this->createSignature(
-                $document->id,
-                $moderator->user_id,
-                'moderator'
-            );
-
-
-            $admin = User::where('system_role','sacdev_admin')->firstOrFail();
-
-            $this->createSignature(
-                $document->id,
-                $admin->id,
-                'sacdev_admin'
-            );
+            $this->createWorkflow($document);
 
         });
-
 
         $document->load('signatures','formType','project');
 
@@ -295,228 +227,41 @@ class RequestToPurchaseController extends BaseProjectDocumentController
             ]
         );
 
-
         return back()->with('success', 'Request to Purchase submitted successfully.');
-
     }
-
-
-
-    private function createSignature(
-        int $documentId,
-        int $userId,
-        string $role,
-        string $status = 'pending'
-    ): void {
-
-        ProjectDocumentSignature::create([
-
-            'project_document_id' => $documentId,
-            'user_id' => $userId,
-            'role' => $role,
-            'status' => $status,
-            'signed_at' => $status === 'signed' ? now() : null,
-
-        ]);
-
-    }
-
-
 
     public function approve(Project $project)
     {
-
-        $formType = FormType::where('code', 'REQUEST_TO_PURCHASE')->firstOrFail();
-
-        $document = ProjectDocument::with('signatures')
-            ->where('project_id', $project->id)
-            ->where('form_type_id', $formType->id)
-            ->firstOrFail();
-
+        $document = $this->getDocument($project,'REQUEST_TO_PURCHASE');
 
         if ($document->status !== 'submitted') {
-            return back()->with('error', 'This document is not awaiting approval.');
+            return back()->with('error','This document is not awaiting approval.');
         }
 
+        $this->handleApproval($project,$document);
 
-        $userId = auth()->id();
-
-        $userSignature = $document->signatures
-            ->where('user_id', $userId)
-            ->first();
-
-
-        if (!$userSignature) {
-            return back()->with('error', 'You are not part of the approval workflow.');
-        }
-
-
-        if ($userSignature->status === 'signed') {
-            return back()->with('error', 'You have already approved this document.');
-        }
-
-
-        $currentPending = $document->signatures
-            ->where('status', 'pending')
-            ->sortBy('id')
-            ->first();
-
-
-        if (!$currentPending) {
-            return back()->with('error', 'No pending approvals remain.');
-        }
-
-
-        if ($currentPending->user_id !== $userId) {
-            return back()->with('error', 'It is not your turn to approve yet.');
-        }
-
-
-        DB::transaction(function () use ($document,$currentPending,$project) {
-
-            $currentPending->update([
-                'status' => 'signed',
-                'signed_at' => now(),
-            ]);
-
-            $remaining = $document->signatures()
-                ->where('status','pending')
-                ->exists();
-
-            if (!$remaining) {
-
-                $document->update([
-                    'status' => 'approved'
-                ]);
-
-            }
-
-        });
-
-        $document->load('signatures','formType','project');
-
-        $this->notifyProjectHead(
-            $project,
-            $document,
-            auth()->user()->name . ' approved the Request to Purchase.'
-        );
-
-        $this->notifyNextApprover($document);
-
-        Audit::log(
-            'document.approved',
-            'Request to Purchase approved',
-            [
-                'actor_user_id' => auth()->id(),
-                'organization_id' => $project->organization_id,
-                'school_year_id' => $project->school_year_id,
-                'meta' => [
-                    'document_id' => $document->id,
-                    'form_type' => 'request_to_purchase'
-                ]
-            ]
-        );
-
-        return back()->with('success', 'Approval recorded.');
-
+        return back()->with('success','Approval recorded.');
     }
-
-
 
     public function return(Request $request, Project $project)
     {
-
         $request->validate([
-            'remarks' => ['required', 'string'],
+            'remarks' => ['required','string']
         ]);
 
-
-        $formType = FormType::where('code', 'REQUEST_TO_PURCHASE')->firstOrFail();
-
-
-        $document = ProjectDocument::with('signatures')
-            ->where('project_id', $project->id)
-            ->where('form_type_id', $formType->id)
-            ->firstOrFail();
-
+        $document = $this->getDocument($project,'REQUEST_TO_PURCHASE');
 
         if ($document->status !== 'submitted') {
-            return back()->with('error', 'This document cannot be returned.');
+            return back()->with('error','This document cannot be returned.');
         }
 
-
-        $userId = auth()->id();
-
-        $userSignature = $document->signatures
-            ->where('user_id', $userId)
-            ->first();
-
-
-        if (!$userSignature) {
-            return back()->with('error', 'You are not part of the approval workflow.');
-        }
-
-
-        $currentPending = $document->signatures
-            ->where('status', 'pending')
-            ->sortBy('id')
-            ->first();
-
-
-        if (!$currentPending) {
-            return back()->with('error', 'No pending approvals remain.');
-        }
-
-
-        if ($currentPending->user_id !== $userId) {
-            return back()->with('error', 'It is not your turn to return this document yet.');
-        }
-
-
-        DB::transaction(function () use ($document, $request) {
-
-            foreach ($document->signatures as $signature) {
-
-                $signature->update([
-                    'status' => 'pending',
-                    'signed_at' => null,
-                ]);
-
-            }
-
-
-            $document->update([
-                'status' => 'draft',
-                'remarks' => $request->remarks,
-                'returned_by' => auth()->id(),
-                'returned_at' => now(),
-            ]);
-
-        });
-
-        $this->notifyProjectHead(
+        $this->handleReturn(
             $project,
             $document,
-            'Your Request to Purchase was returned for revision.'
+            $request->remarks
         );
 
-        Audit::log(
-            'document.returned',
-            'Request to Purchase returned for revision',
-            [
-                'actor_user_id' => auth()->id(),
-                'organization_id' => $project->organization_id,
-                'school_year_id' => $project->school_year_id,
-                'meta' => [
-                    'document_id' => $document->id,
-                    'form_type' => 'request_to_purchase'
-                ]
-            ]
-        );
-
-
-        return back()->with('success', 'Request to Purchase returned for revision.');
-
+        return back()->with('success','Request to Purchase returned for revision.');
     }
 
 }
