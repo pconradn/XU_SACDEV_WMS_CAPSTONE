@@ -178,11 +178,11 @@ class AdminProjectDocumentController extends Controller
         $data = null;
 
         if ($formType === 'POSTPONEMENT_NOTICE') {
-            $data = $document->postponementNoticeData;
+            $data = $document->postponementNotice;
         }
 
         if ($formType === 'CANCELLATION_NOTICE') {
-            $data = $document->cancellationNoticeData;      
+            $data = $document->cancellationNotice;      
         }
 
         if ($formType === 'FEES_COLLECTION_REPORT') {
@@ -224,6 +224,10 @@ class AdminProjectDocumentController extends Controller
 
         $proposal = $proposalDocument?->proposalData;
 
+        //dd(
+        //    $document->id,
+        //    $document->postponementNotice
+        //);
 
         return view($view, [
 
@@ -263,8 +267,8 @@ class AdminProjectDocumentController extends Controller
     }
 
 
-
-    public function approve(Request $request, Project $project, $formCode){
+    public function approve(Request $request, Project $project, $formCode, $documentId = null)
+    {
 
         $allowedForms = [
 
@@ -286,8 +290,11 @@ class AdminProjectDocumentController extends Controller
             'DOCUMENTATION_REPORT',
             'LIQUIDATION_REPORT',
 
+            // NEW
+            'POSTPONEMENT_NOTICE',
+            'CANCELLATION_NOTICE',
+
         ];
-        
 
         if (!in_array($formCode, $allowedForms)) {
             abort(404);
@@ -295,10 +302,15 @@ class AdminProjectDocumentController extends Controller
 
         $formType = FormType::where('code', $formCode)->firstOrFail();
 
-        $document = ProjectDocument::with('signatures')
+        $query = ProjectDocument::with('signatures')
             ->where('project_id', $project->id)
-            ->where('form_type_id', $formType->id)
-            ->firstOrFail();
+            ->where('form_type_id', $formType->id);
+
+        if ($documentId) {
+            $document = $query->where('id', $documentId)->firstOrFail();
+        } else {
+            $document = $query->firstOrFail();
+        }
 
         if ($document->status !== 'submitted') {
             return back()->with('error', 'This document is not awaiting approval.');
@@ -331,25 +343,22 @@ class AdminProjectDocumentController extends Controller
             return back()->with('error', 'It is not your turn to approve yet.');
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Validate extra fields for solicitation approval
-        |--------------------------------------------------------------------------
-        */
-
-        if ($formCode === 'SOLICITATION_APPLICATION') {
-
-            $request->validate([
-                'approved_letter_count' => ['required','integer','min:1'],
-                'control_series_start' => ['required','string','max:255'],
-                'control_series_end' => ['required','string','max:255'],
-            ]);
-
-        }
 
         DB::transaction(function () use ($request, $document, $currentPending, $formCode) {
 
+            /*
+            |------------------------------------------------------------------
+            | Special logic for certain forms
+            |------------------------------------------------------------------
+            */
+
             if ($formCode === 'SOLICITATION_APPLICATION') {
+
+                $request->validate([
+                    'approved_letter_count' => ['required','integer','min:1'],
+                    'control_series_start' => ['required','string','max:255'],
+                    'control_series_end' => ['required','string','max:255'],
+                ]);
 
                 \App\Models\SolicitationLetterBatch::updateOrCreate(
                     [
@@ -361,10 +370,9 @@ class AdminProjectDocumentController extends Controller
                         'control_series_end' => $request->control_series_end,
                     ]
                 );
-
             }
 
-            
+
             if ($formCode === 'FEES_COLLECTION_REPORT') {
 
                 $data = \App\Models\FeesCollectionReportData::where(
@@ -384,9 +392,7 @@ class AdminProjectDocumentController extends Controller
                     }
 
                 }
-
             }
-            
 
 
             if ($formCode === 'SELLING_APPLICATION') {
@@ -409,24 +415,22 @@ class AdminProjectDocumentController extends Controller
 
                         }
 
-                        
-
                     }
 
                 }
-
-            //dd($request->has('items'));   
-
             }
+
 
             $currentPending->update([
                 'status' => 'signed',
                 'signed_at' => now(),
             ]);
 
+
             $remaining = $document->signatures()
                 ->where('status', 'pending')
                 ->exists();
+
 
             if (!$remaining) {
 
@@ -439,45 +443,29 @@ class AdminProjectDocumentController extends Controller
         });
 
         return back()->with('success', 'Document approved successfully.');
-
     }
 
-    public function return(Request $request, Project $project, $formCode)
+
+
+
+    public function return(Request $request, Project $project, $formCode, $documentId = null)
     {
+
         $request->validate([
             'remarks' => ['required', 'string'],
         ]);
 
-        $allowedForms = [
-            'PROJECT_PROPOSAL',
-            'BUDGET_PROPOSAL',
-
-            'OFF_CAMPUS_APPLICATION',
-
-            'SOLICITATION_APPLICATION',
-            'SELLING_APPLICATION',
-
-            'REQUEST_TO_PURCHASE',
-
-            'FEES_COLLECTION_REPORT',
-            'SELLING_ACTIVITY_REPORT',
-            'SOLICITATION_SPONSORSHIP_REPORT',
-            'TICKET_SELLING_REPORT',
-
-            'DOCUMENTATION_REPORT',
-            'LIQUIDATION_REPORT',
-        ];
-
-        if (!in_array($formCode, $allowedForms)) {
-            abort(404);
-        }
-
         $formType = FormType::where('code', $formCode)->firstOrFail();
 
-        $document = ProjectDocument::with('signatures')
+        $query = ProjectDocument::with('signatures')
             ->where('project_id', $project->id)
-            ->where('form_type_id', $formType->id)
-            ->firstOrFail();
+            ->where('form_type_id', $formType->id);
+
+        if ($documentId) {
+            $document = $query->where('id', $documentId)->firstOrFail();
+        } else {
+            $document = $query->firstOrFail();
+        }
 
         if ($document->status !== 'submitted') {
             return back()->with('error', 'This document cannot be returned.');
@@ -507,16 +495,15 @@ class AdminProjectDocumentController extends Controller
         }
 
 
-
-
-
         DB::transaction(function () use ($document, $request) {
 
             foreach ($document->signatures as $signature) {
+
                 $signature->update([
                     'status' => 'pending',
                     'signed_at' => null,
                 ]);
+
             }
 
             $document->update([
@@ -530,6 +517,8 @@ class AdminProjectDocumentController extends Controller
 
         return back()->with('success', 'Document returned for revision.');
     }
+
+    
 
     public function retract(Project $project, $formCode)
     {
