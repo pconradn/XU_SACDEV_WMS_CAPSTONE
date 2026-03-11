@@ -188,4 +188,37 @@ class ProjectDocument extends Model
         );
     }
 
+    public function documentationReport()
+    {
+        return $this->hasOne(
+            \App\Models\DocumentationReportData::class,
+            'project_document_id'
+        );
+    }
+
+    public function documentationReportObjectives()
+    {
+        return $this->hasMany(
+            \App\Models\DocumentationReportObjective::class,
+            'project_document_id'
+        );
+    }
+
+    public function documentationReportIndicators()
+    {
+        return $this->hasMany(
+            \App\Models\DocumentationReportIndicator::class,
+            'project_document_id'
+        );
+    }
+
+
+    public function documentationReportPartners()
+    {
+        return $this->hasMany(
+            \App\Models\DocumentationReportPartner::class,
+            'project_document_id'
+        );
+    }
+
 }
