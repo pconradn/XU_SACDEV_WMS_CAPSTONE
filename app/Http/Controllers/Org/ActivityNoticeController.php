@@ -20,7 +20,6 @@ use App\Models\User;
 class ActivityNoticeController extends Controller
 {
 
-
     public function createPostponement(Project $project)
     {
 
@@ -29,7 +28,7 @@ class ActivityNoticeController extends Controller
         $existing = ProjectDocument::where('project_id',$project->id)
             ->where('form_type_id',$formType->id)
             ->whereNull('archived_at')
-            ->where('status','!=','approved_by_sacdev')
+            ->whereNotIn('status',['approved_by_sacdev'])
             ->exists();
 
         if($existing){
@@ -50,17 +49,19 @@ class ActivityNoticeController extends Controller
     }
 
 
-    public function createCancellation(Project $project){
+    public function createCancellation(Project $project)
+    {
 
         $formType = FormType::where('code','CANCELLATION_NOTICE')->firstOrFail();
 
-        $exists = ProjectDocument::where('project_id',$project->id)
+        $existing = ProjectDocument::where('project_id',$project->id)
             ->where('form_type_id',$formType->id)
             ->whereNull('archived_at')
+            ->whereNotIn('status',['approved_by_sacdev'])
             ->exists();
 
-        if($exists){
-            return back()->with('error','A cancellation notice already exists for this project.');
+        if($existing){
+            return back()->with('error','A cancellation notice already exists and is still pending approval.');
         }
 
         $document = ProjectDocument::create([
@@ -79,9 +80,12 @@ class ActivityNoticeController extends Controller
 
     public function editPostponement(Project $project, ProjectDocument $document)
     {
+        if ($document->project_id !== $project->id) {
+            abort(404);
+        }
 
-        if($document->status !== 'draft'){
-            return back()->with('error','This notice can no longer be edited.');
+        if (!in_array($document->status, ['draft', 'returned', 'submitted'])) {
+            return back()->with('error', 'This notice can no longer be edited.');
         }
 
         $data = PostponementNoticeData::where(
@@ -89,17 +93,41 @@ class ActivityNoticeController extends Controller
             $document->id
         )->first();
 
+        $isProjectHead = ProjectAssignment::where('project_id', $project->id)
+            ->where('assignment_role', 'project_head')
+            ->where('user_id', auth()->id())
+            ->whereNull('archived_at')
+            ->exists();
+
+        $currentSignature = $document->signatures()
+            ->where('user_id', auth()->id())
+            ->first();
+
+        $isReadOnly = !$isProjectHead || $document->status === 'submitted';
+
         return view(
             'org.projects.documents.postponement.create',
-            compact('project','document','data')
+            compact(
+                'project',
+                'document',
+                'data',
+                'isProjectHead',
+                'currentSignature',
+                'isReadOnly'
+            )
         );
     }
 
+
+
     public function editCancellation(Project $project, ProjectDocument $document)
     {
+        if ($document->project_id !== $project->id) {
+            abort(404);
+        }
 
-        if($document->status !== 'draft'){
-            return back()->with('error','This notice can no longer be edited.');
+        if (!in_array($document->status, ['draft', 'returned', 'submitted'])) {
+            return back()->with('error', 'This notice can no longer be edited.');
         }
 
         $data = CancellationNoticeData::where(
@@ -107,48 +135,68 @@ class ActivityNoticeController extends Controller
             $document->id
         )->first();
 
+        $isProjectHead = ProjectAssignment::where('project_id', $project->id)
+            ->where('assignment_role', 'project_head')
+            ->where('user_id', auth()->id())
+            ->whereNull('archived_at')
+            ->exists();
+
+        $currentSignature = $document->signatures()
+            ->where('user_id', auth()->id())
+            ->first();
+
+        $isReadOnly = !$isProjectHead || $document->status === 'submitted';
+
         return view(
             'org.projects.documents.cancellation.create',
-            compact('project','document','data')
+            compact(
+                'project',
+                'document',
+                'data',
+                'isProjectHead',
+                'currentSignature',
+                'isReadOnly'
+            )
         );
     }
 
 
 
+    /* -----------------------------------------------------------
+        STORE POSTPONEMENT
+    ------------------------------------------------------------ */
+
     public function storePostponement(Request $request, Project $project, ProjectDocument $document)
     {
 
-        if($document->status !== 'draft'){
+        if(!in_array($document->status,['draft','returned','submitted'])){
             return back()->with('error','This notice can no longer be modified.');
         }
 
         $data = $request->validate([
 
-            'reason' => 'nullable|string',
+            'reason' => 'nullable|string|max:2000',
 
             'new_date' => 'required|date',
 
-            'new_start_time' => 'required',
-            'new_end_time' => 'required',
+            'new_start_time' => ['required','regex:/^\d{2}:\d{2}(:\d{2})?$/'],
+            'new_end_time'   => ['required','regex:/^\d{2}:\d{2}(:\d{2})?$/'],
 
-            'venue' => 'required|string'
+            'venue' => 'required|string|max:255'
 
         ]);
 
         DB::transaction(function() use ($data,$document,$request,$project) {
 
             PostponementNoticeData::updateOrCreate(
-
                 ['project_document_id'=>$document->id],
-
                 $data
-
             );
 
+            $this->resetApprovalsAfterEdit($document);
+
             if ($request->action === 'submit') {
-
                 $this->submitDocument($project,$document);
-
             }
 
         });
@@ -158,33 +206,56 @@ class ActivityNoticeController extends Controller
 
 
 
+    private function resetApprovalsAfterEdit(ProjectDocument $document): void
+    {
+
+        if ($document->status === 'draft') {
+            return;
+        }
+
+        $document->signatures()
+            ->whereIn('role', [
+                'president',
+                'moderator',
+                'sacdev_admin'
+            ])
+            ->delete();
+
+        $document->update([
+            'status' => 'draft',
+            'submitted_at' => null
+        ]);
+
+    }
+
+
+
+    /* -----------------------------------------------------------
+        STORE CANCELLATION
+    ------------------------------------------------------------ */
+
     public function storeCancellation(Request $request, Project $project, ProjectDocument $document)
     {
 
-        if($document->status !== 'draft'){
+        if(!in_array($document->status,['draft','returned','submitted'])){
             return back()->with('error','This notice can no longer be modified.');
         }
 
         $data = $request->validate([
-
-            'reason' => 'required|string'
-
+            'reason' => 'required|string|max:2000'
         ]);
 
         DB::transaction(function() use ($data,$document,$request,$project) {
 
             CancellationNoticeData::updateOrCreate(
-
                 ['project_document_id'=>$document->id],
-
                 $data
-
             );
 
+            $this->resetApprovalsAfterEdit($document);
+
             if ($request->action === 'submit') {
-
                 $this->submitDocument($project,$document);
-
             }
 
         });
@@ -192,6 +263,10 @@ class ActivityNoticeController extends Controller
         return back()->with('success','Cancellation notice saved.');
     }
 
+
+    /* -----------------------------------------------------------
+        ARCHIVE NOTICE
+    ------------------------------------------------------------ */
 
     public function archive(Project $project, ProjectDocument $document)
     {
@@ -208,6 +283,9 @@ class ActivityNoticeController extends Controller
     }
 
 
+    /* -----------------------------------------------------------
+        APPROVE DOCUMENT
+    ------------------------------------------------------------ */
 
     public function approve(Project $project, ProjectDocument $document)
     {
@@ -217,14 +295,10 @@ class ActivityNoticeController extends Controller
             ->where('status','pending')
             ->firstOrFail();
 
-
         $signature->update([
-
             'status'=>'signed',
             'signed_at'=>now()
-
         ]);
-
 
         if (!$document->nextPendingRole()) {
 
@@ -239,16 +313,20 @@ class ActivityNoticeController extends Controller
         return back()->with('success','Document approved.');
     }
 
+
+    /* -----------------------------------------------------------
+        RETURN DOCUMENT
+    ------------------------------------------------------------ */
+
     public function return(Request $request, Project $project, ProjectDocument $document)
     {
 
         $data = $request->validate([
-            'remarks'=>'required|string'
+            'remarks'=>'required|string|max:2000'
         ]);
 
-
         $document->update([
-            'status'=>'draft',
+            'status'=>'returned',
             'remarks'=>$data['remarks'],
             'returned_by'=>auth()->id(),
             'returned_at'=>now()
@@ -258,6 +336,9 @@ class ActivityNoticeController extends Controller
     }
 
 
+    /* -----------------------------------------------------------
+        SUBMIT DOCUMENT
+    ------------------------------------------------------------ */
 
     protected function submitDocument(Project $project, ProjectDocument $document)
     {
@@ -270,7 +351,6 @@ class ActivityNoticeController extends Controller
             'returned_at'=>null
         ]);
 
-
         $document->signatures()->delete();
 
 
@@ -281,12 +361,10 @@ class ActivityNoticeController extends Controller
 
 
         $this->createSignature(
-
             $document->id,
             $projectHead->user_id,
             'project_head',
             'signed'
-
         );
 
 
@@ -298,11 +376,9 @@ class ActivityNoticeController extends Controller
 
 
         $this->createSignature(
-
             $document->id,
             $president->user_id,
             'president'
-
         );
 
 
@@ -314,26 +390,25 @@ class ActivityNoticeController extends Controller
 
 
         $this->createSignature(
-
             $document->id,
             $moderator->user_id,
             'moderator'
-
         );
 
 
         $admin = User::where('system_role','sacdev_admin')->firstOrFail();
 
         $this->createSignature(
-
             $document->id,
             $admin->id,
             'sacdev_admin'
-
         );
-
     }
 
+
+    /* -----------------------------------------------------------
+        CREATE SIGNATURE
+    ------------------------------------------------------------ */
 
     protected function createSignature($documentId,$userId,$role,$status='pending')
     {

@@ -2,55 +2,36 @@
 
 namespace App\Http\Controllers\Org;
 
-use App\Http\Controllers\Controller;
 use App\Http\Controllers\Documents\BaseProjectDocumentController;
 use App\Models\FormType;
-use App\Models\OrgMembership;
+use App\Models\PostponementNoticeData;
+use App\Models\CancellationNoticeData;
 use App\Models\Project;
-use App\Models\ProjectAssignment;
 use App\Models\ProjectDocument;
-use App\Models\ProjectDocumentSignature;
-use App\Models\SellingApplicationData;
-use App\Models\SellingApplicationItem;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Support\Audit;
 
-class SellingApplicationController extends BaseProjectDocumentController
+class ActivityNoticeController extends BaseProjectDocumentController
 {
 
-    public function create(Project $project)
-    {
+    /* -----------------------------------------------------------
+        CREATE POSTPONEMENT NOTICE
+    ------------------------------------------------------------ */
 
-        $document = $this->getDocument($project, 'SELLING_APPLICATION');
+    public function createPostponement(Project $project)
+    {
+        $document = $this->getDocument($project, 'POSTPONEMENT_NOTICE');
 
         $data = null;
-        $items = collect();
 
         if ($document) {
-
-            $data = SellingApplicationData::where(
+            $data = PostponementNoticeData::where(
                 'project_document_id',
                 $document->id
             )->first();
-
-            if ($data) {
-                $items = $data->items;
-            }
-
         }
 
         $user = auth()->user();
-
-        $isAdmin = $user->system_role === 'sacdev_admin';
-
-        $orgId = session('active_org_id');
-        $syId  = session('encode_sy_id');
-
-        $orgRole = $this->getOrgRole($user->id, $orgId, $syId);
-
-        $roles = $this->resolveRoleFlags($orgRole);
 
         $isProjectHead = $this->isProjectHead($project, $user->id);
 
@@ -58,111 +39,167 @@ class SellingApplicationController extends BaseProjectDocumentController
 
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
 
-        return view('org.projects.documents.selling.create', [
+        return view('org.projects.documents.postponement.create', [
 
             'project' => $project,
             'document' => $document,
             'data' => $data,
-            'items' => $items,
             'currentSignature' => $currentSignature,
             'isReadOnly' => $isReadOnly,
-            'isProjectHead' => $isProjectHead,
-            'isAdmin' => $isAdmin,
-
-            ...$roles
+            'isProjectHead' => $isProjectHead
 
         ]);
-
     }
 
 
+    /* -----------------------------------------------------------
+        CREATE CANCELLATION NOTICE
+    ------------------------------------------------------------ */
 
-    public function store(Request $request, Project $project)
+    public function createCancellation(Project $project)
+    {
+        $document = $this->getDocument($project, 'CANCELLATION_NOTICE');
+
+        $data = null;
+
+        if ($document) {
+            $data = CancellationNoticeData::where(
+                'project_document_id',
+                $document->id
+            )->first();
+        }
+
+        $user = auth()->user();
+
+        $isProjectHead = $this->isProjectHead($project, $user->id);
+
+        $currentSignature = $this->getCurrentSignature($document, $user->id);
+
+        $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
+
+        return view('org.projects.documents.cancellation.create', [
+
+            'project' => $project,
+            'document' => $document,
+            'data' => $data,
+            'currentSignature' => $currentSignature,
+            'isReadOnly' => $isReadOnly,
+            'isProjectHead' => $isProjectHead
+
+        ]);
+    }
+
+
+    /* -----------------------------------------------------------
+        STORE POSTPONEMENT NOTICE
+    ------------------------------------------------------------ */
+
+    public function storePostponement(Request $request, Project $project)
     {
 
         $request->validate([
 
-            'activity_name' => ['required','string','max:255'],
-            'purpose' => ['required','string'],
+            'reason' => ['nullable','string','max:2000'],
 
-            'duration_from' => ['required','date'],
-            'duration_to' => ['required','date'],
+            'new_date' => ['required','date'],
 
-            'projected_sales' => ['nullable','numeric'],
+            'new_start_time' => ['required'],
+            'new_end_time' => ['required'],
 
-            'items.*.quantity' => ['required','integer'],
-            'items.*.particulars' => ['required','string','max:255'],
-            'items.*.selling_price' => ['required','numeric'],
-            //'items.*.remarks' => ['nullable','string','max:255'],
+            'venue' => ['required','string','max:255']
 
         ]);
 
-
-        $document = $this->getOrCreateDocument($project, 'SELLING_APPLICATION');
+        $document = $this->getOrCreateDocument($project, 'POSTPONEMENT_NOTICE');
 
         if ($document->isLocked()) {
-            abort(403, 'This document is already approved and cannot be edited.');
+            abort(403, 'This notice can no longer be edited.');
         }
-
 
         DB::transaction(function () use ($request, $document) {
 
-            $data = SellingApplicationData::updateOrCreate(
+            PostponementNoticeData::updateOrCreate(
 
                 [
                     'project_document_id' => $document->id
                 ],
 
                 [
-                    'activity_name' => $request->activity_name,
-                    'purpose' => $request->purpose,
-
-                    'duration_from' => $request->duration_from,
-                    'duration_to' => $request->duration_to,
-
-                    'projected_sales' => $request->projected_sales,
+                    'reason' => $request->reason,
+                    'new_date' => $request->new_date,
+                    'new_start_time' => $request->new_start_time,
+                    'new_end_time' => $request->new_end_time,
+                    'venue' => $request->venue
                 ]
 
             );
-
-
-
-            $data->items()->delete();
-
-            foreach ($request->items as $item) {
-
-                SellingApplicationItem::create([
-
-                    'selling_application_data_id' => $data->id,
-
-                    'quantity' => $item['quantity'],
-                    'particulars' => $item['particulars'],
-                    'selling_price' => $item['selling_price'],
-                    'remarks' => $item['remarks'] ?? null
-
-                ]);
-
-            }
-
 
             $this->resetApprovalsAfterEdit($document);
 
         });
 
-
         $action = $request->input('action');
 
         if ($action === 'submit') {
-            return $this->submit($project);
+            return $this->submitPostponement($project);
         }
 
         return redirect()
             ->route('org.projects.documents.hub', $project)
-            ->with('success', 'Selling application saved as draft.');
-
+            ->with('success','Postponement notice saved as draft.');
     }
 
 
+    /* -----------------------------------------------------------
+        STORE CANCELLATION NOTICE
+    ------------------------------------------------------------ */
+
+    public function storeCancellation(Request $request, Project $project)
+    {
+
+        $request->validate([
+            'reason' => ['required','string','max:2000']
+        ]);
+
+        $document = $this->getOrCreateDocument($project, 'CANCELLATION_NOTICE');
+
+        if ($document->isLocked()) {
+            abort(403, 'This notice can no longer be edited.');
+        }
+
+        DB::transaction(function () use ($request, $document) {
+
+            CancellationNoticeData::updateOrCreate(
+
+                [
+                    'project_document_id' => $document->id
+                ],
+
+                [
+                    'reason' => $request->reason
+                ]
+
+            );
+
+            $this->resetApprovalsAfterEdit($document);
+
+        });
+
+        $action = $request->input('action');
+
+        if ($action === 'submit') {
+            return $this->submitCancellation($project);
+        }
+
+        return redirect()
+            ->route('org.projects.documents.hub', $project)
+            ->with('success','Cancellation notice saved as draft.');
+    }
+
+
+    /* -----------------------------------------------------------
+        RESET APPROVALS AFTER EDIT
+    ------------------------------------------------------------ */
 
     private function resetApprovalsAfterEdit(ProjectDocument $document): void
     {
@@ -172,7 +209,7 @@ class SellingApplicationController extends BaseProjectDocumentController
         }
 
         $document->signatures()
-            ->whereIn('role', [
+            ->whereIn('role',[
                 'president',
                 'moderator',
                 'sacdev_admin'
@@ -183,31 +220,62 @@ class SellingApplicationController extends BaseProjectDocumentController
             'status' => 'draft',
             'submitted_at' => null
         ]);
-
     }
 
 
+    /* -----------------------------------------------------------
+        SUBMIT POSTPONEMENT
+    ------------------------------------------------------------ */
 
-    public function submit(Project $project)
+    public function submitPostponement(Project $project)
     {
-        $formType = FormType::where('code', 'SELLING_APPLICATION')->firstOrFail();
+        $formType = FormType::where('code','POSTPONEMENT_NOTICE')->firstOrFail();
 
-        $document = ProjectDocument::where('project_id', $project->id)
-            ->where('form_type_id', $formType->id)
+        $document = ProjectDocument::where('project_id',$project->id)
+            ->where('form_type_id',$formType->id)
             ->firstOrFail();
 
+        return $this->submitNotice($project,$document);
+    }
+
+
+    /* -----------------------------------------------------------
+        SUBMIT CANCELLATION
+    ------------------------------------------------------------ */
+
+    public function submitCancellation(Project $project)
+    {
+        $formType = FormType::where('code','CANCELLATION_NOTICE')->firstOrFail();
+
+        $document = ProjectDocument::where('project_id',$project->id)
+            ->where('form_type_id',$formType->id)
+            ->firstOrFail();
+
+        return $this->submitNotice($project,$document);
+    }
+
+
+    /* -----------------------------------------------------------
+        COMMON SUBMIT LOGIC
+    ------------------------------------------------------------ */
+
+    private function submitNotice(Project $project, ProjectDocument $document)
+    {
+
         if ($document->status !== 'draft') {
-            return back()->with('error', 'This form is already submitted.');
+            return back()->with('error','This notice is already submitted.');
         }
 
         DB::transaction(function () use ($document) {
 
             $document->update([
+
                 'status' => 'submitted',
                 'submitted_at' => now(),
                 'remarks' => null,
                 'returned_by' => null,
                 'returned_at' => null,
+
             ]);
 
             $document->signatures()->delete();
@@ -220,50 +288,21 @@ class SellingApplicationController extends BaseProjectDocumentController
 
         $this->notifyNextApprover($document);
 
-        Audit::log(
-            'document.submitted',
-            'Selling application submitted',
-            [
-                'actor_user_id' => auth()->id(),
-                'organization_id' => $project->organization_id,
-                'school_year_id' => $project->school_year_id,
-                'meta' => [
-                    'document_id' => $document->id,
-                    'form_type' => 'selling_application'
-                ]
-            ]
-        );
-
-        return back()->with('success', 'Selling application submitted successfully.');
+        return back()->with('success','Notice submitted successfully.');
     }
 
 
-
-    private function createSignature(
-        int $documentId,
-        int $userId,
-        string $role,
-        string $status = 'pending'
-    ): void {
-
-        ProjectDocumentSignature::create([
-
-            'project_document_id' => $documentId,
-            'user_id' => $userId,
-            'role' => $role,
-            'status' => $status,
-            'signed_at' => $status === 'signed' ? now() : null,
-
-        ]);
-
-    }
+    /* -----------------------------------------------------------
+        APPROVE NOTICE
+    ------------------------------------------------------------ */
 
     public function approve(Project $project)
     {
-        $document = $this->getDocument($project,'SELLING_APPLICATION');
+        $document = $this->getDocument($project,'POSTPONEMENT_NOTICE')
+            ?? $this->getDocument($project,'CANCELLATION_NOTICE');
 
         if ($document->status !== 'submitted') {
-            return back()->with('error','This document is not awaiting approval.');
+            return back()->with('error','This notice is not awaiting approval.');
         }
 
         $this->handleApproval($project,$document);
@@ -272,16 +311,22 @@ class SellingApplicationController extends BaseProjectDocumentController
     }
 
 
+    /* -----------------------------------------------------------
+        RETURN NOTICE
+    ------------------------------------------------------------ */
+
     public function return(Request $request, Project $project)
     {
+
         $request->validate([
             'remarks' => ['required','string']
         ]);
 
-        $document = $this->getDocument($project,'SELLING_APPLICATION');
+        $document = $this->getDocument($project,'POSTPONEMENT_NOTICE')
+            ?? $this->getDocument($project,'CANCELLATION_NOTICE');
 
         if ($document->status !== 'submitted') {
-            return back()->with('error','This document cannot be returned.');
+            return back()->with('error','This notice cannot be returned.');
         }
 
         $this->handleReturn(
@@ -290,8 +335,7 @@ class SellingApplicationController extends BaseProjectDocumentController
             $request->remarks
         );
 
-        return back()->with('success','Application returned for revision.');
+        return back()->with('success','Notice returned for revision.');
     }
-
 
 }
