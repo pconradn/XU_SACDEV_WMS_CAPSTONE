@@ -13,6 +13,8 @@ use App\Http\Controllers\Org\RequestToPurchaseController;
 use App\Http\Controllers\Org\SellingActivityReportController;
 use App\Http\Controllers\Org\SellingApplicationController;
 use App\Http\Controllers\Org\SolicitationApplicationController;
+use App\Http\Controllers\Org\SolicitationSponsorshipReportController;
+use App\Http\Controllers\Org\TicketSellingReportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -379,6 +381,94 @@ Route::post(
     'project.access',
     'project.role:president,moderator'
 ])->name('org.projects.selling-activity-report.return');
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Solicitation / Sponsorship Report
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    'projects/{project}/documents/solicitation-sponsorship-report',
+    [SolicitationSponsorshipReportController::class, 'create']
+)->middleware([
+    'project.access',
+    'org.role:project_head,president,moderator'
+])->name('org.projects.solicitation-sponsorship-report.create');
+
+
+Route::post(
+    'projects/{project}/documents/solicitation-sponsorship-report',
+    [SolicitationSponsorshipReportController::class, 'store']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.solicitation-sponsorship-report.store');
+
+
+Route::post(
+    'projects/{project}/documents/solicitation-sponsorship-report/approve',
+    [SolicitationSponsorshipReportController::class, 'approve']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.solicitation-sponsorship-report.approve');
+
+
+Route::post(
+    'projects/{project}/documents/solicitation-sponsorship-report/return',
+    [SolicitationSponsorshipReportController::class, 'return']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator'
+])->name('org.projects.solicitation-sponsorship-report.return');
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Ticket Selling Report
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    'projects/{project}/documents/ticket-selling-report',
+    [TicketSellingReportController::class, 'create']
+)->middleware([
+    'project.access',
+    'org.role:project_head,president,moderator'
+])->name('org.projects.ticket-selling-report.create');
+
+
+Route::post(
+    'projects/{project}/documents/ticket-selling-report',
+    [TicketSellingReportController::class, 'store']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.ticket-selling-report.store');
+
+
+Route::post(
+    'projects/{project}/documents/ticket-selling-report/approve',
+    [TicketSellingReportController::class, 'approve']
+)->middleware([
+    'project.access',
+    'project.role:sacdev_admin'
+])->name('org.projects.ticket-selling-report.approve');
+
+
+Route::post(
+    'projects/{project}/documents/ticket-selling-report/return',
+    [TicketSellingReportController::class, 'return']
+)->middleware([
+    'project.access',
+    'project.role:sacdev_admin'
+])->name('org.projects.ticket-selling-report.return');
 
 
 

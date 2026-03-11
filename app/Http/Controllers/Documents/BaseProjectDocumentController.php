@@ -234,6 +234,18 @@ abstract class BaseProjectDocumentController extends Controller
                 'moderator',
                 'sacdev_admin'
             ],
+
+            'SOLICITATION_SPONSORSHIP_REPORT' => [
+                'project_head',
+                'president',
+                'moderator',
+                'sacdev_admin'
+            ],
+            
+            'TICKET_SELLING_REPORT' => [
+                'project_head',
+                'sacdev_admin',
+            ],
         ];
 
         return $flows[$formCode] ?? [];

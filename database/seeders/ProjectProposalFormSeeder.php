@@ -85,9 +85,9 @@ class ProjectProposalFormSeeder extends Seeder
         */
 
         DB::table('form_types')->updateOrInsert(
-            ['code' => 'SOLICITATION_COLLECTION_REPORT'],
+            ['code' => 'SOLICITATION_SPONSORSHIP_REPORT'],
             [
-                'name' => 'Solicitation Collection Report',
+                'name' => 'Solicitation/Sponsorship Report',
                 'phase' => 'other',
                 'description' => 'Report summarizing all funds collected from solicitation or sponsorship activities.',
                 'created_at' => $now,

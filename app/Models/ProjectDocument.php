@@ -171,4 +171,21 @@ class ProjectDocument extends Model
         return $this->hasOne(SellingActivityReportData::class, 'project_document_id');
     }
 
+
+    public function solicitationSponsorshipReport()
+    {
+        return $this->hasOne(
+            \App\Models\SolicitationSponsorshipReportData::class,
+            'project_document_id'
+        );
+    }
+
+    public function ticketSellingReport()
+    {
+        return $this->hasOne(
+            \App\Models\TicketSellingReportData::class,
+            'project_document_id'
+        );
+    }
+
 }
