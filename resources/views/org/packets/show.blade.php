@@ -73,6 +73,35 @@ Project Information
 
 
 
+
+
+
+
+
+@if($packet->return_remarks)
+
+<div class="mb-6 border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 rounded">
+
+<div class="font-semibold mb-1">
+Packet Returned by SACDEV
+</div>
+
+<div class="leading-relaxed">
+{{ $packet->return_remarks }}
+</div>
+
+@if($packet->returned_at)
+<div class="text-[11px] mt-1 italic text-amber-700">
+Returned on {{ \Carbon\Carbon::parse($packet->returned_at)->format('F d, Y h:i A') }}
+</div>
+@endif
+
+</div>
+
+@endif
+
+
+
 {{-- DOCUMENT CHECKLIST --}}
 <div class="border border-slate-200 bg-white rounded-xl shadow-sm mb-6">
 
