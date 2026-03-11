@@ -22,6 +22,7 @@ $formRoutes = [
 
 
     'DOCUMENTATION_REPORT' => 'org.projects.documentation-report.create',
+    'LIQUIDATION_REPORT' => 'org.projects.liquidation-report.create',
 ];
 
 $routeName = $formRoutes[$formType->code] ?? null;

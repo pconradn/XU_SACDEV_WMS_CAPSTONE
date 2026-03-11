@@ -6,6 +6,7 @@ use App\Http\Controllers\Org\BudgetProposalController;
 use App\Http\Controllers\Org\ClearanceController;
 use App\Http\Controllers\Org\DocumentationReportController;
 use App\Http\Controllers\Org\FeesCollectionReportController;
+use App\Http\Controllers\Org\LiquidationReportController;
 use App\Http\Controllers\Org\OffCampusApplicationController;
 use App\Http\Controllers\Org\ProjectController;
 use App\Http\Controllers\Org\ProjectDocumentHubController;
@@ -511,6 +512,51 @@ Route::post(
     'project.access',
     'project.role:president,moderator,sacdev_admin'
 ])->name('org.projects.documentation-report.return');
+
+
+/*
+|--------------------------------------------------------------------------
+| Liquidation Report
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    'projects/{project}/documents/liquidation-report',
+    [LiquidationReportController::class, 'create']
+)->middleware([
+    'project.access',
+    'org.role:project_head,president,moderator'
+])->name('org.projects.liquidation-report.create');
+
+
+Route::post(
+    'projects/{project}/documents/liquidation-report',
+    [LiquidationReportController::class, 'store']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.liquidation-report.store');
+
+
+Route::post(
+    'projects/{project}/documents/liquidation-report/approve',
+    [LiquidationReportController::class, 'approve']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator,sacdev_admin'
+])->name('org.projects.liquidation-report.approve');
+
+
+Route::post(
+    'projects/{project}/documents/liquidation-report/return',
+    [LiquidationReportController::class, 'return']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator,sacdev_admin'
+])->name('org.projects.liquidation-report.return');
+
+
+
 
 
 /*

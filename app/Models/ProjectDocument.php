@@ -229,4 +229,12 @@ class ProjectDocument extends Model
         );
     }
 
+    public function liquidationData()
+    {
+        return $this->hasOne(
+            LiquidationReportData::class,
+            'project_document_id'
+        );
+    }
+
 }
