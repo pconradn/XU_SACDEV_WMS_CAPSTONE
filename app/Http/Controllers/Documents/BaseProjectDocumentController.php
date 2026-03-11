@@ -109,6 +109,7 @@ abstract class BaseProjectDocumentController extends Controller
             'isPresident' => $orgRole === 'president',
             'isTreasurer' => $orgRole === 'treasurer',
             'isModerator' => $orgRole === 'moderator',
+
         ];
     }
 
@@ -258,6 +259,7 @@ abstract class BaseProjectDocumentController extends Controller
             'LIQUIDATION_REPORT' => [
                 'project_head',
                 'treasurer',
+                'auditor',
                 'president',
                 'moderator',
                 'sacdev_admin'

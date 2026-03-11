@@ -53,6 +53,7 @@ class ProjectDocument extends Model
             'project_proposal' => [
                 'project_head',
                 'treasurer',
+                'auditor',
                 'president',
                 'moderator',
                 'sacdev_admin',

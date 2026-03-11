@@ -90,8 +90,15 @@ class AdminProjectDocumentController extends Controller
         $solicitationReport = $document->solicitationSponsorshipReport;
         $ticketReport = $document->ticketSellingReport;
 
-        $liquidation = $document->liquidationData;
-        $report = $document->documentationReport;
+        $report = null;
+
+        if ($formType === 'LIQUIDATION_REPORT') {
+            $report = $document->liquidationData;
+        }
+
+        if ($formType === 'DOCUMENTATION_REPORT') {
+            $report = $document->documentationReport;
+        }
         $documentation = $document->documentationReport;
 
         $objectives = $documentation?->objectives ?? collect();
@@ -144,6 +151,7 @@ class AdminProjectDocumentController extends Controller
         $userId = $user->id;
 
         $isAdmin = $user->system_role === 'sacdev_admin';
+        
 
         $currentSignature = $document->signatures
             ->where('user_id', $userId)
@@ -183,7 +191,7 @@ class AdminProjectDocumentController extends Controller
             'prefill' => $prefill,   
 
             'report' => $report,          
-            'liquidation' => $liquidation, 
+          
             'items' => $items,
 
             'isReadOnly' => true,
