@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Org;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Documents\BaseProjectDocumentController;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +18,8 @@ use App\Models\ProjectAssignment;
 use App\Models\OrgMembership;
 use App\Models\User;
 
-class ActivityNoticeController extends Controller
+class ActivityNoticeController extends BaseProjectDocumentController
+
 {
 
     public function createPostponement(Project $project)
@@ -84,7 +86,7 @@ class ActivityNoticeController extends Controller
             abort(404);
         }
 
-        if (!in_array($document->status, ['draft', 'returned', 'submitted'])) {
+        if (!in_array($document->status, ['draft', 'returned', 'submitted','Approved'])) {
             return back()->with('error', 'This notice can no longer be edited.');
         }
 
@@ -126,7 +128,7 @@ class ActivityNoticeController extends Controller
             abort(404);
         }
 
-        if (!in_array($document->status, ['draft', 'returned', 'submitted'])) {
+        if (!in_array($document->status, ['draft', 'returned', 'submitted', 'Approved'])) {
             return back()->with('error', 'This notice can no longer be edited.');
         }
 
@@ -290,28 +292,16 @@ class ActivityNoticeController extends Controller
     public function approve(Project $project, ProjectDocument $document)
     {
 
-        $signature = $document->signatures()
-            ->where('user_id',auth()->id())
-            ->where('status','pending')
-            ->firstOrFail();
-
-        $signature->update([
-            'status'=>'signed',
-            'signed_at'=>now()
-        ]);
-
-        if (!$document->nextPendingRole()) {
-
-            $document->update([
-                'status'=>'approved_by_sacdev',
-                'reviewed_at'=>now(),
-                'reviewed_by_user_id'=>auth()->id()
-            ]);
-
+        if ($document->status !== 'submitted') {
+            return back()->with('error','This document is not awaiting approval.');
         }
 
-        return back()->with('success','Document approved.');
+        $this->handleApproval($project, $document);
+
+        return back()->with('success','Approval recorded.');
+
     }
+
 
 
     /* -----------------------------------------------------------
@@ -321,18 +311,22 @@ class ActivityNoticeController extends Controller
     public function return(Request $request, Project $project, ProjectDocument $document)
     {
 
-        $data = $request->validate([
-            'remarks'=>'required|string|max:2000'
+        $request->validate([
+            'remarks' => ['required','string','max:2000']
         ]);
 
-        $document->update([
-            'status'=>'returned',
-            'remarks'=>$data['remarks'],
-            'returned_by'=>auth()->id(),
-            'returned_at'=>now()
-        ]);
+        if ($document->status !== 'submitted') {
+            return back()->with('error','This document cannot be returned.');
+        }
 
-        return back()->with('success','Document returned for revision.');
+        $this->handleReturn(
+            $project,
+            $document,
+            $request->remarks
+        );
+
+        return back()->with('success','Notice returned for revision.');
+
     }
 
 

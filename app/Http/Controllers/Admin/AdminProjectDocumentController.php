@@ -9,6 +9,7 @@ use App\Models\FormType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+
 class AdminProjectDocumentController extends Controller
 {
 
@@ -20,16 +21,37 @@ class AdminProjectDocumentController extends Controller
             ->get()
             ->keyBy(fn($d) => $d->formType->code);
 
+        $postponementType = FormType::where('code','POSTPONEMENT_NOTICE')->first();
+        $cancellationType = FormType::where('code','CANCELLATION_NOTICE')->first();
+
+        $postponements = ProjectDocument::where('project_id',$project->id)
+            ->where('form_type_id',$postponementType->id)
+            ->whereNull('archived_at')
+            ->latest()
+            ->get();
+
+        $cancellations = ProjectDocument::where('project_id',$project->id)
+            ->where('form_type_id',$cancellationType->id)
+            ->whereNull('archived_at')
+            ->latest()
+            ->get();
+        
+
+        
+
         return view('admin.projects.documents.hub', [
             'project'   => $project,
             'documents' => $documents,
+            'postponements' => $postponements,
+            'cancellations' => $cancellations,
         ]);
     }
 
 
-    public function open(Project $project, $formType)
+    public function open(Project $project, $formType, $documentId = null)
     {
-        $document = ProjectDocument::query()
+
+        $query = ProjectDocument::query()
             ->with([
                 'signatures.user',
                 'formType',
@@ -42,14 +64,22 @@ class AdminProjectDocumentController extends Controller
                 'ticketSellingReport.items',
                 'liquidationData.items',
 
+                'postponementNotice',
+                'cancellationNotice',
+
                 'documentationReport.objectives',
                 'documentationReport.indicators',
                 'documentationReport.partners',
                 'documentationReport.attendees',
             ])
             ->where('project_id', $project->id)
-            ->whereHas('formType', fn($q) => $q->where('code', $formType))
-            ->firstOrFail();
+            ->whereHas('formType', fn($q) => $q->where('code', $formType));
+
+        if ($documentId !== null) {
+            $document = $query->where('id', $documentId)->firstOrFail();
+        } else {
+            $document = $query->firstOrFail();
+        }
 
 
         $viewMap = [
@@ -71,9 +101,15 @@ class AdminProjectDocumentController extends Controller
 
             'DOCUMENTATION_REPORT' => 'org.projects.documents.documentation-report.create',
             'LIQUIDATION_REPORT' => 'org.projects.documents.liquidation-report.create',
+            
+            
+            'POSTPONEMENT_NOTICE' => 'org.projects.documents.postponement.create',
+            'CANCELLATION_NOTICE' => 'org.projects.documents.cancellation.create',
+
         ];
 
         $view = $viewMap[$formType] ?? abort(404);
+
 
         $proposal = $document->proposalData;
         $budget = $document->budgetProposal;
@@ -90,6 +126,7 @@ class AdminProjectDocumentController extends Controller
         $solicitationReport = $document->solicitationSponsorshipReport;
         $ticketReport = $document->ticketSellingReport;
 
+
         $report = null;
 
         if ($formType === 'LIQUIDATION_REPORT') {
@@ -99,12 +136,15 @@ class AdminProjectDocumentController extends Controller
         if ($formType === 'DOCUMENTATION_REPORT') {
             $report = $document->documentationReport;
         }
+
+
         $documentation = $document->documentationReport;
 
         $objectives = $documentation?->objectives ?? collect();
         $indicators = $documentation?->indicators ?? collect();
         $partners = $documentation?->partners ?? collect();
         $attendees = $documentation?->attendees ?? collect();
+
 
         $prefill = [];
 
@@ -120,6 +160,7 @@ class AdminProjectDocumentController extends Controller
             ];
         }
 
+
         $items =
             $purchase?->items ??
             $selling?->items ??
@@ -130,7 +171,25 @@ class AdminProjectDocumentController extends Controller
             $report?->items ??
             collect();
 
+        
+
+
+
         $data = null;
+
+        if ($formType === 'POSTPONEMENT_NOTICE') {
+            $data = $document->postponementNoticeData;
+        }
+
+        if ($formType === 'CANCELLATION_NOTICE') {
+            $data = $document->cancellationNoticeData;      
+        }
+
+        if ($formType === 'FEES_COLLECTION_REPORT') {
+            $data = $feesCollection;
+            $items = $feesCollection?->items ?? collect();
+        }
+
 
         if ($formType === 'SELLING_ACTIVITY_REPORT') {
             $data = $sellingActivity;
@@ -147,15 +206,17 @@ class AdminProjectDocumentController extends Controller
             $items = $ticketReport?->items ?? collect();
         }
 
+
         $user = auth()->user();
         $userId = $user->id;
 
         $isAdmin = $user->system_role === 'sacdev_admin';
-        
+
 
         $currentSignature = $document->signatures
             ->where('user_id', $userId)
             ->first();
+
 
         $proposalDocument = ProjectDocument::where('project_id', $project->id)
             ->whereHas('formType', fn($q) => $q->where('code', 'PROJECT_PROPOSAL'))
@@ -188,10 +249,10 @@ class AdminProjectDocumentController extends Controller
             'partners' => $partners,
             'attendees' => $attendees,
 
-            'prefill' => $prefill,   
+            'prefill' => $prefill,
 
-            'report' => $report,          
-          
+            'report' => $report,
+
             'items' => $items,
 
             'isReadOnly' => true,
@@ -200,6 +261,7 @@ class AdminProjectDocumentController extends Controller
             'isAdmin' => $isAdmin,
         ]);
     }
+
 
 
     public function approve(Request $request, Project $project, $formCode){

@@ -48,6 +48,9 @@ Submission Packets
 {{-- DOCUMENT TABLE --}}
 @include('admin.projects.documents.partials._documents-table')
 
+@include('admin.projects.documents.partials._notices-table')
+
+
 
 
 </div>
