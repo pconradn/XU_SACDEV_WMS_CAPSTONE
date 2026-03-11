@@ -129,5 +129,11 @@ class Project extends Model
     }
 
 
+    public function submissionPackets(): HasMany
+    {
+        return $this->hasMany(SubmissionPacket::class);
+    }
+
+    
 
 }

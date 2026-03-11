@@ -8,21 +8,26 @@ return new class extends Migration
 {
     public function up(): void
     {
+    
         Schema::table('project_documents', function (Blueprint $table) {
-
             $table->timestamp('archived_at')
                 ->nullable();
-
 
         });
     }
 
+
+
     public function down(): void
     {
-        Schema::table('project_documents', function (Blueprint $table) {
 
+        Schema::table('project_documents', function (Blueprint $table) {
+            
             $table->dropColumn('archived_at');
 
         });
     }
+
+
+
 };

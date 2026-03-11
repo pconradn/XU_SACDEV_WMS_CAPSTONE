@@ -706,6 +706,70 @@ Route::post(
 
 
 
+/*
+|--------------------------------------------------------------------------
+| Submission Packet
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    'projects/{project}/documents/{document}/packet/generate',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'generate']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.generate');
+
+
+Route::get(
+    'projects/{project}/packets/{packet}',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'show']
+)->middleware([
+    'project.access'
+])->name('org.projects.packet.show');
+
+
+Route::post(
+    'projects/{project}/packets/{packet}/update',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'update']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.update');
+
+
+Route::delete(
+    'projects/{project}/packets/{packet}',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'destroy']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.destroy');
+
+/*
+|--------------------------------------------------------------------------
+| Packet DV Entries
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    'projects/{project}/packets/{packet}/dvs',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'addDv']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.dvs.store');
+
+
+Route::delete(
+    'projects/{project}/packets/{packet}/dvs/{dv}',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'removeDv']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.dvs.destroy');
+
+
 
 Route::get(
     '/projects/{project}/clearance/print',
