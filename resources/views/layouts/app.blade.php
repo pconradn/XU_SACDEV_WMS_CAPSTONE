@@ -25,6 +25,8 @@
 
 <div class="min-h-screen bg-slate-50">
 
+    @include('org.projects.documents.off-campus.partials._flash')
+
    
     <div class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
 

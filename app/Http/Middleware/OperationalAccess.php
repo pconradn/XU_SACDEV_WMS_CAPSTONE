@@ -27,7 +27,7 @@ class OperationalAccess
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
             ->whereNull('archived_at')
-            ->whereIn('role', ['president', 'treasurer', 'moderator'])
+            ->whereIn('role', ['president', 'treasurer', 'moderator', 'auditor'])
             ->exists();
 
 

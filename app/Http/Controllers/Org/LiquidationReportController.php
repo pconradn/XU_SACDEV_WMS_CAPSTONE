@@ -32,6 +32,8 @@ class LiquidationReportController extends BaseProjectDocumentController
 
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
 
+        $isAdmin = 'false';
+
         return view('org.projects.documents.liquidation-report.create', [
             'project' => $project,
             'document' => $document,
@@ -39,6 +41,7 @@ class LiquidationReportController extends BaseProjectDocumentController
             'currentSignature' => $currentSignature,
             'isReadOnly' => $isReadOnly,
             'isProjectHead' => $isProjectHead,
+            'isAdmin' => $isAdmin,
         ]);
     }
 

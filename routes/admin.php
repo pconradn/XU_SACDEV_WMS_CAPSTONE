@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminMajorOfficerController;
 use App\Http\Controllers\Admin\AdminOrgBySyController;
 use App\Http\Controllers\Admin\AdminOrgReviewController;
+use App\Http\Controllers\Admin\AdminPacketController;
 use App\Http\Controllers\Admin\AdminProjectClearanceController;
 use App\Http\Controllers\Admin\AdminProjectController;
 use App\Http\Controllers\Admin\AdminProjectDocumentController;
@@ -210,6 +211,76 @@ Route::prefix('admin')
             '/projects/{project}/documents/{form}/retract',
             [AdminProjectDocumentController::class,'retract']
         )->name('admin.projects.documents.retract');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Packet Receiving
+        |--------------------------------------------------------------------------
+        */
+
+        Route::prefix('packets')->name('admin.packets.')->group(function () {
+
+            Route::get(
+                '/receive',
+                [AdminPacketController::class, 'receivePage']
+            )->name('receive');
+
+            Route::post(
+                '/{packet}/mark-received',
+                [AdminPacketController::class, 'markReceived']
+            )->name('mark_received');
+
+
+            Route::get(
+                '/packets/lookup',
+                [AdminPacketController::class, 'lookup']
+            )->name('admin.packets.lookup');
+
+
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Project Submission Packets
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/projects/{project}/packets',
+            [AdminPacketController::class, 'projectPackets']
+        )->name('admin.projects.packets.index');
+
+        Route::post(
+            '/packets/{packet}/approve',
+            [AdminPacketController::class, 'approve']
+        )->name('admin.packets.approve');
+
+        Route::post(
+            '/packets/{packet}/return',
+            [AdminPacketController::class, 'return']
+        )->name('admin.packets.return');
+
+        Route::post(
+            '/packets/{packet}/revert-to-received',
+            [AdminPacketController::class, 'revertToReceived']
+        )->name('admin.packets.revert_received');
+
+        Route::post(
+            '/packets/{packet}/forward-to-finance',
+            [AdminPacketController::class, 'forwardToFinance']
+        )->name('admin.packets.forward_finance');
+
+        Route::post(
+            '/packets/{packet}/revert-from-finance',
+            [AdminPacketController::class, 'revertFromFinance']
+        )->name('admin.packets.revert_finance');
+
+        Route::post(
+            '/packets/{packet}/verify',
+            [AdminPacketController::class, 'verify']
+        )->name('admin.packets.verify');
+
 
 
     });

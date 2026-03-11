@@ -74,6 +74,37 @@ Return
 </div>
 
 
+{{-- ADMIN RETRACT APPROVAL --}}
+@if(
+$document &&
+$isAdmin &&
+$document->status === 'approved_by_sacdev'
+)
+
+<div class="border border-slate-300 bg-white sticky bottom-0 z-50 shadow-md">
+
+<div class="px-4 py-3 flex justify-end">
+
+<form method="POST"
+action="{{ route('admin.projects.documents.retract', [$project, $document->formType->code]) }}">
+
+@csrf
+
+<button
+class="bg-amber-600 px-4 py-2 text-[12px] text-white hover:bg-amber-700">
+Retract SACDEV Approval
+</button>
+
+</form>
+
+</div>
+
+</div>
+
+@endif
+
+
+
 {{-- RETURN MODAL --}}
 <div id="returnModal"
      class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">

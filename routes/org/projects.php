@@ -17,6 +17,7 @@ use App\Http\Controllers\Org\SellingApplicationController;
 use App\Http\Controllers\Org\SolicitationApplicationController;
 use App\Http\Controllers\Org\SolicitationSponsorshipReportController;
 use App\Http\Controllers\Org\TicketSellingReportController;
+use App\Http\Controllers\SubmissionPacketController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -50,7 +51,7 @@ Route::get(
     [ProjectProposalController::class, 'create']
 )->middleware([
     'project.access',
-    'org.role:project_head,treasurer,president,moderator'
+    'org.role:project_head,treasurer,auditor,president,moderator'
 ])->name('org.projects.project-proposal.create');
 
 
@@ -68,7 +69,7 @@ Route::post(
     [ProjectProposalController::class, 'approve']
 )->middleware([
     'project.access',
-    'project.role:treasurer,president,moderator'
+    'project.role:treasurer,auditor,president,moderator'
 ])->name('org.projects.project-proposal.approve');
 
 
@@ -77,7 +78,7 @@ Route::post(
     [ProjectProposalController::class, 'return']
 )->middleware([
     'project.access',
-    'project.role:treasurer,president,moderator'
+    'project.role:treasurer,auditor,president,moderator'
 ])->name('org.projects.project-proposal.return');
 
 
@@ -91,7 +92,7 @@ Route::get(
     [BudgetProposalController::class, 'create']
 )->middleware([
     'project.access',
-    'org.role:project_head,treasurer,president,moderator'
+    'org.role:project_head,treasurer,auditor,president,moderator'
 ])->name('org.projects.budget-proposal.create');
 
 
@@ -109,7 +110,7 @@ Route::post(
     [BudgetProposalController::class, 'approve']
 )->middleware([
     'project.access',
-    'project.role:treasurer,president,moderator'
+    'project.role:treasurer,auditor,president,moderator'
 ])->name('org.projects.budget-proposal.approve');
 
 
@@ -118,7 +119,7 @@ Route::post(
     [BudgetProposalController::class, 'return']
 )->middleware([
     'project.access',
-    'project.role:treasurer,president,moderator'
+    'project.role:treasurer,auditor,president,moderator'
 ])->name('org.projects.budget-proposal.return');
 
 
@@ -268,7 +269,7 @@ Route::get(
     [RequestToPurchaseController::class, 'create']
 )->middleware([
     'project.access',
-    'org.role:project_head,president,moderator,treasurer'
+    'org.role:project_head,president,moderator,treasurer,auditor'
 ])->name('org.projects.request-to-purchase.create');
 
 
@@ -286,7 +287,7 @@ Route::post(
     [RequestToPurchaseController::class, 'approve']
 )->middleware([
     'project.access',
-    'project.role:president,moderator,treasurer'
+    'project.role:president,moderator,treasurer,auditor'
 ])->name('org.projects.request-to-purchase.approve');
 
 
@@ -295,7 +296,7 @@ Route::post(
     [RequestToPurchaseController::class, 'return']
 )->middleware([
     'project.access',
-    'project.role:president,moderator,treasurer'
+    'project.role:president,moderator,treasurer,auditor'
 ])->name('org.projects.request-to-purchase.return');
 
 
@@ -525,7 +526,7 @@ Route::get(
     [LiquidationReportController::class, 'create']
 )->middleware([
     'project.access',
-    'org.role:project_head,president,moderator,treasurer'
+    'org.role:project_head,president,moderator,treasurer,auditor'
 ])->name('org.projects.liquidation-report.create');
 
 
@@ -543,7 +544,7 @@ Route::post(
     [LiquidationReportController::class, 'approve']
 )->middleware([
     'project.access',
-    'project.role:president,moderator,sacdev_admin,treasurer'
+    'project.role:president,moderator,sacdev_admin,treasurer,auditor'
 ])->name('org.projects.liquidation-report.approve');
 
 
@@ -552,7 +553,7 @@ Route::post(
     [LiquidationReportController::class, 'return']
 )->middleware([
     'project.access',
-    'project.role:president,moderator,sacdev_admin,treasurer'
+    'project.role:president,moderator,sacdev_admin,treasurer,auditor'
 ])->name('org.projects.liquidation-report.return');
 
 
@@ -703,6 +704,141 @@ Route::post(
 )->middleware([
     'project.access'
 ])->name('org.projects.disbursement-voucher.generate');
+
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Submission Packets
+|--------------------------------------------------------------------------
+*/
+Route::post(
+    'projects/{project}/packets/{packet}/letters',
+    [SubmissionPacketController::class,'addLetter']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.letters.store');
+
+
+Route::delete(
+    'projects/{project}/packets/{packet}/letters/{letter}',
+    [SubmissionPacketController::class,'removeLetter']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.letters.destroy');
+
+
+Route::get(
+    'projects/{project}/packets/{packet}/print',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'print']
+)->middleware([
+    'project.access'
+])->name('org.projects.packet.print');
+
+
+Route::get(
+    'projects/{project}/packets',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'index']
+)->middleware([
+    'project.access'
+])->name('org.projects.packets.index');
+
+
+Route::post(
+    'projects/{project}/packets/create',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'create']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.create');
+
+
+Route::get(
+    'projects/{project}/packets/{packet}',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'show']
+)->middleware([
+    'project.access'
+])->name('org.projects.packet.show');
+
+
+Route::post(
+    'projects/{project}/packets/{packet}/update',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'update']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.update');
+
+
+Route::delete(
+    'projects/{project}/packets/{packet}',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'destroy']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.destroy');
+
+
+Route::post(
+    'projects/{project}/packets/{packet}/dvs',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'addDv']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.dvs.store');
+
+
+Route::delete(
+    'projects/{project}/packets/{packet}/dvs/{dv}',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'removeDv']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.dvs.destroy');
+
+
+Route::post(
+    'projects/{project}/packets/{packet}/receipts',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'addReceipt']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.receipts.store');
+
+
+Route::delete(
+    'projects/{project}/packets/{packet}/receipts/{receipt}',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'removeReceipt']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.receipts.destroy');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -194,10 +194,6 @@ class AdminMajorOfficerController extends Controller
 
             //dd($newEntry->full_name);
           
-            $newEntry->update([
-                'major_officer_role' => $role,
-                'is_major_officer' => true,
-            ]);
 
             // Ensure the new officer has a user account
             if (!$newEntry->user_id) {
