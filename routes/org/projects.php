@@ -17,6 +17,7 @@ use App\Http\Controllers\Org\SellingApplicationController;
 use App\Http\Controllers\Org\SolicitationApplicationController;
 use App\Http\Controllers\Org\SolicitationSponsorshipReportController;
 use App\Http\Controllers\Org\TicketSellingReportController;
+use App\Http\Controllers\SubmissionPacketController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -706,19 +707,55 @@ Route::post(
 
 
 
+
+
+
 /*
 |--------------------------------------------------------------------------
-| Submission Packet
+| Submission Packets
 |--------------------------------------------------------------------------
 */
-
 Route::post(
-    'projects/{project}/documents/{document}/packet/generate',
-    [\App\Http\Controllers\SubmissionPacketController::class, 'generate']
+    'projects/{project}/packets/{packet}/letters',
+    [SubmissionPacketController::class,'addLetter']
 )->middleware([
     'project.access',
     'project.role:project_head'
-])->name('org.projects.packet.generate');
+])->name('org.projects.packet.letters.store');
+
+
+Route::delete(
+    'projects/{project}/packets/{packet}/letters/{letter}',
+    [SubmissionPacketController::class,'removeLetter']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.letters.destroy');
+
+
+Route::get(
+    'projects/{project}/packets/{packet}/print',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'print']
+)->middleware([
+    'project.access'
+])->name('org.projects.packet.print');
+
+
+Route::get(
+    'projects/{project}/packets',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'index']
+)->middleware([
+    'project.access'
+])->name('org.projects.packets.index');
+
+
+Route::post(
+    'projects/{project}/packets/create',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'create']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.create');
 
 
 Route::get(
@@ -746,11 +783,6 @@ Route::delete(
     'project.role:project_head'
 ])->name('org.projects.packet.destroy');
 
-/*
-|--------------------------------------------------------------------------
-| Packet DV Entries
-|--------------------------------------------------------------------------
-*/
 
 Route::post(
     'projects/{project}/packets/{packet}/dvs',
@@ -768,6 +800,46 @@ Route::delete(
     'project.access',
     'project.role:project_head'
 ])->name('org.projects.packet.dvs.destroy');
+
+
+Route::post(
+    'projects/{project}/packets/{packet}/receipts',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'addReceipt']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.receipts.store');
+
+
+Route::delete(
+    'projects/{project}/packets/{packet}/receipts/{receipt}',
+    [\App\Http\Controllers\SubmissionPacketController::class, 'removeReceipt']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.packet.receipts.destroy');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -9,14 +9,14 @@ class SubmissionPacket extends Model
 {
     protected $table = 'submission_packets';
 
+
     protected $fillable = [
 
         'packet_code',
-
         'project_id',
         'project_document_id',
 
-        'has_liquidation_report',
+        'has_solicitation_letter',
         'has_disbursement_voucher',
         'has_collection_report',
         'has_certificates',
@@ -36,6 +36,20 @@ class SubmissionPacket extends Model
         'verified_at',
 
         'forwarded_at',
+
+        'return_remarks',
+        'returned_by',
+        'returned_at',
+
+        'other_items'
+
+    ];
+
+
+
+    protected $casts = [
+        'generated_at' => 'datetime',
+        'received_at' => 'datetime',
     ];
 
     /*
@@ -96,4 +110,18 @@ class SubmissionPacket extends Model
             'verified_by'
         );
     }
+
+
+    public function letters()
+    {
+        return $this->hasMany(SubmissionPacketLetter::class,'packet_id');
+    }
+
+    public function returnedBy()
+    {
+        return $this->belongsTo(User::class,'returned_by');
+    }
+
+
+
 }

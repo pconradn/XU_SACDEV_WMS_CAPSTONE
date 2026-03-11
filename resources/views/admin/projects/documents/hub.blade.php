@@ -23,6 +23,15 @@ Project Documents — SACDEV Review
 
 </a>
 
+
+<a
+href="{{ route('admin.projects.packets.index', $project) }}"
+class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-md bg-indigo-600 text-white hover:bg-indigo-700">
+
+Submission Packets
+
+</a>
+
 </div>
 
 </x-slot>

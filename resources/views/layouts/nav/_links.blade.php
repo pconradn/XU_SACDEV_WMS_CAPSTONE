@@ -66,6 +66,10 @@
                 $orgTools[] = $item('Organization Review', route('admin.review.index'), ['admin.review.*']);
             }
 
+            if (Route::has('admin.packets.receive')) {
+                $orgTools[] = $item('Packet Receiving', route('admin.packets.receive'), ['admin.packets.*']);
+            }
+
             // Form queues (indexes)
             if (Route::has('admin.strategic_plans.index')) {
                 $queues[] = $item('B-1 Strategic Plans', route('admin.strategic_plans.index'), ['admin.strategic_plans.*']);
