@@ -16,6 +16,7 @@ use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\DocumentationReportAttendee;
 
 class DocumentationReportController extends BaseProjectDocumentController
 {
@@ -78,11 +79,15 @@ class DocumentationReportController extends BaseProjectDocumentController
                 abort(403, 'This documentation report is already approved by the moderator and is locked.');
             }
 
+            $this->copyProposalDataIfEmpty($project, $document);
+
+
             $existingReport = DocumentationReportData::where('project_document_id', $document->id)->first();
 
             $photoPath = $existingReport?->photo_document_path;
 
             if ($request->hasFile('photo_document')) {
+
                 if ($photoPath && Storage::disk('public')->exists($photoPath)) {
                     Storage::disk('public')->delete($photoPath);
                 }
@@ -91,9 +96,12 @@ class DocumentationReportController extends BaseProjectDocumentController
                     ->store('documentation-reports/photo-documents', 'public');
             }
 
+
             $this->saveMainReport($document->id, $data, $photoPath);
 
+
             $this->saveMultiEntries($document->id, $clean);
+
 
             $this->resetApprovalsAfterEdit($document);
         });
@@ -108,6 +116,64 @@ class DocumentationReportController extends BaseProjectDocumentController
             ->route('org.projects.documents.hub', $project)
             ->with('success', 'Documentation Report saved as draft.');
     }
+
+    private function copyProposalDataIfEmpty(Project $project, ProjectDocument $document): void
+    {
+        if (DocumentationReportObjective::where('project_document_id', $document->id)->exists()) {
+            return;
+        }
+
+        $proposalDocument = $this->getDocument($project, 'PROJECT_PROPOSAL')
+            ?? $this->getDocument($project, 'project_proposal');
+
+        if (!$proposalDocument) {
+            return;
+        }
+
+        $proposal = $proposalDocument->proposalData;
+
+        if (!$proposal) {
+            return;
+        }
+
+        if ($proposal->objectives->count()) {
+
+            DocumentationReportObjective::insert(
+                $proposal->objectives->map(fn($obj) => [
+                    'project_document_id' => $document->id,
+                    'objective' => $obj->objective,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ])->toArray()
+            );
+        }
+
+        if ($proposal->indicators->count()) {
+
+            DocumentationReportIndicator::insert(
+                $proposal->indicators->map(fn($ind) => [
+                    'project_document_id' => $document->id,
+                    'indicator' => $ind->indicator,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ])->toArray()
+            );
+        }
+
+        if ($proposal->partners->count()) {
+
+            DocumentationReportPartner::insert(
+                $proposal->partners->map(fn($p) => [
+                    'project_document_id' => $document->id,
+                    'name' => $p->name,
+                    'type' => $p->type,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ])->toArray()
+            );
+        }
+    }
+
 
     public function submit(Project $project)
     {
@@ -266,6 +332,11 @@ class DocumentationReportController extends BaseProjectDocumentController
             'partners' => ['nullable', 'array'],
             'partners.*.name' => ['nullable', 'string', 'max:255'],
             'partners.*.type' => ['nullable', 'string', 'max:255'],
+
+            'attendees' => ['nullable','array'],
+            'attendees.*.name' => ['nullable','string'],
+            'attendees.*.affiliation' => ['nullable','string'],
+            'attendees.*.designation' => ['nullable','string'],
         ]);
     }
 
@@ -350,6 +421,25 @@ class DocumentationReportController extends BaseProjectDocumentController
                 ], $clean['partners'])
             );
         }
+
+        DocumentationReportAttendee::where('project_document_id', $documentId)->delete();
+
+        if (!empty($clean['attendees'])) {
+            DocumentationReportAttendee::insert(
+                array_map(fn($a) => [
+                    'project_document_id' => $documentId,
+                    'name' => trim((string)($a['name'] ?? '')),
+                    'affiliation' => !empty($a['affiliation']) ? trim($a['affiliation']) : null,
+                    'designation' => !empty($a['designation']) ? trim($a['designation']) : null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ], $clean['attendees'])
+            );
+        }
+
+
+
+
     }
 
     private function normalizeData(array $data): array
@@ -368,6 +458,12 @@ class DocumentationReportController extends BaseProjectDocumentController
         };
 
         $clean = [];
+
+
+        $clean['attendees'] = array_values(array_filter(
+            $data['attendees'] ?? [],
+            fn($a) => !empty(trim((string)($a['name'] ?? '')))
+        ));
 
         $clean['objectives'] = $cleanStrings($data['objectives'] ?? []);
         $clean['indicators'] = $cleanStrings($data['success_indicators'] ?? []);

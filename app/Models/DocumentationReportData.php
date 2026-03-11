@@ -62,4 +62,16 @@ class DocumentationReportData extends Model
             'project_document_id'
         );
     }
+
+    public function attendees()
+    {
+        return $this->hasMany(
+            DocumentationReportAttendee::class,
+            'project_document_id',
+            'project_document_id'
+        );
+    }
+
+
+
 }

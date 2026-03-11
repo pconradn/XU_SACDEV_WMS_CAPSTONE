@@ -221,4 +221,12 @@ class ProjectDocument extends Model
         );
     }
 
+    public function documentationReportAttendees()
+    {
+        return $this->hasMany(
+            \App\Models\DocumentationReportAttendee::class,
+            'project_document_id'
+        );
+    }
+
 }
