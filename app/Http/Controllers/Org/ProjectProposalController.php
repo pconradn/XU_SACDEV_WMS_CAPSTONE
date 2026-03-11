@@ -134,6 +134,18 @@ class ProjectProposalController extends BaseProjectDocumentController
 
         $data = $this->validateRequest($request);
 
+
+        if (
+            empty($data['on_campus_venue']) &&
+            empty($data['off_campus_venue'])
+        ) {
+            return back()
+                ->withErrors([
+                    'venue' => 'At least one venue must be specified.'
+                ])
+                ->withInput();
+        }
+
         [$data, $clean] = $this->normalizeData($data);
 
         DB::transaction(function () use ($project, $formType, $data, $clean) {
@@ -190,11 +202,13 @@ class ProjectProposalController extends BaseProjectDocumentController
             ]
         );
 
-        if ($proposal->venue_type === 'off_campus') {
+        if (!empty($proposal->off_campus_venue)) {
             $document->update(['is_active' => true]);
         } else {
             $document->update(['is_active' => false]);
         }
+
+
     }
 
     private function resetApprovalsAfterEdit(ProjectDocument $document): void
@@ -230,8 +244,8 @@ class ProjectProposalController extends BaseProjectDocumentController
                     'date_format:H:i:s',
                 ]),
             ],
-            'venue_type' => ['required', 'in:on_campus,off_campus'],
-            'venue_name' => ['required', 'string', 'max:255'],
+            'on_campus_venue' => ['nullable', 'string', 'max:255'],
+            'off_campus_venue' => ['nullable', 'string', 'max:255'],
 
             'engagement_type' => ['required', 'in:organizer,partner,participant'],
             'main_organizer' => ['nullable', 'string', 'max:255'],
@@ -284,6 +298,8 @@ class ProjectProposalController extends BaseProjectDocumentController
             'plan_of_actions.*.venue' => ['nullable', 'string'],
             'roles' => ['nullable', 'array'],
         ]);
+
+        
     }
     
     private function saveDocument(Project $project, $formType)
@@ -308,8 +324,8 @@ class ProjectProposalController extends BaseProjectDocumentController
                 'start_date' => $data['start_date'],
                 'end_date' => $data['end_date'],
                 'start_time' => $data['start_time'] ?? null,
-                'venue_type' => $data['venue_type'],
-                'venue_name' => $data['venue_name'],
+                'on_campus_venue' => $data['on_campus_venue'] ?? null,
+                'off_campus_venue' => $data['off_campus_venue'] ?? null,
                 'engagement_type' => $data['engagement_type'],
                 'main_organizer' => $data['main_organizer'] ?? null,
                 'project_nature' => implode(', ', $data['project_nature'] ?? []),

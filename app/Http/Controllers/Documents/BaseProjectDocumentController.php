@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\ProjectAssignment;
 use App\Models\ProjectDocument;
 use App\Models\ProjectDocumentSignature;
+use App\Models\ProjectProposalData;
 use App\Models\User;
 use App\Notifications\ReregActionNotification;
 use App\Support\Audit;
@@ -246,9 +247,21 @@ abstract class BaseProjectDocumentController extends Controller
                 'project_head',
                 'sacdev_admin',
             ],
+
+            'DOCUMENTATION_REPORT' => [
+                'project_head',
+                'president',
+                'moderator',
+                'sacdev_admin'
+            ],
         ];
 
         return $flows[$formCode] ?? [];
+    }
+
+    protected function requiresOffCampus(ProjectProposalData $proposal): bool
+    {
+        return !empty(trim($proposal->off_campus_venue ?? ''));
     }
 
     protected function resolveUserByRole(Project $project, string $role): int

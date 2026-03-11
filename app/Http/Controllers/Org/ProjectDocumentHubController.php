@@ -112,10 +112,7 @@ class ProjectDocumentHubController extends Controller
 
         if ($proposalData) {
 
-            if (
-                strtolower($proposalData->venue ?? '') === 'off campus' ||
-                strtolower($proposalData->venue_type ?? '') === 'off_campus'
-            ) {
+            if (!empty(trim($proposalData->off_campus_venue ?? ''))) {
                 $showOffCampus = true;
             }
 

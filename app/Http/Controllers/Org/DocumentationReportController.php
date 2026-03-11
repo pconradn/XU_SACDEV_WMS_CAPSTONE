@@ -20,9 +20,20 @@ use App\Models\DocumentationReportAttendee;
 
 class DocumentationReportController extends BaseProjectDocumentController
 {
+
     public function create(Request $request, Project $project)
     {
         $document = $this->getDocument($project, 'DOCUMENTATION_REPORT');
+
+        if ($document) {
+            $document->load([
+                'documentationReport.objectives',
+                'documentationReport.indicators',
+                'documentationReport.partners',
+                'documentationReport.attendees',
+                'signatures',
+            ]);
+        }
 
         $report = $document?->documentationReport;
 
@@ -32,13 +43,10 @@ class DocumentationReportController extends BaseProjectDocumentController
         $syId  = session('encode_sy_id');
 
         $orgRole = $this->getOrgRole($user->id, $orgId, $syId);
-
         $roles = $this->resolveRoleFlags($orgRole);
 
         $isProjectHead = $this->isProjectHead($project, $user->id);
-
         $currentSignature = $this->getCurrentSignature($document, $user->id);
-
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
 
         $proposalDocument = $this->getDocument($project, 'PROJECT_PROPOSAL')
@@ -49,14 +57,14 @@ class DocumentationReportController extends BaseProjectDocumentController
         $prefill = $this->buildPrefillData($proposalDocument, $proposal, $report);
 
         return view('org.projects.documents.documentation-report.create', [
-            'project'            => $project,
-            'document'           => $document,
-            'report'             => $report,
-            'proposal'           => $proposal,
-            'prefill'            => $prefill,
-            'currentSignature'   => $currentSignature,
-            'isReadOnly'         => $isReadOnly,
-            'isProjectHead'      => $isProjectHead,
+            'project' => $project,
+            'document' => $document,
+            'report' => $report,
+            'proposal' => $proposal,
+            'prefill' => $prefill,
+            'currentSignature' => $currentSignature,
+            'isReadOnly' => $isReadOnly,
+            'isProjectHead' => $isProjectHead,
             ...$roles
         ]);
     }
@@ -303,18 +311,31 @@ class DocumentationReportController extends BaseProjectDocumentController
 
     private function validateRequest(Request $request): array
     {
-        return $request->validate([
-            'objectives_met' => ['nullable', 'in:yes,no'],
-            'contributing_factors' => ['nullable', 'string'],
+        $isSubmit = $request->input('action') === 'submit';
 
-            'expected_participants' => ['nullable', 'integer', 'min:0'],
-            'actual_participants' => ['nullable', 'integer', 'min:0'],
+        $data = $request->validate([
+            'description' => [$isSubmit ? 'required' : 'nullable', 'string'],
 
-            'implementation_rating' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'implementation_start_date' => [$isSubmit ? 'required' : 'nullable', 'date'],
+            'implementation_end_date' => [$isSubmit ? 'required' : 'nullable', 'date', 'after_or_equal:implementation_start_date'],
 
-            'pre_implementation_stage' => ['nullable', 'string'],
-            'implementation_stage' => ['nullable', 'string'],
-            'post_implementation_stage' => ['nullable', 'string'],
+            'implementation_start_time' => [$isSubmit ? 'required' : 'nullable', 'date_format:H:i'],
+            'implementation_end_time' => [$isSubmit ? 'required' : 'nullable', 'date_format:H:i'],
+
+            'on_campus_venue' => ['nullable', 'string', 'max:255'],
+            'off_campus_venue' => ['nullable', 'string', 'max:255'],
+
+            'objectives_met' => [$isSubmit ? 'required' : 'nullable', 'in:yes,no'],
+            'contributing_factors' => [$isSubmit ? 'required' : 'nullable', 'string'],
+
+            'expected_participants' => [$isSubmit ? 'required' : 'nullable', 'integer', 'min:0'],
+            'actual_participants' => [$isSubmit ? 'required' : 'nullable', 'integer', 'min:0'],
+
+            'implementation_rating' => [$isSubmit ? 'required' : 'nullable', 'integer', 'min:1', 'max:5'],
+
+            'pre_implementation_stage' => [$isSubmit ? 'required' : 'nullable', 'string'],
+            'implementation_stage' => [$isSubmit ? 'required' : 'nullable', 'string'],
+            'post_implementation_stage' => [$isSubmit ? 'required' : 'nullable', 'string'],
             'recommendations' => ['nullable', 'string'],
 
             'proposed_budget' => ['nullable', 'numeric', 'min:0'],
@@ -323,21 +344,33 @@ class DocumentationReportController extends BaseProjectDocumentController
 
             'photo_document' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
 
-            'objectives' => ['nullable', 'array'],
+            'objectives' => [$isSubmit ? 'required' : 'nullable', 'array', 'min:1'],
             'objectives.*' => ['nullable', 'string'],
 
-            'success_indicators' => ['nullable', 'array'],
+            'success_indicators' => [$isSubmit ? 'required' : 'nullable', 'array', 'min:1'],
             'success_indicators.*' => ['nullable', 'string'],
 
             'partners' => ['nullable', 'array'],
             'partners.*.name' => ['nullable', 'string', 'max:255'],
             'partners.*.type' => ['nullable', 'string', 'max:255'],
 
-            'attendees' => ['nullable','array'],
-            'attendees.*.name' => ['nullable','string'],
-            'attendees.*.affiliation' => ['nullable','string'],
-            'attendees.*.designation' => ['nullable','string'],
+            'attendees' => ['nullable', 'array'],
+            'attendees.*.name' => ['nullable', 'string', 'max:255'],
+            'attendees.*.affiliation' => ['nullable', 'string', 'max:255'],
+            'attendees.*.designation' => ['nullable', 'string', 'max:255'],
         ]);
+
+        if (
+            $isSubmit &&
+            empty(trim((string) ($data['on_campus_venue'] ?? ''))) &&
+            empty(trim((string) ($data['off_campus_venue'] ?? '')))
+        ) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'on_campus_venue' => 'At least one venue must be provided.',
+            ]);
+        }
+
+        return $data;
     }
 
     private function saveDocument(Project $project, FormType $formType): ProjectDocument
@@ -359,22 +392,36 @@ class DocumentationReportController extends BaseProjectDocumentController
         return DocumentationReportData::updateOrCreate(
             ['project_document_id' => $documentId],
             [
+                'description' => $data['description'] ?? null,
+
+                'implementation_start_date' => $data['implementation_start_date'] ?? null,
+                'implementation_end_date' => $data['implementation_end_date'] ?? null,
+                'implementation_start_time' => $data['implementation_start_time'] ?? null,
+                'implementation_end_time' => $data['implementation_end_time'] ?? null,
+
+                'on_campus_venue' => $data['on_campus_venue'] ?? null,
+                'off_campus_venue' => $data['off_campus_venue'] ?? null,
+
                 'objectives_met' => match ($data['objectives_met'] ?? null) {
                     'yes' => true,
                     'no' => false,
                     default => null,
                 },
+
                 'contributing_factors' => $data['contributing_factors'] ?? null,
                 'expected_participants' => $data['expected_participants'] ?? null,
                 'actual_participants' => $data['actual_participants'] ?? null,
                 'implementation_rating' => $data['implementation_rating'] ?? null,
+
                 'pre_implementation_stage' => $data['pre_implementation_stage'] ?? null,
                 'implementation_stage' => $data['implementation_stage'] ?? null,
                 'post_implementation_stage' => $data['post_implementation_stage'] ?? null,
                 'recommendations' => $data['recommendations'] ?? null,
+
                 'proposed_budget' => $data['proposed_budget'] ?? null,
                 'actual_budget' => $data['actual_budget'] ?? null,
                 'balance' => $data['balance'] ?? null,
+
                 'photo_document_path' => $photoPath,
             ]
         );
@@ -501,17 +548,25 @@ class DocumentationReportController extends BaseProjectDocumentController
     {
         if ($report) {
             return [
+                'description' => $report->description,
+
+                'implementation_start_date' => $report->implementation_start_date,
+                'implementation_end_date' => $report->implementation_end_date,
+                'implementation_start_time' => $report->implementation_start_time,
+                'implementation_end_time' => $report->implementation_end_time,
+
+                'on_campus_venue' => $report->on_campus_venue,
+                'off_campus_venue' => $report->off_campus_venue,
+
                 'objectives' => $report->objectives()->get(),
                 'indicators' => $report->indicators()->get(),
                 'partners' => $report->partners()->get(),
+                'attendees' => $report->attendees()->get(),
+
                 'expected_participants' => $report->expected_participants,
                 'proposed_budget' => $report->proposed_budget,
             ];
         }
-
-        $proposalObjectives = $proposalDocument?->proposalData?->objectives ?? collect();
-        $proposalIndicators = $proposalDocument?->proposalData?->indicators ?? collect();
-        $proposalPartners = $proposalDocument?->proposalData?->partners ?? collect();
 
         $expectedParticipants = null;
 
@@ -522,11 +577,26 @@ class DocumentationReportController extends BaseProjectDocumentController
         }
 
         return [
-            'objectives' => $proposalObjectives,
-            'indicators' => $proposalIndicators,
-            'partners' => $proposalPartners,
+            'description' => $proposal?->description,
+
+            'implementation_start_date' => $proposal?->start_date,
+            'implementation_end_date' => $proposal?->end_date,
+            'implementation_start_time' => $proposal?->start_time,
+            'implementation_end_time' => $proposal?->end_time,
+
+            'on_campus_venue' => $proposal?->venue_type === 'on_campus' ? $proposal?->venue_name : null,
+            'off_campus_venue' => $proposal?->venue_type === 'off_campus' ? $proposal?->venue_name : null,
+
+            'objectives' => $proposalDocument?->proposalData?->objectives ?? collect(),
+            'indicators' => $proposalDocument?->proposalData?->indicators ?? collect(),
+            'partners' => $proposalDocument?->proposalData?->partners ?? collect(),
+            'attendees' => collect(),
+
             'expected_participants' => $expectedParticipants,
             'proposed_budget' => $proposal?->total_budget,
         ];
     }
+
+
+
 }

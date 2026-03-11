@@ -4,6 +4,7 @@ use App\Http\Controllers\Documents\BaseProjectDocumentController;
 use App\Http\Controllers\Org\ActivityNoticeController;
 use App\Http\Controllers\Org\BudgetProposalController;
 use App\Http\Controllers\Org\ClearanceController;
+use App\Http\Controllers\Org\DocumentationReportController;
 use App\Http\Controllers\Org\FeesCollectionReportController;
 use App\Http\Controllers\Org\OffCampusApplicationController;
 use App\Http\Controllers\Org\ProjectController;
@@ -470,7 +471,46 @@ Route::post(
     'project.role:sacdev_admin'
 ])->name('org.projects.ticket-selling-report.return');
 
+/*
+|--------------------------------------------------------------------------
+| Documentation Report
+|--------------------------------------------------------------------------
+*/
 
+Route::get(
+    'projects/{project}/documents/documentation-report',
+    [DocumentationReportController::class, 'create']
+)->middleware([
+    'project.access',
+    'org.role:project_head,president,moderator'
+])->name('org.projects.documentation-report.create');
+
+
+Route::post(
+    'projects/{project}/documents/documentation-report',
+    [DocumentationReportController::class, 'store']
+)->middleware([
+    'project.access',
+    'project.role:project_head'
+])->name('org.projects.documentation-report.store');
+
+
+Route::post(
+    'projects/{project}/documents/documentation-report/approve',
+    [DocumentationReportController::class, 'approve']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator,sacdev_admin'
+])->name('org.projects.documentation-report.approve');
+
+
+Route::post(
+    'projects/{project}/documents/documentation-report/return',
+    [DocumentationReportController::class, 'return']
+)->middleware([
+    'project.access',
+    'project.role:president,moderator,sacdev_admin'
+])->name('org.projects.documentation-report.return');
 
 
 /*

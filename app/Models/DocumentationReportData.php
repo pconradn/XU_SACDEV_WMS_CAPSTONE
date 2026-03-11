@@ -10,18 +10,33 @@ class DocumentationReportData extends Model
 
     protected $fillable = [
         'project_document_id',
+
+        'description',
+
+        'implementation_start_date',
+        'implementation_end_date',
+        'implementation_start_time',
+        'implementation_end_time',
+
+        'on_campus_venue',
+        'off_campus_venue',
+
         'objectives_met',
         'contributing_factors',
         'expected_participants',
         'actual_participants',
         'implementation_rating',
+
         'pre_implementation_stage',
         'implementation_stage',
         'post_implementation_stage',
+
         'recommendations',
+
         'proposed_budget',
         'actual_budget',
         'balance',
+
         'photo_document_path',
     ];
 

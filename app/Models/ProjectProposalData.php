@@ -16,6 +16,9 @@ class ProjectProposalData extends Model
         'end_time',
         'venue_type',
         'venue_name',
+        'on_campus_venue',
+        'off_campus_venue',
+
         'engagement_type',
         'main_organizer',
         'project_nature',
