@@ -185,11 +185,6 @@ class SacdevB3OfficerSubmissionController extends Controller
             }
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | STEP 0: Update submission status
-            |--------------------------------------------------------------------------
-            */
 
             $locked->status = 'approved_by_sacdev';
             $locked->approved_at = now();
@@ -198,13 +193,6 @@ class SacdevB3OfficerSubmissionController extends Controller
             $locked->sacdev_remarks = $data['sacdev_remarks'] ?? null;
             $locked->save();
 
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | STEP 1–10: Process each officer
-            |--------------------------------------------------------------------------
-            */
 
             foreach ($locked->items as $item) {
 
@@ -215,12 +203,6 @@ class SacdevB3OfficerSubmissionController extends Controller
                 $studentId = $item->student_id_number;
                 $email = $studentId . '@my.xu.edu.ph';
 
-
-                /*
-                |--------------------------------------------------------------------------
-                | STEP 1: Major officer conflict blocking
-                |--------------------------------------------------------------------------
-                */
 
                 if ($item->is_major_officer) {
 
@@ -240,13 +222,6 @@ class SacdevB3OfficerSubmissionController extends Controller
                 }
 
 
-
-                /*
-                |--------------------------------------------------------------------------
-                | STEP 2: Find or create OfficerEntry
-                |--------------------------------------------------------------------------
-                */
-
                 $entry = OfficerEntry::query()
                     ->where('organization_id', $orgId)
                     ->where('school_year_id', $syId)
@@ -263,12 +238,6 @@ class SacdevB3OfficerSubmissionController extends Controller
                 }
 
 
-
-                /*
-                |--------------------------------------------------------------------------
-                | STEP 3: Update OfficerEntry snapshot
-                |--------------------------------------------------------------------------
-                */
 
                 $entry->full_name = $item->officer_name;
                 $entry->email = $email;
@@ -292,12 +261,6 @@ class SacdevB3OfficerSubmissionController extends Controller
 
 
 
-                /*
-                |--------------------------------------------------------------------------
-                | STEP 4: Compute probation status
-                |--------------------------------------------------------------------------
-                */
-
                 $failingCount = collect([
                     $item->first_sem_qpi,
                     $item->second_sem_qpi,
@@ -309,13 +272,6 @@ class SacdevB3OfficerSubmissionController extends Controller
 
                 $isUnderProbation = $failingCount >= 2;
 
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | STEP 5: Create OrgMembership for ALL officers
-                |--------------------------------------------------------------------------
-                */
 
                 $membership = OrgMembership::query()
                     ->where('organization_id', $orgId)
@@ -342,13 +298,7 @@ class SacdevB3OfficerSubmissionController extends Controller
 
 
 
-                /*
-                |--------------------------------------------------------------------------
-                | STEP 6: Provision USER ONLY if Treasurer
-                |--------------------------------------------------------------------------
-                */
-
-                if ($item->isTreasurer()) {
+                if ($item->isTreasurer() || $item->major_officer_role === 'auditor') {
 
                     [$user, $tempPassword] =
                         AccountProvisioner::findOrCreateUser(
@@ -356,32 +306,28 @@ class SacdevB3OfficerSubmissionController extends Controller
                             $email
                         );
 
-                    // Link OfficerEntry
                     $entry->user_id = $user->id;
                     $entry->save();
 
-                    // Link OrgMembership
                     $membership->user_id = $user->id;
                     $membership->save();
 
-
-
-
+                    $roleLabel = $item->major_officer_role ?? 'officer';
 
                     Audit::log(
-                        'treasurer_provisioned',
-                        "Treasurer account provisioned: {$item->officer_name}",
+                        'major_officer_provisioned',
+                        ucfirst($roleLabel) . " account provisioned: {$item->officer_name}",
                         [
                             'actor_user_id' => auth()->id(),
                             'organization_id' => $orgId,
                             'school_year_id' => $syId,
                             'meta' => [
-                                'student_id_number' => $studentId
+                                'student_id_number' => $studentId,
+                                'role' => $roleLabel
                             ]
                         ]
                     );
                 }
-
 
 
 

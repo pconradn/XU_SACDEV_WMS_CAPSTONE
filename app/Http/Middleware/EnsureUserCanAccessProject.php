@@ -60,6 +60,7 @@ class EnsureUserCanAccessProject
                 'president',
                 'treasurer',
                 'moderator',
+                'auditor',
             ])
             ->exists();
 

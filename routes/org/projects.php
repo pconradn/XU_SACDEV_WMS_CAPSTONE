@@ -51,7 +51,7 @@ Route::get(
     [ProjectProposalController::class, 'create']
 )->middleware([
     'project.access',
-    'org.role:project_head,treasurer,president,moderator'
+    'org.role:project_head,treasurer,auditor,president,moderator'
 ])->name('org.projects.project-proposal.create');
 
 
@@ -69,7 +69,7 @@ Route::post(
     [ProjectProposalController::class, 'approve']
 )->middleware([
     'project.access',
-    'project.role:treasurer,president,moderator'
+    'project.role:treasurer,auditor,president,moderator'
 ])->name('org.projects.project-proposal.approve');
 
 
@@ -78,7 +78,7 @@ Route::post(
     [ProjectProposalController::class, 'return']
 )->middleware([
     'project.access',
-    'project.role:treasurer,president,moderator'
+    'project.role:treasurer,auditor,president,moderator'
 ])->name('org.projects.project-proposal.return');
 
 
@@ -92,7 +92,7 @@ Route::get(
     [BudgetProposalController::class, 'create']
 )->middleware([
     'project.access',
-    'org.role:project_head,treasurer,president,moderator'
+    'org.role:project_head,treasurer,auditor,president,moderator'
 ])->name('org.projects.budget-proposal.create');
 
 
@@ -110,7 +110,7 @@ Route::post(
     [BudgetProposalController::class, 'approve']
 )->middleware([
     'project.access',
-    'project.role:treasurer,president,moderator'
+    'project.role:treasurer,auditor,president,moderator'
 ])->name('org.projects.budget-proposal.approve');
 
 
@@ -119,7 +119,7 @@ Route::post(
     [BudgetProposalController::class, 'return']
 )->middleware([
     'project.access',
-    'project.role:treasurer,president,moderator'
+    'project.role:treasurer,auditor,president,moderator'
 ])->name('org.projects.budget-proposal.return');
 
 
@@ -269,7 +269,7 @@ Route::get(
     [RequestToPurchaseController::class, 'create']
 )->middleware([
     'project.access',
-    'org.role:project_head,president,moderator,treasurer'
+    'org.role:project_head,president,moderator,treasurer,auditor'
 ])->name('org.projects.request-to-purchase.create');
 
 
@@ -287,7 +287,7 @@ Route::post(
     [RequestToPurchaseController::class, 'approve']
 )->middleware([
     'project.access',
-    'project.role:president,moderator,treasurer'
+    'project.role:president,moderator,treasurer,auditor'
 ])->name('org.projects.request-to-purchase.approve');
 
 
@@ -296,7 +296,7 @@ Route::post(
     [RequestToPurchaseController::class, 'return']
 )->middleware([
     'project.access',
-    'project.role:president,moderator,treasurer'
+    'project.role:president,moderator,treasurer,auditor'
 ])->name('org.projects.request-to-purchase.return');
 
 
@@ -526,7 +526,7 @@ Route::get(
     [LiquidationReportController::class, 'create']
 )->middleware([
     'project.access',
-    'org.role:project_head,president,moderator,treasurer'
+    'org.role:project_head,president,moderator,treasurer,auditor'
 ])->name('org.projects.liquidation-report.create');
 
 
@@ -544,7 +544,7 @@ Route::post(
     [LiquidationReportController::class, 'approve']
 )->middleware([
     'project.access',
-    'project.role:president,moderator,sacdev_admin,treasurer'
+    'project.role:president,moderator,sacdev_admin,treasurer,auditor'
 ])->name('org.projects.liquidation-report.approve');
 
 
@@ -553,7 +553,7 @@ Route::post(
     [LiquidationReportController::class, 'return']
 )->middleware([
     'project.access',
-    'project.role:president,moderator,sacdev_admin,treasurer'
+    'project.role:president,moderator,sacdev_admin,treasurer,auditor'
 ])->name('org.projects.liquidation-report.return');
 
 

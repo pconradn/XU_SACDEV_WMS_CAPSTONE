@@ -166,6 +166,7 @@
                     ->whereNull('archived_at')
                     ->value('role');
 
+                $isAuditor = ($orgRole === 'auditor');
                 $isTreasurer = ($orgRole === 'treasurer');
                 $isModerator = ($orgRole === 'moderator');
 
@@ -261,7 +262,7 @@
                 // TREASURER ACCESS
                 // =========================
 
-                if ($isTreasurer) {
+                if ($isTreasurer || $isAuditor) {
 
                     $treasurer = [];
 
