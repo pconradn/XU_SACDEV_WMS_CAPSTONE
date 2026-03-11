@@ -30,128 +30,130 @@ class AdminProjectDocumentController extends Controller
     public function open(Project $project, $formType)
     {
         $document = ProjectDocument::query()
-            ->with(['signatures.user','formType'])
+            ->with([
+                'signatures.user',
+                'formType',
+                'budgetProposal.items',
+                'sellingApplication.items',
+                'requestToPurchase.items',
+                'feesCollectionReport.items',
+                'sellingActivityReport.items',
+                'solicitationSponsorshipReport.items',
+                'ticketSellingReport.items',
+                'liquidationData.items',
+
+                'documentationReport.objectives',
+                'documentationReport.indicators',
+                'documentationReport.partners',
+                'documentationReport.attendees',
+            ])
             ->where('project_id', $project->id)
             ->whereHas('formType', fn($q) => $q->where('code', $formType))
             ->firstOrFail();
 
 
         $viewMap = [
-            'PROJECT_PROPOSAL'       => 'org.projects.documents.project-proposal.create',
-            'BUDGET_PROPOSAL'        => 'org.projects.documents.budget-proposal.create',
+
+            'PROJECT_PROPOSAL' => 'org.projects.documents.project-proposal.create',
+            'BUDGET_PROPOSAL' => 'org.projects.documents.budget-proposal.create',
+
             'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.create',
+
             'SOLICITATION_APPLICATION' => 'org.projects.documents.solicitation.create',
-            'SELLING_APPLICATION'    => 'org.projects.documents.selling.create',
-            'REQUEST_TO_PURCHASE'    => 'org.projects.documents.request-to-purchase.create',
+            'SELLING_APPLICATION' => 'org.projects.documents.selling.create',
+
+            'REQUEST_TO_PURCHASE' => 'org.projects.documents.request-to-purchase.create',
+
+            'FEES_COLLECTION_REPORT' => 'org.projects.documents.fees-collection.create',
+            'SELLING_ACTIVITY_REPORT' => 'org.projects.documents.selling-activity-report.create',
+            'SOLICITATION_SPONSORSHIP_REPORT' => 'org.projects.documents.solicitation-sponsorship-report.create',
+            'TICKET_SELLING_REPORT' => 'org.projects.documents.ticket-selling-report.create',
+
+            'DOCUMENTATION_REPORT' => 'org.projects.documents.documentation-report.create',
+            'LIQUIDATION_REPORT' => 'org.projects.documents.liquidation-report.create',
         ];
 
         $view = $viewMap[$formType] ?? abort(404);
 
+        $proposal = $document->proposalData;
+        $budget = $document->budgetProposal;
 
-        $proposal = null;
-        $budget = null;
-        $activity = null;
-        $participants = collect();
-        $solicitation = null;
-        $selling = null;
-        $purchase = null;
+        $activity = $document->offCampusActivity;
+        $participants = $activity?->participants ?? collect();
 
-        $items = collect();
+        $solicitation = $document->solicitationData;
+        $selling = $document->sellingApplication;
+        $purchase = $document->requestToPurchase;
 
+        $feesCollection = $document->feesCollectionReport;
+        $sellingActivity = $document->sellingActivityReport;
+        $solicitationReport = $document->solicitationSponsorshipReport;
+        $ticketReport = $document->ticketSellingReport;
 
-        if ($formType === 'PROJECT_PROPOSAL') {
+        $liquidation = $document->liquidationData;
+        $report = $document->documentationReport;
+        $documentation = $document->documentationReport;
 
-            $proposal = $document->proposalData;
+        $objectives = $documentation?->objectives ?? collect();
+        $indicators = $documentation?->indicators ?? collect();
+        $partners = $documentation?->partners ?? collect();
+        $attendees = $documentation?->attendees ?? collect();
 
+        $prefill = [];
+
+        if ($documentation) {
+            $prefill = [
+                'implementation_start_date' => $documentation->implementation_start_date,
+                'implementation_end_date'   => $documentation->implementation_end_date,
+                'implementation_start_time' => $documentation->implementation_start_time,
+                'implementation_end_time'   => $documentation->implementation_end_time,
+                'on_campus_venue'           => $documentation->on_campus_venue,
+                'off_campus_venue'          => $documentation->off_campus_venue,
+                'description'               => $documentation->description,
+            ];
         }
 
+        $items =
+            $purchase?->items ??
+            $selling?->items ??
+            $feesCollection?->items ??
+            $sellingActivity?->items ??
+            $solicitationReport?->items ??
+            $ticketReport?->items ??
+            $report?->items ??
+            collect();
 
-        if ($formType === 'BUDGET_PROPOSAL') {
+        $data = null;
 
-            $budget = $document->budgetProposal()->with('items')->first();
-
+        if ($formType === 'SELLING_ACTIVITY_REPORT') {
+            $data = $sellingActivity;
+            $items = $sellingActivity?->items ?? collect();
         }
 
-
-        if ($formType === 'OFF_CAMPUS_APPLICATION') {
-
-            $activity = \App\Models\OffCampusActivityData::with('participants')
-                ->where('project_document_id', $document->id)
-                ->first();
-
-            if ($activity) {
-                $participants = $activity->participants;
-            }
-
+        if ($formType === 'SOLICITATION_SPONSORSHIP_REPORT') {
+            $data = $solicitationReport;
+            $items = $solicitationReport?->items ?? collect();
         }
 
-
-        if ($formType === 'SOLICITATION_APPLICATION') {
-
-            $solicitation = \App\Models\SolicitationApplicationData::where(
-                'project_document_id',
-                $document->id
-            )->first();
-
+        if ($formType === 'TICKET_SELLING_REPORT') {
+            $data = $ticketReport;
+            $items = $ticketReport?->items ?? collect();
         }
-
-
-        if ($formType === 'SELLING_APPLICATION') {
-
-            $selling = \App\Models\SellingApplicationData::where(
-                'project_document_id',
-                $document->id
-            )->first();
-
-            if ($selling) {
-                $items = $selling->items;
-            }
-
-        }
-
-
-        if ($formType === 'REQUEST_TO_PURCHASE') {
-
-            $purchase = \App\Models\RequestToPurchaseData::where(
-                'project_document_id',
-                $document->id
-            )->first();
-
-            if ($purchase) {
-                $items = $purchase->items;
-            }
-
-        }
-
-
-        if ($formType === 'POSTPONEMENT_NOTICE') {
-
-            $postponement = \App\Models\PostponementNoticeData::where(
-                'project_document_id',
-                $document->id
-            )->first();
-
-        }
-
-        if ($formType === 'CANCELLATION_NOTICE') {
-
-            $cancellation = \App\Models\CancellationNoticeData::where(
-                'project_document_id',
-                $document->id
-            )->first();
-
-        }
-
 
         $user = auth()->user();
         $userId = $user->id;
 
         $isAdmin = $user->system_role === 'sacdev_admin';
 
-
         $currentSignature = $document->signatures
             ->where('user_id', $userId)
             ->first();
+
+        $proposalDocument = ProjectDocument::where('project_id', $project->id)
+            ->whereHas('formType', fn($q) => $q->where('code', 'PROJECT_PROPOSAL'))
+            ->first();
+
+        $proposal = $proposalDocument?->proposalData;
 
 
         return view($view, [
@@ -161,20 +163,33 @@ class AdminProjectDocumentController extends Controller
 
             'proposal' => $proposal,
             'budget' => $budget,
+
             'activity' => $activity,
             'participants' => $participants,
 
-            'data' => $purchase ?? $solicitation ?? $selling,
+            'data' => $data ?? ($purchase ?? $solicitation ?? $selling),
+
+            'feesCollection' => $feesCollection,
+            'sellingActivity' => $sellingActivity,
+            'solicitationReport' => $solicitationReport,
+            'ticketReport' => $ticketReport,
+
+            'documentation' => $documentation,
+            'objectives' => $objectives,
+            'indicators' => $indicators,
+            'partners' => $partners,
+            'attendees' => $attendees,
+
+            'prefill' => $prefill,   
+
+            'report' => $report,          
+            'liquidation' => $liquidation, 
             'items' => $items,
 
             'isReadOnly' => true,
             'isProjectHead' => false,
             'currentSignature' => $currentSignature,
-
             'isAdmin' => $isAdmin,
-            //'cancellation' => $cancellation,
-            //'postponement' => $postponement,
-
         ]);
     }
 
@@ -182,14 +197,26 @@ class AdminProjectDocumentController extends Controller
     public function approve(Request $request, Project $project, $formCode){
 
         $allowedForms = [
+
             'PROJECT_PROPOSAL',
             'BUDGET_PROPOSAL',
+
             'OFF_CAMPUS_APPLICATION',
+
             'SOLICITATION_APPLICATION',
             'SELLING_APPLICATION',
-            'REQUEST_TO_PURCHASE',
-        ];
 
+            'REQUEST_TO_PURCHASE',
+
+            'FEES_COLLECTION_REPORT',
+            'SELLING_ACTIVITY_REPORT',
+            'SOLICITATION_SPONSORSHIP_REPORT',
+            'TICKET_SELLING_REPORT',
+
+            'DOCUMENTATION_REPORT',
+            'LIQUIDATION_REPORT',
+
+        ];
         
 
         if (!in_array($formCode, $allowedForms)) {
@@ -266,7 +293,29 @@ class AdminProjectDocumentController extends Controller
                 );
 
             }
+
             
+            if ($formCode === 'FEES_COLLECTION_REPORT') {
+
+                $data = \App\Models\FeesCollectionReportData::where(
+                    'project_document_id',
+                    $document->id
+                )->first();
+
+                if ($data && $request->has('items')) {
+
+                    foreach ($request->items as $itemId => $row) {
+
+                        \App\Models\FeesCollectionItem::where('id', $itemId)
+                            ->update([
+                                'remarks' => $row['remarks'] ?? null
+                            ]);
+
+                    }
+
+                }
+
+            }
             
 
 
@@ -332,10 +381,21 @@ class AdminProjectDocumentController extends Controller
         $allowedForms = [
             'PROJECT_PROPOSAL',
             'BUDGET_PROPOSAL',
+
             'OFF_CAMPUS_APPLICATION',
+
             'SOLICITATION_APPLICATION',
             'SELLING_APPLICATION',
+
             'REQUEST_TO_PURCHASE',
+
+            'FEES_COLLECTION_REPORT',
+            'SELLING_ACTIVITY_REPORT',
+            'SOLICITATION_SPONSORSHIP_REPORT',
+            'TICKET_SELLING_REPORT',
+
+            'DOCUMENTATION_REPORT',
+            'LIQUIDATION_REPORT',
         ];
 
         if (!in_array($formCode, $allowedForms)) {
@@ -452,6 +512,28 @@ class AdminProjectDocumentController extends Controller
                 }
 
             }
+
+            if ($document->formType->code === 'FEES_COLLECTION_REPORT') {
+
+                $data = \App\Models\FeesCollectionReportData::where(
+                    'project_document_id',
+                    $document->id
+                )->first();
+
+                if ($data) {
+
+                    \App\Models\FeesCollectionItem::where(
+                        'fees_collection_report_id',
+                        $data->id
+                    )->update([
+                        'remarks' => null
+                    ]);
+
+                }
+
+            }
+
+
 
 
 

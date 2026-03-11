@@ -176,7 +176,10 @@ supporting documents have been reviewed.
 </p>
 
 <form method="POST"
-action="{{ route('org.projects.solicitation-sponsorship-report.approve', $project) }}">
+action="{{ $currentSignature->role === 'sacdev_admin'
+    ? route('admin.projects.documents.approve', [$project, $document->formType->code])
+    : route('org.projects.solicitation-sponsorship-report.approve', $project) }}">
+
 
 @csrf
 
@@ -220,7 +223,10 @@ Please provide remarks explaining the required corrections.
 </p>
 
 <form method="POST"
-action="{{ route('org.projects.solicitation-sponsorship-report.return', $project) }}">
+action="{{ optional($currentSignature)->role === 'sacdev_admin'
+    ? route('admin.projects.documents.return', [$project, $document->formType->code])
+    : route('org.projects.solicitation-sponsorship-report.return', $project) }}">
+
 
 @csrf
 

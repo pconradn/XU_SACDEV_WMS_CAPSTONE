@@ -27,22 +27,47 @@ Action
 @php
 
 $types = [
-    'PROJECT_PROPOSAL'         => 'Project Proposal',
-    'BUDGET_PROPOSAL'          => 'Budget Proposal',
-    'OFF_CAMPUS_APPLICATION'   => 'Off-Campus Form',
-    'SOLICITATION_APPLICATION' => 'Solicitation / Sponsorship Application',
-    'SELLING_APPLICATION' => 'Selling Application',
-    'REQUEST_TO_PURCHASE' => 'Request to Purchase'
+
+    'PROJECT_PROPOSAL'                   => 'Project Proposal',
+    'BUDGET_PROPOSAL'                    => 'Budget Proposal',
+
+    'OFF_CAMPUS_APPLICATION'             => 'Off-Campus Form',
+
+    'SOLICITATION_APPLICATION'           => 'Solicitation / Sponsorship Application',
+    'SELLING_APPLICATION'                => 'Selling Application',
+
+    'REQUEST_TO_PURCHASE'                => 'Request to Purchase',
+
+    'FEES_COLLECTION_REPORT'             => 'Fees Collection Report',
+    'SELLING_ACTIVITY_REPORT'            => 'Selling Activity Report',
+    'SOLICITATION_SPONSORSHIP_REPORT'    => 'Solicitation / Sponsorship Report',
+    'TICKET_SELLING_REPORT'              => 'Ticket Selling Report',
+
+    'DOCUMENTATION_REPORT'               => 'Documentation Report',
+    'LIQUIDATION_REPORT'                 => 'Liquidation Report',
 
 ];
 
 $formRoutes = [
-    'PROJECT_PROPOSAL'         => 'org.projects.project-proposal.create',
-    'BUDGET_PROPOSAL'          => 'org.projects.budget-proposal.create',
-    'OFF_CAMPUS_APPLICATION'   => 'org.projects.off-campus.create',
-    'SOLICITATION_APPLICATION' => 'org.projects.solicitation.create',
-    'SELLING_APPLICATION' => 'org.projects.selling.create',
-    'REQUEST_TO_PURCHASE' => 'org.projects.request-to-purchase.create',
+
+    'PROJECT_PROPOSAL'                   => 'org.projects.project-proposal.create',
+    'BUDGET_PROPOSAL'                    => 'org.projects.budget-proposal.create',
+
+    'OFF_CAMPUS_APPLICATION'             => 'org.projects.off-campus.create',
+
+    'SOLICITATION_APPLICATION'           => 'org.projects.solicitation.create',
+    'SELLING_APPLICATION'                => 'org.projects.selling.create',
+
+    'REQUEST_TO_PURCHASE'                => 'org.projects.request-to-purchase.create',
+
+    'FEES_COLLECTION_REPORT'             => 'org.projects.fees-collection.create',
+    'SELLING_ACTIVITY_REPORT'            => 'org.projects.selling-activity-report.create',
+    'SOLICITATION_SPONSORSHIP_REPORT'    => 'org.projects.solicitation-sponsorship-report.create',
+    'TICKET_SELLING_REPORT'              => 'org.projects.ticket-selling-report.create',
+
+    'DOCUMENTATION_REPORT'               => 'org.projects.documentation-report.create',
+    'LIQUIDATION_REPORT'                 => 'org.projects.liquidation-report.create',
+
 ];
 
 @endphp

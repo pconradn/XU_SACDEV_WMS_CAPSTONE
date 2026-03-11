@@ -525,7 +525,7 @@ Route::get(
     [LiquidationReportController::class, 'create']
 )->middleware([
     'project.access',
-    'org.role:project_head,president,moderator'
+    'org.role:project_head,president,moderator,treasurer'
 ])->name('org.projects.liquidation-report.create');
 
 
@@ -543,7 +543,7 @@ Route::post(
     [LiquidationReportController::class, 'approve']
 )->middleware([
     'project.access',
-    'project.role:president,moderator,sacdev_admin'
+    'project.role:president,moderator,sacdev_admin,treasurer'
 ])->name('org.projects.liquidation-report.approve');
 
 
@@ -552,7 +552,7 @@ Route::post(
     [LiquidationReportController::class, 'return']
 )->middleware([
     'project.access',
-    'project.role:president,moderator,sacdev_admin'
+    'project.role:president,moderator,sacdev_admin,treasurer'
 ])->name('org.projects.liquidation-report.return');
 
 

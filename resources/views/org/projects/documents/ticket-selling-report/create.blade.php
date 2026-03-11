@@ -181,6 +181,7 @@ Pending
 
 @include('org.projects.documents.ticket-selling-report.partials._scripts')
 
+
 </div>
 
 </x-layouts.form-only>

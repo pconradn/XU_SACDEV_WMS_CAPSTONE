@@ -205,6 +205,61 @@ Return with Remarks
 
 
 
+
+{{-- APPROVE MODAL --}}
+@if($isAdmin)
+
+<div id="approveModal"
+class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+
+<div class="bg-white rounded-lg shadow-lg w-full max-w-md">
+
+<div class="border-b px-4 py-3 font-semibold text-sm">
+Confirm Approval
+</div>
+
+<form method="POST"
+action="{{ route('admin.projects.documents.approve', [$project,$document->formType->code]) }}">
+
+@csrf
+
+<div class="p-4 text-[12px] text-slate-700 space-y-3">
+
+<p>
+You are about to approve this Ticket Selling Report.
+Please confirm that the submitted ticket sales summary
+and supporting documents have been reviewed.
+</p>
+
+</div>
+
+<div class="border-t px-4 py-3 flex justify-end gap-2">
+
+<button
+type="button"
+onclick="closeApproveModal()"
+class="border border-slate-300 px-4 py-2 text-[12px]">
+Cancel
+</button>
+
+<button
+type="submit"
+class="bg-emerald-600 text-white px-4 py-2 text-[12px] hover:bg-emerald-700">
+Confirm Approval
+</button>
+
+</div>
+
+</form>
+
+</div>
+
+</div>
+
+@endif
+
+
+
 {{-- RETURN MODAL --}}
 <div id="returnModal"
 class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
@@ -304,3 +359,15 @@ Yes, Submit
 </div>
 
 </div>
+
+<script>
+function openApproveModal(){
+document.getElementById('approveModal')?.classList.remove('hidden');
+document.getElementById('approveModal')?.classList.add('flex');
+}
+
+function closeApproveModal(){
+document.getElementById('approveModal')?.classList.add('hidden');
+document.getElementById('approveModal')?.classList.remove('flex');
+}
+</script>
