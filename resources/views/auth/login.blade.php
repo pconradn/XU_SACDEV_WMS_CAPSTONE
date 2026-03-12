@@ -1,47 +1,134 @@
 <x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
+<div class="min-h-screen flex flex-col items-center justify-center bg-gray-100">
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+
+    <div class="w-full max-w-4xl bg-white shadow-xl rounded-xl overflow-hidden grid grid-cols-2">
+
+    
+        <div class="bg-blue-900 text-white p-10 flex flex-col justify-between">
+
+            <!-- Header -->
+            <div class="text-center">
+
+                <!-- Logo -->
+                <div class="flex justify-center mb-5">
+                    <div class="w-24 h-24 bg-white rounded-full shadow-md ring-4 ring-blue-200 overflow-hidden">
+
+                        <img src="/images/sacdev-logo.jpg"
+                            alt="SACDEV Logo"
+                            class="w-full h-full object-cover">
+
+                    </div>
+                </div>
+
+                <!-- Title -->
+                <h1 class="text-2xl font-semibold tracking-tight">
+                    SACDEV
+                </h1>
+
+                <h2 class="text-base font-medium mt-1 leading-snug text-blue-100">
+                    Project Documentation and Approval System
+                </h2>
+
+                <p class="mt-2 text-sm text-blue-200">
+                    Xavier University – Ateneo de Cagayan
+                </p>
+
+            </div>
+
+
+            <!-- Description -->
+            <div class="mt-10 text-sm text-blue-200 leading-relaxed text-center max-w-xs mx-auto">
+                This system facilitates the submission, review, and approval of
+                student organization project documents required by the SACDEV office.
+            </div>
+
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+      
+        <div class="p-10">
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
+            <h2 class="text-xl font-semibold text-gray-800 mb-6">
+                Login to your account
+            </h2>
 
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+            <x-auth-session-status class="mb-4" :status="session('status')" />
+
+            <form method="POST" action="{{ route('login') }}">
+                @csrf
+
+                
+                <div>
+                    <x-input-label for="email" :value="__('Email')" />
+
+                    <x-text-input
+                        id="email"
+                        class="block mt-1 w-full"
+                        type="email"
+                        name="email"
+                        :value="old('email')"
+                        required
+                        autofocus
+                    />
+
+                    <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                </div>
+
+
+                
+                <div class="mt-4">
+
+                    <x-input-label for="password" :value="__('Password')" />
+
+                    <x-text-input
+                        id="password"
+                        class="block mt-1 w-full"
+                        type="password"
+                        name="password"
+                        required
+                    />
+
+                    <x-input-error :messages="$errors->get('password')" class="mt-2" />
+
+                </div>
+
+
+         
+                <div class="flex items-center justify-between mt-4">
+
+                    <label class="flex items-center text-sm text-gray-600">
+                        <input type="checkbox" name="remember" class="mr-2">
+                        Remember me
+                    </label>
+
+                    @if (Route::has('password.request'))
+                        <a href="{{ route('password.request') }}"
+                           class="text-sm text-blue-700 hover:underline">
+                            Forgot password?
+                        </a>
+                    @endif
+
+                </div>
+
+
+              
+                <div class="mt-6">
+
+                    <button
+                        type="submit"
+                        class="w-full bg-blue-900 hover:bg-blue-800 text-white font-medium py-2 rounded-md">
+                        Log in
+                    </button>
+
+                </div>
+
+            </form>
+
         </div>
 
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
-        </div>
+    </div>
 
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
+</div>
 
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
-    </form>
 </x-guest-layout>
