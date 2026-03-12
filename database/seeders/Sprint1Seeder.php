@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Organization;
-use App\Models\OrganizationSchoolYear;
 use App\Models\OrgMembership;
 use App\Models\OfficerEntry;
 use App\Models\Project;
@@ -16,13 +15,14 @@ class Sprint1Seeder extends Seeder
 {
     public function run(): void
     {
+        $password = Hash::make('paul1234');
+
         // ---------------------------
-        // 1) ACTIVE SCHOOL YEAR
+        // 1) Reset School Years
         // ---------------------------
-        // Make sure only one active SY
         SchoolYear::query()->update(['is_active' => false]);
 
-        $sy = SchoolYear::query()->firstOrCreate(
+        $sy = SchoolYear::query()->updateOrCreate(
             ['name' => '2025-2026'],
             [
                 'start_date' => '2025-08-01',
@@ -31,18 +31,16 @@ class Sprint1Seeder extends Seeder
             ]
         );
 
-        $sy->update(['is_active' => true]);
-
         // ---------------------------
-        // 2) SacDev Admin account
+        // 2) SACDEV Admin
         // ---------------------------
-        $admin = User::query()->firstOrCreate(
-            ['email' => 'sacdev.admin@xu.edu.ph'],
+        $admin = User::query()->updateOrCreate(
+            ['email' => 'sacdev.admin@my.xu.edu.ph'],
             [
-                'name' => 'SacDev Admin',
-                'password' => Hash::make('Admin1234!'),
+                'name' => 'SACDEV Admin',
+                'password' => $password,
                 'system_role' => 'sacdev_admin',
-                'must_change_password' => false, // admin can already access right away
+                'must_change_password' => false,
                 'password_changed_at' => now(),
             ]
         );
@@ -50,162 +48,202 @@ class Sprint1Seeder extends Seeder
         // ---------------------------
         // 3) Organizations
         // ---------------------------
-        $org1 = Organization::query()->firstOrCreate(
+        $org1 = Organization::query()->updateOrCreate(
             ['name' => 'XU Coding Society'],
             ['acronym' => 'XUCS']
         );
 
-        $org2 = Organization::query()->firstOrCreate(
+        $org2 = Organization::query()->updateOrCreate(
             ['name' => 'XU Tech Innovators'],
             ['acronym' => 'XUTI']
         );
 
         // ---------------------------
-        // 4) Presidents (1 per org)
+        // 4) Presidents 
         // ---------------------------
-        $pres1 = User::query()->firstOrCreate(
-            ['email' => 'president.xucs@xu.edu.ph'],
+        $pres1 = User::query()->updateOrCreate(
+            ['email' => 'president.xucs@my.xu.edu.ph'],
             [
-                'name' => 'President - XUCS',
-                'password' => Hash::make('TempPass123!'),
+                'name' => 'President XUCS',
+                'password' => $password,
                 'system_role' => null,
-                'must_change_password' => true,
-                'password_changed_at' => null,
+                'must_change_password' => false,
+                'password_changed_at' => now(),
             ]
         );
 
-        $pres2 = User::query()->firstOrCreate(
-            ['email' => 'president.xuti@xu.edu.ph'],
+        $pres2 = User::query()->updateOrCreate(
+            ['email' => 'president.xuti@my.xu.edu.ph'],
             [
-                'name' => 'President - XUTI',
-                'password' => Hash::make('TempPass123!'),
+                'name' => 'President XUTI',
+                'password' => $password,
                 'system_role' => null,
-                'must_change_password' => true,
-                'password_changed_at' => null,
+                'must_change_password' => false,
+                'password_changed_at' => now(),
             ]
         );
 
         // ---------------------------
-        // 5) organization_school_years setup
+        // 5) President memberships 
         // ---------------------------
-        OrganizationSchoolYear::query()->updateOrCreate(
+        OrgMembership::query()->updateOrCreate(
             [
                 'organization_id' => $org1->id,
                 'school_year_id' => $sy->id,
+                'role' => 'president',
             ],
             [
-                'president_user_id' => $pres1->id,
-                'president_confirmed_at' => null,
+                'user_id' => $pres1->id,
+                'archived_at' => null,
             ]
         );
 
-        OrganizationSchoolYear::query()->updateOrCreate(
+        OrgMembership::query()->updateOrCreate(
             [
                 'organization_id' => $org2->id,
                 'school_year_id' => $sy->id,
+                'role' => 'president',
             ],
             [
-                'president_user_id' => $pres2->id,
-                'president_confirmed_at' => null,
+                'user_id' => $pres2->id,
+                'archived_at' => null,
             ]
         );
 
         // ---------------------------
-        // 6) President memberships
+        // Helper to create officer user
         // ---------------------------
-        OrgMembership::query()->firstOrCreate([
-            'organization_id' => $org1->id,
-            'school_year_id' => $sy->id,
-            'user_id' => $pres1->id,
-            'role' => 'president',
-        ]);
-
-        OrgMembership::query()->firstOrCreate([
-            'organization_id' => $org2->id,
-            'school_year_id' => $sy->id,
-            'user_id' => $pres2->id,
-            'role' => 'president',
-        ]);
+        $makeUser = function ($name, $email) use ($password) {
+            return User::query()->updateOrCreate(
+                ['email' => $email],
+                [
+                    'name' => $name,
+                    'password' => $password,
+                    'system_role' => null,
+                    'must_change_password' => false,
+                    'password_changed_at' => now(),
+                ]
+            );
+        };
 
         // ---------------------------
-        // 7) Officers list (5 per org)
+        // 6) Officers XUCS
         // ---------------------------
         $xucsOfficers = [
-            ['full_name' => 'Treasurer XUCS', 'email' => 'treasurer.xucs@xu.edu.ph', 'position' => 'Treasurer'],
-            ['full_name' => 'Moderator XUCS', 'email' => 'moderator.xucs@xu.edu.ph', 'position' => 'Moderator'],
-            ['full_name' => 'Officer A XUCS', 'email' => 'officerA.xucs@xu.edu.ph', 'position' => 'Secretary'],
-            ['full_name' => 'Officer B XUCS', 'email' => 'officerB.xucs@xu.edu.ph', 'position' => 'PRO'],
-            ['full_name' => 'Officer C XUCS', 'email' => 'officerC.xucs@xu.edu.ph', 'position' => 'Auditor'],
+            ['Treasurer XUCS', 'treasurer.xucs@my.xu.edu.ph', 'treasurer'],
+            ['Moderator XUCS', 'moderator.xucs@my.xu.edu.ph', 'moderator'],
+            ['Secretary XUCS', 'secretary.xucs@my.xu.edu.ph', 'secretary'],
+            ['PRO XUCS', 'pro.xucs@my.xu.edu.ph', 'pro'],
+            ['Auditor XUCS', 'auditor.xucs@my.xu.edu.ph', 'auditor'],
         ];
 
-        foreach ($xucsOfficers as $o) {
-            OfficerEntry::query()->updateOrCreate(
+        foreach ($xucsOfficers as $i => $o)
+        {
+            [$name, $email, $role] = $o;
+
+            $user = $makeUser($name, $email);
+
+            $officer = OfficerEntry::query()->updateOrCreate(
                 [
                     'organization_id' => $org1->id,
                     'school_year_id' => $sy->id,
-                    'email' => $o['email'],
+                    'email' => $email,
                 ],
                 [
-                    'full_name' => $o['full_name'],
-                    'position' => $o['position'],
+                    'full_name' => $name,
+                    'position' => ucfirst($role),
+                    'user_id' => $user->id,
+                    'sort_order' => $i,
+                ]
+            );
+
+            OrgMembership::query()->updateOrCreate(
+                [
+                    'organization_id' => $org1->id,
+                    'school_year_id' => $sy->id,
+                    'role' => $role,
+                ],
+                [
+                    'user_id' => $user->id,
+                    'officer_entry_id' => $officer->id,
+                    'archived_at' => null,
                 ]
             );
         }
 
+        // ---------------------------
+        // 7) Officers XUTI
+        // ---------------------------
         $xutiOfficers = [
-            ['full_name' => 'Treasurer XUTI', 'email' => 'treasurer.xuti@xu.edu.ph', 'position' => 'Treasurer'],
-            ['full_name' => 'Moderator XUTI', 'email' => 'moderator.xuti@xu.edu.ph', 'position' => 'Moderator'],
-            ['full_name' => 'Officer A XUTI', 'email' => 'officerA.xuti@xu.edu.ph', 'position' => 'Secretary'],
-            ['full_name' => 'Officer B XUTI', 'email' => 'officerB.xuti@xu.edu.ph', 'position' => 'PRO'],
-            ['full_name' => 'Officer C XUTI', 'email' => 'officerC.xuti@xu.edu.ph', 'position' => 'Auditor'],
+            ['Treasurer XUTI', 'treasurer.xuti@my.xu.edu.ph', 'treasurer'],
+            ['Moderator XUTI', 'moderator.xuti@my.xu.edu.ph', 'moderator'],
+            ['Secretary XUTI', 'secretary.xuti@my.xu.edu.ph', 'secretary'],
+            ['PRO XUTI', 'pro.xuti@my.xu.edu.ph', 'pro'],
+            ['Auditor XUTI', 'auditor.xuti@my.xu.edu.ph', 'auditor'],
         ];
 
-        foreach ($xutiOfficers as $o) {
-            OfficerEntry::query()->updateOrCreate(
+        foreach ($xutiOfficers as $i => $o)
+        {
+            [$name, $email, $role] = $o;
+
+            $user = $makeUser($name, $email);
+
+            $officer = OfficerEntry::query()->updateOrCreate(
                 [
                     'organization_id' => $org2->id,
                     'school_year_id' => $sy->id,
-                    'email' => $o['email'],
+                    'email' => $email,
                 ],
                 [
-                    'full_name' => $o['full_name'],
-                    'position' => $o['position'],
+                    'full_name' => $name,
+                    'position' => ucfirst($role),
+                    'user_id' => $user->id,
+                    'sort_order' => $i,
+                ]
+            );
+
+            OrgMembership::query()->updateOrCreate(
+                [
+                    'organization_id' => $org2->id,
+                    'school_year_id' => $sy->id,
+                    'role' => $role,
+                ],
+                [
+                    'user_id' => $user->id,
+                    'officer_entry_id' => $officer->id,
+                    'archived_at' => null,
                 ]
             );
         }
 
         // ---------------------------
-        // 8) Projects (2 per org)
+        // 8) Projects 
         // ---------------------------
-        $org1Projects = [
-            'Hackathon Training Week',
-            'Community Coding Workshop',
-        ];
-
-        foreach ($org1Projects as $title) {
-            Project::query()->firstOrCreate([
+        Project::query()->updateOrCreate(
+            [
                 'organization_id' => $org1->id,
                 'school_year_id' => $sy->id,
-                'title' => $title,
-            ]);
-        }
+                'title' => 'Hackathon Training Week',
+            ]
+        );
 
-        $org2Projects = [
-            'AI Awareness Seminar',
-            'Tech Expo Booth Setup',
-        ];
-
-        foreach ($org2Projects as $title) {
-            Project::query()->firstOrCreate([
+        Project::query()->updateOrCreate(
+            [
                 'organization_id' => $org2->id,
                 'school_year_id' => $sy->id,
-                'title' => $title,
-            ]);
-        }
+                'title' => 'AI Awareness Seminar',
+            ]
+        );
 
-        $this->command?->info('✅ Sprint1Seeder completed successfully!');
-        $this->command?->warn('Admin Login: sacdev.admin@xu.edu.ph / Admin1234!');
-        $this->command?->warn('President Login XUCS: president.xucs@xu.edu.ph / TempPass123!');
-        $this->command?->warn('President Login XUTI: president.xuti@xu.edu.ph / TempPass123!');
+        // ---------------------------
+        // DONE
+        // ---------------------------
+        $this->command->info('Sprint1Seeder ready for full workflow testing.');
+
+        $this->command->warn('ADMIN: sacdev.admin@my.xu.edu.ph / paul1234');
+        $this->command->warn('PRESIDENT XUCS: president.xucs@my.xu.edu.ph / paul1234');
+        $this->command->warn('PRESIDENT XUTI: president.xuti@my.xu.edu.ph / paul1234');
+        $this->command->warn('MODERATOR XUCS: moderator.xucs@my.xu.edu.ph / paul1234');
+        $this->command->warn('TREASURER XUCS: treasurer.xucs@my.xu.edu.ph / paul1234');
     }
 }

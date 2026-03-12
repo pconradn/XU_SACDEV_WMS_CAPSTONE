@@ -1,0 +1,93 @@
+<?php
+
+namespace App\Notifications;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\MailMessage;
+
+class ReregActionNotification extends Notification
+{
+    use Queueable;
+
+    public function __construct(
+        public array $payload
+    ) {}
+
+    public function via($notifiable): array
+    {
+        $channels = ['database'];
+
+        
+        if (!empty($this->payload['send_mail']) && $this->resolveEmail($notifiable)) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
+    }
+
+    public function toArray($notifiable): array
+    {
+        return [
+            'dedupe_key' => $this->payload['dedupe_key'] ?? null,
+
+            'title'      => $this->payload['title'] ?? 'Update',
+            'message'    => $this->payload['message'] ?? null,
+
+            'org_id'     => $this->payload['org_id'] ?? null,
+            'target_sy'  => $this->payload['target_sy_id'] ?? null,
+
+            'form'       => $this->payload['form'] ?? null,
+            'status'     => $this->payload['status'] ?? null,
+
+            'action_url' => $this->payload['action_url'] ?? null,
+            'meta'       => $this->payload['meta'] ?? [],
+        ];
+    }
+
+    public function toMail($notifiable): MailMessage
+    {
+        $title = $this->payload['title'] ?? 'SAcDev Notification';
+        $message = $this->payload['message'] ?? '';
+        $url = $this->payload['action_url'] ?? null;
+
+        $mail = (new MailMessage)
+            ->subject($title)
+            ->greeting('Hello ' . ($this->resolveName($notifiable) ?? 'there') . ',')
+            ->line($message);
+
+        if (!empty($url)) {
+            $mail->action('Open in System', $url);
+        }
+
+        return $mail->line('This is an automated message from the SAcDev system.');
+    }
+
+    private function resolveEmail($notifiable): ?string
+    {
+        
+        if (!empty($notifiable?->email)) {
+            return $notifiable->email;
+        }
+
+   
+        if (!empty($notifiable?->user?->email)) {
+            return $notifiable->user->email;
+        }
+
+        return null;
+    }
+
+    private function resolveName($notifiable): ?string
+    {
+        if (!empty($notifiable?->name)) {
+            return $notifiable->name;
+        }
+
+        if (!empty($notifiable?->user?->name)) {
+            return $notifiable->user->name;
+        }
+
+        return null;
+    }
+}

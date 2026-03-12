@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
+//CONTROLLER USED FOR DISPLAYING PASSWORD CHANGE AND UPDATING PASSWORD
+
 class ForcedPasswordController extends Controller
 {
+    
     public function show()
     {
         return view('auth.force-change-password');
     }
+
 
     public function update(Request $request)
     {

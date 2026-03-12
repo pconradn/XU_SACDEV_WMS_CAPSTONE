@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use Illuminate\Http\Request;
 
+//PROJECTS CRUD
+
 class ProjectController extends Controller
 {
+    //IDENTIFY CONTEXT
     private function ctx(Request $request): array
     {
         return [
@@ -20,10 +23,39 @@ class ProjectController extends Controller
     {
         ['orgId' => $orgId, 'syId' => $syId] = $this->ctx($request);
 
-        $projects = Project::query()
+        $user = auth()->user();
+
+        $query = Project::query()
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
-            ->orderBy('title')
+            ->orderBy('title');
+
+        $orgRole = \App\Models\OrgMembership::query()
+            ->where('user_id', $user->id)
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->whereNull('archived_at')
+            ->value('role');
+
+        $isPresident = ($orgRole === 'president');
+        $isTreasurer = ($orgRole === 'treasurer');
+        $isModerator = ($orgRole === 'moderator');
+
+        //dd($orgRole);
+
+        if (!$isPresident && !$isTreasurer && !$isModerator) {
+
+            $query->whereHas('assignments', function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                ->where('assignment_role', 'project_head')
+                ->whereNull('archived_at');
+            });
+        }
+
+        $projects = $query
+            ->with([
+                'documents.signatures'
+            ])
             ->get();
 
         return view('org.projects.index', compact('projects', 'syId'));

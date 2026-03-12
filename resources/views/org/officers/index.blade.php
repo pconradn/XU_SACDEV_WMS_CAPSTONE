@@ -1,9 +1,35 @@
 <x-app-layout>
+
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             Officers (Encoding SY ID: {{ $syId }})
         </h2>
     </x-slot>
+
+
+
+    @if (session('warning'))
+        <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800 text-sm">
+            {{ session('warning') }}
+        </div>
+    @endif
+
+    @if (session('warning') && session('resend_invite_officer_id'))
+        <div class="mb-4 p-4 rounded bg-yellow-100 text-yellow-900 border border-yellow-200">
+            <div class="font-semibold">Action needed</div>
+            <div class="text-sm mt-1">{{ session('warning') }}</div>
+
+            <form method="POST" action="{{ route('org.officers.resend-invite', session('resend_invite_officer_id')) }}">
+                @csrf
+                <input type="hidden" name="old_user_id" value="{{ session('resend_invite_old_user_id') }}">
+
+                <button type="submit" class="px-4 py-2 bg-yellow-600 !text-white rounded text-sm font-semibold">
+                    Resend Invite to Correct Email
+                </button>
+            </form>
+
+        </div>
+    @endif
 
     <div class="py-8">
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">

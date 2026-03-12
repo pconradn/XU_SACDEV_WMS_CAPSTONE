@@ -36,4 +36,29 @@ class User extends Authenticatable
     {
         return $this->system_role === 'sacdev_admin';
     }
+    public function officerEntries()
+    {
+        return $this->hasMany(\App\Models\OfficerEntry::class);
+    }
+
+    public function encodedPresidentRegistrations()
+    {
+        return $this->hasMany(PresidentRegistration::class, 'encoded_by_user_id');
+    }
+
+    public function sacdevReviewedPresidentRegistrations()
+    {
+        return $this->hasMany(PresidentRegistration::class, 'sacdev_reviewed_by_user_id');
+    }
+
+    public function moderatorTerms()
+    {
+        return $this->hasMany(\App\Models\OrgModeratorTerm::class, 'user_id');
+    }
+
+    public function moderatorSubmissions()
+    {
+        return $this->hasMany(\App\Models\ModeratorSubmission::class, 'moderator_user_id');
+    }
+
 }

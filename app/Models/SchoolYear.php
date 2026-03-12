@@ -29,4 +29,10 @@ class SchoolYear extends Model
     {
         return static::active()->value('id');
     }
+    
+    public function memberLists()
+    {
+        return $this->hasMany(\App\Models\MemberList::class, 'target_school_year_id');
+    }
+
 }

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Organization;
 use Illuminate\Http\Request;
 
+//ORG CRUD
+
 class OrganizationController extends Controller
 {
     public function index()
@@ -29,20 +31,26 @@ class OrganizationController extends Controller
             'acronym' => ['nullable', 'string', 'max:50'],
         ]);
 
+
         Organization::create($data);
 
         return redirect()
+
             ->route('admin.organizations.index')
             ->with('status', 'Organization created.');
     }
 
+
     public function edit(Organization $organization)
     {
         return view('admin.organizations.edit', compact('organization'));
+
     }
 
     public function update(Request $request, Organization $organization)
     {
+
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:organizations,name,' . $organization->id],
             'acronym' => ['nullable', 'string', 'max:50'],
@@ -55,8 +63,11 @@ class OrganizationController extends Controller
             ->with('status', 'Organization updated.');
     }
 
+
+
     public function destroy(Organization $organization)
     {
+
         $organization->delete();
 
         return redirect()

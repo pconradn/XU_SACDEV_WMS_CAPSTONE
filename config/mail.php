@@ -37,6 +37,11 @@ return [
 
     'mailers' => [
 
+        'log_mail' => [
+            'transport' => 'log',
+            'channel' => 'mail',
+        ],
+
         'smtp' => [
             'transport' => 'smtp',
             'scheme' => env('MAIL_SCHEME'),
