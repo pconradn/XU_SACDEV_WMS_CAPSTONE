@@ -73,68 +73,94 @@ php artisan serve
 
 ---
 
-## Quick Test Guide (Recommended Order)
 
+### 1. Login as SACDEV Admin
 
-
----
-
-### A) Login as SACDEV Admin
-
-1. Login using the admin account from the seeder
-2. Check **School Years**
-3. Ensure there is an **active school year**
-4. Create a new school year for testing re-registration
+1. Login as the SACDEV admin.
+2. Create a new school year.
+3. Set the new school year as **Active**.
 
 ---
 
-### B) Login as Active School Year President
+### 2. Assign Organization President
 
-1. Login as a president account
-2. Change password if prompted
-3. Assign the **next school year president** 
-
+4. Assign a **President** to an organization for the active school year.
 
 ---
 
-### C) Login as Next School Year President
+### 3. Login as Organization President
 
-1. Login as the newly provisioned next SY president
-2. Select the **target school year**
-3. Assign a **moderator** in the Reregistraion Hub
-4. Fill out re-registration forms:
-
-   * B1 – Strategic Plan
-   * B2 – President Registration
-   * B3 – Officers List
-5. Submit the forms
+5. Login using the president account.
+6. Change the temporary password if prompted.
+7. Select the **school year context** for the active school year.
 
 ---
 
-### D) Login as Moderator
+### 4. Complete Re-Registration Setup
 
-
-1. Login as moderator
-2. Review **B1**
-3. Complete **B5**
-4. Forward submissions to SACDEV
+8. Open the **Re-Registration Hub**.
+9. Assign a **Moderator** from the officer list.
 
 ---
 
-### E) SACDEV Review and Activation
+### 5. Fill Out Re-Registration Forms
 
-
-2. Login as SACDEV admin
-3. Review B1, B2, B3, and B5
-4. Approve or return forms as needed
-5. Once all are approved, **activate the organization**
-
-After activation:
-
-* Officers and projects are created for the target school year
-* The organization becomes operational
+10. Complete the **Strategic Plan**.
+11. Complete the **President Registration**.
+12. Complete the **Officers List**.
+13. Upload the **Organization Constitution**.
+14. Submit all completed forms.
 
 ---
+
+### 6. Moderator Review
+
+15. Login as the **Moderator**.
+16. Review the submitted forms.
+17. Approve or return forms if necessary.
+18. Complete the **Moderator Submission Form**.
+19. Submit the moderator form.
+
+---
+
+### 7. SACDEV Review
+
+20. Login again as **SACDEV Admin**.
+21. Review all submitted requirements.
+22. Approve the forms if complete.
+
+---
+
+### 8. Register Organization
+
+23. Register the organization for the selected school year.
+
+---
+
+### 9. Assign Project Head
+
+24. Login again as the **Organization President**.
+25. Assign a **Project Head** from the officer list.
+
+---
+
+### 10. Project Implementation Workflow
+
+26. Login as the **Project Head**.
+27. Create or open a project.
+28. Fill out the required **project implementation forms**.
+29. Submit the forms for approval.
+
+---
+
+### 11. Document Approval Workflow
+
+30. Approvals proceed in the following order:
+
+Project Head → Treasurer → President → Moderator → SACDEV Admin
+
+---
+
 
 ## Viewing Temporary Password Emails (Development)
 
