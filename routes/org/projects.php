@@ -447,6 +447,8 @@ Route::get(
 ])->name('org.projects.ticket-selling-report.create');
 
 
+
+
 Route::post(
     'projects/{project}/documents/ticket-selling-report',
     [TicketSellingReportController::class, 'store']

@@ -3,29 +3,41 @@
 
 @include('layouts.partials._head')
 
-<body class="font-sans antialiased text-gray-900">
+<body class="font-sans antialiased bg-slate-100 text-slate-900">
 
 @auth
-    @php
-        $isAdmin = auth()->user()->system_role === 'sacdev_admin';
-        $activeSy = \App\Models\SchoolYear::activeYear();
-    @endphp
+@php
+$isAdmin = auth()->user()->system_role === 'sacdev_admin';
+$activeSy = \App\Models\SchoolYear::activeYear();
+@endphp
 @endauth
 
-<div class="min-h-screen bg-slate-50">
 
-    @include('layouts.partials._flash')
+<div x-data="{ sidebarOpen: false }" class="flex h-screen overflow-hidden">
 
-    @include('layouts.partials._topbar')
+    {{-- SIDEBAR --}}
+    @include('layouts.partials._sidebar')
 
-    <div class="mx-auto max-w-screen-2xl px-6 lg:px-8 py-6">
-        <div class="grid grid-cols-12 gap-6">
 
-            @include('layouts.partials._sidebar')
+    <div class="flex flex-col flex-1 min-w-0">
+
+        {{-- TOPBAR --}}
+        @include('layouts.partials._topbar')
+
+
+        {{-- FLASH --}}
+        <div class="px-6 pt-4">
+            @include('layouts.partials._flash')
+        </div>
+
+
+        {{-- PAGE CONTENT --}}
+        <main class="flex-1 overflow-y-auto p-6">
 
             @include('layouts.partials._content-wrapper')
 
-        </div>
+        </main>
+
     </div>
 
 </div>

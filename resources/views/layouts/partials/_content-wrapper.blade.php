@@ -1,17 +1,27 @@
-<section class="col-span-12 lg:col-span-9 xl:col-span-9">
+<section class="space-y-6">
 
 @isset($header)
-<div class="mb-4 rounded-2xl border border-slate-200 bg-white shadow-sm">
-<div class="px-6 py-5">
+
+<div class="flex items-center justify-between">
+
+<div class="text-xl font-semibold text-slate-800">
 {{ $header }}
 </div>
+
 </div>
+
 @endisset
 
-<div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
-<div class="p-6">
+
+
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200">
+
+<div class="p-8">
+
 {{ $slot }}
+
 </div>
+
 </div>
 
 </section>
