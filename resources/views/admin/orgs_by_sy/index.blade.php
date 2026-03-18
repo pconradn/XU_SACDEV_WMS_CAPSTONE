@@ -1,133 +1,167 @@
 <x-app-layout>
-    <x-slot name="header">
+
+
+    {{-- jQuery + DataTables JS only --}}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    @include('admin.orgs_by_sy.partials._index-styles')
+
+    <div class="mx-auto max-w-6xl space-y-5 px-4 py-6">
+
+
+
         <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-slate-800 leading-tight">
-                Organizations (by School Year)
-            </h2>
+            <div>
+                <h2 class="text-xl font-semibold leading-tight text-slate-800">
+                    Organizations
+                </h2>
+                <p class="mt-1 text-sm text-slate-500">
+                    View organizations registered by school year
+                </p>
+            </div>
 
             @if($activeSy)
-                <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
+                <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">
                     Active SY: {{ $activeSy->name }}
                 </span>
             @endif
         </div>
-    </x-slot>
 
-    <div class="max-w-6xl mx-auto px-4 py-6 space-y-4">
 
-        @if(session('status'))
-            <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-                {{ session('status') }}
-            </div>
-        @endif
 
-        @if(session('error'))
-            <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-                {{ session('error') }}
-            </div>
-        @endif
+        {{-- top filter card --}}
+        <div class="org-page-card px-5 py-4">
+            <form method="POST" action="{{ route('admin.orgs_by_sy.set_sy') }}">
+                @csrf
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                <form method="POST" action="{{ route('admin.orgs_by_sy.set_sy') }}" class="flex flex-col gap-2">
-                    @csrf
-                    <label class="text-sm font-medium text-slate-700">School Year</label>
-                    <div class="flex gap-2">
-                        <select name="school_year_id" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                            <option value="">-- Select --</option>
-                            @foreach($schoolYears as $sy)
-                                <option value="{{ $sy->id }}" @selected(optional($selectedSy)->id === $sy->id)>
-                                    {{ $sy->name }} {{ $sy->is_active ? '(Active)' : '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <button class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                            Load Orgs
-                        </button>
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+                    {{-- LEFT: FILTER --}}
+                    <div class="flex items-center gap-3">
+
+                        {{-- LABEL --}}
+                        <span class="text-sm font-medium text-slate-600 whitespace-nowrap">
+                            School Year
+                        </span>
+
+                        {{-- SELECT WITH ICON --}}
+                        <div class="relative">
+
+                            {{-- ICON --}}
+                            <div class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                                <i data-lucide="calendar" class="w-4 h-4"></i>
+                            </div>
+
+                            {{-- SELECT --}}
+                            <select
+                                name="school_year_id"
+                                onchange="this.form.submit()"
+                                class="h-10 min-w-[200px] pl-9 pr-3 rounded-xl border border-slate-300 bg-white text-sm text-slate-700
+                                    focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100 transition"
+                            >
+                                <option value="">Select school year...</option>
+                                @foreach($schoolYears as $sy)
+                                    <option value="{{ $sy->id }}" @selected(optional($selectedSy)->id === $sy->id)>
+                                        {{ $sy->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                        </div>
+
                     </div>
-                    @error('school_year_id')
-                        <div class="text-sm text-red-600">{{ $message }}</div>
-                    @enderror
-                </form>
 
-                <form method="GET" action="{{ route('admin.orgs_by_sy.index') }}" class="flex gap-2">
-                    <input type="text" name="q" value="{{ $q }}" placeholder="Search org name / acronym..."
-                           class="w-72 rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    <button class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                        Search
-                    </button>
-                </form>
-            </div>
+                    {{-- RIGHT: STATUS --}}
+                    <div class="flex items-center gap-2 text-sm">
 
-            <div class="mt-4 text-sm text-slate-600">
-                @if($selectedSy)
-                    Showing organizations registered for: <span class="font-semibold text-slate-800">{{ $selectedSy->name }}</span>
-                @else
-                    Select a school year to list registered organizations.
-                @endif
-            </div>
+                        @if($selectedSy)
+                            <span class="text-slate-500">Showing:</span>
+
+                            <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-slate-700 font-medium">
+                                <i data-lucide="calendar-days" class="w-3.5 h-3.5 text-slate-400"></i>
+                                {{ $selectedSy->name }}
+                            </span>
+                        @else
+                            <span class="text-slate-400">No school year selected</span>
+                        @endif
+
+                    </div>
+
+                </div>
+
+                {{-- ERROR --}}
+                @error('school_year_id')
+                    <div class="mt-2 text-sm text-red-600">{{ $message }}</div>
+                @enderror
+
+            </form>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        {{-- table card --}}
+        <div class="org-page-card overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                <table id="orgTable" class="min-w-full text-sm">
+                    <thead>
                         <tr>
-                            <th class="text-left px-4 py-3">Organization</th>
-                            <th class="text-left px-4 py-3">President (if linked)</th>
-                            <th class="text-left px-4 py-3">Confirmed</th>
-                            <th class="text-right px-4 py-3">Action</th>
+                            <th class="px-5 py-4 text-left">Organization</th>
+                            <th class="px-5 py-4 text-left">President</th>
+                            <th class="px-5 py-4 text-left">Status</th>
+                            <th class="px-5 py-4 text-right">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+
+                    <tbody>
                         @forelse($orgSys as $row)
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-4 py-3">
-                                    <div class="font-semibold text-slate-900">
+                            <tr>
+                                <td class="px-5 py-4">
+                                    <div class="font-semibold text-slate-800">
                                         {{ $row->organization->name }}
                                     </div>
-                                    <div class="text-xs text-slate-500">
-                                        {{ $row->organization->acronym ? $row->organization->acronym : '—' }}
+                                    <div class="mt-1 text-xs text-slate-400">
+                                        {{ $row->organization->acronym ?? '—' }}
                                     </div>
                                 </td>
 
-                                <td class="px-4 py-3 text-slate-700">
+                                <td class="px-5 py-4 text-slate-700">
                                     {{ optional($row->president)->name ?? '—' }}
                                 </td>
 
-                                <td class="px-4 py-3">
+                                <td class="px-5 py-4">
                                     @if($row->president_confirmed_at)
-                                        <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
-                                            Yes
+                                        <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                                            Confirmed
                                         </span>
                                     @else
-                                        <span class="text-xs px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
-                                            No
+                                        <span class="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-200">
+                                            Pending
                                         </span>
                                     @endif
                                 </td>
 
-                                <td class="px-4 py-3 text-right">
-                                    <a href="{{ route('admin.orgs_by_sy.show', $row->organization_id) }}"
-                                       class="inline-flex items-center rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">
+                                <td class="px-5 py-4 text-right">
+                                    <a
+                                        href="{{ route('admin.orgs_by_sy.show', $row->organization_id) }}"
+                                        class="inline-flex items-center text-sm font-semibold text-blue-600 transition hover:text-blue-800"
+                                    >
                                         Open
+                                        <span class="ml-1">→</span>
                                     </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-4 py-8 text-center text-slate-600">
-                                    No registered organizations found for this school year.
+                                <td colspan="4" class="px-5 py-10 text-center text-sm text-slate-500">
+                                    No organizations found
                                 </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-
-            <div class="px-4 py-3 border-t border-slate-200">
-                {{ $orgSys->links() }}
-            </div>
         </div>
     </div>
+
+    @include('admin.orgs_by_sy.partials._index-scripts')
+
 </x-app-layout>

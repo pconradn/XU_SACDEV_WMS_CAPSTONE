@@ -21,6 +21,7 @@
     "dependencies": {
         "@fontsource/inter": "^5.2.8",
         "@heroicons/vue": "^2.2.0",
+        "lucide": "^0.577.0",
         "preline": "^4.1.2"
     }
 }

@@ -180,7 +180,7 @@ if ($user && $isAdmin) {
     }
 
     if (Route::has('admin.orgs_by_sy.index')) {
-        $system[] = $item('Organizations (by SY)', route('admin.orgs_by_sy.index'), ['admin.orgs_by_sy.*']);
+        $orgTools[] = $item('Organizations (by SY)', route('admin.orgs_by_sy.index'), ['admin.orgs_by_sy.*']);
     }
 
     if (Route::has('admin.audit-logs.index')) {
