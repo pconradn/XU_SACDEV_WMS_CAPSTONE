@@ -13,20 +13,34 @@ $activeSy = \App\Models\SchoolYear::activeYear();
 @endauth
 
 <style>
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateX(20px);
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
     }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
 
-.animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
-}
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+
+    .content-frame {
+        background: #ffffff;
+        border: 1px solid rgb(226 232 240);
+        border-radius: 1.25rem;
+        padding: 1.5rem;
+        box-shadow: 0 8px 28px -12px rgb(15 23 42 / 0.08);
+        min-height: calc(100vh - 120px);
+    }
+
+    .content-frame.soft {
+        background: rgb(248 250 252);
+    }
 </style>
 
 
@@ -96,7 +110,13 @@ $activeSy = \App\Models\SchoolYear::activeYear();
         {{-- PAGE CONTENT --}}
         <main class="flex-1 overflow-y-auto p-6">
 
-            @include('layouts.partials._content-wrapper')
+            <div class="max-w-7xl mx-auto">
+
+                <div class="content-frame">
+                    @include('layouts.partials._content-wrapper')
+                </div>
+
+            </div>
 
         </main>
 
