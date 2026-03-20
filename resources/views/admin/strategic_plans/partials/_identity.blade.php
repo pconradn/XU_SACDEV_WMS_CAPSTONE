@@ -2,23 +2,10 @@
 
     {{-- LEFT: Org details --}}
     <div class="md:col-span-2 bg-white shadow-sm rounded-2xl border border-slate-200 p-5">
-        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-            <div>
-                <h2 class="text-base font-semibold text-slate-900">Organization Details</h2>
-                <p class="mt-1 text-sm text-slate-500">
-                    Identity + mission and vision submitted in the Strategic Plan.
-                </p>
-            </div>
 
-            <div class="shrink-0">
-                <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
-                    {{ $submission->org_acronym ? $submission->org_acronym : 'No Acronym' }}
-                </span>
-            </div>
-        </div>
 
         {{-- Name --}}
-        <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div class="mt-0 rounded-xl border border-slate-200 bg-slate-50 p-4">
             <div class="text-xs font-semibold text-slate-500">Organization Name</div>
             <div class="mt-1 text-sm font-semibold text-slate-900">
                 {{ $submission->org_name ?: '—' }}

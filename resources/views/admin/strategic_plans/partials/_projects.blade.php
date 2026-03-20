@@ -1,89 +1,160 @@
-<div class="bg-white shadow-sm rounded-2xl border border-slate-200 p-5">
-    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+@php
+    $grouped = [
+        'org_dev' => $submission->projects->where('category', 'org_dev'),
+        'student_services' => $submission->projects->where('category', 'student_services'),
+        'community_involvement' => $submission->projects->where('category', 'community_involvement'),
+    ];
+
+    function niceCategory($key) {
+        return [
+            'org_dev' => 'Organizational Development',
+            'student_services' => 'Student Services',
+            'community_involvement' => 'Community Involvement',
+        ][$key] ?? $key;
+    }
+@endphp
+
+
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+
+    {{-- HEADER --}}
+    <div class="flex items-center justify-between">
         <div>
             <h2 class="text-base font-semibold text-slate-900">Projects</h2>
-            <p class="mt-1 text-sm text-slate-500">
-                Table view shows only the key info, click <span class="font-medium">View</span> to see full details.
-            </p>
+
         </div>
 
-        <div class="shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-            Total projects:
-            <span class="font-semibold text-slate-900">{{ $submission->projects->count() }}</span>
+        <div class="text-xs bg-slate-100 border border-slate-200 rounded-xl px-3 py-2">
+            Total:
+            <span class="font-semibold text-slate-900">
+                {{ $submission->projects->count() }}
+            </span>
         </div>
     </div>
 
-    <div class="mt-4 overflow-x-auto rounded-xl border border-slate-200">
-        <table class="min-w-full w-full text-sm">
-            <thead class="bg-slate-50 text-slate-600">
-                <tr class="text-left">
-                    <th class="px-3 py-2 w-48">Target Date</th>
-                    <th class="px-3 py-2">Project Title</th>
-                    <th class="px-3 py-2 w-48">Actions</th>
-                </tr>
-            </thead>
 
-            <tbody class="divide-y divide-slate-100">
-                @forelse($submission->projects as $p)
-                    <tr class="align-top">
-                        <td class="px-3 py-2">
-                            <div class="font-medium text-slate-800">
-                                {{ optional($p->target_date)->format('Y-m-d') ?: '—' }}
-                            </div>
-                            <div class="mt-1 text-xs text-slate-500">
-                                {{ $p->category }}
-                            </div>
-                        </td>
+    {{-- LOOP CATEGORIES --}}
+    @foreach($grouped as $key => $projects)
 
-                        <td class="px-3 py-2">
-                            <div class="font-semibold text-slate-900">
-                                {{ $p->title ?: 'Untitled project' }}
-                            </div>
+        @if($projects->count())
 
-                            <div class="mt-1 flex flex-wrap gap-2 text-xs">
-                                <span class="inline-flex items-center rounded-full border px-2 py-0.5
-                                    {{ $p->objectives->count() ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700' }}">
-                                    Objectives: {{ $p->objectives->count() }}
-                                </span>
-                                <span class="inline-flex items-center rounded-full border px-2 py-0.5
-                                    {{ $p->beneficiaries->count() ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700' }}">
-                                    Beneficiaries: {{ $p->beneficiaries->count() }}
-                                </span>
-                                <span class="inline-flex items-center rounded-full border px-2 py-0.5
-                                    {{ $p->deliverables->count() ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700' }}">
-                                    Deliverables: {{ $p->deliverables->count() }}
-                                </span>
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
 
-                                @if($p->partners->count())
-                                    <span class="inline-flex items-center rounded-full border px-2 py-0.5 bg-slate-50 border-slate-200 text-slate-700">
-                                        Partners: {{ $p->partners->count() }}
+            {{-- CATEGORY HEADER --}}
+            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+
+                <div class="flex items-center gap-3">
+                    <div class="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
+
+                    <h3 class="text-sm font-semibold text-slate-800">
+                        {{ niceCategory($key) }}
+                    </h3>
+                </div>
+
+                <div class="text-xs text-slate-500">
+                    {{ $projects->count() }} project(s)
+                </div>
+
+            </div>
+
+
+            {{-- TABLE --}}
+            <div class="overflow-x-auto">
+
+                <table class="min-w-full text-sm">
+
+                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
+                        <tr class="text-left">
+                            <th class="px-4 py-3 w-44">Date</th>
+                            <th class="px-4 py-3">Project</th>
+                            <th class="px-4 py-3 w-44">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-slate-100">
+
+                        @foreach($projects as $p)
+
+                        <tr class="hover:bg-slate-50 transition">
+
+                            {{-- DATE --}}
+                            <td class="px-4 py-3">
+                                <div class="font-medium text-slate-800">
+                                    {{ optional($p->target_date)->format('M d, Y') ?: '—' }}
+                                </div>
+
+                                <div class="text-xs text-slate-400 mt-1 capitalize">
+                                    {{ str_replace('_',' ', $p->category) }}
+                                </div>
+                            </td>
+
+
+                            {{-- PROJECT --}}
+                            <td class="px-4 py-3">
+
+                                <div class="font-semibold text-slate-900">
+                                    {{ $p->title ?: 'Untitled project' }}
+                                </div>
+
+                                {{-- META TAGS (neutral now) --}}
+                                <div class="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">
+
+                                    <span class="inline-flex items-center rounded-full border px-2 py-0.5 bg-slate-50 border-slate-200">
+                                        Objectives: {{ $p->objectives->count() }}
                                     </span>
-                                @endif
-                            </div>
-                        </td>
 
-                        <td class="px-3 py-2">
-                            <div class="flex gap-2">
-                                <button type="button"
-                                        class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                                        @click="openProject({{ (int) $p->id }})">
-                                    View
-                                </button>
-                            </div>
+                                    <span class="inline-flex items-center rounded-full border px-2 py-0.5 bg-slate-50 border-slate-200">
+                                        Beneficiaries: {{ $p->beneficiaries->count() }}
+                                    </span>
 
-                            <div class="mt-2 text-xs text-slate-500">
-                                Budget: <span class="font-medium text-slate-700">₱{{ number_format((float)$p->budget, 2) }}</span>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="3" class="px-3 py-6 text-slate-500 text-center">
-                            No projects found for this submission.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                                    <span class="inline-flex items-center rounded-full border px-2 py-0.5 bg-slate-50 border-slate-200">
+                                        Deliverables: {{ $p->deliverables->count() }}
+                                    </span>
+
+                                    @if($p->partners->count())
+                                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 bg-slate-50 border-slate-200">
+                                            Partners: {{ $p->partners->count() }}
+                                        </span>
+                                    @endif
+
+                                </div>
+
+                            </td>
+
+
+                            {{-- ACTION --}}
+                            <td class="px-4 py-3">
+
+                                <div class="flex flex-col gap-2 items-start">
+
+                                    <button type="button"
+                                            class="rounded-lg bg-slate-900 text-white px-3 py-2 text-xs font-semibold hover:bg-slate-800"
+                                            @click="openProject({{ (int) $p->id }})">
+                                        View
+                                    </button>
+
+                                    <div class="text-xs text-slate-500">
+                                        ₱{{ number_format((float)$p->budget, 2) }}
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        @endforeach
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+        @endif
+
+    @endforeach
+
 </div>

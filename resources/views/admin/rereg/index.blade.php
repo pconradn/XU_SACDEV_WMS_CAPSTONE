@@ -119,8 +119,19 @@
 
                                 <tr>
                                     <td class="px-5 py-4">
-                                        <div class="font-semibold text-slate-800">
-                                            {{ $org->name }}
+                                        <div class="flex items-center gap-2">
+
+                                            <span class="font-semibold text-slate-800">
+                                                {{ $org->name }}
+                                            </span>
+
+                                            {{-- COUNTER --}}
+                                            @if($pending > 0)
+                                                <span class="inline-flex items-center rounded-full bg-red-100 text-red-700 px-2 py-0.5 text-xs font-semibold">
+                                                    {{ $pending }}
+                                                </span>
+                                            @endif
+
                                         </div>
                                     </td>
 

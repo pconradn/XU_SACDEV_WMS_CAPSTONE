@@ -139,6 +139,38 @@ $activeSy = \App\Models\SchoolYear::activeYear();
         });
     }, 4000);
 </script>
+<script>
+    let quill;
+
+    document.addEventListener('alpine:init', () => {
+
+        Alpine.effect(() => {
+            if (document.getElementById('editor') && !quill) {
+
+                quill = new Quill('#editor', {
+                    theme: 'snow',
+                    placeholder: 'Write remarks here...',
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'underline'],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            ['link'],
+                            ['clean']
+                        ]
+                    }
+                });
+
+                // preload existing content
+                quill.root.innerHTML = `{!! addslashes($submission->sacdev_remarks ?? '') !!}`;
+            }
+        });
+
+    });
+
+    function submitRemarks() {
+        document.getElementById('remarksInput').value = quill.root.innerHTML;
+    }
+</script>
 
 </body>
 </html>

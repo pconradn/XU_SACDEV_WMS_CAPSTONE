@@ -1,37 +1,93 @@
+{{-- STICKY ACTION BAR --}}
+@if(in_array($submission->status, ['forwarded_to_sacdev','approved_by_sacdev'], true))
 
-        {{-- ACTIONS --}}
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-            <h2 class="text-base font-semibold text-slate-900">Actions</h2>
-            <p class="text-sm text-slate-500 mt-1">
-                Approve, return with remarks, or revert approval (requires remark).
-            </p>
+    <div 
+        class="fixed bottom-0 left-0 right-0 z-40 
+               border-t border-slate-200 
+               bg-white/95 backdrop-blur
+               shadow-[0_-4px_16px_rgba(0,0,0,0.06)]
+               pb-[env(safe-area-inset-bottom)]">
 
-            <div class="mt-4 flex flex-wrap gap-2">
+        <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
+
+            {{-- LEFT: GUIDANCE --}}
+            <div class="flex flex-col">
+                <span class="text-sm font-semibold text-slate-800">
+                    Done reviewing this submission?
+                </span>
+                <span class="text-xs text-slate-500">
+                    Choose an action below to proceed.
+                </span>
+            </div>
+
+            {{-- RIGHT: ACTIONS --}}
+            <div class="flex items-center gap-2">
+
+                {{-- RETURN + APPROVE --}}
                 @if(in_array($submission->status, ['forwarded_to_sacdev','returned_by_sacdev'], true))
+
                     <button type="button"
-                            class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
-                            @click="openApprove=true">
-                        Approve
+                            @click="openReturn = true"
+                            :disabled="loading"
+                            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 
+                                   hover:bg-slate-50 transition
+                                   disabled:opacity-50 disabled:cursor-not-allowed">
+                        Return for Revision
                     </button>
 
                     <button type="button"
-                            class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100"
-                            @click="openReturn=true">
-                        Return to Organization
+                            @click="openApprove = true"
+                            :disabled="loading"
+                            class="inline-flex items-center justify-center gap-2 rounded-lg 
+                                   bg-slate-900 px-5 py-2 text-sm font-semibold text-white 
+                                   hover:bg-slate-800 transition
+                                   disabled:opacity-50 disabled:cursor-not-allowed">
+                        Approve Submission
                     </button>
+
                 @endif
 
+                {{-- REVERT --}}
                 @if($submission->status === 'approved_by_sacdev')
+
                     <button type="button"
-                            class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
-                            @click="openRevert=true">
+                            @click="openRevert = true"
+                            :disabled="loading"
+                            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 
+                                   hover:bg-slate-50 transition
+                                   disabled:opacity-50 disabled:cursor-not-allowed">
                         Revert Approval
                     </button>
+
                 @endif
 
-                <a href="{{ route('admin.strategic_plans.index') }}"
-                   class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                    Back to list
-                </a>
             </div>
+
         </div>
+
+    </div>
+
+@else
+
+    {{-- 🔒 NO ACTION STATE --}}
+    <div 
+        class="fixed bottom-0 left-0 right-0 z-40 
+               border-t border-slate-200 
+               bg-slate-50
+               pb-[env(safe-area-inset-bottom)]">
+
+        <div class="max-w-7xl mx-auto px-6 py-3 text-center">
+
+            <div class="text-sm font-medium text-slate-700">
+                No actions available
+            </div>
+
+            <div class="text-xs text-slate-500 mt-1">
+                This submission is not in a state that allows review actions.
+            </div>
+
+        </div>
+
+    </div>
+
+@endif

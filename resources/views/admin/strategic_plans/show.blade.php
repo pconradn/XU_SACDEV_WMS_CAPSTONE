@@ -189,38 +189,8 @@
 
         </div>
 
-        {{-- RETURN MODAL --}}
-        <div x-show="openReturn" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-slate-900/50" @click="openReturn=false"></div>
-            <div class="relative w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-xl p-5">
-                <h3 class="text-lg font-semibold text-slate-900">Return to Organization</h3>
-                <p class="text-sm text-slate-600 mt-1">
-                    This will allow the president to edit again. Remarks are required.
-                </p>
-
-                <form class="mt-4 space-y-3"
-                      method="POST"
-                      action="{{ route('admin.strategic_plans.return', $submission) }}">
-                    @csrf
-
-                    <textarea name="remarks" rows="4"
-                              class="w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                              placeholder="Enter required changes..." required></textarea>
-
-                    <div class="flex justify-end gap-2">
-                        <button type="button"
-                                class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
-                                @click="openReturn=false">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                                class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">
-                            Return
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+        @include('admin.strategic_plans.partials._return_modal', ['submission' => $submission])
+        @include('admin.strategic_plans.partials._revert_modal', ['submission' => $submission])
 
     </div>
 </x-app-layout>
