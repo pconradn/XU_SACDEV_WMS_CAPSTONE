@@ -101,10 +101,6 @@ $activeSy = \App\Models\SchoolYear::activeYear();
         @include('layouts.partials._topbar')
 
 
-        {{-- FLASH --}}
-        <div class="px-6 pt-4">
-            @include('layouts.partials._flash')
-        </div>
 
 
         {{-- PAGE CONTENT --}}
