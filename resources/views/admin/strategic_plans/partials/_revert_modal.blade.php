@@ -18,14 +18,18 @@
 
         <form method="POST"
               action="{{ route('admin.strategic_plans.revert_approval', $submission) }}"
-              class="mt-4 space-y-3">
+              class="mt-4 space-y-3"
+              onsubmit="syncRevertRemarks()">
 
             @csrf
 
-            <textarea name="remarks" rows="4"
-                required
-                class="w-full rounded-lg border-slate-200 focus:border-amber-500 focus:ring-amber-500"
-                placeholder="Enter reason for reverting..."></textarea>
+            {{-- HIDDEN INPUT --}}
+            <input type="hidden" name="remarks" id="revertRemarksInput">
+
+            {{-- QUILL EDITOR --}}
+            <div id="revertQuill"
+                 class="bg-white border border-slate-200 rounded-lg">
+            </div>
 
             <div class="flex justify-end gap-2">
                 <button type="button"
@@ -44,3 +48,27 @@
 
     </div>
 </div>
+<script>
+    let revertQuill;
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        revertQuill = new Quill('#revertQuill', {
+            theme: 'snow',
+            placeholder: 'Enter reason for reverting...',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['clean']
+                ]
+            }
+        });
+
+    });
+
+    function syncRevertRemarks() {
+        const html = revertQuill.root.innerHTML;
+        document.getElementById('revertRemarksInput').value = html;
+    }
+</script>

@@ -1,7 +1,6 @@
 <x-app-layout>
 
     @php
-        // Safe JSON for modal viewing (same UX as moderator)
         $projectsJson = $submission->projects->map(function ($p) {
             return [
                 'id' => $p->id,

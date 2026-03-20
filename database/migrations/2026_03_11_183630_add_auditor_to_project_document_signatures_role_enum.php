@@ -35,7 +35,8 @@ return new class extends Migration
                 'finance_officer',
                 'moderator',
                 'sacdev_admin',
-                'osa_admin'
+                'osa_admin',
+                'auditor'
             )
         ");
     }

@@ -351,7 +351,11 @@ class SacdevStrategicPlanController extends Controller
     public function revertApproval(Request $request, StrategicPlanSubmission $submission)
     {
         $request->validate([
-            'remarks' => ['required', 'string', 'min:8'],
+            'remarks' => ['required', function ($attribute, $value, $fail) {
+                if (trim(strip_tags($value)) === '') {
+                    $fail('Remarks cannot be empty.');
+                }
+            }],
         ]);
 
         $orgId = (int) $submission->organization_id;
