@@ -24,6 +24,14 @@ class EnsureUserCanAccessProject
 
         $project = $request->route('project');
 
+        if (!$project instanceof \App\Models\Project) {
+            $project = \App\Models\Project::find($project);
+        }
+
+        if (!$project) {
+            abort(403, 'Project not found.');
+        }
+
         if (!$project) {
             abort(403, 'Project not found.');
         }

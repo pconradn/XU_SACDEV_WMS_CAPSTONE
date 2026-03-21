@@ -8,11 +8,7 @@ use App\Http\Controllers\Org\ProjectHeadAssignmentController;
 use App\Http\Controllers\Org\ActivationStatusController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Officers
-|--------------------------------------------------------------------------
-*/
+
 Route::resource('officers', OfficerEntryController::class)
     ->except(['show'])
     ->names('org.officers');
@@ -22,21 +18,12 @@ Route::post(
 )->name('org.officers.resend-invite');
 
 
-/*
-|--------------------------------------------------------------------------
-| Projects CRUD
-|--------------------------------------------------------------------------
-*/
 Route::resource('projects', ProjectController::class)
     ->except(['show', 'index'])
     ->names('org.projects');
 
 
-/*
-|--------------------------------------------------------------------------
-| Assign org roles
-|--------------------------------------------------------------------------
-*/
+
 Route::get(
     'assign-roles',
     [OrgRoleAssignmentController::class, 'edit']
@@ -48,11 +35,7 @@ Route::post(
 )->name('org.assign-roles.update');
 
 
-/*
-|--------------------------------------------------------------------------
-| Assign project heads
-|--------------------------------------------------------------------------
-*/
+
 Route::get(
     'assign-project-heads',
     [ProjectHeadAssignmentController::class, 'index']
@@ -71,11 +54,6 @@ Route::post(
  ->name('org.assign-project-heads.update');
 
 
-/*
-|--------------------------------------------------------------------------
-| Activation status
-|--------------------------------------------------------------------------
-*/
 Route::get(
     'activation-status',
     [ActivationStatusController::class, 'index']

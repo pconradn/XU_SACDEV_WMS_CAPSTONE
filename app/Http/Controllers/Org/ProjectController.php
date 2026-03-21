@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Org;
 
 use App\Http\Controllers\Controller;
+use App\Models\OfficerEntry;
+use App\Models\OrgMembership;
 use App\Models\Project;
 use Illuminate\Http\Request;
 
@@ -25,11 +27,6 @@ class ProjectController extends Controller
 
         $user = auth()->user();
 
-        $query = Project::query()
-            ->where('organization_id', $orgId)
-            ->where('school_year_id', $syId)
-            ->orderBy('title');
-
         $orgRole = \App\Models\OrgMembership::query()
             ->where('user_id', $user->id)
             ->where('organization_id', $orgId)
@@ -37,14 +34,17 @@ class ProjectController extends Controller
             ->whereNull('archived_at')
             ->value('role');
 
-        $isPresident = ($orgRole === 'president');
-        $isTreasurer = ($orgRole === 'treasurer');
-        $isModerator = ($orgRole === 'moderator');
+        $isPresident = $orgRole === 'president';
+        $isTreasurer = $orgRole === 'treasurer';
+        $isModerator = $orgRole === 'moderator';
 
-        //dd($orgRole);
+
+        $query = Project::query()
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->orderBy('title');
 
         if (!$isPresident && !$isTreasurer && !$isModerator) {
-
             $query->whereHas('assignments', function ($q) use ($user) {
                 $q->where('user_id', $user->id)
                 ->where('assignment_role', 'project_head')
@@ -52,13 +52,35 @@ class ProjectController extends Controller
             });
         }
 
+
         $projects = $query
             ->with([
-                'documents.signatures'
+                'documents',
+                'assignments' => function ($q) {
+                    $q->where('assignment_role', 'project_head')
+                    ->whereNull('archived_at')
+                    ->with('officerEntry');
+                }
             ])
+            ->withCount('documents')
             ->get();
 
-        return view('org.projects.index', compact('projects', 'syId'));
+
+        $officers = OfficerEntry::query()
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->where('is_major_officer', 0)
+            ->orderBy('full_name')
+            ->get();
+
+        return view('org.projects.index', [
+            'projects'     => $projects,
+            'officers'     => $officers,
+            'syId'         => $syId,
+            'isPresident'  => $isPresident,
+            'isTreasurer'  => $isTreasurer,
+            'isModerator'  => $isModerator,
+        ]);
     }
 
     public function create(Request $request)
