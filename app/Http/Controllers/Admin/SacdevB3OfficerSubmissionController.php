@@ -129,13 +129,21 @@ class SacdevB3OfficerSubmissionController extends Controller
             if ($locked->status !== 'submitted_to_sacdev') {
                 abort(403, 'Only submitted forms can be returned.');
             }
-
+            $oldStatus = $locked->status;
             $locked->status = 'returned_by_sacdev';
             $locked->returned_at = now();
             $locked->sacdev_reviewed_by_user_id = Auth::id();
             $locked->sacdev_remarks = $data['sacdev_remarks'];
             $locked->sacdev_reviewed_at = now();
             $locked->save();
+
+            $locked->timelines()->create([
+                'user_id' => auth()->id(),
+                'action' => 'returned_by_sacdev',
+                'remarks' => $data['sacdev_remarks'],
+                'old_status' => $oldStatus,
+                'new_status' => 'returned_by_sacdev',
+            ]);
 
             $submissionId = (int) $locked->getKey();
 
@@ -185,13 +193,22 @@ class SacdevB3OfficerSubmissionController extends Controller
             }
 
 
-
+            $oldStatus = $locked->status;
             $locked->status = 'approved_by_sacdev';
             $locked->approved_at = now();
             $locked->sacdev_reviewed_by_user_id = auth()->id();
             $locked->sacdev_reviewed_at = now();
             $locked->sacdev_remarks = $data['sacdev_remarks'] ?? null;
             $locked->save();
+
+
+            $locked->timelines()->create([
+                'user_id' => auth()->id(),
+                'action' => 'approved_by_sacdev',
+                'remarks' => $data['sacdev_remarks'] ?? null,
+                'old_status' => $oldStatus,
+                'new_status' => 'approved_by_sacdev',
+            ]);
 
 
             foreach ($locked->items as $item) {

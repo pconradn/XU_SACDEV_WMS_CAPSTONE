@@ -1,102 +1,121 @@
-{{-- TOP WRAPPER --}}
-<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+<div class="bg-white shadow-sm rounded-2xl p-5 space-y-4">
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <div x-data="{ openTimeline: false, openRemarks: false }">
 
-        {{-- LEFT SIDE (MAIN INFO) --}}
-        <div class="lg:col-span-8 space-y-4">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
-            <div class="flex items-start justify-between gap-6">
+            {{-- LEFT --}}
+            <div>
+                <h1 class="text-xl font-semibold text-slate-900">
+                    Registration Form B-1: Strategic Plan
+                </h1>
 
-                {{-- LEFT: TITLE + ORG --}}
-                <div class="space-y-2">
+                <div class="text-sm text-slate-500 mt-1 flex flex-wrap items-center gap-2">
 
-                    <h1 class="text-xl font-semibold text-slate-900">
-                        Strategic Plan Submission
-                    </h1>
-
-                    <div class="text-sm text-slate-600">
-                        <span class="text-slate-500">Organization</span>
-                        <div class="font-semibold text-slate-900">
+                    {{-- ORG --}}
+                    <span>
+                        Organization:
+                        <span class="font-semibold text-slate-800">
                             {{ $submission->organization->name ?? ($submission->org_name ?? '—') }}
-
-                            @if(!empty($submission->org_acronym))
-                                <span class="text-slate-400 font-normal">
-                                    ({{ $submission->org_acronym }})
-                                </span>
-                            @endif
-                        </div>
-                    </div>
-
-                    <div class="text-sm text-slate-600">
-                        <span class="text-slate-500">School Year</span>
-                        <div class="font-semibold text-slate-900">
-                            {{ $submission->targetSchoolYear->name ?? '—' }}
-                        </div>
-                    </div>
-
-                </div>
-
-
-                {{-- RIGHT: STATUS + PEOPLE 🔥 --}}
-                <div class="text-right space-y-3 min-w-[200px]">
-
-                    {{-- STATUS --}}
-                    <div>
-                        <span class="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border font-medium capitalize
-                            @if($submission->status === 'approved_by_sacdev')
-                                bg-emerald-50 border-emerald-200 text-emerald-700
-                            @elseif(str_contains($submission->status, 'returned'))
-                                bg-rose-50 border-rose-200 text-rose-700
-                            @elseif(in_array($submission->status, ['submitted_to_moderator','forwarded_to_sacdev']))
-                                bg-amber-50 border-amber-200 text-amber-700
-                            @else
-                                bg-slate-100 border-slate-200 text-slate-700
-                            @endif
-                        ">
-                            ● {{ str_replace('_',' ', $submission->status) }}
                         </span>
-                    </div>
 
-                    {{-- PEOPLE --}}
-                    <div class="space-y-2 text-sm">
+                        @if(!empty($submission->org_acronym))
+                            <span class="text-slate-400">
+                                ({{ $submission->org_acronym }})
+                            </span>
+                        @endif
+                    </span>
 
-                        <div>
-                            <div class="text-slate-500 text-xs">Submitted by</div>
-                            <div class="font-semibold text-slate-900">
-                                {{ $submission->submittedBy?->name ?? '—' }}
-                            </div>
-                        </div>
 
-                        <div>
-                            <div class="text-slate-500 text-xs">Moderator</div>
-                            <div class="font-semibold text-slate-900">
-                                {{ $submission->moderatorReviewedBy?->name ?? '—' }}
-                            </div>
-                        </div>
+                    {{-- SY --}}
+                    <span>
+                        Target School Year:
+                        <span class="font-semibold text-slate-800">
+                            {{ $submission->targetSchoolYear->name ?? '—' }}
+                        </span>
+                    </span>
 
-                    </div>
+                    <span class="hidden sm:inline">•</span>
+
+                    {{-- BACK --}}
+                    <a href="{{ route('rereg.hub', $submission->organization->id) }}"
+                       class="text-blue-600 hover:underline font-medium">
+                        Back to Re-Registration
+                    </a>
 
                 </div>
-
             </div>
 
-        </div>
+            {{-- RIGHT: STATUS + ACTIONS --}}
+            <div class="flex items-center gap-2 flex-wrap">
 
+                {{-- STATUS --}}
+                @php
+                    $status = $submission->status;
 
-        {{-- RIGHT SIDE (TIMELINE) --}}
-        <div class="lg:col-span-4">
+                    $config = match($status) {
 
-            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 lg:sticky lg:top-6">
+                        'draft' => [
+                            'label' => 'Draft',
+                            'class' => 'bg-slate-50 text-slate-700 border-slate-200'
+                        ],
 
-                @include('admin.strategic_plans.partials._timeline', [
-                    'submission' => $submission,
-                    'compact' => true
+                        'submitted_to_moderator' => [
+                            'label' => 'Under Moderator Review',
+                            'class' => 'bg-amber-50 text-amber-700 border-amber-200'
+                        ],
+
+                        'returned_by_moderator' => [
+                            'label' => 'Returned by Moderator',
+                            'class' => 'bg-rose-50 text-rose-700 border-rose-200'
+                        ],
+
+                        'forwarded_to_sacdev' => [
+                            'label' => 'Under SACDEV Review',
+                            'class' => 'bg-blue-50 text-blue-700 border-blue-200'
+                        ],
+
+                        'returned_by_sacdev' => [
+                            'label' => 'Returned by SACDEV',
+                            'class' => 'bg-red-50 text-red-700 border-red-200'
+                        ],
+
+                        'approved_by_sacdev' => [
+                            'label' => 'Approved',
+                            'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        ],
+
+                        default => [
+                            'label' => ucwords(str_replace('_', ' ', $status)),
+                            'class' => 'bg-slate-50 text-slate-700 border-slate-200'
+                        ],
+                    };
+                @endphp
+
+                <span class="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border font-semibold {{ $config['class'] }}">
+                    {{ $config['label'] }}
+                </span>
+
+                {{-- REMARKS --}}
+                @include('partials.timeline_remarks._remarks_button', [
+                    'submission' => $submission
                 ])
 
+                {{-- TIMELINE --}}
+                @include('partials.timeline_remarks._timeline_button')
+
             </div>
 
         </div>
+
+        {{-- MODALS --}}
+        @include('partials.timeline_remarks._remarks_modal', [
+            'submission' => $submission
+        ])
+
+        @include('partials.timeline_remarks._timeline_modal', [
+            'submission' => $submission
+        ])
 
     </div>
 

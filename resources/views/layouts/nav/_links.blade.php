@@ -2,96 +2,47 @@
 use App\Models\SchoolYear;
 use App\Models\OrgMembership;
 use App\Models\OrganizationSchoolYear;
+use App\Models\ProjectAssignment;
 
 $user = auth()->user();
 $isAdmin = $user && $user->system_role === 'sacdev_admin';
 
-
-/*
-|--------------------------------------------------------------------------
-| Link Styling
-|--------------------------------------------------------------------------
-*/
-
 $linkClass = function (array $activePatterns) {
-
     $active = request()->routeIs(...$activePatterns);
 
     return $active
         ? 'bg-blue-50 text-blue-700 border-blue-200'
         : 'bg-white text-slate-700 border-transparent hover:bg-slate-50 hover:text-slate-900';
-
 };
 
-
-/*
-|--------------------------------------------------------------------------
-| Link Builder
-|--------------------------------------------------------------------------
-*/
-
 $item = function (string $label, string $href, array $activePatterns, $badge = null) use ($linkClass) {
-
     return [
         'label' => $label,
         'href' => $href,
         'class' => $linkClass($activePatterns),
         'badge' => $badge,
     ];
-
 };
-
-
-/*
-|--------------------------------------------------------------------------
-| Navigation Containers
-|--------------------------------------------------------------------------
-*/
 
 $dashboardLinks = [];
 $contextLinks = [];
 $groups = [];
 
 
-/*
-|--------------------------------------------------------------------------
-| Dashboard
-|--------------------------------------------------------------------------
-*/
 
 if (Route::has('dashboard')) {
-
-    $dashboardLinks[] = $item(
-        'Dashboard',
-        route('dashboard'),
-        ['dashboard']
-    );
-
+    $dashboardLinks[] = $item('Dashboard', route('dashboard'), ['dashboard']);
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| Context Selector
-|--------------------------------------------------------------------------
-*/
-
 if (Route::has('context.show') && !$isAdmin) {
-
     $contextLinks[] = $item(
         'Select SY / Organization',
         route('context.show'),
         ['context.*', 'org.encode-sy.*']
     );
-
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| ADMIN NAVIGATION
-|--------------------------------------------------------------------------
-*/
 
 if ($user && $isAdmin) {
 
@@ -100,30 +51,14 @@ if ($user && $isAdmin) {
     $orgTools = [];
     $system = [];
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Re-Registration Hub (single entry)
-    |--------------------------------------------------------------------------
-    */
-
     if (Route::has('admin.rereg.index')) {
-
         $rereg[] = $item(
             'Re-Registration Hub',
             route('admin.rereg.index'),
             ['admin.rereg.*','rereg.*'],
             $adminReregBadgeCount ?? null
         );
-
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Submission Queues
-    |--------------------------------------------------------------------------
-    */
 
     if (Route::has('admin.strategic_plans.index')) {
         $queues[] = $item('Strategic Plans (B-1)', route('admin.strategic_plans.index'), ['admin.strategic_plans.*']);
@@ -145,13 +80,6 @@ if ($user && $isAdmin) {
         $queues[] = $item('Moderator Submissions (B-5)', route('admin.moderator_submissions.index'), ['admin.moderator_submissions.*']);
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Organization Tools
-    |--------------------------------------------------------------------------
-    */
-
     if (Route::has('admin.review.index')) {
         $orgTools[] = $item('Organization Review', route('admin.review.index'), ['admin.review.*']);
     }
@@ -159,13 +87,6 @@ if ($user && $isAdmin) {
     if (Route::has('admin.packets.receive')) {
         $orgTools[] = $item('Packet Receiving', route('admin.packets.receive'), ['admin.packets.*']);
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | System Administration
-    |--------------------------------------------------------------------------
-    */
 
     if (Route::has('admin.school-years.index')) {
         $system[] = $item('School Years', route('admin.school-years.index'), ['admin.school-years.*']);
@@ -187,72 +108,190 @@ if ($user && $isAdmin) {
         $system[] = $item('Audit Logs', route('admin.audit-logs.index'), ['admin.audit-logs.*']);
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Push Navigation Groups
-    |--------------------------------------------------------------------------
-    */
-
-
-    // Re-Registration (single item, not dropdown)
     if ($rereg) {
-        $groups[] = [
-            'title' => 'Re-Registration Hub',
-            'links' => $rereg,
-            'icon' => 'clipboard',
-            'single' => true
-        ];
+        $groups[] = ['title' => 'Re-Registration Hub', 'links' => $rereg, 'icon' => 'clipboard', 'single' => true];
+    }
+
+    if ($queues) {
+        $groups[] = ['title' => 'Submission Queues', 'links' => $queues, 'icon' => 'clipboard'];
+    }
+
+    if ($orgTools) {
+        $groups[] = ['title' => 'Organization Tools', 'links' => $orgTools, 'icon' => 'grid'];
+    }
+
+    if ($system) {
+        $groups[] = ['title' => 'System Administration', 'links' => $system, 'icon' => 'settings'];
+    }
+}
+
+
+
+$activeOrgId = (int) session('active_org_id');
+$syId = (int) session('encode_sy_id');
+
+if ($user && $activeOrgId && $syId) {
+
+    $orgRole = OrgMembership::query()
+        ->where('user_id', $user->id)
+        ->where('school_year_id', $syId)
+        ->whereNull('archived_at')
+        ->value('role');
+
+    $isPresident = ($orgRole === 'president');
+    $isModerator = ($orgRole === 'moderator');
+    $isTreasurer = ($orgRole === 'treasurer');
+    $isAuditor = ($orgRole === 'auditor');
+
+    $isProjectHead = ProjectAssignment::query()
+        ->where('user_id', $user->id)
+        ->whereNull('archived_at')
+        ->whereHas('project', function ($q) use ($activeOrgId, $syId) {
+            $q->where('organization_id', $activeOrgId)
+              ->where('school_year_id', $syId);
+        })
+        ->exists();
+
+    if (!$isPresident) {
+        $osyPresident = OrganizationSchoolYear::query()
+            ->where('organization_id', $activeOrgId)
+            ->where('school_year_id', $syId)
+            ->value('president_user_id');
+
+        $isPresident = ((int)$osyPresident === (int)$user->id);
+    }
+
+    /* ========================= */
+    /* PRESIDENT */
+    /* ========================= */
+    if ($isPresident) {
+
+        $rereg = [];
+        $ops = [];
+
+        if (Route::has('org.rereg.index')) {
+            $rereg[] = $item('Re-Registration Hub', route('org.rereg.index'), ['org.rereg.*']);
+        }
+
+        if (Route::has('org.provision.next_president.edit')) {
+            $rereg[] = $item('Assign Next SY President', route('org.provision.next_president.edit'), ['org.provision.*']);
+        }
+
+        if (Route::has('org.officers.index')) {
+            $ops[] = $item('Officer List', route('org.officers.index'), ['org.officers.*']);
+        }
+
+        if (Route::has('org.projects.index')) {
+            $ops[] = $item('Projects', route('org.projects.index'), ['org.projects.*']);
+        }
+
+        if (Route::has('org.assign-roles.edit')) {
+            $ops[] = $item('Assign Treasurer / Moderator', route('org.assign-roles.edit'), ['org.assign-roles.*']);
+        }
+
+        if (Route::has('org.assign-project-heads.index')) {
+            $ops[] = $item('Assign Project Heads', route('org.assign-project-heads.index'), ['org.assign-project-heads.*']);
+        }
+
+        if (Route::has('org.activation-status.index')) {
+            $ops[] = $item('Activation Status', route('org.activation-status.index'), ['org.activation-status.*']);
+        }
+
+        if ($rereg) {
+            $groups[] = [
+                'title' => 'Re-Registration',
+                'links' => $rereg,
+                'icon' => 'clipboard'
+            ];
+        }
+
+        if ($ops) {
+            $groups[] = [
+                'title' => 'Operational Modules',
+                'links' => $ops,
+                'icon' => 'grid'
+            ];
+        }
     }
 
 
-    if ($queues) {
+    /* ========================= */
+    /* PROJECT ACCESS (ALL ROLES) */
+    /* ========================= */
+
+    $projectLinks = [];
+
+    if ($isModerator && Route::has('org.projects.index')) {
+        $projectLinks[] = $item('Projects', route('org.projects.index'), ['org.projects.*']);
+    }
+
+    if (($isTreasurer || $isAuditor) && Route::has('org.projects.index')) {
+        $projectLinks[] = $item('Projects', route('org.projects.index'), ['org.projects.*']);
+    }
+
+    if ($isProjectHead && Route::has('org.projects.index')) {
+        $projectLinks[] = $item('My Projects', route('org.projects.index'), ['org.projects.*']);
+    }
+
+    /* remove duplicates */
+    if (!empty($projectLinks)) {
+        $seen = [];
+        $projectLinks = array_values(array_filter($projectLinks, function ($link) use (&$seen) {
+            if (in_array($link['label'], $seen, true)) return false;
+            $seen[] = $link['label'];
+            return true;
+        }));
+
         $groups[] = [
-            'title' => 'Submission Queues',
-            'links' => $queues,
+            'title' => 'Projects',
+            'links' => $projectLinks,
             'icon' => 'clipboard'
         ];
     }
 
 
-    if ($orgTools) {
-        $groups[] = [
-            'title' => 'Organization Tools',
-            'links' => $orgTools,
-            'icon' => 'grid'
-        ];
-    }
+    /* ========================= */
+    /* MODERATOR TOOLS */
+    /* ========================= */
 
+    if ($isModerator) {
+        $mod = [];
 
-    if ($system) {
-        $groups[] = [
-            'title' => 'System Administration',
-            'links' => $system,
-            'icon' => 'settings'
-        ];
+        if (Route::has('org.moderator.rereg.dashboard')) {
+            $mod[] = $item(
+                'Re-Registration Dashboard',
+                route('org.moderator.rereg.dashboard'),
+                ['org.moderator.rereg.*']
+            );
+        }
+
+        if (Route::has('org.moderator.strategic_plans.index')) {
+            $mod[] = $item(
+                'Review Strategic Plans (B-1)',
+                route('org.moderator.strategic_plans.index'),
+                ['org.moderator.strategic_plans.*']
+            );
+        }
+
+        if ($mod) {
+            $groups[] = [
+                'title' => 'Moderator',
+                'links' => $mod,
+                'icon' => 'user'
+            ];
+        }
     }
 
 }
-
-
-
 @endphp
 
 
-{{-- Dashboard --}}
 @include('layouts.nav._menu', ['links' => $dashboardLinks])
 
-{{-- Context --}}
 @if ($contextLinks)
 @include('layouts.nav._menu', ['links' => $contextLinks])
 @endif
 
-
-
 @foreach ($groups as $group)
-
-@include('layouts.nav.components._group', [
-    'group' => $group
-])
-
+@include('layouts.nav.components._group', ['group' => $group])
 @endforeach

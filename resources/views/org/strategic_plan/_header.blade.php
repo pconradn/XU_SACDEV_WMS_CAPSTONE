@@ -1,9 +1,7 @@
 <div class="bg-white shadow-sm rounded-2xl border border-slate-200 p-5 space-y-4">
 
-    {{-- TOP ROW --}}
     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
-        {{-- TITLE --}}
         <div>
             <h1 class="text-xl font-semibold text-slate-900">
                 Registration Form B-1: Strategic Plan
@@ -24,8 +22,6 @@
             </div>
         </div>
 
-      
-{{-- ACTION GROUP --}}
 <div class="flex items-center gap-2 flex-wrap">
 
     @php
@@ -76,7 +72,7 @@
         };
     @endphp
 
-    {{-- STATUS BADGE --}}
+
     <span class="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border font-semibold {{ $config['class'] }}">
 
         <span class="text-sm leading-none">
@@ -91,12 +87,12 @@
 
 </div>
 
-{{-- REMARKS PARTIAL --}}
+
 @include('org.strategic_plan.partials._remarks', [
     'submission' => $submission
 ])
 
-{{-- TIMELINE PARTIAL --}}
+
 @include('admin.strategic_plans.partials._timeline', [
     'submission' => $submission,
     'compact' => true

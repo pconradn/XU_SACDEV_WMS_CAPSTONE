@@ -10,7 +10,7 @@
             </h3>
 
             <p class="mt-1 text-sm text-slate-600 max-w-xl">
-                Upload a clear photo or scan of your valid ID. This will be used by SACDEV to verify moderator certification.
+                Upload a clear photo.
             </p>
 
             <p class="mt-1 text-xs text-slate-500">
@@ -150,3 +150,27 @@
 
 
 </div>
+<script>
+function previewModeratorPhoto(event) {
+    const input = event.target;
+    const file = input.files[0];
+
+    if (!file) return;
+
+    const preview = document.getElementById('moderatorPhotoPreview');
+    const placeholder = document.getElementById('moderatorPhotoPlaceholder');
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        preview.src = e.target.result;
+        preview.classList.remove('hidden');
+
+        if (placeholder) {
+            placeholder.classList.add('hidden');
+        }
+    };
+
+    reader.readAsDataURL(file);
+}
+</script>

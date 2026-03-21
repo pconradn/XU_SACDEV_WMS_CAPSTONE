@@ -7,23 +7,39 @@
             {{-- LEFT --}}
             <div>
                 <h1 class="text-xl font-semibold text-slate-900">
-                    Registration Form B-3: Officers List
+                    Registration Form B-5: Moderator Form
                 </h1>
 
                 <div class="text-sm text-slate-500 mt-1 flex flex-wrap items-center gap-2">
+
+                    {{-- ORGANIZATION --}}
                     <span>
-                        Target School Year:
-                        <span class="font-semibold text-slate-700">
-                            {{ $schoolYear?->name ?? ('SY #' . (int) $targetSyId) }}
+                        Organization:
+                        <span class="font-semibold text-slate-800">
+                            {{ $submission->organization->name ?? '—' }}
                         </span>
                     </span>
 
                     <span class="hidden sm:inline">•</span>
 
-                    <a href="{{ route('org.rereg.index') }}"
+                    {{-- SCHOOL YEAR --}}
+                    <span>
+                        Target School Year:
+                        <span class="font-semibold text-slate-800">
+                            {{ $submission->targetSchoolYear->name 
+                                ?? $submission->targetSchoolYear->label 
+                                ?? $submission->target_school_year_id }}
+                        </span>
+                    </span>
+
+                    <span class="hidden sm:inline">•</span>
+
+                    {{-- BACK --}}
+                    <a href="{{ route('org.moderator.rereg.dashboard') }}"
                        class="text-blue-600 hover:underline font-medium">
                         Back to Re-Registration
                     </a>
+
                 </div>
             </div>
 
@@ -35,22 +51,27 @@
                     $status = $submission->status;
 
                     $config = match($status) {
+
                         'draft' => [
                             'label' => 'Draft',
                             'class' => 'bg-slate-50 text-slate-700 border-slate-200'
                         ],
+
                         'submitted_to_sacdev' => [
                             'label' => 'Under SACDEV Review',
                             'class' => 'bg-blue-50 text-blue-700 border-blue-200'
                         ],
+
                         'returned_by_sacdev' => [
                             'label' => 'Returned by SACDEV',
                             'class' => 'bg-red-50 text-red-700 border-red-200'
                         ],
+
                         'approved_by_sacdev' => [
                             'label' => 'Approved',
                             'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         ],
+
                         default => [
                             'label' => ucwords(str_replace('_', ' ', $status)),
                             'class' => 'bg-slate-50 text-slate-700 border-slate-200'
@@ -62,12 +83,12 @@
                     {{ $config['label'] }}
                 </span>
 
-                {{-- REMARKS BUTTON --}}
+                {{-- REMARKS --}}
                 @include('partials.timeline_remarks._remarks_button', [
                     'submission' => $submission
                 ])
 
-                {{-- TIMELINE BUTTON --}}
+                {{-- TIMELINE --}}
                 @include('partials.timeline_remarks._timeline_button')
 
             </div>

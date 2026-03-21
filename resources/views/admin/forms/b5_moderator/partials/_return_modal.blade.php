@@ -1,38 +1,94 @@
-<div id="returnModal" class="hidden fixed inset-0 z-50">
-    <div class="absolute inset-0 bg-black/40"></div>
+<template x-if="openReturn">
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
 
-    <div class="relative mx-auto mt-24 w-full max-w-lg px-4">
-        <div class="rounded-2xl bg-white shadow-xl border border-slate-200 overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-200">
-                <div class="text-base font-semibold text-slate-900">Return to Moderator with Remarks</div>
-                <div class="text-sm text-slate-600 mt-1">
-                    Remarks are required and will be shown to the moderator.
-                </div>
+        {{-- BACKDROP --}}
+        <div class="absolute inset-0 bg-black/40" @click="openReturn = false"></div>
+
+        {{-- MODAL --}}
+        <div class="relative w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200">
+
+            {{-- HEADER --}}
+            <div class="px-6 py-4 border-b border-slate-200">
+                <h3 class="text-lg font-semibold text-slate-900">
+                    Return to Moderator
+                </h3>
+                <p class="text-sm text-slate-500 mt-1">
+                    Provide clear remarks so the moderator can revise the submission properly.
+                </p>
             </div>
 
-            <form method="POST" action="{{ route('admin.moderator_submissions.return', $submission) }}">
+            {{-- FORM --}}
+            <form method="POST"
+                  action="{{ route('admin.moderator_submissions.return', $submission) }}"
+                  id="b5ReturnForm"
+                  class="px-6 py-5 space-y-4"
+                  x-data="{ quillInstance: null }"
+                  x-init="$nextTick(() => {
+                      quillInstance = initQuillEditor('b5-return-editor');
+                  })">
+
                 @csrf
 
-                <div class="p-5 space-y-3">
-                    <label class="block text-sm font-medium text-slate-700">Remarks</label>
-                    <textarea name="sacdev_remarks" rows="5"
-                              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                              required>{{ old('sacdev_remarks') }}</textarea>
+                {{-- LABEL --}}
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                        Remarks <span class="text-red-500">*</span>
+                    </label>
+
+                    <div id="b5-return-editor"
+                         class="bg-white border border-slate-300 rounded-lg min-h-[180px]"></div>
+
+                    <input type="hidden" name="sacdev_remarks" id="b5ReturnRemarks">
+
+                    <p class="mt-1 text-xs text-slate-500">
+                        Be specific about what needs to be corrected.
+                    </p>
                 </div>
 
-                <div class="px-5 py-4 border-t border-slate-200 flex items-center justify-end gap-2">
+                {{-- ACTIONS --}}
+                <div class="flex items-center justify-end gap-2 pt-2">
+
                     <button type="button"
-                            data-close-return-modal
-                            class="inline-flex justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                            @click="openReturn = false"
+                            class="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
                         Cancel
                     </button>
 
                     <button type="submit"
-                            class="inline-flex justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
-                        Return
+                            class="px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition">
+                        Return Submission
                     </button>
+
                 </div>
+
             </form>
+
         </div>
     </div>
-</div>
+</template>
+
+<script>
+document.addEventListener('submit', function (e) {
+
+    if (e.target.id === 'b5ReturnForm') {
+
+        const editor = document.querySelector('#b5-return-editor .ql-editor');
+        const input = document.getElementById('b5ReturnRemarks');
+
+        if (editor && input) {
+            input.value = editor.innerHTML;
+        }
+
+        const text = input.value
+            .replace(/<(.|\n)*?>/g, '')
+            .replace(/&nbsp;/g, ' ')
+            .trim();
+
+        if (!text) {
+            e.preventDefault();
+            alert('Please enter remarks.');
+        }
+    }
+
+});
+</script>

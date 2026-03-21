@@ -44,49 +44,7 @@ $activeSy = \App\Models\SchoolYear::activeYear();
 </style>
 
 
-{{-- GLOBAL TOAST NOTIFICATIONS --}}
-<div id="toast-container" class="fixed top-5 right-5 z-50 space-y-3">
-
-    @if(session('status'))
-        <div class="toast flex items-start gap-3 max-w-sm rounded-xl border border-emerald-200 bg-white shadow-lg p-4 animate-fade-in">
-
-            {{-- ICON --}}
-            <div class="text-emerald-500 mt-0.5">
-                <i data-lucide="check-circle" class="w-5 h-5"></i>
-            </div>
-
-            {{-- MESSAGE --}}
-            <div class="flex-1 text-sm text-slate-700">
-                {{ session('status') }}
-            </div>
-
-            {{-- CLOSE --}}
-            <button onclick="closeToast(this)" class="text-slate-400 hover:text-slate-600">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="toast flex items-start gap-3 max-w-sm rounded-xl border border-red-200 bg-white shadow-lg p-4 animate-fade-in">
-
-            <div class="text-red-500 mt-0.5">
-                <i data-lucide="alert-circle" class="w-5 h-5"></i>
-            </div>
-
-            <div class="flex-1 text-sm text-slate-700">
-                {{ session('error') }}
-            </div>
-
-            <button onclick="closeToast(this)" class="text-slate-400 hover:text-slate-600">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-
-        </div>
-    @endif
-
-</div>
+@include('layouts.partials._flash')
 
 
 <div x-data="{ sidebarOpen: false }" class="flex h-screen overflow-hidden">
@@ -136,37 +94,74 @@ $activeSy = \App\Models\SchoolYear::activeYear();
     }, 4000);
 </script>
 <script>
-    let quill;
+document.addEventListener('alpine:init', () => {
 
-    document.addEventListener('alpine:init', () => {
+    window.initQuillEditor = function (editorId, options = {}) {
 
-        Alpine.effect(() => {
-            if (document.getElementById('editor') && !quill) {
+        const el = document.getElementById(editorId);
+        if (!el) return null;
 
-                quill = new Quill('#editor', {
-                    theme: 'snow',
-                    placeholder: 'Write remarks here...',
-                    modules: {
-                        toolbar: [
-                            ['bold', 'italic', 'underline'],
-                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                            ['link'],
-                            ['clean']
-                        ]
-                    }
-                });
+        el.innerHTML = '';
 
-                // preload existing content
-                quill.root.innerHTML = `{!! addslashes($submission->sacdev_remarks ?? '') !!}`;
+        const q = new Quill(el, {
+            theme: 'snow',
+            placeholder: options.placeholder || 'Write remarks here...',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline'],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    ['link'],
+                    ['clean']
+                ]
             }
         });
 
-    });
+        if (options.content) {
+            q.root.innerHTML = options.content;
+        }
 
-    function submitRemarks() {
-        document.getElementById('remarksInput').value = quill.root.innerHTML;
+        if (options.hiddenInputId) {
+            q.on('text-change', function () {
+                const input = document.getElementById(options.hiddenInputId);
+                if (input) {
+                    input.value = q.root.innerHTML;
+                }
+            });
+        }
+
+        return q;
+    };
+
+});
+
+
+
+document.addEventListener('submit', function (e) {
+
+    const form = e.target;
+
+    const editorId = form.dataset.quillEditor;
+    const inputId  = form.dataset.quillInput;
+
+    if (!editorId || !inputId) return;
+
+    const editor = document.querySelector(`#${editorId} .ql-editor`);
+    const input  = document.getElementById(inputId);
+
+    if (editor && input) {
+        input.value = editor.innerHTML;
     }
-</script>
 
+    const text = input.value
+        .replace(/<(.|\n)*?>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .trim();
+
+    if (!text) {
+        e.preventDefault();
+        alert('Please enter remarks.');
+    }
+});
+</script>
 </body>
 </html>

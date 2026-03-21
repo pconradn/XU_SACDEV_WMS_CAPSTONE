@@ -190,9 +190,20 @@ class PresidentRegistrationController extends Controller
             $registration->fill($request->except(['leaderships', 'trainings', 'awards', 'photo_id']));
 
             $registration->encoded_by_user_id = $registration->encoded_by_user_id ?: $userId;
+            $oldStatus = $registration->status;
             $registration->status = 'draft';
             $registration->version = ((int) $registration->version) + 1;
             $registration->save();
+
+            if ($oldStatus !== 'draft') {
+                $registration->timelines()->create([
+                    'user_id' => $userId,
+                    'action' => 'saved_as_draft',
+                    'remarks' => null,
+                    'old_status' => $oldStatus,
+                    'new_status' => 'draft',
+                ]);
+            }
 
             $registration->leaderships()->delete();
             foreach (($request->input('leaderships') ?? []) as $i => $row) {
@@ -254,6 +265,7 @@ class PresidentRegistrationController extends Controller
         $this->saveDraft($request);
 
         $registration->refresh();
+        $oldStatus = $registration->getOriginal('status');
 
         $registration->status = 'submitted_to_sacdev';
         $registration->submitted_at = now();
@@ -263,6 +275,15 @@ class PresidentRegistrationController extends Controller
         $registration->sacdev_reviewed_at = null;
 
         $registration->save();
+
+        $registration->timelines()->create([
+            'user_id' => $userId,
+            'action' => 'submitted_to_sacdev',
+            'remarks' => null,
+            'old_status' => $oldStatus,
+            'new_status' => 'submitted_to_sacdev',
+        ]);
+        
 
         return back()->with('success', 'Submitted to SACDEV successfully.');
     }
@@ -282,10 +303,19 @@ class PresidentRegistrationController extends Controller
         if ($registration->status !== 'submitted_to_sacdev') {
             return back()->with('error', 'This form cannot be pulled back because it is not currently submitted.');
         }
-
+        $oldStatus = $registration->getOriginal('status');
         $registration->status = 'draft';
         $registration->submitted_at = null;
         $registration->save();
+
+        $registration->timelines()->create([
+            'user_id' => $userId,
+            'action' => 'submitted_to_sacdev',
+            'remarks' => null,
+            'old_status' => $oldStatus,
+            'new_status' => 'submitted_to_sacdev',
+        ]);
+
 
         return back()->with('success', 'Submission pulled back. You can now edit and resubmit.');
     }

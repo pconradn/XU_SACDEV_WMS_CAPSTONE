@@ -1,8 +1,6 @@
+<div x-data="{ openReturn: false, openApprove: false, openRevert: false, loading: false }">
 
-<div x-data="{ openReturn: false, openApprove: false, loading: false }">
-
-
-    @if($registration->status === 'submitted_to_sacdev')
+    @if($submission->status === 'submitted_to_sacdev')
 
         <div class="fixed bottom-0 left-0 right-0 z-40 
                     border-t border-slate-200 
@@ -15,17 +13,16 @@
                 {{-- LEFT --}}
                 <div class="flex flex-col">
                     <span class="text-sm font-semibold text-slate-800">
-                        Review this president registration
+                        Done reviewing this submission?
                     </span>
                     <span class="text-xs text-slate-500">
-                        Return it for corrections or approve if complete.
+                        Choose an action below to proceed.
                     </span>
                 </div>
 
-                {{-- RIGHT --}}
                 <div class="flex items-center gap-2">
 
-                    {{-- RETURN --}}
+          
                     <button type="button"
                             @click="openReturn = true"
                             :disabled="loading"
@@ -35,7 +32,7 @@
                         Return for Revision
                     </button>
 
-                    {{-- APPROVE --}}
+
                     <button type="button"
                             @click="openApprove = true"
                             :disabled="loading"
@@ -54,7 +51,6 @@
 
     @else
 
-        {{-- NO ACTION STATE --}}
         <div class="fixed bottom-0 left-0 right-0 z-40 
                     border-t border-slate-200 
                     bg-slate-50
@@ -67,7 +63,7 @@
                 </div>
 
                 <div class="text-xs text-slate-500 mt-1">
-                    This submission is not in a reviewable state.
+                    This submission is not in a state that allows review actions.
                 </div>
 
             </div>
@@ -77,24 +73,17 @@
     @endif
 
 
-
     <form id="approveForm"
           method="POST"
-          action="{{ route('admin.b2.president.approve', $registration) }}">
+          action="{{ route('admin.officer_submissions.approve', $submission->id) }}">
         @csrf
     </form>
 
 
-
-
-    {{-- RETURN MODAL --}}
-    @include('admin.forms.b2_president.partials._return_modal', [
-        'registration' => $registration
+    @include('admin.forms.b3_officers.partials._return_modal', [
+        'submission' => $submission
     ])
 
-    {{-- APPROVE MODAL --}}
-    @include('admin.forms.b2_president.partials._approve_modal', [
-        'registration' => $registration
-    ])
+    @include('admin.forms.b3_officers.partials._approval-preview-modal')
 
 </div>

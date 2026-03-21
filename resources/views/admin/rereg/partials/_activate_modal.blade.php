@@ -1,44 +1,40 @@
-<div id="activateModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+<div 
+    x-data="{ open: false }"
+    x-on:open-activate-modal.window="open = true"
+    x-show="open"
+    x-cloak
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+>
 
-<div class="bg-white rounded-2xl p-6 shadow-xl w-full max-w-lg">
+    <div @click.away="open = false"
+         class="bg-white rounded-2xl p-6 shadow-xl w-full max-w-lg">
 
-<div class="text-lg font-semibold mb-2">
+        <div class="text-lg font-semibold mb-2">
+            Confirm Registration
+        </div>
 
-Confirm Registration
+        <div class="text-sm text-slate-600 mb-4">
+            Register {{ $organization->name }} for selected school year?
+        </div>
 
-</div>
+        <div class="flex justify-end gap-2">
 
-<div class="text-sm text-slate-600 mb-4">
+            <button type="button"
+                @click="open = false"
+                class="border px-4 py-2 rounded-lg">
+                Cancel
+            </button>
 
-Register {{ $organization->name }} for selected school year?
+            <form method="POST" action="{{ route('admin.rereg.activate', $organization) }}">
+                @csrf
+                <button type="submit"
+                    class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold">
+                    Confirm
+                </button>
+            </form>
 
-</div>
+        </div>
 
-
-<div class="flex justify-end gap-2">
-
-<button onclick="document.getElementById('activateModal').classList.add('hidden')"
-class="border px-4 py-2 rounded-lg">
-
-Cancel
-
-</button>
-
-
-<form method="POST" action="{{ route('admin.rereg.activate', $organization) }}">
-
-@csrf
-
-<button class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold">
-
-Confirm
-
-</button>
-
-</form>
-
-</div>
-
-</div>
+    </div>
 
 </div>

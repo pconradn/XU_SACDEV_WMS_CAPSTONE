@@ -81,7 +81,6 @@
                 @endif
 
 
-                {{-- QUICK ACTION --}}
                 @if($encodeSyId && $allApproved && !$alreadyActivated)
                     <button
                         onclick="window.dispatchEvent(new Event('open-activate-modal'))"

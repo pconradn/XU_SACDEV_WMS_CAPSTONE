@@ -19,7 +19,6 @@
 
         @if(!$encodeSyId)
 
-            {{-- EMPTY STATE --}}
             <div class="text-center py-10">
                 <div class="text-sm text-slate-500">
                     Please select a target school year to view submissions.
@@ -40,8 +39,6 @@
                         </p>
                     </div>
 
-                    {{-- OPTIONAL: progress indicator (future-ready) --}}
-                    {{-- <span class="text-xs text-slate-400">3 / 5 Approved</span> --}}
                 </div>
 
                 <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/40">
@@ -63,5 +60,6 @@
     'admin.rereg.partials._activate_modal',
     ['organization' => $organization]
 )
+</div>
 
 </x-app-layout>

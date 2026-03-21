@@ -15,8 +15,7 @@ class SacdevB2PresidentRegistrationController extends Controller
 {
     public function index(Request $request)
     {
-        // Optional filter by target SY (like org side). If you already store active_sy_id in session,
-        // use that as default. Otherwise allow showing all.
+       
         $targetSyId = (int) ($request->input('target_school_year_id') ?? session('encode_sy_id') ?? 0);
 
         $q = PresidentRegistration::query()
@@ -28,8 +27,7 @@ class SacdevB2PresidentRegistrationController extends Controller
             $q->where('target_school_year_id', $targetSyId);
         }
 
-        // Common list default: show anything SACDEV needs to see
-        // submitted / returned / approved
+      
         $status = $request->input('status');
         if ($status) {
             $q->where('status', $status);
@@ -39,7 +37,7 @@ class SacdevB2PresidentRegistrationController extends Controller
 
         $registrations = $q->paginate(15)->withQueryString();
 
-        // If you have SchoolYear model, pass it here. Otherwise remove.
+        
         $schoolYears = \App\Models\SchoolYear::query()->orderByDesc('id')->get();
 
         return view('admin.forms.b2_president.index', compact('registrations', 'schoolYears', 'targetSyId', 'status'));
@@ -62,7 +60,7 @@ class SacdevB2PresidentRegistrationController extends Controller
     {
         $registration->load(['organization', 'leaderships', 'trainings', 'awards', 'targetSchoolYear']);
 
-        // SACDEV view is always read-only for the form fields.
+      
         $isLocked = true;
 
         return view('admin.forms.b2_president.show', compact('registration', 'isLocked'));
@@ -89,13 +87,21 @@ class SacdevB2PresidentRegistrationController extends Controller
             if ($locked->status !== 'submitted_to_sacdev') {
                 abort(403, 'Only submitted forms can be returned.');
             }
-
+            $oldStatus = $locked->getOriginal('status');
             $locked->status = 'returned_by_sacdev';
             $locked->returned_at = now();
             $locked->sacdev_reviewed_by_user_id = Auth::id();
             $locked->sacdev_remarks = $data['sacdev_remarks'];
             $locked->sacdev_reviewed_at = now();
             $locked->save();
+
+            $locked->timelines()->create([
+                'user_id' => Auth::id(),
+                'action' => 'returned_by_sacdev',
+                'remarks' => $data['sacdev_remarks'],
+                'old_status' => $oldStatus,
+                'new_status' => 'returned_by_sacdev',
+            ]);
 
             $regId = (int) $locked->getKey();
 
@@ -145,6 +151,7 @@ class SacdevB2PresidentRegistrationController extends Controller
             if ($locked->status !== 'submitted_to_sacdev') {
                 abort(403, 'Only submitted forms can be approved.');
             }
+            $oldStatus = $locked->getOriginal('status');
 
             $locked->status = 'approved_by_sacdev';
             $locked->approved_at = now();
@@ -152,6 +159,14 @@ class SacdevB2PresidentRegistrationController extends Controller
             $locked->sacdev_remarks = $data['sacdev_remarks'] ?? null;
             $locked->sacdev_reviewed_at = now();
             $locked->save();
+
+            $locked->timelines()->create([
+                'user_id' => Auth::id(),
+                'action' => 'approved_by_sacdev',
+                'remarks' => $data['sacdev_remarks'] ?? null,
+                'old_status' => $oldStatus,
+                'new_status' => 'approved_by_sacdev',
+            ]);
 
             $regId = (int) $locked->getKey();
 

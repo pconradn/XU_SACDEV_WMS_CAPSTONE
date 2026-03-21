@@ -2,7 +2,7 @@
 
     <div class="px-5 py-4 border-b border-slate-200">
         <div class="text-sm font-semibold text-slate-800">
-            Officers List (Previous School Year QPI)
+            Officers List 
         </div>
 
         <div class="text-xs text-slate-500 mt-1">
@@ -158,46 +158,6 @@
 
                 @endforeach
 
-
-
-                {{-- SAMPLE FLAGGED ENTRY — REMOVE LATER --}}
-                <tr class="bg-red-50 border-t-2 border-red-300">
-
-                    <td class="px-4 py-3 font-semibold text-red-800">
-                        SAMPLE FLAGGED ENTRY
-                    </td>
-
-                    <td class="px-4 py-3 text-red-700">
-                        20180099999
-                    </td>
-
-                    <td class="px-4 py-3 text-red-700">
-                        Treasurer
-                    </td>
-
-                    <td class="px-4 py-3 text-red-700">
-                        3.12
-                    </td>
-
-                    <td class="px-4 py-3 text-red-700">
-                        3.45
-                    </td>
-
-                    <td class="px-4 py-3 text-red-700">
-                        3.80
-                    </td>
-
-                    <td class="px-4 py-3 text-center">
-
-                        <button onclick="openModal('sampleModal')"
-                                class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-600 text-white font-bold hover:bg-red-700">
-                            !
-                        </button>
-
-                    </td>
-
-                </tr>
-
             </tbody>
 
         </table>
@@ -206,51 +166,6 @@
 
 </div>
 
-
-
-{{-- SAMPLE MODAL — REMOVE LATER --}}
-<div id="sampleModal"
-     class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
-
-    <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
-
-        <div class="flex justify-between items-center mb-3">
-
-            <div class="font-semibold text-lg text-red-700">
-                Sample Conflict Indicator
-            </div>
-
-            <button onclick="closeModal('sampleModal')"
-                    class="text-slate-400 hover:text-slate-600 text-xl">
-                ×
-            </button>
-
-        </div>
-
-
-        <div class="text-sm text-slate-700">
-
-            This officer is already Treasurer in:
-
-            <div class="mt-2 border rounded-lg p-3 bg-red-50">
-                Computer Studies Society
-            </div>
-
-        </div>
-
-
-        <div class="mt-5 text-right">
-
-            <button onclick="closeModal('sampleModal')"
-                    class="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900">
-                Close
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
 
 
 

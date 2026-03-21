@@ -1,6 +1,5 @@
 <div id="officerModal"
-     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-sm">
-
+class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm hidden">
     <div class="bg-white rounded-xl shadow-lg w-full max-w-lg mx-4">
 
         {{-- Header --}}
@@ -121,11 +120,6 @@
         {{-- Footer --}}
         <div class="flex justify-end gap-2 px-5 py-4 border-t border-slate-200">
 
-            <button type="button"
-                id="cancelOfficerBtn"
-                class="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200">
-                Cancel
-            </button>
 
             <button type="button"
                 id="saveOfficerBtn"

@@ -1,3 +1,14 @@
+<div></div>
+@php
+use App\Models\SchoolYear;
+use App\Models\OrgMembership;
+use App\Models\OrganizationSchoolYear;
+
+$user = auth()->user();
+
+$orgGroups = []; 
+@endphp
+
 @php
 
 $activeOrgId = (int) session('active_org_id');
@@ -26,12 +37,6 @@ if ($activeOrgId) {
 
         $isPresident = ((int)$osyPresident === (int)$user->id);
     }
-
-    /*
-    |--------------------------------
-    | PRESIDENT MODULES
-    |--------------------------------
-    */
 
     if ($isPresident) {
 
@@ -83,7 +88,7 @@ if ($activeOrgId) {
         }
 
         if (!empty($rereg)) {
-            $groups[] = [
+            $orgGroups[] = [
                 'key' => 'org_rereg',
                 'title' => 'Re-Registration',
                 'links' => $rereg,
@@ -92,7 +97,7 @@ if ($activeOrgId) {
         }
 
         if (!empty($ops)) {
-            $groups[] = [
+            $orgGroups[] = [
                 'key' => 'org_ops',
                 'title' => 'Operational Modules',
                 'links' => $ops,
@@ -101,12 +106,6 @@ if ($activeOrgId) {
         }
 
     }
-
-    /*
-    |--------------------------------
-    | PROJECT HEAD ACCESS
-    |--------------------------------
-    */
 
     $isProjectHead = \App\Models\ProjectAssignment::query()
         ->where('user_id', $user->id)
@@ -130,7 +129,7 @@ if ($activeOrgId) {
         }
 
         if (!empty($ph)) {
-            $groups[] = [
+            $orgGroups[] = [
                 'key' => 'org_project_head',
                 'title' => 'Project Head',
                 'links' => $ph,
@@ -140,11 +139,7 @@ if ($activeOrgId) {
 
     }
 
-    /*
-    |--------------------------------
-    | TREASURER ACCESS
-    |--------------------------------
-    */
+
 
     if ($isTreasurer || $isAuditor) {
 
@@ -159,7 +154,7 @@ if ($activeOrgId) {
         }
 
         if (!empty($treasurer)) {
-            $groups[] = [
+            $orgGroups[] = [
                 'key' => 'org_treasurer',
                 'title' => 'Treasurer',
                 'links' => $treasurer,
@@ -168,12 +163,6 @@ if ($activeOrgId) {
         }
 
     }
-
-    /*
-    |--------------------------------
-    | MODERATOR ACCESS
-    |--------------------------------
-    */
 
     if ($isModerator) {
 
@@ -188,7 +177,7 @@ if ($activeOrgId) {
         }
 
         if (!empty($modProjects)) {
-            $groups[] = [
+            $orgGroups[] = [
                 'key' => 'org_mod_projects',
                 'title' => 'Moderator Projects',
                 'links' => $modProjects,
@@ -215,7 +204,7 @@ if ($activeOrgId) {
         }
 
         if (!empty($mod)) {
-            $groups[] = [
+            $orgGroups[] = [
                 'key' => 'org_mod',
                 'title' => 'Moderator',
                 'links' => $mod,
@@ -226,5 +215,28 @@ if ($activeOrgId) {
     }
 
 }
-
+$orgGroups[] = [
+    'title' => 'TEST GROUP',
+    'links' => [
+        [
+            'label' => 'Test Link',
+            'href' => '#',
+            'class' => 'bg-red-100 text-red-700',
+        ]
+    ],
+    'icon' => 'clipboard'
+];
 @endphp
+
+@php
+return $orgGroups;
+@endphp
+
+<div class="text-red-500 text-xs space-y-1">
+    activeOrgId: {{ $activeOrgId ?? 'null' }} <br>
+    syId: {{ $syId ?? 'null' }} <br>
+    role: {{ $orgRole ?? 'null' }} <br>
+    isPresident: {{ $isPresident ? 'true' : 'false' }} <br>
+    isModerator: {{ $isModerator ? 'true' : 'false' }} <br>
+    isTreasurer: {{ $isTreasurer ? 'true' : 'false' }}
+</div>
