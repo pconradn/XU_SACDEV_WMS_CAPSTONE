@@ -238,4 +238,43 @@ class ProjectDocument extends Model
         );
     }
 
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            'draft' => 'Draft',
+            'submitted' => 'Submitted',
+            'returned' => 'Returned',
+            'approved_by_moderator' => 'Approved by Moderator',
+            'approved_by_sacdev' => 'Approved',
+            default => str_replace('_', ' ', ucfirst($this->status ?? 'unknown')),
+        };
+    }
+
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return match ($this->status) {
+            'draft' => 'bg-slate-100 text-slate-700 ring-slate-200',
+            'submitted' => 'bg-blue-100 text-blue-700 ring-blue-200',
+            'returned' => 'bg-orange-100 text-orange-700 ring-orange-200',
+            'approved_by_moderator' => 'bg-indigo-100 text-indigo-700 ring-indigo-200',
+            'approved_by_sacdev' => 'bg-emerald-100 text-emerald-700 ring-emerald-200',
+            default => 'bg-slate-100 text-slate-700 ring-slate-200',
+        };
+    }
+
+
+    public function isEditable(): bool
+    {
+        return in_array($this->status, ['draft', 'returned', 'submitted']);
+    }
+
+    public function currentPendingSignature()
+    {
+        return $this->signatures()
+            ->where('status', 'pending')
+            ->orderBy('id')
+            ->first();
+    }
+
+
 }

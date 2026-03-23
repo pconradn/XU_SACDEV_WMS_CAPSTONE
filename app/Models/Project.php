@@ -37,8 +37,96 @@ class Project extends Model
         'clearance_uploaded_at' => 'datetime',
         'clearance_verified_at' => 'datetime',
 
+        'implementation_start_date' => 'date',
+        'implementation_end_date' => 'date',
+
 
     ];
+
+
+    public function getImplementationDateDisplayAttribute(): ?string
+    {
+        if (!$this->implementation_start_date) {
+            return null;
+        }
+
+        if (
+            $this->implementation_end_date &&
+            !$this->implementation_start_date->isSameDay($this->implementation_end_date)
+        ) {
+            return $this->implementation_start_date->format('M d') . ' - ' .
+                $this->implementation_end_date->format('M d, Y');
+        }
+
+        return $this->implementation_start_date->format('M d, Y');
+    }
+
+    public function getImplementationTimeDisplayAttribute(): ?string
+    {
+        if (!$this->implementation_start_time || !$this->implementation_end_time) {
+            return null;
+        }
+
+        return date('g:i A', strtotime($this->implementation_start_time))
+            . ' - ' .
+            date('g:i A', strtotime($this->implementation_end_time));
+    }
+
+    public function getImplementationVenueDisplayAttribute(): ?string
+    {
+        if (!$this->implementation_venue) {
+            return null;
+        }
+
+        $types = collect(explode(',', (string) $this->implementation_venue_type))
+            ->map(fn ($t) => match (trim($t)) {
+                'on_campus' => 'On-campus',
+                'off_campus' => 'Off-campus',
+                default => null,
+            })
+            ->filter()
+            ->values();
+
+        $typeLabel = $types->isNotEmpty() ? $types->implode(', ') : null;
+
+        return $typeLabel
+            ? "{$typeLabel} • {$this->implementation_venue}"
+            : $this->implementation_venue;
+    }
+
+    public function getWorkflowStatusLabelAttribute(): string
+    {
+        return match ($this->workflow_status) {
+            'planning' => 'Planning',
+            'drafting' => 'Drafting',
+            'submitted' => 'Submitted',
+            'under_review' => 'Under Review',
+            'returned' => 'Returned for Revision',
+            'approved' => 'Approved for Implementation',
+            'postponed' => 'Postponed',
+            'cancelled' => 'Cancelled',
+            'post_implementation' => 'Post-Implementation',
+            'completed' => 'Completed',
+            default => 'Unknown',
+        };
+    }
+
+    public function getWorkflowStatusBadgeClassAttribute(): string
+    {
+        return match ($this->workflow_status) {
+            'planning' => 'bg-slate-100 text-slate-700 ring-slate-200',
+            'drafting' => 'bg-amber-100 text-amber-700 ring-amber-200',
+            'submitted', 'under_review' => 'bg-blue-100 text-blue-700 ring-blue-200',
+            'returned' => 'bg-orange-100 text-orange-700 ring-orange-200',
+            'approved' => 'bg-emerald-100 text-emerald-700 ring-emerald-200',
+            'postponed' => 'bg-yellow-100 text-yellow-700 ring-yellow-200',
+            'cancelled' => 'bg-rose-100 text-rose-700 ring-rose-200',
+            'post_implementation' => 'bg-indigo-100 text-indigo-700 ring-indigo-200',
+            'completed' => 'bg-purple-100 text-purple-700 ring-purple-200',
+            default => 'bg-slate-100 text-slate-700 ring-slate-200',
+        };
+    }
+
 
 
     public function organization(): BelongsTo

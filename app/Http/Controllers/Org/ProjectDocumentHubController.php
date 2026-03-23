@@ -261,5 +261,203 @@ class ProjectDocumentHubController extends Controller
         ]);
     }
 
+    public function showV2(Project $project)
+    {
+        $user = auth()->user();
+
+        $documents = ProjectDocument::with('signatures')
+            ->where('project_id', $project->id)
+            ->whereNull('archived_at')
+            ->get()
+            ->keyBy('form_type_id');
+
+        $formTypes = FormType::all()->keyBy('id');
+
+        $proposal = $formTypes->firstWhere('code', 'PROJECT_PROPOSAL');
+        $budget   = $formTypes->firstWhere('code', 'BUDGET_PROPOSAL');
+
+        $proposalDoc = $proposal ? ($documents[$proposal->id] ?? null) : null;
+        $budgetDoc   = $budget ? ($documents[$budget->id] ?? null) : null;
+
+        $hasProposal = (bool) $proposalDoc;
+        $proposalStatus = $proposalDoc?->status;
+
+        $isApproved = $project->workflow_status === 'approved';
+        $isCancelled = $project->workflow_status === 'cancelled';
+
+        $header = [
+            'title' => $project->title,
+            'status_label' => $project->workflow_status_label,
+            'status_class' => $project->workflow_status_badge_class,
+        ];
+
+        $snapshot = [
+            'date' => $project->implementation_date_display,
+            'time' => $project->implementation_time_display,
+            'venue' => $project->implementation_venue_display,
+        ];
+
+        $actions = [];
+
+        if (!$hasProposal) {
+            $actions[] = [
+                'label' => 'Create Project Proposal',
+                'type' => 'primary',
+                'action' => 'create_proposal',
+            ];
+        }
+
+        elseif ($proposalDoc && $proposalDoc->isEditable()) {
+            $actions[] = [
+                'label' => 'Edit Project Proposal',
+                'type' => 'primary',
+                'action' => 'edit_proposal',
+            ];
+
+            $actions[] = [
+                'label' => 'Submit Project Proposal',
+                'type' => 'secondary',
+                'action' => 'submit_proposal',
+            ];
+        }
+
+        elseif ($proposalStatus === 'submitted') {
+
+            $pending = $proposalDoc->currentPendingSignature();
+
+            if ($pending && $pending->user_id === $user->id) {
+
+                $actions[] = [
+                    'label' => 'Review Project Proposal',
+                    'type' => 'primary',
+                    'action' => 'review_proposal',
+                ];
+
+            } else {
+
+                $actions[] = [
+                    'label' => 'Waiting for ' . ucfirst(str_replace('_',' ', $pending->role ?? 'review')),
+                    'type' => 'info',
+                    'action' => null,
+                ];
+
+            }
+        }
+
+        elseif ($proposalStatus === 'approved_by_sacdev') {
+
+            if (!$isCancelled) {
+
+                $actions[] = [
+                    'label' => 'Create Packet Submission',
+                    'type' => 'primary',
+                    'action' => 'create_packet',
+                ];
+
+                $actions[] = [
+                    'label' => 'Create Notice of Postponement',
+                    'type' => 'warning',
+                    'action' => 'create_postponement',
+                ];
+
+                $actions[] = [
+                    'label' => 'Create Notice of Cancellation',
+                    'type' => 'danger',
+                    'action' => 'create_cancellation',
+                ];
+            }
+        }
+
+        $formRoutes = [
+            'PROJECT_PROPOSAL' => 'org.projects.project-proposal.create',
+            'BUDGET_PROPOSAL'  => 'org.projects.budget-proposal.create',
+            'OFF_CAMPUS_APPLICATION' => 'org.projects.off-campus.guidelines',
+            'SOLICITATION_APPLICATION' => 'org.projects.solicitation.create',
+            'SELLING_APPLICATION' => 'org.projects.selling.create',
+            'REQUEST_TO_PURCHASE' => 'org.projects.request-to-purchase.create',
+
+            'FEES_COLLECTION_REPORT' => 'org.projects.fees-collection.create',
+            'SELLING_ACTIVITY_REPORT' => 'org.projects.selling-activity-report.create',
+            'SOLICITATION_SPONSORSHIP_REPORT' => 'org.projects.solicitation-sponsorship-report.create',
+            'TICKET_SELLING_REPORT' => 'org.projects.ticket-selling-report.create',
+
+            'DOCUMENTATION_REPORT' => 'org.projects.documentation-report.create',
+            'LIQUIDATION_REPORT' => 'org.projects.liquidation-report.create',
+        ];
+
+
+        $buildForm = function ($formType) use ($documents, $user, $project, $formRoutes) {
+
+            $doc = $documents[$formType->id] ?? null;
+
+            $routeName = $formRoutes[$formType->code] ?? null;
+
+            $createUrl = (!$doc && $routeName)
+                ? route($routeName, $project)
+                : null;
+
+            $editUrl = ($doc && $doc->isEditable() && $routeName)
+                ? route($routeName, $project)
+                : null;
+
+            $viewUrl = ($doc && $routeName)
+                ? route($routeName, $project)
+                : null;
+
+            $pending = $doc?->currentPendingSignature();
+            $nextRole = $doc?->nextPendingRole();
+
+            $canReview = $pending && $pending->user_id === $user->id;
+
+            return [
+                'name' => $formType->name,
+                'code' => $formType->code,
+
+                'document' => $doc,
+
+                'status_label' => $doc?->status_label ?? 'Not started',
+                'status_class' => $doc?->status_badge_class ?? 'bg-slate-100 text-slate-600',
+
+                'waiting_for' => $nextRole,
+
+                'can_create' => !$doc && $routeName,
+                'can_edit' => $doc?->isEditable() ?? false,
+                'can_review' => $canReview,
+
+                'create_url' => $createUrl,
+                'edit_url' => $editUrl,
+                'view_url' => $viewUrl,
+            ];
+        };
+
+
+        $preForms = FormType::where('phase', 'pre_implementation')->get()
+            ->map($buildForm);
+
+        $noticeForms = FormType::where('phase', 'notice')->get()
+            ->map($buildForm);
+
+        $postForms = FormType::where('phase', 'post_implementation')->get()
+            ->map($buildForm);
+
+        $otherForms = FormType::where('phase', 'other')->get()
+            ->map($buildForm);
+
+        $sections = [
+            'pre' => $preForms,
+            'notices' => $noticeForms,
+            'other' => $otherForms,
+            'post' => $postForms,
+        ];
+
+        return view('org.projects.documents.hub', compact(
+            'project',
+            'header',
+            'snapshot',
+            'actions',
+            'sections'
+        ));
+    }
+
 
 }

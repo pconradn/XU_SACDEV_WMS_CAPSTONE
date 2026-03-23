@@ -1,121 +1,73 @@
 <x-app-layout>
 
-<div class="mx-auto max-w-6xl px-4 py-6">
-
-@include('org.projects.documents.partials.header', [
-    'project' => $project,
-    'proposalData' => $proposalData ?? null
-])
+<div class="max-w-7xl mx-auto px-6 py-6 space-y-6">
 
 
-{{-- PROJECT MILESTONE --}}
-@include('org.projects.documents.partials.milestone-slider', [
-    'stage' => $projectStage
-])
+    @include('org.projects.documents.v2.partials.header', [
+        'header' => $header
+    ])
 
 
-{{-- PRE IMPLEMENTATION --}}
-@include('org.projects.documents.partials.section', [
-    'title' => 'Pre-Implementation Documents',
-    'forms' => $preForms,
-    'phase' => 'pre'
-])
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
+        @include('org.projects.documents.v2.partials.snapshot', [
+            'snapshot' => $snapshot
+        ])
 
-{{-- DV --}}
-@if($budgetDocument)
+        @include('org.projects.documents.v2.partials.actions', [
+            'actions' => $actions
+        ])
 
-@include('org.projects.documents.partials.dv-card', [
-    'project' => $project
-])
-
-@endif
-
-{{-- OFF CAMPUS --}}
-@if($showOffCampus)
-
-@include('org.projects.documents.partials.section', [
-    'title' => 'Off-Campus Documents',
-    'forms' => $offCampusForms ?? [],
-    'phase' => 'offcampus'
-])
-
-
-{{-- CLEARANCE --}}
-@if($showOffCampus)
-
-@include('org.projects.documents.partials._clearance-card')
-
-@endif
-
-@endif
-
-
-{{-- OTHER FORMS --}}
-@if($showOtherForms)
-
-@include('org.projects.documents.partials.section', [
-    'title' => 'Other Forms',
-    'forms' => $otherForms ?? [],
-    'phase' => 'other'
-])
-
-@endif
-
-
-{{-- NOTICES --}}
-@include('org.projects.documents.partials.notice-section', [
-    'project' => $project,
-    'postponements' => $postponements,
-    'cancellations' => $cancellations
-])
+    </div>
 
 
 
+    @php
+        $pre = $sections['pre'] ?? collect();
+        $notices = $sections['notices'] ?? collect();
+        $other = $sections['other'] ?? collect();
+        $post = $sections['post'] ?? collect();
+
+        $proposal = $pre->firstWhere('code', 'PROJECT_PROPOSAL');
+        $budget = $pre->firstWhere('code', 'BUDGET_PROPOSAL');
+
+        $preSubmitted =
+            $proposal && $proposal['document'] && $proposal['document']->status !== 'draft'
+            &&
+            $budget && $budget['document'] && $budget['document']->status !== 'draft';
+    @endphp
 
 
+    @include('org.projects.documents.v2.partials.section', [
+        'title' => 'Pre-Implementation Documents',
+        'forms' => $pre
+    ])
 
 
+    @if($preSubmitted)
 
-{{-- POST IMPLEMENTATION --}}
-@include('org.projects.documents.partials.section', [
-    'title' => 'Post-Implementation Documents',
-    'forms' => $postForms,
-    'phase' => 'post'
-])
+        @include('org.projects.documents.v2.partials.section', [
+            'title' => 'Notices / Adjustments',
+            'forms' => $notices
+        ])
 
+        @include('org.projects.documents.v2.partials.section', [
+            'title' => 'Supporting Documents',
+            'forms' => $other
+        ])
 
-{{-- PHYSICAL SUBMISSIONS --}}
-<div class="mt-8 border border-slate-200 rounded-xl bg-white shadow-sm">
+        @include('org.projects.documents.v2.partials.section', [
+            'title' => 'Post-Implementation Documents',
+            'forms' => $post
+        ])
 
-    <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+    @else
 
-        <div>
-            <div class="text-sm font-semibold text-slate-900">
-                Physical Submissions
-            </div>
-
-            <div class="text-xs text-slate-500">
-                Manage physical document packets submitted to SACDEV.
-            </div>
+        <div class="bg-white border rounded-2xl p-6 text-center text-sm text-slate-500">
+            Other documents will be available once the Project Proposal and Budget Proposal are submitted.
         </div>
 
-        <a href="{{ route('org.projects.packets.index', $project) }}"
-           class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-md bg-indigo-600 text-white hover:bg-indigo-700">
-            Open Packets
-        </a>
-
-    </div>
-
-    <div class="px-5 py-4 text-xs text-slate-600">
-
-        Physical packets are used for submitting printed documents such as
-        liquidation reports, official receipts, disbursement vouchers, and
-        supporting documents required by the Finance Office.
-
-    </div>
-
-</div>
+    @endif
 
 
 </div>
