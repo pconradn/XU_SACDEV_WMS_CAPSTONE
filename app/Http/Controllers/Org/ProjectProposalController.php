@@ -38,6 +38,8 @@ class ProjectProposalController extends BaseProjectDocumentController
 
         $user = auth()->user();
 
+        //dd($proposal->end_time);
+
         $orgId = session('active_org_id');
         $syId  = session('encode_sy_id');
 
@@ -244,6 +246,16 @@ class ProjectProposalController extends BaseProjectDocumentController
                     'date_format:H:i:s',
                 ]),
             ],
+
+
+            'end_time' => [
+                'nullable',
+                Rule::anyOf([
+                    'date_format:H:i',
+                    'date_format:H:i:s',
+                ]),
+            ],
+
             'on_campus_venue' => ['nullable', 'string', 'max:255'],
             'off_campus_venue' => ['nullable', 'string', 'max:255'],
 
@@ -318,12 +330,15 @@ class ProjectProposalController extends BaseProjectDocumentController
 
     private function saveMainProposal(int $documentId, array $data)
     {
-        return ProjectProposalData::updateOrCreate(
+        //dd($data['end_time']);
+        $proposal = ProjectProposalData::updateOrCreate(
             ['project_document_id' => $documentId],
             [
                 'start_date' => $data['start_date'],
+                'venue_name' => "",
                 'end_date' => $data['end_date'],
                 'start_time' => $data['start_time'] ?? null,
+                'end_time' => $data['end_time'] ?? null,
                 'on_campus_venue' => $data['on_campus_venue'] ?? null,
                 'off_campus_venue' => $data['off_campus_venue'] ?? null,
                 'engagement_type' => $data['engagement_type'],
@@ -348,6 +363,55 @@ class ProjectProposalController extends BaseProjectDocumentController
                 'has_guest_speakers' => (bool) ($data['has_guest_speakers'] ?? false),
             ]
         );
+
+        $project = Project::findOrFail($proposal->projectDocument->project_id);
+
+        $this->syncProjectDetailsFromProposal($project, $data);
+
+        return $proposal;
+    }
+
+    private function syncProjectDetailsFromProposal(Project $project, array $data): void
+    {
+
+
+        $onCampus = trim($data['on_campus_venue'] ?? '');
+        $offCampus = trim($data['off_campus_venue'] ?? '');
+
+        $venueParts = [];                  
+        if (!empty($onCampus)) {
+            $venueParts[] = $onCampus;
+        }
+
+        if (!empty($offCampus)) {
+            $venueParts[] = $offCampus;
+        }
+
+        $venueString = !empty($venueParts)
+            ? implode(', ', $venueParts)
+            : null;
+
+                    
+        $venueType = !empty($offCampus)
+            ? 'off_campus' 
+            : (!empty($onCampus) ? 'on_campus' : null);
+
+        //dd($venueType);
+ 
+        $project->update([
+
+            'implementation_start_date' => $data['start_date'] ?? null,
+            'implementation_end_date'   => $data['end_date'] ?? null,
+
+            'implementation_start_time' => $data['start_time'] ?? null,
+            'implementation_end_time'   => $data['end_time'] ?? null,
+
+            'implementation_venue' => $venueString,
+            'implementation_venue_type' => $venueType,
+
+
+            'description' => $data['description'] ?? $project->description,
+        ]);
     }
 
     private function saveFundSources(ProjectProposalData $proposal, array $fundSources)

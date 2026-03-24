@@ -16,15 +16,27 @@ class Project extends Model
         'target_date',
         'implementing_body',
         'budget',
+
+        'description', 
+
         'source_strategic_plan_project_id',
+
         'requires_clearance',
         'clearance_reference',
         'clearance_status',
         'clearance_file_path',
+
         'clearance_required_at',
         'clearance_uploaded_at',
         'clearance_verified_at',
         'clearance_remarks',
+
+        'implementation_start_date',
+        'implementation_end_date',
+        'implementation_start_time',
+        'implementation_end_time',
+        'implementation_venue',
+        'implementation_venue_type',
     ];
 
     protected $casts = [
@@ -40,7 +52,8 @@ class Project extends Model
         'implementation_start_date' => 'date',
         'implementation_end_date' => 'date',
 
-
+        'implementation_start_time' => 'datetime:H:i',
+        'implementation_end_time' => 'datetime:H:i',
     ];
 
 

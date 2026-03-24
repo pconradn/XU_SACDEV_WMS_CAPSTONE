@@ -6,39 +6,36 @@
 
     <div class="space-y-2">
 
-        @forelse($actions as $action)
+        {{-- DV --}}
+        @if($actions['can_generate_dv'])
+            <a href="{{ $actions['dv_url'] }}"
+               class="block w-full text-left px-4 py-3 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-sm font-medium">
+                Generate Disbursement Voucher
+            </a>
+        @endif
 
-            <button
-                class="w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition
 
-                @if($action['type'] === 'primary')
-                    bg-indigo-600 text-white hover:bg-indigo-700
-
-                @elseif($action['type'] === 'warning')
-                    bg-yellow-50 text-yellow-800 hover:bg-yellow-100
-
-                @elseif($action['type'] === 'danger')
-                    bg-red-50 text-red-700 hover:bg-red-100
-
-                @elseif($action['type'] === 'info')
-                    bg-slate-100 text-slate-600 cursor-default
-
-                @else
-                    bg-slate-100 text-slate-600
-                @endif
-                ">
-
-                {{ $action['label'] }}
-
+        {{-- POSTPONEMENT --}}
+        @if($actions['can_postpone'])
+            <button class="w-full text-left px-4 py-3 bg-yellow-50 hover:bg-yellow-100 rounded-lg text-sm font-medium">
+                Create Notice of Postponement
             </button>
+        @endif
 
-        @empty
 
-            <div class="text-sm text-slate-500">
-                No available actions.
-            </div>
+        {{-- CANCELLATION --}}
+        @if($actions['can_cancel'])
+            <button class="w-full text-left px-4 py-3 bg-red-50 hover:bg-red-100 rounded-lg text-sm font-medium">
+                Create Notice of Cancellation
+            </button>
+        @endif
 
-        @endforelse
+
+        {{-- PACKETS --}}
+        <a href="{{ route('org.projects.packets.index', $project) }}"
+           class="block w-full text-left px-4 py-3 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium">
+            Open Packet Submissions
+        </a>
 
     </div>
 

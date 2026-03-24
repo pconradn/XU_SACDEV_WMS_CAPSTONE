@@ -56,6 +56,7 @@ class BudgetProposalController extends BaseProjectDocumentController
             'currentSignature' => $currentSignature,
             'isReadOnly'       => $isReadOnly,
             'isProjectHead'    => $isProjectHead,
+            'isAdmin' => false,
             ...$roles
         ]);
     }

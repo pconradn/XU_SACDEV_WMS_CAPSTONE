@@ -2,21 +2,35 @@
 
 <div class="max-w-7xl mx-auto px-6 py-6 space-y-6">
 
+    <div class="max-w-7xl mx-auto px-6 py-6">
 
-    @include('org.projects.documents.v2.partials.header', [
-        'header' => $header
-    ])
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            {{-- LEFT: MAIN CONTENT --}}
+            <div class="lg:col-span-2 space-y-6">
+
+                @include('org.projects.documents.v2.partials.header', ['header' => $header])
+
+                @include('org.projects.documents.v2.partials.snapshot')
+
+                @include('org.projects.documents.v2.partials.milestone', [
+                    'milestones' => $milestones,
+                    'currentStage' => $currentStage
+                ])
+
+            </div>
 
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {{-- RIGHT: SIDEBAR --}}
+            <div class="lg:col-span-1 space-y-6">
 
-        @include('org.projects.documents.v2.partials.snapshot', [
-            'snapshot' => $snapshot
-        ])
+                @include('org.projects.documents.v2.partials.actions')
 
-        @include('org.projects.documents.v2.partials.actions', [
-            'actions' => $actions
-        ])
+                @include('org.projects.documents.v2.partials.clearance-card')
+
+            </div>
+
+        </div>
 
     </div>
 
