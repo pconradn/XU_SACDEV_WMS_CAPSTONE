@@ -58,26 +58,23 @@
                     class="text-xs px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
                         Create
                     </a>
-                @endif
 
-                {{-- EDIT / CONTINUE --}}
-                @if($form['can_edit'] && $form['edit_url'])
+                {{-- CONTINUE (EDIT) --}}
+                @elseif($form['can_edit'] && $form['edit_url'])
                     <a href="{{ $form['edit_url'] }}"
                     class="text-xs px-3 py-2 bg-yellow-100 text-yellow-800 rounded-md hover:bg-yellow-200">
                         Continue
                     </a>
-                @endif
 
                 {{-- REVIEW --}}
-                @if($form['can_review'] && $form['view_url'])
+                @elseif($form['can_review'] && $form['view_url'])
                     <a href="{{ $form['view_url'] }}"
                     class="text-xs px-3 py-2 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200">
                         Review
                     </a>
-                @endif
 
-                {{-- VIEW --}}
-                @if($form['document'] && $form['view_url'])
+                {{-- VIEW (fallback) --}}
+                @elseif($form['document'] && $form['view_url'])
                     <a href="{{ $form['view_url'] }}"
                     class="text-xs px-3 py-2 bg-slate-200 text-slate-700 rounded-md hover:bg-slate-300">
                         View

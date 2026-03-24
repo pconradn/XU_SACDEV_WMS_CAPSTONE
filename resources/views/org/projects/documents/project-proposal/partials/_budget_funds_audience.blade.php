@@ -2,7 +2,6 @@
 
 <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-6">
 
-    {{-- ================= HEADER ================= --}}
     <div>
         <h3 class="text-sm font-semibold text-slate-900">
             Budget & Participants
@@ -12,10 +11,8 @@
         </p>
     </div>
 
-    {{-- ================= BUDGET ================= --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        {{-- TOTAL BUDGET (AUTO) --}}
         <div>
             <label class="block text-xs font-medium text-slate-700 mb-1">
                 Total Estimated Amount
@@ -31,7 +28,6 @@
                 class="w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-900">
         </div>
 
-        {{-- SOURCES --}}
         <div class="md:col-span-2">
             <label class="block text-xs font-medium text-slate-700 mb-2">
                 Sources of Funds
@@ -88,7 +84,6 @@
 
     </div>
 
-    {{-- ================= TARGET AUDIENCE ================= --}}
     <div class="border-t border-slate-200 pt-4">
 
         <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
@@ -158,7 +153,6 @@
         </div>
     </div>
 
-    {{-- ================= PARTICIPANTS ================= --}}
     <div class="border-t border-slate-200 pt-4 flex flex-wrap gap-6">
 
         <div>
@@ -186,3 +180,55 @@
     </div>
 
 </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    function calculateTotalBudget() {
+        let total = 0;
+
+        document.querySelectorAll('.fund-amount').forEach(input => {
+            const val = parseFloat(input.value);
+            if (!isNaN(val)) {
+                total += val;
+            }
+        });
+
+        const totalInput = document.getElementById('totalBudget');
+        if (totalInput) {
+            totalInput.value = total.toFixed(2);
+        }
+    }
+
+
+    document.addEventListener('input', (e) => {
+        if (e.target.classList.contains('fund-amount')) {
+            calculateTotalBudget();
+        }
+    });
+
+
+    document.querySelectorAll('.fund-source-checkbox').forEach(cb => {
+        cb.addEventListener('change', () => {
+            const targetId = cb.dataset.target;
+            const input = document.getElementById(targetId);
+
+            if (!input) return;
+
+            if (cb.checked) {
+                input.classList.remove('hidden');
+            } else {
+                input.classList.add('hidden');
+                input.value = '';
+            }
+
+            calculateTotalBudget();
+        });
+    });
+
+
+    calculateTotalBudget();
+
+});
+</script>

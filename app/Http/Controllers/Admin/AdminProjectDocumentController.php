@@ -295,7 +295,13 @@ class AdminProjectDocumentController extends Controller
         $proposal = $document->proposalData;
         $budget = $document->budgetProposal;
 
-        return view('admin.projects.documents.project-proposal.print', [
+        $view = match ($formType) {
+            'PROJECT_PROPOSAL' => 'admin.projects.documents.project-proposal.print',
+            'BUDGET_PROPOSAL'  => 'admin.projects.documents.budget-proposal.print',
+            default => abort(404),
+        };
+
+        return view($view, [
             'project' => $project,
             'document' => $document,
             'proposal' => $proposal,

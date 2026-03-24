@@ -52,6 +52,7 @@ class ProjectProposalController extends BaseProjectDocumentController
         $currentSignature = $this->getCurrentSignature($document, $user->id);
 
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
+        $isAdmin = false;
 
         return view('org.projects.documents.project-proposal.create', [
             'project'          => $project,
@@ -60,6 +61,7 @@ class ProjectProposalController extends BaseProjectDocumentController
             'currentSignature' => $currentSignature,
             'isReadOnly'       => $isReadOnly,
             'isProjectHead'    => $isProjectHead,
+            'isAdmin'          => $isAdmin,
             ...$roles
         ]);
     }
@@ -175,9 +177,7 @@ class ProjectProposalController extends BaseProjectDocumentController
             return $this->submit($project);
         }
 
-        return redirect()
-            ->route('org.projects.documents.hub', $project)
-            ->with('success', 'Project Proposal saved as draft.');
+        return back()->with('success', 'Project Proposal saved as draft.');     
     }
 
     protected function ensureOffCampusDocument(Project $project): void

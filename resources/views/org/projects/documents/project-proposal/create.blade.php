@@ -93,10 +93,7 @@
                         @endif
                     </div>
 
-                    <button onclick="this.closest('div').remove()"
-                            class="text-amber-500 hover:text-amber-700 text-sm">
-                        ✕
-                    </button>
+ 
                 </div>
             </div>
         @endif

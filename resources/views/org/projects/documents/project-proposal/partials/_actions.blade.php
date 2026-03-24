@@ -151,6 +151,35 @@
 @endif
 
 
+
+{{-- ================= ADMIN REVERT ACTION BAR ================= --}}
+@if(
+    $document &&
+    $isAdmin &&
+    $status === 'approved_by_sacdev'
+)
+
+<div class="sticky bottom-0 z-50 border-t border-amber-200 bg-amber-50 shadow-md">
+
+    <div class="px-5 py-3 flex items-center justify-end gap-2">
+
+        <form method="POST"
+            action="{{ route('admin.projects.documents.retract', [$project, $document->formType->code]) }}">
+            @csrf
+
+            <button
+                class="rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-700">
+                Revert Approval
+            </button>
+        </form>
+
+    </div>
+
+</div>
+
+@endif
+
+
 {{-- ================= RETURN MODAL ================= --}}
 <div id="returnModal"
      class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
