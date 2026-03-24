@@ -46,6 +46,8 @@ class OrganizationPresidentController extends Controller
                 ->keyBy('organization_id');
         }
 
+        //dd($assignedMap);
+
         return view('admin.president_assignments.index', [
             'schoolYears' => $schoolYears,
             'selectedSyId' => $selectedSyId,

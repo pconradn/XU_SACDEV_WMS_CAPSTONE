@@ -15,6 +15,7 @@
 
 
         <section class="space-y-3">
+            
             <div class="flex items-center justify-between">
                 <h3 class="text-sm font-semibold text-slate-800" x-text="cat.label"></h3>
 
