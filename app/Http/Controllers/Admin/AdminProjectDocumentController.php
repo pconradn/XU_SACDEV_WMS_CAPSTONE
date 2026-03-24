@@ -267,6 +267,42 @@ class AdminProjectDocumentController extends Controller
     }
 
 
+    public function showPrint(Project $project, $formType, $documentId = null)
+    {
+        $query = ProjectDocument::query()
+            ->with([
+                'signatures.user',
+                'formType',
+                'proposalData.guests',
+                'proposalData.planOfActions',
+                'budgetProposal.items',
+            ])
+            ->where('project_id', $project->id)
+            ->whereHas('formType', fn($q) => $q->where('code', $formType));
+
+        $document = $documentId
+            ? $query->where('id', $documentId)->firstOrFail()
+            : $query->firstOrFail();
+
+        if ($document->status !== 'approved_by_sacdev') {
+            abort(403, 'Document not approved for printing.');
+        }
+
+        if (auth()->user()->system_role !== 'sacdev_admin') {
+            abort(403);
+        }
+
+        $proposal = $document->proposalData;
+        $budget = $document->budgetProposal;
+
+        return view('admin.projects.documents.project-proposal.print', [
+            'project' => $project,
+            'document' => $document,
+            'proposal' => $proposal,
+            'budget' => $budget,
+        ]);
+    }
+
     public function approve(Request $request, Project $project, $formCode, $documentId = null)
     {
 

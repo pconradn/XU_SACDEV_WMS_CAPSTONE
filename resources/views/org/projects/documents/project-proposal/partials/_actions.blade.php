@@ -3,27 +3,15 @@
 @endphp
 
 
-<pre>
-Auth ID: {{ auth()->id() }}
-</pre>
-<pre>
-isProjectHead: {{ $isProjectHead ? 'true' : 'false' }}
-isReadOnly: {{ $isReadOnly ? 'true' : 'false' }}
-currentSignature: {{ $currentSignature ? 'exists' : 'null' }}
-@if($currentSignature)
-status: {{ $currentSignature->status }}
-@endif
-</pre>
-
-
-
+{{-- ================= PROJECT HEAD ACTION BAR ================= --}}
 @if($isProjectHead)
 
-<div class="border border-slate-300 bg-white sticky bottom-0 z-50 shadow-md">
+<div class="sticky bottom-0 z-50 border-t border-amber-200 bg-amber-50 shadow-md">
 
-    <div class="px-4 py-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div class="px-5 py-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
-        <div class="text-[11px] text-slate-600">
+        {{-- LEFT MESSAGE --}}
+        <div class="text-xs text-amber-900">
             @if($status === 'submitted')
                 Editing and resubmitting will reset Treasurer and President approvals.
             @elseif($status === 'approved')
@@ -34,11 +22,13 @@ status: {{ $currentSignature->status }}
             @endif
         </div>
 
-        <div class="flex items-center gap-3">
+        {{-- ACTION BUTTONS --}}
+        <div class="flex items-center gap-2">
 
+            {{-- BACK --}}
             <a href="{{ route('org.projects.documents.hub', $project) }}"
-               class="border border-slate-400 px-4 py-2 text-[12px] text-slate-700 hover:bg-slate-100">
-                Cancel
+               class="rounded-lg border border-amber-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                Back to Project Hub
             </a>
 
             @if(in_array($status, ['draft', 'returned']))
@@ -47,7 +37,7 @@ status: {{ $currentSignature->status }}
                         form="proposalForm"
                         name="action"
                         value="draft"
-                        class="border border-slate-500 px-4 py-2 text-[12px] text-slate-800 hover:bg-slate-100">
+                        class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50">
                     Save as Draft
                 </button>
 
@@ -55,24 +45,21 @@ status: {{ $currentSignature->status }}
                         form="proposalForm"
                         name="action"
                         value="submit"
-                        class="bg-blue-900 px-4 py-2 text-[12px] text-white hover:bg-blue-800">
+                        class="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800">
                     Submit for Approval
                 </button>
 
             @endif
 
-
             @if($status === 'submitted')
 
                 <button type="button"
                         onclick="openResubmitModal()"
-                        class="bg-amber-600 px-4 py-2 text-[12px] text-white hover:bg-amber-700">
+                        class="rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-700">
                     Resubmit with Changes
                 </button>
 
             @endif
-
-       
 
         </div>
 
@@ -82,36 +69,37 @@ status: {{ $currentSignature->status }}
 
 @endif
 
+
+{{-- ================= RESUBMIT MODAL ================= --}}
 @if($isProjectHead && $status === 'submitted')
 
 <div id="resubmitModal"
-     class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+     class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
 
-    <div class="bg-white w-full max-w-md rounded shadow-lg p-6">
+    <div class="bg-white w-full max-w-md rounded-xl shadow-lg p-6">
 
-        <h2 class="text-[14px] font-semibold mb-3">
+        <h2 class="text-sm font-semibold mb-3 text-slate-900">
             Confirm Resubmission
         </h2>
 
-        <p class="text-[12px] text-slate-600 mb-4">
+        <p class="text-xs text-slate-600 mb-4">
             Resubmitting this proposal will remove existing approvals from the Treasurer and President.
             They will be required to review and approve this document again.
         </p>
 
-        <div class="flex justify-end gap-3">
+        <div class="flex justify-end gap-2">
 
             <button type="button"
                     onclick="closeResubmitModal()"
-                    class="border border-slate-400 px-4 py-2 text-[12px] text-slate-700 hover:bg-slate-100">
+                    class="rounded-lg border border-slate-300 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50">
                 Cancel
             </button>
-
 
             <button type="submit"
                     form="proposalForm"
                     name="action"
                     value="draft"
-                    class="border border-slate-500 px-4 py-2 text-[12px] text-slate-800 hover:bg-slate-100">
+                    class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-800 hover:bg-slate-50">
                 Yes, Resubmit
             </button>
 
@@ -124,8 +112,7 @@ status: {{ $currentSignature->status }}
 @endif
 
 
-
-
+{{-- ================= APPROVER ACTION BAR ================= --}}
 @if(
     !$isProjectHead &&
     $isReadOnly &&
@@ -134,55 +121,49 @@ status: {{ $currentSignature->status }}
     $currentSignature->status === 'pending'
 )
 
-    <div class="border border-slate-300 bg-white sticky bottom-0 z-50 shadow-md">
+<div class="sticky bottom-0 z-50 border-t border-amber-200 bg-amber-50 shadow-md">
 
-        <div class="px-4 py-3 flex items-center justify-end gap-3">
+    <div class="px-5 py-3 flex items-center justify-end gap-2">
 
+        <form method="POST"
+            action="{{ $currentSignature->role === 'sacdev_admin'
+                ? route('admin.projects.documents.approve', [$project, $document->formType->code])
+                : route('org.projects.project-proposal.approve', $project) }}">
 
-
-
-
-
-            <form method="POST"
-                action="{{ $currentSignature->role === 'sacdev_admin'
-                    ? route('admin.projects.documents.approve', [$project, $document->formType->code])
-                    : route('org.projects.project-proposal.approve', $project) }}">
-
-                @csrf
-                <button
-                    class="bg-emerald-600 px-4 py-2 text-[12px] text-white hover:bg-emerald-700">
-                    Approve
-                </button>
-            </form>
-
+            @csrf
             <button
-                type="button"
-                onclick="openReturnModal()"
-                class="bg-rose-600 px-4 py-2 text-[12px] text-white hover:bg-rose-700">
-                Return with Remarks
+                class="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700">
+                Approve
             </button>
+        </form>
 
-        </div>
+        <button
+            type="button"
+            onclick="openReturnModal()"
+            class="rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700">
+            Return with Remarks
+        </button>
 
     </div>
+
+</div>
 
 @endif
 
 
+{{-- ================= RETURN MODAL ================= --}}
 <div id="returnModal"
-     class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+     class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
 
-    <div class="bg-white w-full max-w-md rounded shadow-lg p-6">
+    <div class="bg-white w-full max-w-md rounded-xl shadow-lg p-6">
 
-        <h2 class="text-[14px] font-semibold mb-3">
-            Return Budget Proposal
+        <h2 class="text-sm font-semibold mb-3 text-slate-900">
+            Return Proposal
         </h2>
 
-        <p class="text-[12px] text-slate-600 mb-4">
+        <p class="text-xs text-slate-600 mb-4">
             Please provide remarks explaining why this proposal is being returned.
         </p>
-
-
 
         <form method="POST"
             action="{{ optional($currentSignature)->role === 'sacdev_admin' 
@@ -195,18 +176,18 @@ status: {{ $currentSignature->status }}
                 name="remarks"
                 required
                 rows="4"
-                class="w-full border border-slate-300 px-3 py-2 text-[12px]"></textarea>
+                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 focus:outline-none"></textarea>
 
-            <div class="flex justify-end gap-3 mt-4">
+            <div class="flex justify-end gap-2 mt-4">
 
                 <button type="button"
                         onclick="closeReturnModal()"
-                        class="border border-slate-400 px-4 py-2 text-[12px] text-slate-700 hover:bg-slate-100">
+                        class="rounded-lg border border-slate-300 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50">
                     Cancel
                 </button>
 
                 <button type="submit"
-                        class="bg-rose-600 px-4 py-2 text-[12px] text-white hover:bg-rose-700">
+                        class="rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700">
                     Return Proposal
                 </button>
 
@@ -218,8 +199,9 @@ status: {{ $currentSignature->status }}
 
 </div>
 
-<script>
 
+{{-- ================= MODAL SCRIPTS ================= --}}
+<script>
 function openReturnModal() {
     document.getElementById('returnModal')?.classList.remove('hidden');
     document.getElementById('returnModal')?.classList.add('flex');
@@ -230,21 +212,13 @@ function closeReturnModal() {
     document.getElementById('returnModal')?.classList.remove('flex');
 }
 
+function openResubmitModal() {
+    document.getElementById('resubmitModal')?.classList.remove('hidden');
+    document.getElementById('resubmitModal')?.classList.add('flex');
+}
 
-
-</script>
-
-
-
-
-<script>
-    function openResubmitModal() {
-        document.getElementById('resubmitModal')?.classList.remove('hidden');
-        document.getElementById('resubmitModal')?.classList.add('flex');
-    }
-
-    function closeResubmitModal() {
-        document.getElementById('resubmitModal')?.classList.add('hidden');
-        document.getElementById('resubmitModal')?.classList.remove('flex');
-    }
+function closeResubmitModal() {
+    document.getElementById('resubmitModal')?.classList.add('hidden');
+    document.getElementById('resubmitModal')?.classList.remove('flex');
+}
 </script>

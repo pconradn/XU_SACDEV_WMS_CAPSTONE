@@ -1,33 +1,40 @@
 @php use Illuminate\Support\Str; @endphp
 
-<div class="border border-slate-300">
+<div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-6">
 
-    <div class="px-4 pt-2">
-        <div class="text-[12px] font-medium text-slate-700">
-            Proposed Budget
-        </div>
+    {{-- ================= HEADER ================= --}}
+    <div>
+        <h3 class="text-sm font-semibold text-slate-900">
+            Budget & Participants
+        </h3>
+        <p class="text-xs text-slate-500">
+            Define funding sources and expected participants
+        </p>
     </div>
 
-    <div class="px-4 pb-3 pt-1 grid grid-cols-1 gap-6 md:grid-cols-3">
+    {{-- ================= BUDGET ================= --}}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        {{-- Total Budget --}}
+        {{-- TOTAL BUDGET (AUTO) --}}
         <div>
-            <label class="block text-[10px] font-medium text-blue-900 italic">
-                Total Estimated Amount:
+            <label class="block text-xs font-medium text-slate-700 mb-1">
+                Total Estimated Amount
             </label>
+
             <input type="number"
                 step="0.01"
                 min="0"
                 name="total_budget"
+                id="totalBudget"
                 value="{{ old('total_budget', $proposal->total_budget ?? '') }}"
-                class="mt-1 w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
-                placeholder="0.00">
+                readonly
+                class="w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-900">
         </div>
 
-        {{-- Sources of Funds --}}
+        {{-- SOURCES --}}
         <div class="md:col-span-2">
-            <label class="block text-[10px] font-medium text-blue-900 italic">
-                Sources of Funds:
+            <label class="block text-xs font-medium text-slate-700 mb-2">
+                Sources of Funds
             </label>
 
             @php
@@ -45,7 +52,7 @@
                     ($proposal?->fundSources?->pluck('amount', 'source_name')->toArray() ?? []);
             @endphp
 
-            <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
 
                 @foreach($sources as $source)
 
@@ -54,9 +61,9 @@
                         $isChecked = $oldValue !== null;
                     @endphp
 
-                    <div class="flex items-center justify-between border border-slate-200 px-3 py-2">
+                    <div class="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2">
 
-                        <label class="flex items-center gap-2 text-[12px] text-slate-700">
+                        <label class="flex items-center gap-2 text-sm text-slate-700">
                             <input type="checkbox"
                                 class="fund-source-checkbox"
                                 data-target="amount-{{ Str::slug($source) }}"
@@ -71,7 +78,7 @@
                             value="{{ $oldValue }}"
                             placeholder="0.00"
                             id="amount-{{ Str::slug($source) }}"
-                            class="fund-amount w-24 border border-slate-300 bg-white px-2 py-0 text-[12px] {{ $isChecked ? '' : 'hidden' }}">
+                            class="fund-amount w-24 rounded-lg border border-slate-300 px-2 py-1 text-sm {{ $isChecked ? '' : 'hidden' }}">
                     </div>
 
                 @endforeach
@@ -81,28 +88,23 @@
 
     </div>
 
-    <div class="border-t border-slate-300"></div>
+    {{-- ================= TARGET AUDIENCE ================= --}}
+    <div class="border-t border-slate-200 pt-4">
 
-    {{-- Target Audience --}}
-    <div class="px-4 pt-2">
-        <div class="text-[12px] font-medium text-slate-700">
-            Target Audience / Participants / Beneficiaries
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+            Target Audience
         </div>
-    </div>
 
-    @php 
-        $aud = old('audience_type', $proposal->audience_type ?? null); 
-    @endphp
+        @php 
+            $aud = old('audience_type', $proposal->audience_type ?? null); 
+        @endphp
 
-    <div class="px-4 pb-3 pt-2 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        <div class="md:col-span-2">
-            <div class="space-y-2 text-[12px] text-slate-700">
+            <div class="md:col-span-2 space-y-3 text-sm text-slate-700">
 
                 <label class="flex items-center gap-2">
-                    <input type="radio"
-                        name="audience_type"
-                        value="xu_community"
+                    <input type="radio" name="audience_type" value="xu_community"
                         class="border-slate-300"
                         @checked($aud === 'xu_community')>
                     XU Community
@@ -113,7 +115,7 @@
                         (isset($proposal->xu_subtypes) ? explode(', ', $proposal->xu_subtypes) : []); 
                 @endphp
 
-                <div class="ml-6 grid grid-cols-1 md:grid-cols-2 gap-1 text-[11px]" id="xuSubWrap">
+                <div class="ml-6 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm" id="xuSubWrap">
                     @foreach(['Officers','Org Members','Non-Org Members','Faculty/Staff'] as $s)
                         <label class="flex items-center gap-2">
                             <input type="checkbox"
@@ -127,66 +129,58 @@
                 </div>
 
                 <label class="flex items-center gap-2">
-                    <input type="radio"
-                        name="audience_type"
-                        value="non_xu_community"
+                    <input type="radio" name="audience_type" value="non_xu_community"
                         class="border-slate-300"
                         @checked($aud === 'non_xu_community')>
                     Non-XU Community
                 </label>
 
                 <label class="flex items-center gap-2">
-                    <input type="radio"
-                        name="audience_type"
-                        value="beneficiaries"
+                    <input type="radio" name="audience_type" value="beneficiaries"
                         class="border-slate-300"
                         @checked($aud === 'beneficiaries')>
                     Beneficiaries
                 </label>
 
             </div>
+
+            <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">
+                    Specify details
+                </label>
+
+                <textarea name="audience_details"
+                    rows="4"
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    placeholder="If non-XU or beneficiaries...">{{ old('audience_details', $proposal->audience_details ?? '') }}</textarea>
+            </div>
+
+        </div>
+    </div>
+
+    {{-- ================= PARTICIPANTS ================= --}}
+    <div class="border-t border-slate-200 pt-4 flex flex-wrap gap-6">
+
+        <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">
+                Expected XU Participants
+            </label>
+            <input type="number"
+                min="0"
+                name="expected_xu_participants"
+                value="{{ old('expected_xu_participants', $proposal->expected_xu_participants ?? '') }}"
+                class="w-28 rounded-lg border border-slate-300 px-2 py-2 text-sm">
         </div>
 
         <div>
-            <label class="block text-[10px] font-medium text-blue-900 italic">
-                Specify details (for Non-XU / Beneficiaries):
+            <label class="block text-xs font-medium text-slate-700 mb-1">
+                Expected Non-XU Participants
             </label>
-            <textarea name="audience_details"
-                    class="mt-1 w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
-                    rows="4"
-                    placeholder="If non-XU or beneficiaries, specify...">{{ old('audience_details', $proposal->audience_details ?? '') }}</textarea>
-        </div>
-
-    </div>
-
-    <div class="border-t border-slate-300"></div>
-
-    <div class="px-4 pb-4 pt-3">
-
-        <div class="flex items-center gap-8 text-[12px]">
-
-            <div class="flex items-center gap-2">
-                <label class="font-medium text-blue-900 italic whitespace-nowrap">
-                    Expected # of XU Participants:
-                </label>
-                <input type="number"
-                    min="0"
-                    name="expected_xu_participants"
-                    value="{{ old('expected_xu_participants', $proposal->expected_xu_participants ?? '') }}"
-                    class="w-24 border border-slate-300 bg-white px-2 py-1 text-[12px]">
-            </div>
-
-            <div class="flex items-center gap-2">
-                <label class="font-medium text-blue-900 italic whitespace-nowrap">
-                    Expected # of Non-XU Participants:
-                </label>
-                <input type="number"
-                    min="0"
-                    name="expected_non_xu_participants"
-                    value="{{ old('expected_non_xu_participants', $proposal->expected_non_xu_participants ?? '') }}"
-                    class="w-24 border border-slate-300 bg-white px-2 py-1 text-[12px]">
-            </div>
-
+            <input type="number"
+                min="0"
+                name="expected_non_xu_participants"
+                value="{{ old('expected_non_xu_participants', $proposal->expected_non_xu_participants ?? '') }}"
+                class="w-28 rounded-lg border border-slate-300 px-2 py-2 text-sm">
         </div>
 
     </div>

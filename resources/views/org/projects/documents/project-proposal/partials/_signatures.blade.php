@@ -1,60 +1,71 @@
 @if($document && $document->signatures && $document->signatures->count())
 
-<div class="border border-slate-300 bg-white mt-8">
+<div class="rounded-2xl border border-slate-200 bg-white shadow-sm mt-8 overflow-hidden">
 
-<div class="bg-slate-50 border-b border-slate-300 px-4 py-2 text-[12px] font-semibold tracking-wide">
-Approval Trail
-</div>
+    {{-- HEADER --}}
+    <div class="px-5 py-3 border-b border-slate-200 bg-slate-50">
+        <div class="text-sm font-semibold text-slate-900">
+            Approval Trail
+        </div>
+        <div class="text-xs text-slate-500">
+            Track the approval progress of this document
+        </div>
+    </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x">
+    {{-- CONTENT --}}
+    <div class="divide-y md:divide-y-0 md:grid md:grid-cols-2 md:divide-x">
 
-@foreach($document->signatures->sortBy('id') as $sig)
+        @foreach($document->signatures->sortBy('id') as $sig)
 
-@php
-    $status = $sig->status;
-@endphp
+        @php
+            $status = $sig->status;
 
-<div class="px-4 py-4 text-[12px] flex justify-between items-center">
+            $statusStyles = [
+                'signed' => 'bg-emerald-50 text-emerald-700',
+                'pending' => 'bg-amber-50 text-amber-700',
+            ];
 
-<div class="flex flex-col">
+            $badge = $statusStyles[$status] ?? 'bg-slate-100 text-slate-600';
+        @endphp
 
-<div class="font-medium capitalize">
-{{ str_replace('_',' ', $sig->role) }}
-</div>
+        <div class="px-5 py-4 flex items-center justify-between">
 
-<div class="text-slate-500">
-{{ $sig->user?->name ?? 'Unknown User' }}
-</div>
+            {{-- LEFT --}}
+            <div class="flex flex-col gap-1">
+                <div class="text-sm font-semibold text-slate-900 capitalize">
+                    {{ str_replace('_',' ', $sig->role) }}
+                </div>
 
-</div>
+                <div class="text-xs text-slate-500">
+                    {{ $sig->user?->name ?? 'Unknown User' }}
+                </div>
+            </div>
 
-<div class="text-right">
+            {{-- RIGHT --}}
+            <div class="text-right flex flex-col items-end gap-1">
 
-@if($status === 'signed')
+                @if($status === 'signed')
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold {{ $badge }}">
+                        Approved
+                    </span>
 
-<div class="text-emerald-700 font-medium">
-Approved
-</div>
+                    <span class="text-xs text-slate-500">
+                        {{ $sig->signed_at?->format('M d, Y h:i A') }}
+                    </span>
 
-<div class="text-slate-500 text-[11px]">
-{{ $sig->signed_at?->format('M d, Y h:i A') }}
-</div>
+                @elseif($status === 'pending')
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold {{ $badge }}">
+                        Pending
+                    </span>
+                @endif
 
-@elseif($status === 'pending')
+            </div>
 
-<div class="text-amber-600 font-medium">
-Pending
-</div>
+        </div>
 
-@endif
+        @endforeach
 
-</div>
-
-</div>
-
-@endforeach
-
-</div>
+    </div>
 
 </div>
 

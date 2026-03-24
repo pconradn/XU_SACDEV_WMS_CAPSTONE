@@ -1,126 +1,114 @@
-<div class="border border-slate-300">
+<div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-6">
 
-    {{-- Section Label --}}
-    <div class="flex justify-start px-4 pt-1">
-        <div class="text-[12px] font-medium text-slate-700">
-            Proposed Implementation Date(s):
-        </div>
+    {{-- ================= SECTION HEADER ================= --}}
+    <div class="flex flex-col">
+        <h3 class="text-sm font-semibold text-slate-900">
+            Schedule & Venue
+        </h3>
+        <p class="text-xs text-slate-500">
+            Set the implementation date, time, and location of the project
+        </p>
     </div>
 
+    {{-- ================= DATES & TIME ================= --}}
+    <div>
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+            Implementation Schedule
+        </div>
 
-    {{-- Dates + Time --}}
-    <div class="px-4 pb-2">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
 
             {{-- Start Date --}}
             <div>
-                <label class="block text-[10px] font-medium text-blue-900 italic">
-                    Start Date:
+                <label class="block text-xs font-medium text-slate-700 mb-1">
+                    Start Date
                 </label>
-
                 <input type="date"
                        name="start_date"
                        value="{{ old('start_date', $proposal->start_date ?? '') }}"
-                       class="mt-1 w-full border border-slate-300 bg-white px-3 py-0.5 text-[12px]"
+                       class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 focus:outline-none"
                        required>
             </div>
-
 
             {{-- End Date --}}
             <div>
-                <label class="block text-[10px] font-medium text-blue-900 italic">
-                    End Date:
+                <label class="block text-xs font-medium text-slate-700 mb-1">
+                    End Date
                 </label>
-
                 <input type="date"
                        name="end_date"
                        value="{{ old('end_date', $proposal->end_date ?? '') }}"
-                       class="mt-1 w-full border border-slate-300 bg-white px-3 py-0.5 text-[12px]"
+                       class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 focus:outline-none"
                        required>
             </div>
 
-
             {{-- Start Time --}}
             <div>
-                <label class="block text-[10px] font-medium text-blue-900 italic">
-                    Start Time (optional):
+                <label class="block text-xs font-medium text-slate-700 mb-1">
+                    Start Time <span class="text-slate-400">(optional)</span>
                 </label>
-
                 <input type="time"
                        name="start_time"
                        value="{{ old('start_time', $proposal->start_time ?? '') }}"
-                       class="mt-1 w-full border border-slate-300 bg-white px-3 py-0.5 text-[12px]">
+                       class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 focus:outline-none">
             </div>
-
 
             {{-- End Time --}}
             <div>
-                <label class="block text-[10px] font-medium text-blue-900 italic">
-                    End Time (optional):
+                <label class="block text-xs font-medium text-slate-700 mb-1">
+                    End Time <span class="text-slate-400">(optional)</span>
                 </label>
-
                 <input type="time"
                        name="end_time"
                        value="{{ old('end_time', $proposal->end_time ?? '') }}"
-                       class="mt-1 w-full border border-slate-300 bg-white px-3 py-0.5 text-[12px]">
+                       class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 focus:outline-none">
             </div>
 
         </div>
     </div>
 
-
-    {{-- Divider --}}
-    <div class="border-t border-slate-300"></div>
-
-
-    {{-- Venue Section --}}
-    <div class="px-4 pb-3 pt-2">
-
-        <div class="text-[12px] font-medium text-slate-700">
-            Proposed Venue
+    {{-- ================= VENUE ================= --}}
+    <div>
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+            Venue
         </div>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-12 items-start">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
 
             {{-- Instruction --}}
-            <div class="md:col-span-4 text-[10px] text-blue-900 italic">
-                If the activity is conducted outside the university, an Off-Campus Activity Permit will be required after approval of this proposal.
+            <div class="md:col-span-4 text-xs text-slate-500 leading-relaxed">
+                If conducted outside the university, an <span class="font-medium">Off-Campus Activity Permit</span> will be required after approval.
             </div>
 
-
-            {{-- On Campus Venue --}}
+            {{-- On Campus --}}
             <div class="md:col-span-4">
-                <label class="block text-[10px] font-medium text-blue-900 italic">
+                <label class="block text-xs font-medium text-slate-700 mb-1">
                     On Campus
                 </label>
-
                 <input type="text"
                        name="on_campus_venue"
                        value="{{ old('on_campus_venue', $proposal->on_campus_venue ?? '') }}"
-                       class="mt-1 w-full border border-slate-300 bg-white px-3 py-1 text-[11px]"
-                       placeholder="e.g., XU Gym, AVR 1, Little Theatre">
+                       class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 focus:outline-none"
+                       placeholder="e.g., XU Gym, AVR 1">
             </div>
 
-
-            {{-- Off Campus Venue --}}
+            {{-- Off Campus --}}
             <div class="md:col-span-4">
-                <label class="block text-[10px] font-medium text-blue-900 italic">
+                <label class="block text-xs font-medium text-slate-700 mb-1">
                     Off Campus
                 </label>
-
                 <input type="text"
                        name="off_campus_venue"
                        value="{{ old('off_campus_venue', $proposal->off_campus_venue ?? '') }}"
-                       class="mt-1 w-full border border-slate-300 bg-white px-3 py-1 text-[11px]"
-                       placeholder="Barangay Hall, Community Center, etc.">
+                       class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 focus:outline-none"
+                       placeholder="Barangay Hall, Community Center">
             </div>
 
         </div>
 
-        <div class="text-[10px] text-slate-500 mt-1 italic">
+        <div class="text-xs text-slate-400 mt-2">
             At least one venue must be provided.
         </div>
-
     </div>
 
 </div>
