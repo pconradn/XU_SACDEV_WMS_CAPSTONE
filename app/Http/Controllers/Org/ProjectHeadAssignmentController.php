@@ -55,95 +55,120 @@ class ProjectHeadAssignmentController extends Controller
         return view('org.assignments.project-heads-edit', compact('project', 'officers', 'currentHead', 'syId'));
     }
 
-    public function update(Request $request, Project $project)
+    public function update(Request $request, $project)
     {
+        if (!$project instanceof \App\Models\Project) {
+            $project = \App\Models\Project::findOrFail($project);
+        }
+
         $orgId = (int) $request->session()->get('active_org_id');
         $syId  = (int) $request->session()->get('encode_sy_id');
 
-        abort_unless($project->organization_id === $orgId && $project->school_year_id === $syId, 404);
+        if (!$project instanceof Project) {
+            $project = Project::find($project);
+            dd('STEP 2 - after find', $project);
+        }
+
+
+
+        abort_unless(
+            (int) $project->organization_id === $orgId &&
+            (int) $project->school_year_id === $syId,
+            404
+        );
 
         $data = $request->validate([
             'officer_id' => ['required', 'integer', 'exists:officer_entries,id'],
         ]);
 
-        $officer = OfficerEntry::findOrFail($data['officer_id']);
+
+
+        $officer = OfficerEntry::find($data['officer_id']);
+
 
         abort_unless(
-            $officer->organization_id === $orgId &&
-            $officer->school_year_id === $syId,
+            (int) $officer->organization_id === $orgId &&
+            (int) $officer->school_year_id === $syId,
             403
         );
 
-        DB::transaction(function () use ($project, $officer, $orgId, $syId) {
+        try {
 
-            [$user, $tempPassword] =
-                AccountProvisioner::findOrCreateUser($officer->full_name, $officer->email);
+            DB::transaction(function () use ($project, $officer, $orgId, $syId) {
 
-            if ((int) $officer->user_id !== (int) $user->id) {
-                $officer->user_id = $user->id;
-                $officer->save();
-            }
+                [$user, $tempPassword] =
+                    AccountProvisioner::findOrCreateUser(
+                        $officer->full_name,
+                        $officer->email
+                    );
 
-            // Ensure member access (project heads must be members)
-            AccountProvisioner::ensureBasicOrgAccess(
-                $user->id,
-                $orgId,
-                $syId,
-                $officer->id
-            );
 
-            $currentHead = ProjectAssignment::query()
-                ->where('project_id', $project->id)
-                ->where('assignment_role', 'project_head')
-                ->whereNull('archived_at')
-                ->first();
+                if ((int) $officer->user_id !== (int) $user->id) {
+                    $officer->user_id = $user->id;
+                    $officer->save();
+                }
 
-            // If same head, do nothing
-            if ($currentHead && (int) $currentHead->user_id === (int) $user->id) {
-                return;
-            }
+                AccountProvisioner::ensureBasicOrgAccess(
+                    $user->id,
+                    $orgId,
+                    $syId,
+                    $officer->id
+                );
 
-            // Archive old head
-            ProjectAssignment::query()
-                ->where('project_id', $project->id)
-                ->where('assignment_role', 'project_head')
-                ->whereNull('archived_at')
-                ->update([
-                    'archived_at' => now()
-                ]);
+                $currentHead = ProjectAssignment::query()
+                    ->where('project_id', $project->id)
+                    ->where('assignment_role', 'project_head')
+                    ->whereNull('archived_at')
+                    ->first();
 
-            // Create new head
-            ProjectAssignment::query()->create([
-                'project_id' => $project->id,
-                'user_id' => $user->id,
-                'assignment_role' => 'project_head',
-                'archived_at' => null,
-            ]);
 
-            // 🔥 Reset all project documents
-            $documents = ProjectDocument::query()
-                ->where('project_id', $project->id)
-                ->get();
+                if ($currentHead && (int) $currentHead->user_id === (int) $user->id) {
+                    throw new \Exception('SAME_USER');
+                }
 
-            foreach ($documents as $document) {
+                ProjectAssignment::query()
+                    ->where('project_id', $project->id)
+                    ->where('assignment_role', 'project_head')
+                    ->whereNull('archived_at')
+                    ->update([
+                        'archived_at' => now()
+                    ]);
 
-                // Delete all signatures
-                ProjectDocumentSignature::query()
-                    ->where('project_document_id', $document->id)
-                    ->delete();
 
-                // Reset document status
-                $document->update([
-                    'status' => 'draft',
-                    'submitted_at' => null,
-                ]);
-            }
 
-        });
+                $existing = ProjectAssignment::query()
+                    ->where('project_id', $project->id)
+                    ->where('user_id', $user->id)
+                    ->where('assignment_role', 'project_head')
+                    ->first();
+
+
+
+                if ($existing) {
+                    $existing->update([
+                        'archived_at' => null
+                    ]);
+                } else {
+                    ProjectAssignment::create([
+                        'project_id' => $project->id,
+                        'user_id' => $user->id,
+                        'assignment_role' => 'project_head',
+                        'archived_at' => null,
+                    ]);
+                }
+
+   
+
+            });
+
+        } catch (\Exception $e) {
+
+        }
+
 
         return redirect()
-            ->route('org.assign-project-heads.index')
-            ->with('status', 'Project head updated. All related documents were reset.');
+            ->route('org.projects.index')
+            ->with('status', 'Project head updated.');
     }
 
 

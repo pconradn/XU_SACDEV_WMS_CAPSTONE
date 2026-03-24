@@ -1,6 +1,16 @@
+@import "@fontsource/inter";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 
+
+
 [x-cloak] { display: none !important; }
+
+
+
+body {
+font-family: "Inter", sans-serif;
+}

@@ -71,6 +71,7 @@ class SacdevStrategicPlanController extends Controller
             'projects.deliverables',
             'projects.partners',
             'fundSources',
+            'timelines.user',
         ]);
 
         return view('admin.strategic_plans.show', compact('submission'));
@@ -102,7 +103,7 @@ class SacdevStrategicPlanController extends Controller
                     ->route('org.moderator.strategic_plans.show', $locked->getKey()) // adjust route
                     ->with('error', 'This submission is not in SACDEV review stage.');
             }
-
+            $oldStatus = $locked->status;
             $locked->status = StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV;
             $locked->sacdev_reviewed_by = auth()->id();
             $locked->sacdev_reviewed_at = now();
@@ -110,6 +111,14 @@ class SacdevStrategicPlanController extends Controller
             $locked->approved_at = null;
 
             $locked->save();
+
+            $locked->timelines()->create([
+                'user_id' => auth()->id(),
+                'action' => 'returned_by_sacdev',
+                'remarks' => $request->input('remarks'), // REQUIRED
+                'old_status' => $oldStatus,
+                'new_status' => StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
+            ]);
 
             $submissionId = (int) $locked->getKey();
 
@@ -181,7 +190,7 @@ class SacdevStrategicPlanController extends Controller
             }
 
 
-
+            $oldStatus = $locked->status;
             $locked->status = StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV;
             $locked->approved_at = now();
 
@@ -210,6 +219,14 @@ class SacdevStrategicPlanController extends Controller
             $organization->last_b1_submission_id = $submissionId;
 
             $organization->save();
+
+            $locked->timelines()->create([
+                'user_id' => auth()->id(),
+                'action' => 'approved_by_sacdev',
+                'remarks' => null, 
+                'old_status' => $oldStatus,
+                'new_status' => StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV,
+            ]);
 
             Audit::log(
                 'organization_profile_updated_from_strategic_plan',
@@ -334,7 +351,11 @@ class SacdevStrategicPlanController extends Controller
     public function revertApproval(Request $request, StrategicPlanSubmission $submission)
     {
         $request->validate([
-            'remarks' => ['required', 'string', 'min:8'],
+            'remarks' => ['required', function ($attribute, $value, $fail) {
+                if (trim(strip_tags($value)) === '') {
+                    $fail('Remarks cannot be empty.');
+                }
+            }],
         ]);
 
         $orgId = (int) $submission->organization_id;
@@ -352,12 +373,16 @@ class SacdevStrategicPlanController extends Controller
 
             if ($locked->status !== StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV) {
                 return redirect()
-                    ->route('org.moderator.strategic_plans.show', $locked->getKey()) // or SACDEV show
+                    ->route('org.moderator.strategic_plans.show', $locked->getKey())
                     ->with('error', 'Only approved submissions can be reverted.');
             }
 
+            // 🔥 CAPTURE OLD STATUS
+            $oldStatus = $locked->status;
 
-            $locked->status = StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV;
+            // 🔥 NEW BEHAVIOR: revert to SACDEV review stage
+            $locked->status = StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV;
+
             $locked->approved_at = null;
 
             $locked->sacdev_reviewed_by = auth()->id();
@@ -366,16 +391,26 @@ class SacdevStrategicPlanController extends Controller
 
             $locked->save();
 
+            // 🔥 TIMELINE ENTRY
+            $locked->timelines()->create([
+                'user_id' => auth()->id(),
+                'action' => 'approval_reverted',
+                'remarks' => $request->input('remarks'),
+                'old_status' => $oldStatus,
+                'new_status' => StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV,
+            ]);
+
             $submissionId = (int) $locked->getKey();
 
             DB::afterCommit(function () use ($president, $moderator, $orgId, $syId, $submissionId) {
 
                 if ($president) {
                     $dedupeKey = "admin:strategic_plan:{$submissionId}:approval_reverted:to:{$president->getKey()}";
+
                     InAppNotifier::notifyOnce($president, [
                         'dedupe_key'   => $dedupeKey,
-                        'title'        => 'Strategic Plan approval reverted',
-                        'message'      => 'SACDEV reverted the approval and returned your Strategic Plan for revision.',
+                        'title'        => 'Strategic Plan Approval Reverted',
+                        'message'      => 'SACDEV reverted the approval. Your submission is now back under SACDEV review.',
                         'org_id'       => $orgId,
                         'target_sy_id' => $syId,
                         'form'         => 'strategic_plan',
@@ -387,10 +422,11 @@ class SacdevStrategicPlanController extends Controller
 
                 if ($moderator) {
                     $dedupeKey = "admin:strategic_plan:{$submissionId}:approval_reverted:to:{$moderator->getKey()}";
+
                     InAppNotifier::notifyOnce($moderator, [
                         'dedupe_key'   => $dedupeKey,
-                        'title'        => 'Strategic Plan approval reverted',
-                        'message'      => 'SACDEV reverted an approved Strategic Plan. The org will revise and resubmit.',
+                        'title'        => 'Strategic Plan Approval Reverted',
+                        'message'      => 'SACDEV reverted an approved Strategic Plan. It is now back under SACDEV review.',
                         'org_id'       => $orgId,
                         'target_sy_id' => $syId,
                         'form'         => 'strategic_plan',
@@ -403,7 +439,7 @@ class SacdevStrategicPlanController extends Controller
         });
 
         return redirect()->route('admin.strategic_plans.show', $submission)
-            ->with('success', 'Approval reverted. Submission returned to the organization.');
+            ->with('success', 'Approval reverted. Submission is back in SACDEV review stage.');
     }
 
 }

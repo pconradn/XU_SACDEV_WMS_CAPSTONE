@@ -18,20 +18,22 @@
         })->values()->all();
     @endphp
 
- 
+
+    {{--  USE ADMIN LOGIC --}}
     <script>
-        window.spReview = function (projects) {
+        window.spAdminReview = function (projects) {
             return {
+                // project modal
                 projects: Array.isArray(projects) ? projects : [],
-                modalOpen: false,
+                projModalOpen: false,
                 activeProjectId: null,
 
                 openProject(id) {
                     this.activeProjectId = id;
-                    this.modalOpen = true;
+                    this.projModalOpen = true;
                 },
                 closeProject() {
-                    this.modalOpen = false;
+                    this.projModalOpen = false;
                     this.activeProjectId = null;
                 },
                 get activeProject() {
@@ -49,7 +51,10 @@
                 formatMoney(n) {
                     const x = parseFloat(n);
                     const v = isNaN(x) ? 0 : x;
-                    return v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return v.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
                 },
                 countFilled(arr) {
                     if (!Array.isArray(arr)) return 0;
@@ -59,45 +64,31 @@
         }
     </script>
 
+
     <div
         class="mx-auto max-w-6xl px-4 py-6 space-y-6"
-        x-data='window.spReview(@json($projectsJson))'
+        x-data='window.spAdminReview(@json($projectsJson))'
     >
 
-        {{-- Header --}}
+        
         @include('org.moderator.strategic_plans.partials._header', ['submission' => $submission])
 
-        {{-- Alerts --}}
-        @include('org.moderator.strategic_plans.partials._alerts')
+       
+        @include('admin.strategic_plans.partials._identity', ['submission' => $submission])
 
-        {{-- SACDEV Remarks --}}
-        @include('org.moderator.strategic_plans.partials._remarks_sacdev', ['submission' => $submission])
+      
+        @include('admin.strategic_plans.partials._projects', ['submission' => $submission])
 
-        {{-- Organization overview  --}}
-        @include('org.moderator.strategic_plans.partials._org_overview', ['submission' => $submission])
+    
+        @include('admin.strategic_plans.partials._funds', ['submission' => $submission])
 
-
-
-
-        {{-- Projects Table --}}
-        @include('org.moderator.strategic_plans.partials._projects_table', ['submission' => $submission])
-
-        {{-- Project Modal --}}
-        @include('org.moderator.strategic_plans.partials._project_modal')
-
-        
-        {{--  Fund sources --}}
-        @include('org.moderator.strategic_plans.partials._fund_sources', ['submission' => $submission])
-
-
-
-        {{-- Summary totals --}}
-        @include('org.moderator.strategic_plans.partials._summary', ['submission' => $submission])
-
-        {{-- Moderator Actions --}}
+       
         @include('org.moderator.strategic_plans.partials._actions', ['submission' => $submission])
 
-        {{-- Back --}}
+        
+        @include('admin.strategic_plans.partials._project_modal')
+
+        {{-- BACK --}}
         <div class="flex items-center gap-3">
             <a href="{{ route('org.moderator.rereg.dashboard') }}"
                class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">

@@ -180,6 +180,7 @@ abstract class BaseProjectDocumentController extends Controller
 
             'PROJECT_PROPOSAL' => [
                 'project_head',
+                'auditor',
                 'treasurer',
                 'president',
                 'moderator',

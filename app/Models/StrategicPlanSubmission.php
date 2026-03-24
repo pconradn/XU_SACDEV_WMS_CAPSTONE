@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Timeline;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -136,4 +137,10 @@ class StrategicPlanSubmission extends Model
     {
         return $query->where('status', $status);
     }
+    public function timelines()
+    {
+        return $this->morphMany(Timeline::class, 'timelineable')->latest();
+    }
+
+
 }

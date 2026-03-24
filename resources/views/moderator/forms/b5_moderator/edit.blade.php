@@ -1,15 +1,9 @@
 <x-app-layout>
     <div class="mx-auto max-w-6xl px-4 py-6">
         <div class="mb-4">
-            <h2 class="text-xl font-semibold text-slate-900">
-                B-5 Moderator Form
-                <span class="text-slate-500 font-normal">
-                    ({{ $submission->organization->name ?? 'Organization' }} •
-                    Target SY: {{ $submission->targetSchoolYear->name ?? $submission->targetSchoolYear->label ?? $submission->target_school_year_id }})
-                </span>
-            </h2>
 
-            {{-- Use Previous (top helper area) --}}
+            @include('moderator.forms.b5_moderator.partials._header', ['submission' => $submission])
+          
             @if(!$isLocked && ($canUsePrevious ?? false))
                 <div class="mt-3 rounded-xl border border-slate-200 bg-white p-4">
                     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -36,34 +30,9 @@
                     </div>
                 </div>
             @endif
+
+
         </div>
-
-        @include('moderator.forms.b5_moderator.partials._status_banner', ['submission' => $submission])
-
-        @if(session('success'))
-            <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
-                <div class="font-semibold">Success</div>
-                <div class="text-sm mt-1">{{ session('success') }}</div>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-900">
-                <div class="font-semibold">Error</div>
-                <div class="text-sm mt-1">{{ session('error') }}</div>
-            </div>
-        @endif
-
-        @if($errors->any())
-            <div class="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-900">
-                <div class="font-semibold">Please fix the errors below.</div>
-                <ul class="mt-2 list-disc pl-5 text-sm space-y-1">
-                    @foreach($errors->all() as $err)
-                        <li>{{ $err }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
 
         <form method="POST" action="{{ route('org.moderator.rereg.b5.saveDraft') }}" enctype="multipart/form-data">
             @csrf
@@ -133,11 +102,7 @@
                             Edit request pending
                         </div>
                     @else
-                        <button type="button"
-                                id="openEditRequestModalBtn"
-                                class="inline-flex justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                            Request Edit
-                        </button>
+
                     @endif
                 @endif
 

@@ -1,37 +1,47 @@
 <x-app-layout>
-    <div class="mx-auto max-w-6xl px-4 py-6">
-        <div class="mb-6">
-            <h2 class="text-xl font-semibold text-slate-900">Re-Registration Review</h2>
-            <div class="text-sm text-slate-600 mt-1">
-                Select a target school year (SY), then choose an organization to open its hub.
+
+    {{-- DataTables --}}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    @include('admin.orgs_by_sy.partials._index-styles')
+
+    <div class="mx-auto max-w-6xl space-y-5 px-4 py-6">
+
+        {{-- HEADER --}}
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-semibold text-slate-800">
+                    Re-Registration Review
+                </h2>
+                <p class="mt-1 text-sm text-slate-500">
+                    Review organization submissions per school year
+                </p>
             </div>
+
+            @if($activeSy)
+                <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                    Active SY: {{ $activeSy->name }}
+                </span>
+            @endif
         </div>
 
-        @if (session('status'))
-            <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
-                <div class="text-sm">{{ session('status') }}</div>
-            </div>
-        @endif
+        {{-- SCHOOL YEAR SELECTOR --}}
+        <div class="org-page-card px-5 py-4">
 
-        {{-- SY selector --}}
-        <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex flex-col gap-3">
-                <div>
-                    <div class="text-sm font-semibold text-slate-900">Target School Year</div>
-                    <div class="text-sm text-slate-600 mt-1">
-                        Quick switch using Prev / Active / Next. Use “More…” for older school years.
-                    </div>
-                </div>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-                {{-- Quick buttons --}}
-                <div class="flex flex-wrap items-center gap-2">
+                {{-- LEFT --}}
+                <div class="flex items-center gap-3 flex-wrap">
+
+                    <span class="text-sm font-medium text-slate-600">
+                        School Year
+                    </span>
+
                     @foreach($schoolYears as $sy)
                         @php
                             $isSelected = $encodeSyId && (int)$encodeSyId === (int)$sy->id;
                             $count = (int)($syBadges[$sy->id] ?? 0);
-                            $isActive = !empty($activeSy) && (int)$activeSy->id === (int)$sy->id;
-
-                            $labelPrefix = $isActive ? 'Active' : ((int)$sy->id < (int)($activeSy->id ?? $sy->id) ? 'Prev' : 'Next');
                         @endphp
 
                         <form method="POST" action="{{ route('rereg.setSy') }}">
@@ -39,16 +49,15 @@
                             <input type="hidden" name="encode_school_year_id" value="{{ $sy->id }}">
 
                             <button type="submit"
-                                class="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition
-                                    {{ $isSelected
-                                        ? 'bg-slate-900 text-white border-slate-900'
-                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                                    }}">
-                                <span class="opacity-80">{{ $labelPrefix }}:</span>
-                                <span>{{ $sy->name ?? ('SY #' . $sy->id) }}</span>
+                                class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition
+                                {{ $isSelected
+                                    ? 'bg-slate-900 text-white'
+                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                }}">
+                                {{ $sy->name }}
 
                                 @if($count > 0)
-                                    <span class="inline-flex items-center rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">
+                                    <span class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
                                         {{ $count }}
                                     </span>
                                 @endif
@@ -56,179 +65,177 @@
                         </form>
                     @endforeach
 
-               
+                    {{-- MORE --}}
                     <button type="button"
                         onclick="document.getElementById('syModal').classList.remove('hidden')"
-                        class="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                        More School Years…
+                        class="text-xs font-semibold text-blue-600 hover:text-blue-800">
+                        More...
                     </button>
+
                 </div>
 
-              
-                <div class="text-xs text-slate-500">
-                    Selected: <span class="font-semibold text-slate-800">
-                        {{ $selectedSy?->name ?? ('SY #' . ($encodeSyId ?? '—')) }}
-                    </span>
+                {{-- RIGHT --}}
+                <div class="text-sm text-slate-500">
+                    @if($selectedSy)
+                        Showing: <span class="font-semibold text-slate-800">{{ $selectedSy->name }}</span>
+                    @else
+                        No school year selected
+                    @endif
                 </div>
-            </div>
 
-            {{-- Modal --}}
-            <div id="syModal" class="hidden fixed inset-0 z-50">
-                <div class="absolute inset-0 bg-black/40"
-                    onclick="document.getElementById('syModal').classList.add('hidden')"></div>
-
-                <div class="relative mx-auto mt-20 w-full max-w-xl px-4">
-                    <div class="rounded-2xl bg-white shadow-xl border border-slate-200 overflow-hidden">
-                        <div class="px-6 py-5 border-b border-slate-200 flex items-start justify-between gap-4">
-                            <div>
-                                <div class="text-lg font-semibold text-slate-900">Select School Year</div>
-                                <div class="mt-1 text-sm text-slate-600">
-                                    Pick any school year to filter the re-registration review list.
-                                </div>
-                            </div>
-
-                            <button type="button"
-                                onclick="document.getElementById('syModal').classList.add('hidden')"
-                                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                                Close
-                            </button>
-                        </div>
-
-                        <div class="px-6 py-5">
-                            <div class="max-h-[60vh] overflow-y-auto space-y-2">
-                                @foreach($allSchoolYears as $sy)
-                                    @php
-                                        $isSelected = $encodeSyId && (int)$encodeSyId === (int)$sy->id;
-                                        $count = (int)($syBadges[$sy->id] ?? 0);
-                                        $isActive = !empty($activeSy) && (int)$activeSy->id === (int)$sy->id;
-                                    @endphp
-
-                                    <form method="POST" action="{{ route('rereg.setSy') }}">
-                                        @csrf
-                                        <input type="hidden" name="encode_school_year_id" value="{{ $sy->id }}">
-
-                                        <button type="submit"
-                                            class="w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition
-                                                {{ $isSelected
-                                                    ? 'border-slate-900 bg-slate-900 text-white'
-                                                    : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-50'
-                                                }}">
-                                            <div class="flex-1">
-                                                <div class="text-sm font-semibold">
-                                                    {{ $sy->name ?? ('SY #' . $sy->id) }}
-                                                    @if($isActive)
-                                                        <span class="ml-2 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                                                            Active
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                                <div class="text-xs opacity-80">
-                                                    ID: {{ $sy->id }}
-                                                </div>
-                                            </div>
-
-                                            @if($count > 0)
-                                                <span class="inline-flex items-center rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">
-                                                    {{ $count }}
-                                                </span>
-                                            @endif
-                                        </button>
-                                    </form>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-end">
-                            <button type="button"
-                                onclick="document.getElementById('syModal').classList.add('hidden')"
-                                class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                                Done
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
 
+        {{-- TABLE --}}
         @if(!$encodeSyId)
-            <div class="rounded-xl border border-slate-200 bg-white p-6 text-slate-700">
-                Please select a target school year to continue.
+
+            <div class="org-page-card px-6 py-6 text-sm text-slate-600 text-center">
+                Please select a school year to continue.
             </div>
+
         @else
-            {{-- Organization list --}}
-            <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div class="px-5 py-4 border-b border-slate-200">
-                    <div class="text-sm font-semibold text-slate-900">Organizations</div>
-                    <div class="text-sm text-slate-600 mt-1">
-                        Open the hub to review B-1 to B-5 submissions under the selected SY.
-                    </div>
-                </div>
+
+            <div class="org-page-card overflow-hidden">
 
                 <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-slate-50 text-slate-600">
+                    <table id="reregTable" class="min-w-full text-sm">
+                        <thead>
                             <tr>
-                                <th class="text-left px-5 py-3 font-semibold">Organization</th>
-                                <th class="text-right px-5 py-3 font-semibold">Action</th>
+                                <th class="px-5 py-4 text-left">Organization</th>
+                                <th class="px-5 py-4 text-left">Status</th>
+                                <th class="px-5 py-4 text-right">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-200">
-                            @foreach($organizations as $org)
-                                <tr>
 
-                                    <td class="px-5 py-3 text-slate-800">
+                        <tbody>
+                            @forelse($organizations as $org)
+
+                                @php
+                                    $pending = (int)($orgBadges[$org->id] ?? 0);
+                                    $isReady = in_array((int)$org->id, $readyOrgIds ?? [], true);
+                                    $isActivated = in_array((int)$org->id, $activatedOrgIds ?? [], true);
+                                @endphp
+
+                                <tr>
+                                    <td class="px-5 py-4">
                                         <div class="flex items-center gap-2">
-                                            <span class="font-medium">
-                                                {{ $org->name ?? ('Org #' . $org->id) }}
+
+                                            <span class="font-semibold text-slate-800">
+                                                {{ $org->name }}
                                             </span>
 
-                                            @php
-                                                $pending = (int)(($orgBadges[$org->id] ?? 0));
-                                                $isReady = in_array((int)$org->id, $readyOrgIds ?? [], true);
-                                                $isActivated = in_array((int)$org->id, $activatedOrgIds ?? [], true);
-                                            @endphp
-
-                                            @if($isActivated)
-                                                <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800">
-                                                    Registered
-                                                </span>
-                                            @elseif($isReady)
-                                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-                                                    Ready for registration
-                                                </span>
-                                            @elseif($pending > 0)
-                                                <span class="inline-flex items-center rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">
+                                            {{-- COUNTER --}}
+                                            @if($pending > 0)
+                                                <span class="inline-flex items-center rounded-full bg-red-100 text-red-700 px-2 py-0.5 text-xs font-semibold">
                                                     {{ $pending }}
                                                 </span>
                                             @endif
+
                                         </div>
                                     </td>
 
+                                    <td class="px-5 py-4">
+                                        @if($isActivated)
+                                            <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-200">
+                                                Registered
+                                            </span>
+                                        @elseif($isReady)
+                                            <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                                                Ready
+                                            </span>
+                                        @elseif($pending > 0)
+                                            <span class="inline-flex items-center rounded-full bg-red-600 px-2.5 py-1 text-xs font-medium text-white">
+                                                {{ $pending }} Pending
+                                            </span>
+                                        @else
+                                            <span class="text-slate-400 text-xs">—</span>
+                                        @endif
+                                    </td>
 
-
-
-
-                                    <td class="px-5 py-3 text-right">
+                                    <td class="px-5 py-4 text-right">
                                         <a href="{{ route('rereg.hub', $org->id) }}"
-                                           class="inline-flex items-center rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-                                            Open Hub
+                                           class="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-800">
+                                            Open
+                                            <span class="ml-1">→</span>
                                         </a>
                                     </td>
                                 </tr>
-                            @endforeach
 
-                            @if($organizations->isEmpty())
+                            @empty
                                 <tr>
-                                    <td colspan="2" class="px-5 py-6 text-center text-slate-600">
-                                        No organizations found.
+                                    <td colspan="3" class="px-5 py-10 text-center text-slate-500">
+                                        No organizations found
                                     </td>
                                 </tr>
-                            @endif
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
+
             </div>
+
         @endif
     </div>
+
+
+    {{-- MODAL (same, just cleaner spacing) --}}
+    <div id="syModal" class="hidden fixed inset-0 z-50">
+        <div class="absolute inset-0 bg-black/40"
+            onclick="document.getElementById('syModal').classList.add('hidden')"></div>
+
+        <div class="relative mx-auto mt-20 w-full max-w-xl px-4">
+            <div class="rounded-2xl bg-white shadow-xl border border-slate-200 overflow-hidden">
+
+                <div class="px-6 py-5 border-b border-slate-200 flex justify-between">
+                    <div>
+                        <div class="text-lg font-semibold text-slate-900">Select School Year</div>
+                        <div class="text-sm text-slate-600">Choose a school year</div>
+                    </div>
+
+                    <button onclick="document.getElementById('syModal').classList.add('hidden')">
+                        ✕
+                    </button>
+                </div>
+
+                <div class="px-6 py-5 max-h-[60vh] overflow-y-auto space-y-2">
+                    @foreach($allSchoolYears as $sy)
+                        <form method="POST" action="{{ route('rereg.setSy') }}">
+                            @csrf
+                            <input type="hidden" name="encode_school_year_id" value="{{ $sy->id }}">
+
+                            <button type="submit"
+                                class="w-full text-left px-4 py-3 rounded-xl border hover:bg-slate-50">
+                                {{ $sy->name }}
+                            </button>
+                        </form>
+                    @endforeach
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    {{-- DATATABLE --}}
+    <script>
+        $(function () {
+            $('#reregTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [10, 25, 50],
+                ordering: true,
+                info: true,
+                autoWidth: false,
+                language: {
+                    search: '',
+                    searchPlaceholder: 'Search organizations...',
+                },
+                dom:
+                    "<'dt-top'<'dataTables_length'l><'dataTables_filter'f>>" +
+                    "t" +
+                    "<'dt-bottom'<'dataTables_info'i><'dataTables_paginate'p>>"
+            });
+        });
+    </script>
+
 </x-app-layout>

@@ -1,47 +1,59 @@
 @php
-$status = $doc->status ?? 'not_created';
+    $status = $doc->status ?? 'not_created';
 @endphp
 
 <tr>
 
 <td class="px-6 py-5">
 
-<div class="font-semibold text-slate-900">
-{{ $label }}
-</div>
+    <div class="font-semibold text-slate-900">
+        {{ $label }}
+    </div>
 
-@if(!$doc)
-
-<div class="text-xs text-slate-500 mt-1">
-Not created yet
-</div>
-
-@endif
+    @if(!$doc)
+        <div class="text-xs text-slate-500 mt-1">
+            Not created yet
+        </div>
+    @endif
 
 </td>
 
 
 <td class="px-6 py-5">
 
-@include('admin.projects.documents.partials._status-badge', [
-    'status' => $status
-])
+    @include('admin.projects.documents.partials._status-badge', [
+        'status' => $status
+    ])
 
 </td>
 
 
 <td class="px-6 py-5 text-right">
 
-@if($doc)
+    @if($doc)
 
-<a href="{{ route('admin.projects.documents.open', [$project, $code]) }}"
-   class="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 transition">
+        <div class="flex justify-end gap-2">
 
-Open
+            {{-- OPEN --}}
+            <a href="{{ route('admin.projects.documents.open', [$project, $code]) }}"
+               class="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 transition">
+                Open
+            </a>
 
-</a>
+            {{-- PRINT (ONLY IF APPROVED) --}}
+            @if($status === 'approved_by_sacdev')
 
-@endif
+                <a href="{{ route('admin.projects.documents.print', [$project, $code, $doc->id]) }}"
+                   target="_blank"
+                   class="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-slate-800 transition">
+                    Print
+                </a>
+
+            @endif
+
+        </div>
+
+    @endif
 
 </td>
 

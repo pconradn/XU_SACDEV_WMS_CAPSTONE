@@ -1,5 +1,6 @@
 <x-app-layout>
-    {{-- Updated: routes now live under org.rereg.b1.* --}}
+   
+    <div x-data="{ openRemarks: false }">
     @include('org.strategic_plan._header', ['submission' => $submission, 'schoolYear' => $schoolYear])
 
     @include('org.strategic_plan._alpine', ['submission' => $submission])

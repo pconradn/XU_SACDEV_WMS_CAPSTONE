@@ -18,6 +18,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             Sprint1Seeder::class,
             ProjectProposalFormSeeder::class,
+
+            SchoolYearOrganizationSetupSeeder::class,
+            StrategicPlanSeeder::class
         ]);
 
 

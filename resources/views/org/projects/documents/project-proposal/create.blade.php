@@ -1,14 +1,9 @@
-<x-layouts.form-only
-    title="Project Proposal — {{ $project->title }}"
-    :backRoute="route('org.projects.documents.hub', $project)"
->
+<x-app-layout>
 
-    <div class="mx-auto max-w-5xl">
+    <div class="max-w-6xl mx-auto space-y-6">
 
         @php
             $status = $document->status ?? 'draft';
-
-     
 
             $isProjectHead = $isProjectHead ?? false;
 
@@ -20,12 +15,11 @@
 
             $isReadOnly = !$isEditable;
 
-       
             $statusStyles = [
-                'draft'     => 'bg-slate-50 text-slate-700',
-                'submitted' => 'bg-blue-50 text-blue-800',
-                'returned'  => 'bg-rose-50 text-rose-800',
-                'approved'  => 'bg-emerald-50 text-emerald-800',
+                'draft'     => 'bg-slate-50 text-slate-700 border-slate-200',
+                'submitted' => 'bg-blue-50 text-blue-800 border-blue-200',
+                'returned'  => 'bg-rose-50 text-rose-800 border-rose-200',
+                'approved'  => 'bg-emerald-50 text-emerald-800 border-emerald-200',
             ];
 
             $style = $statusStyles[$status] ?? $statusStyles['draft'];
@@ -36,7 +30,7 @@
                 ->first();
         @endphp
 
-
+        {{-- ================= STATUS CARD ================= --}}
         <div class="border border-slate-300 {{ $style }} px-4 py-3 text-sm mb-6">
 
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
@@ -78,64 +72,81 @@
             </div>
         </div>
 
-
+        {{-- ================= REMARKS ================= --}}
         @if(isset($document) && $document->remarks && $isProjectHead)
+            <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="text-sm font-semibold text-amber-800 mb-1">
+                            Returned for Revision
+                        </div>
 
-        <div class="remarks-card border border-amber-200 bg-amber-50 shadow-lg rounded-xl p-4 text-sm text-amber-800 relative mb-6">
+                        <div class="text-sm text-amber-700">
+                            {{ $document->remarks }}
+                        </div>
 
-            <button
-                onclick="this.closest('.remarks-card').remove()"
-                class="absolute top-2 right-3 text-amber-500 hover:text-amber-700 text-[14px]">
-                ×
-            </button>
+                        @if($document->returnedBy)
+                            <div class="text-xs text-amber-600 mt-2 italic">
+                                {{ $document->returnedBy->name }}
+                                • {{ \Carbon\Carbon::parse($document->returned_at)->format('M d, Y h:i A') }}
+                            </div>
+                        @endif
+                    </div>
 
-            <div class="font-semibold mb-2 flex items-center gap-2">
-                <span class="text-amber-600">⚠</span>
-                Returned for Revision
-            </div>
-
-            <div class="text-[12px] leading-relaxed mb-2">
-                {{ $document->remarks }}
-            </div>
-
-            @if($document->returnedBy)
-                <div class="text-[11px] text-amber-700 italic">
-                    Returned by {{ $document->returnedBy->name }}
-                    @if($document->returned_at)
-                        on {{ \Carbon\Carbon::parse($document->returned_at)->format('F d, Y h:i A') }}
-                    @endif
+ 
                 </div>
-            @endif
-
-        </div>
-
+            </div>
         @endif
 
+        {{-- ================= HEADER INFO ================= --}}
+        <div class="">
+            @include('org.projects.documents.project-proposal.partials._header', [
+                'project' => $project,
+            ])
+        </div>
 
+        {{-- @include('org.projects.documents.project-proposal.partials._flash') --}}
 
-
-        @include('org.projects.documents.project-proposal.partials._header', [
-            'project' => $project,
-        ])
-
-        @include('org.projects.documents.project-proposal.partials._flash')
-
-
+        {{-- ================= FORM ================= --}}
         <form method="POST"
               action="{{ route('org.projects.project-proposal.store', $project) }}"
-              id="proposalForm">
+              id="proposalForm"
+              class="space-y-6">
+
             @csrf
 
             @if($isReadOnly)
                 <fieldset disabled class="space-y-6">
             @endif
 
-                @include('org.projects.documents.project-proposal.partials._schedule_venue')
-                @include('org.projects.documents.project-proposal.partials._nature_sdg_area')
-                @include('org.projects.documents.project-proposal.partials._description_link_cluster')
-                @include('org.projects.documents.project-proposal.partials._multi_entries')
-                @include('org.projects.documents.project-proposal.partials._budget_funds_audience')
-                @include('org.projects.documents.project-proposal.partials._guests_plan_of_action')
+            {{-- GROUP INTO CARDS --}}
+            <div class="grid gap-6">
+
+                <div class="">
+                    @include('org.projects.documents.project-proposal.partials._schedule_venue')
+                </div>
+
+                <div class="">
+                    @include('org.projects.documents.project-proposal.partials._nature_sdg_area')
+                </div>
+
+                <div class="">
+                    @include('org.projects.documents.project-proposal.partials._description_link_cluster')
+                </div>
+
+                <div class="">
+                    @include('org.projects.documents.project-proposal.partials._multi_entries')
+                </div>
+
+                <div class="">
+                    @include('org.projects.documents.project-proposal.partials._budget_funds_audience')
+                </div>
+
+                <div class="">
+                    @include('org.projects.documents.project-proposal.partials._guests_plan_of_action')
+                </div>
+
+            </div>
 
             @if($isReadOnly)
                 </fieldset>
@@ -143,12 +154,16 @@
 
         </form>
 
-        @include('org.projects.documents.project-proposal.partials._signatures')
+        {{-- ================= SIGNATURES ================= --}}
+        <div class="rounded-2xl border bg-white p-5 shadow-sm">
+            @include('org.projects.documents.project-proposal.partials._signatures')
+        </div>
 
+        {{-- ================= ACTIONS ================= --}}
         @include('org.projects.documents.project-proposal.partials._actions')
 
     </div>
 
     @include('org.projects.documents.project-proposal.partials._script')
 
-</x-layouts.form-only>
+</x-app-layout>

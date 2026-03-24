@@ -161,5 +161,9 @@ class OfficerEntry extends Model
     {
         $this->is_under_probation = $this->shouldBeUnderProbation();
     }
-
+    
+    public function timelines()
+    {
+        return $this->morphMany(\App\Models\Timeline::class, 'timelineable')->latest();
+    }
 }

@@ -120,14 +120,23 @@ class ModeratorStrategicPlanController extends Controller
                     ->with('error', 'This submission cannot be returned in its current state.');
             }
 
+            $oldStatus = $locked->status;
+
             $locked->status = StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR;
             $locked->moderator_reviewed_by = $userId;
             $locked->moderator_reviewed_at = now();
             $locked->moderator_remarks = $request->input('moderator_remarks');
             $locked->forwarded_to_sacdev_at = null;
+
             $locked->save();
 
-            // Prepare data for after-commit notification
+            $locked->timelines()->create([
+                'user_id' => $userId,
+                'action' => 'returned_by_moderator',
+                'remarks' => $request->input('moderator_remarks'),
+                'old_status' => $oldStatus,
+                'new_status' => StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
+            ]);
             $submissionId = (int) $locked->getKey();
 
             DB::afterCommit(function () use ($orgId, $syId, $submissionId) {
@@ -211,12 +220,23 @@ class ModeratorStrategicPlanController extends Controller
                     ->with('error', 'This submission is no longer in the moderator review stage.');
             }
 
+            $oldStatus = $locked->status;
+
             $locked->status = StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV;
             $locked->moderator_reviewed_by = $userId;
             $locked->moderator_reviewed_at = now();
             $locked->moderator_remarks = $request->input('moderator_note');
             $locked->forwarded_to_sacdev_at = now();
+
             $locked->save();
+
+            $locked->timelines()->create([
+                'user_id' => $userId,
+                'action' => 'forwarded_to_sacdev',
+                'remarks' => $request->input('moderator_note'),
+                'old_status' => $oldStatus,
+                'new_status' => StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV,
+            ]);
 
             $submissionId = (int) $locked->getKey();
 

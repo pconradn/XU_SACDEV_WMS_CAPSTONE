@@ -33,10 +33,16 @@ Route::get('projects', [ProjectController::class, 'index'])
 |--------------------------------------------------------------------------
 | Project document hub
 |--------------------------------------------------------------------------
-*/
+
 Route::get(
     'projects/{project}/documents',
     [ProjectDocumentHubController::class, 'show']
+)->middleware('project.access')
+ ->name('org.projects.documents.hub');
+*/
+Route::get(
+    'projects/{project}/documents',
+    [ProjectDocumentHubController::class, 'showV2']
 )->middleware('project.access')
  ->name('org.projects.documents.hub');
 
@@ -445,6 +451,8 @@ Route::get(
     'project.access',
     'org.role:project_head,president,moderator'
 ])->name('org.projects.ticket-selling-report.create');
+
+
 
 
 Route::post(

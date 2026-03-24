@@ -1,131 +1,131 @@
-<div class="border border-slate-300">
+<div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-6">
 
-    {{-- =========================
-        GUESTS SECTION
-    ========================== --}}
-    <div class="px-4 pt-2">
-        <div class="text-[12px] font-medium text-slate-700">
+    {{-- ================= HEADER ================= --}}
+    <div>
+        <h3 class="text-sm font-semibold text-slate-900">
+            Guests & Plan of Action
+        </h3>
+        <p class="text-xs text-slate-500">
+            Add guest speakers and define the program flow or itinerary
+        </p>
+    </div>
+
+    {{-- ================= GUESTS ================= --}}
+    <div>
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
             Guests / Speakers / Dignitaries
         </div>
-    </div>
 
-    @php
-        $hasGuests = old('has_guest_speakers');
-        if ($hasGuests === null) {
-            $hasGuests = isset($proposal) ? (string)($proposal->has_guest_speakers ? '1' : '0') : '0';
-        }
-    @endphp
+        @php
+            $hasGuests = old('has_guest_speakers');
+            if ($hasGuests === null) {
+                $hasGuests = isset($proposal) ? (string)($proposal->has_guest_speakers ? '1' : '0') : '0';
+            }
+        @endphp
 
-    <div class="px-4 pt-2 text-[12px] text-slate-700 flex gap-6">
-        <label class="flex items-center gap-2">
-            <input type="radio"
-                   name="has_guest_speakers"
-                   value="1"
-                   class="border-slate-300"
-                   @checked($hasGuests === '1')>
-            Yes
-        </label>
+        <div class="flex gap-6 text-sm text-slate-700 mb-3">
+            <label class="flex items-center gap-2">
+                <input type="radio" name="has_guest_speakers" value="1"
+                    class="border-slate-300"
+                    @checked($hasGuests === '1')>
+                Yes
+            </label>
 
-        <label class="flex items-center gap-2">
-            <input type="radio"
-                   name="has_guest_speakers"
-                   value="0"
-                   class="border-slate-300"
-                   @checked($hasGuests === '0')>
-            No
-        </label>
-    </div>
+            <label class="flex items-center gap-2">
+                <input type="radio" name="has_guest_speakers" value="0"
+                    class="border-slate-300"
+                    @checked($hasGuests === '0')>
+                No
+            </label>
+        </div>
 
-    <div class="px-4 pb-3 pt-2 {{ $hasGuests === '1' ? '' : 'hidden' }}" id="guestListWrap">
+        {{-- Guest List --}}
+        <div id="guestListWrap" class="{{ $hasGuests === '1' ? '' : 'hidden' }}">
 
-        <div class="flex items-center justify-between">
-            <div class="text-[11px] font-medium text-blue-900 italic">
-                Guests List (Full Name, Affiliation, Designation)
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-slate-500">
+                    Full Name • Affiliation • Designation
+                </span>
+
+                <button type="button"
+                        id="addGuestBtn"
+                        class="text-xs text-slate-600 hover:text-slate-900">
+                    + Add
+                </button>
             </div>
 
-            <button type="button"
-                    id="addGuestBtn"
-                    class="text-[11px] text-blue-700 underline">
-                + Add
-            </button>
-        </div>
+            <div id="guestsWrap" class="space-y-2">
 
-        <div class="mt-2 space-y-2" id="guestsWrap">
+                @php
+                    $oldGuests = old('guests')
+                        ?? ($proposal?->guests?->map(fn($g) => [
+                            'full_name' => $g->full_name,
+                            'affiliation' => $g->affiliation,
+                            'designation' => $g->designation,
+                        ])->toArray() ?? []);
 
-            @php
-                $oldGuests = old('guests')
-                    ?? ($proposal?->guests?->map(fn($g) => [
-                        'full_name' => $g->full_name,
-                        'affiliation' => $g->affiliation,
-                        'designation' => $g->designation,
-                    ])->toArray() ?? []);
+                    if (empty($oldGuests)) {
+                        $oldGuests = [['full_name'=>'','affiliation'=>'','designation'=>'']];
+                    }
+                @endphp
 
-                if (empty($oldGuests)) {
-                    $oldGuests = [['full_name'=>'','affiliation'=>'','designation'=>'']];
-                }
-            @endphp
+                @foreach($oldGuests as $i => $g)
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-2 items-center guest-row">
 
-            @foreach($oldGuests as $i => $g)
-                <div class="grid grid-cols-1 gap-2 md:grid-cols-4 guest-row">
+                        <input type="text"
+                               name="guests[{{ $i }}][full_name]"
+                               value="{{ $g['full_name'] ?? '' }}"
+                               class="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                               placeholder="Full Name">
 
-                    <input type="text"
-                           name="guests[{{ $i }}][full_name]"
-                           value="{{ $g['full_name'] ?? '' }}"
-                           class="border border-slate-300 bg-white px-3 py-1 text-[12px]"
-                           placeholder="Full Name">
+                        <input type="text"
+                               name="guests[{{ $i }}][affiliation]"
+                               value="{{ $g['affiliation'] ?? '' }}"
+                               class="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                               placeholder="Affiliation">
 
-                    <input type="text"
-                           name="guests[{{ $i }}][affiliation]"
-                           value="{{ $g['affiliation'] ?? '' }}"
-                           class="border border-slate-300 bg-white px-3 py-1 text-[12px]"
-                           placeholder="Affiliation">
+                        <input type="text"
+                               name="guests[{{ $i }}][designation]"
+                               value="{{ $g['designation'] ?? '' }}"
+                               class="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                               placeholder="Designation">
 
-                    <input type="text"
-                           name="guests[{{ $i }}][designation]"
-                           value="{{ $g['designation'] ?? '' }}"
-                           class="border border-slate-300 bg-white px-3 py-1 text-[12px]"
-                           placeholder="Designation">
+                        <button type="button"
+                                class="remove-btn text-slate-400 hover:text-red-600 text-sm">
+                            ✕
+                        </button>
 
-                    <button type="button"
-                            class="remove-btn text-red-600 text-[12px] px-2">
-                        ✕
-                    </button>
-                </div>
-            @endforeach
+                    </div>
+                @endforeach
 
+            </div>
         </div>
     </div>
 
-    {{-- Divider --}}
-    <div class="border-t border-slate-300"></div>
+    {{-- ================= PLAN OF ACTION ================= --}}
+    <div class="border-t border-slate-200 pt-4">
 
-    {{-- =========================
-        PLAN OF ACTION
-    ========================== --}}
-    <div class="px-4 pt-2">
-        <div class="text-[12px] font-medium text-slate-700">
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
             Plan of Action
         </div>
-        <div class="text-[10px] text-blue-900 italic">
-            For on-campus: program flow. For off-campus: itinerary then program flow.
-        </div>
-    </div>
 
-    <div class="px-4 pb-4 pt-2">
+        <p class="text-xs text-slate-400 mb-3">
+            On-campus: program flow • Off-campus: itinerary then program flow
+        </p>
 
-        <div class="flex items-center justify-between">
-            <div class="text-[11px] font-medium text-blue-900 italic">
-                Rows
-            </div>
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-slate-500">
+                Schedule Entries
+            </span>
 
             <button type="button"
                     id="addPlanBtn"
-                    class="text-[11px] text-blue-700 underline">
+                    class="text-xs text-slate-600 hover:text-slate-900">
                 + Add
             </button>
         </div>
 
-        <div class="mt-2 space-y-2" id="planWrap">
+        <div id="planWrap" class="space-y-2">
 
             @php
                 $oldPlan = old('plan_of_actions')
@@ -142,34 +142,35 @@
             @endphp
 
             @foreach($oldPlan as $i => $p)
-                <div class="grid grid-cols-1 gap-2 md:grid-cols-7 plan-row">
+                <div class="grid grid-cols-1 md:grid-cols-7 gap-2 items-center plan-row">
 
                     <input type="date"
                            name="plan_of_actions[{{ $i }}][date]"
                            value="{{ isset($p['date']) ? \Carbon\Carbon::parse($p['date'])->format('Y-m-d') : '' }}"
-                           class="border border-slate-300 bg-white px-3 py-1 text-[12px]">
+                           class="rounded-lg border border-slate-300 px-2 py-2 text-sm">
 
                     <input type="time"
                            name="plan_of_actions[{{ $i }}][time]"
                            value="{{ optional(\Illuminate\Support\Carbon::make($p['time'] ?? null))->format('H:i') }}"
-                           class="border border-slate-300 bg-white px-3 py-1 text-[12px]">
+                           class="rounded-lg border border-slate-300 px-2 py-2 text-sm">
 
                     <input type="text"
                            name="plan_of_actions[{{ $i }}][activity]"
                            value="{{ $p['activity'] ?? '' }}"
-                           class="border border-slate-300 bg-white px-3 py-1 text-[12px] md:col-span-2"
-                           placeholder="Activity / Particulars">
+                           class="rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-2"
+                           placeholder="Activity">
 
                     <input type="text"
                            name="plan_of_actions[{{ $i }}][venue]"
                            value="{{ $p['venue'] ?? '' }}"
-                           class="border border-slate-300 bg-white px-3 py-1 text-[12px] md:col-span-2"
+                           class="rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-2"
                            placeholder="Venue">
 
                     <button type="button"
-                            class="remove-btn text-red-600 text-[12px] px-2">
+                            class="remove-btn text-slate-400 hover:text-red-600 text-sm">
                         ✕
                     </button>
+
                 </div>
             @endforeach
 

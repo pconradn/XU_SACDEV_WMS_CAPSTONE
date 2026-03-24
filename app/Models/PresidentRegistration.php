@@ -144,7 +144,10 @@ class PresidentRegistration extends Model
         return $this->status === 'approved_by_sacdev';
     }
 
-    
+    public function timelines()
+    {
+        return $this->morphMany(\App\Models\Timeline::class, 'timelineable')->latest();
+    }
 
 
 }

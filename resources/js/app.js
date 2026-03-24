@@ -1,7 +1,16 @@
-import './bootstrap';
+import './bootstrap'
 
-import Alpine from 'alpinejs';
+import Alpine from 'alpinejs'
 
-window.Alpine = Alpine;
+window.Alpine = Alpine
 
-Alpine.start();
+import 'preline'
+
+Alpine.start()
+
+import { createIcons, icons } from 'lucide';
+
+// run after DOM loads
+document.addEventListener("DOMContentLoaded", () => {
+    createIcons({ icons });
+});

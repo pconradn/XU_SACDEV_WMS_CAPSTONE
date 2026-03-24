@@ -7,32 +7,32 @@
 
 @php
 
-$docStatus = $document->status ?? 'draft';
+    $docStatus = $document->status ?? 'draft';
 
-$isProjectHead = $isProjectHead ?? false;
+    $isProjectHead = $isProjectHead ?? false;
 
-$isEditable = $isProjectHead && in_array($docStatus, ['draft', 'submitted', 'returned']);
+    $isEditable = $isProjectHead && in_array($docStatus, ['draft', 'submitted', 'returned']);
 
-if (in_array($docStatus, ['approved', 'approved_by_sacdev'])) {
-    $isEditable = false;
-}
+    if (in_array($docStatus, ['approved', 'approved_by_sacdev'])) {
+        $isEditable = false;
+    }
 
-$isReadOnly = !$isEditable;
+    $isReadOnly = !$isEditable;
 
-$statusStyles = [
-    'draft'              => 'bg-slate-50 text-slate-700',
-    'submitted'          => 'bg-blue-50 text-blue-800',
-    'returned'           => 'bg-rose-50 text-rose-800',
-    'approved'           => 'bg-emerald-50 text-emerald-800',
-    'approved_by_sacdev' => 'bg-emerald-50 text-emerald-800',
-];
+    $statusStyles = [
+        'draft'              => 'bg-slate-50 text-slate-700',
+        'submitted'          => 'bg-blue-50 text-blue-800',
+        'returned'           => 'bg-rose-50 text-rose-800',
+        'approved'           => 'bg-emerald-50 text-emerald-800',
+        'approved_by_sacdev' => 'bg-emerald-50 text-emerald-800',
+    ];
 
-$style = $statusStyles[$docStatus] ?? $statusStyles['draft'];
+    $style = $statusStyles[$docStatus] ?? $statusStyles['draft'];
 
-$currentApprover = $document?->signatures
-    ?->where('status', 'pending')
-    ->sortBy('id')
-    ->first();
+    $currentApprover = $document?->signatures
+        ?->where('status', 'pending')
+        ->sortBy('id')
+        ->first();
 
 @endphp
 
