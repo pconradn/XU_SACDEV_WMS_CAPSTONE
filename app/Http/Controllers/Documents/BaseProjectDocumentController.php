@@ -445,6 +445,151 @@ abstract class BaseProjectDocumentController extends Controller
 
 
 
+    
 
+    protected function handleSubmit(Project $project, ProjectDocument $document): void
+    {
+        DB::transaction(function () use ($document, $project) {
+
+        
+            if ($document->edit_mode && !$document->edit_requires_full_approval) {
+
+            
+                $document->signatures()->delete();
+
+                
+                $sacdevId = $this->resolveUserByRole($project, 'sacdev_admin');
+
+                ProjectDocumentSignature::create([
+                    'project_document_id' => $document->id,
+                    'user_id' => $sacdevId,
+                    'role' => 'sacdev_admin',
+                    'status' => 'pending'
+                ]);
+
+            } else {
+                
+                $document->signatures()->delete();
+                $this->createWorkflow($document);
+            }
+
+            $document->update([
+                'status' => 'submitted',
+                'edit_mode' => false
+            ]);
+
+            $document->timelines()->create([
+                'user_id' => auth()->id(),
+                'action' => 'submitted',
+                'remarks' => null,
+                'old_status' => 'draft',
+                'new_status' => 'submitted',
+            ]);
+        });
+
+        $this->notifyNextApprover($document);
+    }
+
+    protected function allowEdit(Project $project, ProjectDocument $document, ?string $remarks = null): void
+    {
+        if (!$document->edit_requested) {
+            abort(403, 'No edit request pending.');
+        }
+
+        DB::transaction(function () use ($document, $remarks) {
+
+            $document->update([
+                'edit_mode' => true,
+                'edit_requires_full_approval' => false, // 🔥 bypass flow
+                'edit_requested' => false,
+                'edit_requested_at' => null,
+                'edit_requested_by' => null,
+                'edit_request_remarks' => null,
+            ]);
+
+            $document->timelines()->create([
+                'user_id' => auth()->id(),
+                'action' => 'edit_granted',
+                'remarks' => $remarks,
+                'old_status' => $document->status,
+                'new_status' => $document->status,
+            ]);
+        });
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            'Edit request granted. You may update and resubmit. Only SACDEV approval will be required.'
+        );
+    }
+
+    public function requestEdit(Project $project, ProjectDocument $document, Request $request)
+    {
+        $data = $request->validate([
+            'remarks' => ['required', 'string', 'min:3']
+        ]);
+
+        if ($document->status !== 'approved') {
+            abort(403, 'Only approved documents can request edit.');
+        }
+
+        $document->update([
+            'edit_requested' => true,
+            'edit_requested_at' => now(),
+            'edit_requested_by' => auth()->id(),
+            'edit_request_remarks' => $data['remarks'],
+        ]);
+
+        $document->timelines()->create([
+            'user_id' => auth()->id(),
+            'action' => 'edit_requested',
+            'remarks' => $data['remarks'],
+            'old_status' => $document->status,
+            'new_status' => $document->status,
+        ]);
+
+
+        return back()->with('success', 'Edit request sent.');
+    }
+
+    protected function revertApproval(Project $project, ProjectDocument $document, string $remarks): void
+    {
+        if ($document->status !== 'approved') {
+            abort(403, 'Only approved documents can be reverted.');
+        }
+
+        DB::transaction(function () use ($document, $remarks) {
+
+            $oldStatus = $document->status;
+
+            foreach ($document->signatures as $sig) {
+                $sig->update([
+                    'status' => 'pending',
+                    'signed_at' => null
+                ]);
+            }
+
+            $document->update([
+                'status' => 'draft',
+                'remarks' => $remarks,
+                'returned_by' => auth()->id(),
+                'returned_at' => now(),
+            ]);
+
+            $document->timelines()->create([
+                'user_id' => auth()->id(),
+                'action' => 'approval_reverted',
+                'remarks' => $remarks,
+                'old_status' => $oldStatus,
+                'new_status' => 'draft',
+            ]);
+        });
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            'Approval was reverted for '.$document->formType->name.'. Please revise and resubmit.'
+        );
+    }
 
 }

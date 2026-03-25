@@ -218,6 +218,17 @@ class SacdevStrategicPlanController extends Controller
 
             $organization->last_b1_submission_id = $submissionId;
 
+            $exists = Organization::query()
+                ->whereRaw('LOWER(name) = ?', [strtolower($locked->org_name)])
+                ->where('id', '!=', $organization->id)
+                ->exists();
+
+            if ($exists) {
+                return redirect()
+                    ->route('admin.strategic_plans.show', $submission->getKey())
+                    ->with('error', 'Organization name already exists (including archived organizations). Please use a different name.');
+            }
+
             $organization->save();
 
             $locked->timelines()->create([
@@ -440,6 +451,15 @@ class SacdevStrategicPlanController extends Controller
 
         return redirect()->route('admin.strategic_plans.show', $submission)
             ->with('success', 'Approval reverted. Submission is back in SACDEV review stage.');
-    }
+    } 
+
+
+
+
+
+
+
+
+    
 
 }
