@@ -162,8 +162,6 @@ class SacdevStrategicPlanController extends Controller
             ->with('success', 'Returned to organization for revision.');
     }
 
-
-
     public function approve(Request $request, StrategicPlanSubmission $submission)
     {
         $orgId = (int) $submission->organization_id;
@@ -179,6 +177,14 @@ class SacdevStrategicPlanController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            $newName = trim($locked->org_name);
+
+            if ($newName === '') {
+                return redirect()
+                    ->route('admin.strategic_plans.show', $submission->getKey())
+                    ->with('error', 'Organization name cannot be empty. Please update the Strategic Plan before approval.');
+            }
+
             $allowed = [
                 StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV,
             ];
@@ -188,7 +194,6 @@ class SacdevStrategicPlanController extends Controller
                     ->route('admin.strategic_plans.show', $locked->getKey())
                     ->with('error', 'This submission is not ready for approval.');
             }
-
 
             $oldStatus = $locked->status;
             $locked->status = StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV;
@@ -205,7 +210,18 @@ class SacdevStrategicPlanController extends Controller
                 ->lockForUpdate()
                 ->findOrFail($orgId);
 
-            $organization->name = $locked->org_name;
+            $exists = Organization::query()
+                ->whereRaw('LOWER(name) = ?', [strtolower($newName)])
+                ->where('id', '!=', $organization->id)
+                ->exists();
+
+            if ($exists) {
+                return redirect()
+                    ->route('admin.strategic_plans.show', $submission->getKey())
+                    ->with('error', 'Organization name already exists (including archived organizations). Please use a different name.');
+            }
+
+            $organization->name = $newName;
             $organization->acronym = $locked->org_acronym;
 
             $organization->mission = $locked->mission;
@@ -217,17 +233,6 @@ class SacdevStrategicPlanController extends Controller
             $organization->logo_size_bytes = $locked->logo_size_bytes;
 
             $organization->last_b1_submission_id = $submissionId;
-
-            $exists = Organization::query()
-                ->whereRaw('LOWER(name) = ?', [strtolower($locked->org_name)])
-                ->where('id', '!=', $organization->id)
-                ->exists();
-
-            if ($exists) {
-                return redirect()
-                    ->route('admin.strategic_plans.show', $submission->getKey())
-                    ->with('error', 'Organization name already exists (including archived organizations). Please use a different name.');
-            }
 
             $organization->save();
 
@@ -252,14 +257,12 @@ class SacdevStrategicPlanController extends Controller
                 ]
             );
 
-
             $planProjects = StrategicPlanProject::query()
                 ->where('submission_id', $submissionId)
                 ->get();
 
             foreach ($planProjects as $planProject) {
 
-               
                 $project = Project::query()
                     ->where('source_strategic_plan_project_id', $planProject->id)
                     ->first();
@@ -273,17 +276,12 @@ class SacdevStrategicPlanController extends Controller
 
                     $project->source_strategic_plan_project_id = $planProject->id;
 
-                  
                     $project->status = 'planned';
                 }
 
- 
-
                 $project->title = $planProject->title;
 
-
                 $project->save();
-
 
                 Audit::log(
                     'strategic_plan_project_created',
@@ -300,7 +298,6 @@ class SacdevStrategicPlanController extends Controller
                     ]
                 );
             }
-
 
             DB::afterCommit(function () use ($president, $moderator, $orgId, $syId, $submissionId) {
 
@@ -346,8 +343,6 @@ class SacdevStrategicPlanController extends Controller
             return true;
         });
 
-
-
         if ($result instanceof RedirectResponse) {
             return $result;
         }
@@ -356,8 +351,6 @@ class SacdevStrategicPlanController extends Controller
             ->route('admin.strategic_plans.show', $submission->getKey())
             ->with('success', 'Approved by SACDEV and projects created successfully.');
     }
-
-
 
     public function revertApproval(Request $request, StrategicPlanSubmission $submission)
     {
