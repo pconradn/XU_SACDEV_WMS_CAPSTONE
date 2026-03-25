@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\OrgMembership;
 use App\Models\ProjectAssignment;
+use App\Models\Project;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -17,19 +18,14 @@ class EnsureUserCanAccessProject
             abort(403);
         }
 
-        // SACDEV admin always allowed
         if ($user->system_role === 'sacdev_admin') {
             return $next($request);
         }
 
         $project = $request->route('project');
 
-        if (!$project instanceof \App\Models\Project) {
-            $project = \App\Models\Project::find($project);
-        }
-
-        if (!$project) {
-            abort(403, 'Project not found.');
+        if (!$project instanceof Project) {
+            $project = Project::find($project);
         }
 
         if (!$project) {
@@ -39,25 +35,12 @@ class EnsureUserCanAccessProject
         $orgId = (int) session('active_org_id');
         $syId  = (int) session('encode_sy_id');
 
-        /*
-        |--------------------------------------------------------------------------
-        | Ensure project belongs to context
-        |--------------------------------------------------------------------------
-        */
-        //dd($request->route('project'));
-
         if (
             (int) $project->organization_id !== $orgId ||
             (int) $project->school_year_id !== $syId
         ) {
             abort(403, 'Invalid project context.');
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Check Org Roles (President, Treasurer, Moderator)
-        |--------------------------------------------------------------------------
-        */
 
         $hasOrgRoleAccess = OrgMembership::query()
             ->where('user_id', $user->id)
@@ -72,28 +55,26 @@ class EnsureUserCanAccessProject
             ])
             ->exists();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Check Project Head assignment
-        |--------------------------------------------------------------------------
-        */
-
-        $isProjectHead = ProjectAssignment::query()
+        $projectHeadAssignment = ProjectAssignment::query()
             ->where('project_id', $project->id)
             ->where('user_id', $user->id)
             ->where('assignment_role', 'project_head')
             ->whereNull('archived_at')
-            ->exists();
+            ->first();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Allow if ANY valid role
-        |--------------------------------------------------------------------------
-        */
+        $isProjectHead = (bool) $projectHeadAssignment;
 
         if (!$hasOrgRoleAccess && !$isProjectHead) {
             abort(403, 'You are not authorized to access this project.');
         }
+
+        if ($request->routeIs('org.projects.agreement.accept')) {
+            return $next($request);
+        }
+
+        $needsAgreement = $projectHeadAssignment && !$projectHeadAssignment->agreement_accepted_at;
+
+        $request->attributes->set('needs_project_agreement', $needsAgreement);
 
         return $next($request);
     }
