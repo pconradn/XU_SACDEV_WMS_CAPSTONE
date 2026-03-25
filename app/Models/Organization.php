@@ -77,4 +77,11 @@ class Organization extends Model
     {
         return $this->belongsTo(StrategicPlanSubmission::class, 'last_b1_submission_id');
     }
+
+    protected static function booted()
+    {
+        static::addGlobalScope('not_archived', function ($query) {
+            $query->whereNull('archived_at');
+        });
+    }
 }

@@ -67,11 +67,11 @@ class OrganizationController extends Controller
 
     public function destroy(Organization $organization)
     {
-
-        $organization->delete();
+        $organization->archived_at = now();
+        $organization->save();
 
         return redirect()
             ->route('admin.organizations.index')
-            ->with('status', 'Organization deleted.');
+            ->with('status', 'Organization archived.');
     }
 }
