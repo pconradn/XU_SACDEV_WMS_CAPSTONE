@@ -19,21 +19,13 @@ class RequireOperationalAccess
 
         $user = auth()->user();
 
-        /*
-        |--------------------------------------------------------------------------
-        | SACDEV admin always allowed
-        |--------------------------------------------------------------------------
-        */
+
 
         if ($user->system_role === 'sacdev_admin') {
             return $next($request);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Require context
-        |--------------------------------------------------------------------------
-        */
+
 
         $orgId = (int) session('active_org_id');
         $syId  = (int) session('encode_sy_id');
@@ -42,11 +34,7 @@ class RequireOperationalAccess
             abort(403, 'Organization and school year context required.');
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | 1. Membership access (PRIMARY rule)
-        |--------------------------------------------------------------------------
-        */
+
 
         $hasMembership = OrgMembership::query()
             ->where('user_id', $user->id)
@@ -59,11 +47,6 @@ class RequireOperationalAccess
             return $next($request);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | 2. President access via org_school_year record
-        |--------------------------------------------------------------------------
-        */
 
         $isPresident = OrganizationSchoolYear::query()
             ->where('organization_id', $orgId)
@@ -75,11 +58,7 @@ class RequireOperationalAccess
             return $next($request);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | 3. Assigned to project in this org + SY (carry-over / preparation)
-        |--------------------------------------------------------------------------
-        */
+
 
         $hasAssignment = ProjectAssignment::query()
             ->where('user_id', $user->id)
@@ -97,11 +76,6 @@ class RequireOperationalAccess
             return $next($request);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | No access
-        |--------------------------------------------------------------------------
-        */
 
         return response()->view('blocked.no-access', [], 403);
     }

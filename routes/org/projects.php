@@ -17,6 +17,7 @@ use App\Http\Controllers\Org\SellingApplicationController;
 use App\Http\Controllers\Org\SolicitationApplicationController;
 use App\Http\Controllers\Org\SolicitationSponsorshipReportController;
 use App\Http\Controllers\Org\TicketSellingReportController;
+use App\Http\Controllers\ProjectAgreementController;
 use App\Http\Controllers\SubmissionPacketController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,6 +28,8 @@ use Illuminate\Support\Facades\Route;
 */
 Route::get('projects', [ProjectController::class, 'index'])
     ->name('org.projects.index');
+
+
 
 
 /*
@@ -45,6 +48,10 @@ Route::get(
     [ProjectDocumentHubController::class, 'showV2']
 )->middleware('project.access')
  ->name('org.projects.documents.hub');
+
+ Route::post('projects/{project}/agreement/accept', [ProjectAgreementController::class, 'accept']
+    )->middleware('project.access')
+    ->name('org.projects.agreement.accept');
 
 
 /*

@@ -286,6 +286,18 @@ class ProjectDocumentHubController extends Controller
         $projectHead = $projectHeadAssignment?->user;
         $isProjectHead = $projectHead?->id === $user->id;
 
+        $assignment = ProjectAssignment::query()
+            ->where('project_id', $project->id)
+            ->where('user_id', $user->id)
+            ->where('assignment_role', 'project_head')
+            ->whereNull('archived_at')
+            ->first();
+
+        $needsAgreement = $assignment && !$assignment->agreement_accepted_at;
+
+
+
+
         $orgRole = \App\Models\OrgMembership::where('user_id', $user->id)
             ->where('organization_id', $project->organization_id)
             ->where('school_year_id', $project->school_year_id)
@@ -377,15 +389,18 @@ class ProjectDocumentHubController extends Controller
             'can_generate_dv' => $budgetDoc !== null,
             'dv_url' => route('org.projects.disbursement-voucher.create', $project),
 
-            'can_postpone' => $hasApprovedProposal && $isProjectHead && (
+            'can_postpone' => !$needsAgreement && $hasApprovedProposal && $isProjectHead && (
                 $postponements->isEmpty() ||
                 $postponements->last()?->status === 'approved_by_sacdev'
             ),
 
-            'can_cancel' => $hasApprovedProposal && $isProjectHead && $cancellations->isEmpty(),
+            'can_cancel' => !$needsAgreement && $hasApprovedProposal && $isProjectHead && $cancellations->isEmpty(),
 
-            'can_packets' => $hasApprovedProposal,
+            'can_packets' => !$needsAgreement && $hasApprovedProposal,
             'packet_url' => route('org.projects.packets.index', $project),
+
+
+
         ];
 
 
@@ -411,7 +426,8 @@ class ProjectDocumentHubController extends Controller
             $user,
             $project,
             $formRoutes,
-            $isProjectHead
+            $isProjectHead,
+            $needsAgreement,
         ) {
 
             $doc = $documents[$formType->id] ?? null;
@@ -434,13 +450,15 @@ class ProjectDocumentHubController extends Controller
                 'waiting_for' => $nextRole,
 
                 
-                'can_create' => !$doc && $routeName && $isProjectHead,
-                'can_edit' => $doc?->isEditable() && $isProjectHead,
+                'can_create' => !$needsAgreement && !$doc && $routeName && $isProjectHead,
+                'can_edit'   => !$needsAgreement && $doc?->isEditable() && $isProjectHead,
                 'can_review' => $canReview,
 
                 'create_url' => (!$doc && $routeName) ? route($routeName, $project) : null,
                 'edit_url' => ($doc && $doc->isEditable() && $routeName) ? route($routeName, $project) : null,
                 'view_url' => ($doc && $routeName) ? route($routeName, $project) : null,
+
+
             ];
         };
 
@@ -535,6 +553,7 @@ class ProjectDocumentHubController extends Controller
             'clearance',
             'milestones',
             'currentStage',
+            'needsAgreement',
         ));
     }
 
