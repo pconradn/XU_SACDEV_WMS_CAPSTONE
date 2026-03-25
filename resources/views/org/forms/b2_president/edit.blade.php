@@ -1,47 +1,14 @@
 <x-app-layout>
     <div class="mx-auto max-w-6xl px-4 py-6">
-        <div class="mb-6">
-            <h2 class="text-xl font-semibold text-slate-900">
-                Registration Form B-2: President Registration
-            </h2>
 
-            <div class="mt-1 text-sm text-slate-600">
-                Target School Year:
-                <span class="font-semibold">{{ $schoolYear->name }}</span>
+        @include('org.forms.b2_president.partials._header', ['submission' => $registration])
 
-            </div>
-        </div>
-
-        @include('org.forms.b2_president.partials._status_banner', ['registration' => $registration])
-
-        @if(session('success'))
-            <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
-                <div class="font-semibold">Success</div>
-                <div class="text-sm mt-1">{{ session('success') }}</div>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-900">
-                <div class="font-semibold">Error</div>
-                <div class="text-sm mt-1">{{ session('error') }}</div>
-            </div>
-        @endif
-
-        @if($errors->any())
-            <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-900">
-                <div class="font-semibold">Please fix the errors below.</div>
-                <ul class="mt-2 list-disc pl-5 text-sm space-y-1">
-                    @foreach($errors->all() as $err)
-                        <li>{{ $err }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
 
         @if($registration->status === 'submitted_to_sacdev')
             <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+                
                 <div class="font-semibold">Need to change something?</div>
+
                 <p class="mt-1 text-sm">
                     You can pull back the submission to edit the form, then submit again.
                 </p>
@@ -53,6 +20,7 @@
                         Pull Back Submission
                     </button>
                 </form>
+
             </div>
         @endif
 

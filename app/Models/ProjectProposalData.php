@@ -73,7 +73,10 @@ class ProjectProposalData extends Model
         return $this->hasMany(ProjectProposalPlanOfAction::class, 'project_document_id', 'project_document_id');
     }
 
-
+    public function projectDocument()
+    {
+        return $this->belongsTo(ProjectDocument::class);
+    }
 
     public function fundSources()
     {

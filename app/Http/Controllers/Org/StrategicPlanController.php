@@ -292,7 +292,7 @@ class StrategicPlanController extends Controller
                 $submission->logo_mime = $file->getMimeType();
                 $submission->logo_size_bytes = $file->getSize();
             }
-
+            $oldStatus = $submission->getOriginal('status');
             $submission->status = StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR;
             $submission->submitted_to_moderator_at = now();
 
@@ -304,8 +304,17 @@ class StrategicPlanController extends Controller
             $submission->sacdev_reviewed_at = null;
             $submission->sacdev_remarks = null;
             $submission->approved_at = null;
+             
 
             $submission->save();
+
+            $submission->timelines()->create([
+                'user_id' => Auth::id(),
+                'action' => 'submitted_to_moderator',
+                'remarks' => null,
+                'old_status' => $oldStatus,
+                'new_status' => StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR,
+            ]);
 
             Audit::log(
                 'strategic_plan_submitted_to_moderator',
@@ -333,7 +342,9 @@ class StrategicPlanController extends Controller
 
         $dedupeKey = implode(':', [
             'rereg','strategic_plan','submitted_to_moderator',
-            'org'.$orgId,'sy'.$targetSyId,'sub'.$submissionId,'to_user'.$moderator->getKey(),
+            'org'.$orgId,'sy'.$targetSyId,'sub'.$submissionId,
+            'to_user'.$moderator->getKey(),
+            now()->timestamp 
         ]);
 
         InAppNotifier::notifyOnce($moderator, [
@@ -458,4 +469,5 @@ class StrategicPlanController extends Controller
             ->route('org.rereg.index')
             ->with('status', 'Please select the target school year from the Re-Registration dashboard.');
     }
+
 }

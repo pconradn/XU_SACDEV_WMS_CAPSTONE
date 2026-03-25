@@ -46,6 +46,8 @@ class OrganizationPresidentController extends Controller
                 ->keyBy('organization_id');
         }
 
+        //dd($assignedMap);
+
         return view('admin.president_assignments.index', [
             'schoolYears' => $schoolYears,
             'selectedSyId' => $selectedSyId,
@@ -258,11 +260,7 @@ class OrganizationPresidentController extends Controller
 
         DB::transaction(function () use ($data, $email) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | RULE: President cannot be president of another org in same SY
-            |--------------------------------------------------------------------------
-            */
+  
 
             $existingPresident = \App\Models\OfficerEntry::query()
                 ->where('school_year_id', $data['school_year_id'])
@@ -274,11 +272,7 @@ class OrganizationPresidentController extends Controller
                 abort(422, 'This student is already a president of another organization in this school year.');
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | STEP 1: Create or Update OfficerEntry (ACADEMIC RECORD)
-            |--------------------------------------------------------------------------
-            */
+
 
             $officerEntry = \App\Models\OfficerEntry::updateOrCreate(
                 [
@@ -299,11 +293,7 @@ class OrganizationPresidentController extends Controller
                 ]
             );
 
-            /*
-            |--------------------------------------------------------------------------
-            | STEP 2: Create or Find User (LOGIN ACCOUNT)
-            |--------------------------------------------------------------------------
-            */
+
 
             [$user, $tempPassword] =
                 \App\Support\AccountProvisioner::findOrCreateUser(
@@ -311,21 +301,12 @@ class OrganizationPresidentController extends Controller
                     $email
                 );
 
-            /*
-            |--------------------------------------------------------------------------
-            | STEP 3: Link OfficerEntry → User
-            |--------------------------------------------------------------------------
-            */
+
 
             $officerEntry->update([
                 'user_id' => $user->id
             ]);
 
-            /*
-            |--------------------------------------------------------------------------
-            | STEP 4: Archive Existing President Membership
-            |--------------------------------------------------------------------------
-            */
 
             \App\Models\OrgMembership::query()
                 ->where('organization_id', $data['organization_id'])
@@ -336,11 +317,6 @@ class OrganizationPresidentController extends Controller
                     'archived_at' => now(),
                 ]);
 
-            /*
-            |--------------------------------------------------------------------------
-            | STEP 5: Create New Membership
-            |--------------------------------------------------------------------------
-            */
 
             \App\Models\OrgMembership::create([
                 'organization_id' => $data['organization_id'],

@@ -68,13 +68,21 @@ class SacdevB5ModeratorSubmissionController extends Controller
             if ($locked->status === 'approved_by_sacdev') {
                 abort(403, 'This form is already approved. Use a revert flow if you want later.');
             }
-
+            $oldStatus = $locked->getOriginal('status');
             $locked->status = 'returned_by_sacdev';
             $locked->returned_at = now();
             $locked->sacdev_reviewed_by_user_id = auth()->id();
             $locked->sacdev_remarks = $data['sacdev_remarks'];
             $locked->sacdev_reviewed_at = now();
             $locked->save();
+
+            $locked->timelines()->create([
+                'user_id' => auth()->id(),
+                'action' => 'returned_by_sacdev',
+                'remarks' => $data['sacdev_remarks'],
+                'old_status' => $oldStatus,
+                'new_status' => 'returned_by_sacdev',
+            ]);
 
             $submissionId = (int) $locked->getKey();
             $orgId = (int) $locked->organization_id;
@@ -115,14 +123,22 @@ class SacdevB5ModeratorSubmissionController extends Controller
             if ($locked->status !== 'submitted_to_sacdev') {
                 abort(403, 'Only submitted forms can be approved.');
             }
-
+            $oldStatus = $locked->getOriginal('status');
             $locked->status = 'approved_by_sacdev';
             $locked->approved_at = now();
             $locked->sacdev_reviewed_by_user_id = auth()->id();
             $locked->sacdev_reviewed_at = now();
             $locked->save();
 
-            // Activate term (keep inside same tx)
+
+            $locked->timelines()->create([
+                'user_id' => auth()->id(),
+                'action' => 'approved_by_sacdev',
+                'remarks' => null,
+                'old_status' => $oldStatus,
+                'new_status' => 'approved_by_sacdev',
+            ]);
+
             if ($locked->org_moderator_term_id) {
                 $term = OrgModeratorTerm::query()
                     ->whereKey($locked->org_moderator_term_id)
@@ -227,9 +243,6 @@ class SacdevB5ModeratorSubmissionController extends Controller
 
         return back()->with('success', 'Edit access granted. Submission returned for revision.');
     }
-
-
-
 
     public function revertApproval(Request $request, ModeratorSubmission $submission)
     {

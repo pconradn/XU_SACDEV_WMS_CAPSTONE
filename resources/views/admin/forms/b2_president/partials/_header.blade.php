@@ -1,113 +1,112 @@
-<div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+<div class="bg-white shadow-sm rounded-2xl p-5 space-y-4">
 
-    <div>
+    <div x-data="{ openTimeline: false, openRemarks: false }">
 
-        <div class="flex items-center gap-3 flex-wrap">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
-            <h1 class="text-xl font-semibold text-slate-900">
-                B-2 President Registration
-            </h1>
-
-            @php
-                $status = $registration->status ?? null;
-
-                $dot =
-                    !$status ? 'bg-slate-400' :
-                    (str_contains($status,'approved') ? 'bg-emerald-500' :
-                    (str_contains($status,'returned') ? 'bg-rose-500' :
-                    (str_contains($status,'submitted') ? 'bg-amber-500' :
-                    (str_contains($status,'forwarded') ? 'bg-blue-500' :
-                    'bg-slate-400'))));
-
-                $statusText = match($status) {
-
-                    'draft' => 'Draft',
-
-                    'submitted',
-                    'submitted_to_sacdev' => 'Submitted to SACDEV',
-
-                    'submitted_to_moderator' => 'Submitted to Moderator',
-
-                    'returned',
-                    'returned_by_moderator' => 'Returned',
-
-                    'approved',
-                    'approved_by_sacdev' => 'Approved',
-
-                    'forwarded_to_sacdev' => 'Forwarded to SACDEV',
-
-                    default => 'Not submitted'
-                };
-            @endphp
-
-
-            <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-
-                <span class="h-2.5 w-2.5 rounded-full {{ $dot }}"></span>
-
-                {{ $statusText }}
-
-            </span>
-
-        </div>
-
-
-
-        <div class="mt-2 text-sm text-slate-600 space-y-1">
-
+            {{-- LEFT --}}
             <div>
-                Organization:
-                <span class="font-semibold text-slate-900">
-                    {{ $registration->organization->name ?? '—' }}
-                </span>
+
+                {{-- TITLE --}}
+                <h1 class="text-xl font-semibold text-slate-900">
+                    Registration Form B-2: President Registration
+                </h1>
+
+                {{-- META --}}
+                <div class="text-sm text-slate-500 mt-1 flex flex-wrap items-center gap-2">
+
+                    {{-- ORG --}}
+                    <span>
+                        Organization:
+                        <span class="font-semibold text-slate-800">
+                            {{ $registration->organization->name ?? '—' }}
+                        </span>
+                    </span>
+
+                    <span class="hidden sm:inline">•</span>
+
+                    {{-- SCHOOL YEAR --}}
+                    <span>
+                        Target School Year:
+                        <span class="font-semibold text-slate-800">
+                            {{ $registration->targetSchoolYear->name ?? '—' }}
+                        </span>
+                    </span>
+
+                    <span class="hidden sm:inline">•</span>
+
+                    {{-- BACK --}}
+                    <a href="{{ route('admin.b2.president.index') }}"
+                       class="text-blue-600 hover:underline font-medium">
+                        Back to List
+                    </a>
+
+                </div>
+
+
             </div>
 
+
+            {{-- RIGHT: STATUS + BUTTONS --}}
+            <div class="flex items-center gap-2 flex-wrap">
+
+                {{-- STATUS --}}
+                @php
+                    $status = $registration->status;
+
+                    $config = match($status) {
+
+                        'draft' => [
+                            'label' => 'Draft',
+                            'class' => 'bg-slate-50 text-slate-700 border-slate-200'
+                        ],
+
+                        'submitted_to_sacdev' => [
+                            'label' => 'For Review',
+                            'class' => 'bg-blue-50 text-blue-700 border-blue-200'
+                        ],
+
+                        'returned_by_sacdev' => [
+                            'label' => 'Returned',
+                            'class' => 'bg-red-50 text-red-700 border-red-200'
+                        ],
+
+                        'approved_by_sacdev' => [
+                            'label' => 'Approved',
+                            'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        ],
+
+                        default => [
+                            'label' => ucwords(str_replace('_', ' ', $status)),
+                            'class' => 'bg-slate-50 text-slate-700 border-slate-200'
+                        ],
+                    };
+                @endphp
+
+                <span class="inline-flex items-center text-xs px-3 py-1.5 rounded-full border font-semibold {{ $config['class'] }}">
+                    {{ $config['label'] }}
+                </span>
+
+                {{-- REMARKS --}}
+                @include('partials.timeline_remarks._remarks_button', [
+                    'submission' => $registration
+                ])
+
+                {{-- TIMELINE --}}
+                @include('partials.timeline_remarks._timeline_button')
+
+            </div>
 
         </div>
 
+        {{-- MODALS --}}
+        @include('partials.timeline_remarks._remarks_modal', [
+            'submission' => $registration
+        ])
 
-
-        @if($registration->submitted_at || $registration->created_at)
-
-            <div class="mt-2 text-xs text-slate-500">
-
-                Submitted:
-                {{
-                    $registration->submitted_at
-                        ? \Carbon\Carbon::parse($registration->submitted_at)->format('M d, Y — h:i A')
-                        : \Carbon\Carbon::parse($registration->created_at)->format('M d, Y — h:i A')
-                }}
-
-            </div>
-
-        @endif
-
-
-        @if($registration->sacdev_reviewed_at)
-
-            <div class="text-xs text-slate-500">
-
-                SACDEV reviewed:
-                {{
-                    \Carbon\Carbon::parse($registration->sacdev_reviewed_at)->format('M d, Y — h:i A')
-                }}
-
-            </div>
-
-        @endif
-
-    </div>
-
-
-
-    <div class="flex items-center gap-2">
-
-        <a href="{{ route('admin.b2.president.index') }}"
-           class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-
-            ← Back to List
-
-        </a>
+        @include('partials.timeline_remarks._timeline_modal', [
+            'submission' => $registration
+        ])
 
     </div>
 

@@ -7,19 +7,6 @@
             </p>
         </div>
 
-        @if(session('success'))
-            <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
-                <div class="font-semibold">Success</div>
-                <div class="text-sm mt-1">{{ session('success') }}</div>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-900">
-                <div class="font-semibold">Error</div>
-                <div class="text-sm mt-1">{{ session('error') }}</div>
-            </div>
-        @endif
 
         <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <form method="GET" action="{{ route('admin.moderator_submissions.index') }}"

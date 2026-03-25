@@ -222,6 +222,21 @@ class B3OfficerListController extends Controller
         ]);
 
         $this->persistDraft($request, $registration);
+        $this->persistDraft($request, $registration);
+
+        $registration->refresh();
+
+        if ($registration->timelines()->count() === 0) {
+
+            $registration->timelines()->create([
+                'user_id' => auth()->id(),
+                'action' => 'draft_created',
+                'remarks' => null,
+                'old_status' => null,
+                'new_status' => 'draft',
+            ]);
+
+        }
 
         return back()->with('success', 'Draft saved.');
     }
@@ -267,7 +282,7 @@ class B3OfficerListController extends Controller
    
         $this->persistDraft($request, $registration);
 
-    
+        $oldStatus = $registration->status;
         $registration->refresh();
         $registration->status = 'submitted_to_sacdev';
         $registration->submitted_at = now();
@@ -287,6 +302,15 @@ class B3OfficerListController extends Controller
 
         $registration->save();
 
+        $registration->timelines()->create([
+            'user_id' => auth()->id(),
+            'action' => 'submitted_to_sacdev',
+            'remarks' => null,
+            'old_status' => $oldStatus,
+            'new_status' => 'submitted_to_sacdev',
+        ]);
+
+
         return back()->with('success', 'Submitted to SACDEV successfully.');
     }
 
@@ -300,12 +324,20 @@ class B3OfficerListController extends Controller
             ->firstOrFail();
 
         if ($registration->status !== 'submitted_to_sacdev') {
-            return back()->with('error', 'This form cannot be pulled back because it is not currently submitted to SACDEV.');
+            return back()->with('error', 'This form cannot be pulled back as it is not yet submitted or it is already under review');
         }
-
+        $oldStatus = $registration->status;
         $registration->status = 'draft';
         $registration->submitted_at = null;
         $registration->save();
+
+        $registration->timelines()->create([
+            'user_id' => auth()->id(),
+            'action' => 'unsubmitted',
+            'remarks' => null,
+            'old_status' => $oldStatus,
+            'new_status' => 'draft',
+        ]);
 
         return back()->with('success', 'Submission pulled back successfully. You may now edit and resubmit.');
     }

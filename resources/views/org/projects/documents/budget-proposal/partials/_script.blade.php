@@ -1,7 +1,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
-  
     document.querySelectorAll('[data-add-budget]').forEach(btn => {
         btn.addEventListener('click', () => {
             addBudgetRow(btn.getAttribute('data-add-budget'));
@@ -19,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (section) recalcSection(section);
         recalcGrandTotal();
         recalcFunds();
+        checkBudgetMatch();
     });
 
     document.addEventListener('input', (e) => {
@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (section) recalcSection(section);
             recalcGrandTotal();
             recalcFunds();
+            checkBudgetMatch();
             return;
         }
 
@@ -43,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     recalcAllSections();
     recalcGrandTotal();
     recalcFunds();
+    checkBudgetMatch(); 
 });
 
 
@@ -80,29 +82,40 @@ function addBudgetRow(section) {
     row.className = "grid grid-cols-12 gap-2 items-center";
 
     row.innerHTML = `
+        <input type="hidden" data-section="${section}">
+
         <div class="col-span-1">
-            <input type="number" min="0" step="1" name="${section}[qty][]"
-                   class="w-full border border-slate-300 px-2 py-1 text-[12px] text-center">
+            <input type="number" step="1"
+                name="${section}[qty][]"
+                class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-center">
         </div>
+
         <div class="col-span-2">
-            <input type="text" name="${section}[unit][]"
-                   class="w-full border border-slate-300 px-2 py-1 text-[12px] text-center">
+            <input type="text"
+                name="${section}[unit][]"
+                class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-center">
         </div>
+
         <div class="col-span-4">
-            <input type="text" name="${section}[particulars][]"
-                   class="w-full border border-slate-300 px-2 py-1 text-[12px]">
+            <input type="text"
+                name="${section}[particulars][]"
+                class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
         </div>
+
         <div class="col-span-2">
-            <input type="number" min="0" step="0.01" name="${section}[price][]"
-                   class="w-full border border-slate-300 px-2 py-1 text-[12px] text-right">
+            <input type="number" step="0.01"
+                name="${section}[price][]"
+                class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-right">
         </div>
-        <div class="col-span-2">
-            <input type="number" min="0" step="0.01" name="${section}[amount][]"
-                   class="w-full border border-slate-300 px-2 py-1 text-[12px] text-right bg-slate-50" readonly>
+
+        <div class="col-span-2 text-right font-semibold tabular-nums">
+            ₱ <span data-amount>0.00</span>
+            <input type="hidden" name="${section}[amount][]" value="0">
         </div>
+
         <div class="col-span-1 text-center">
-            <button type="button" data-remove-budget="1"
-                    class="text-red-600 text-[12px] font-semibold hover:underline">
+            <button type="button" data-remove-budget
+                class="text-red-500 text-xs hover:underline">
                 Remove
             </button>
         </div>
@@ -114,18 +127,28 @@ function addBudgetRow(section) {
     recalcSection(section);
     recalcGrandTotal();
     recalcFunds();
+    checkBudgetMatch(); 
 }
 
-function calculateRowAmount(row) {
-    const qty   = row.querySelector('input[name*="[qty]"]');
-    const price = row.querySelector('input[name*="[price]"]');
-    const amt   = row.querySelector('input[name*="[amount]"]');
+    function calculateRowAmount(row) {
+        const qty   = row.querySelector('input[name*="[qty]"]');
+        const price = row.querySelector('input[name*="[price]"]');
+        const amtSpan = row.querySelector('[data-amount]');
+        const amtInput = row.querySelector('input[name*="[amount]"]');
 
-    const q = num(qty?.value);
-    const p = num(price?.value);
+        const q = num(qty?.value);
+        const p = num(price?.value);
 
-    if (amt) amt.value = (q * p).toFixed(2);
-}
+        const total = q * p;
+
+        if (amtSpan) {
+            amtSpan.textContent = total.toLocaleString(undefined, { minimumFractionDigits: 2 });
+        }
+
+        if (amtInput) {
+            amtInput.value = total.toFixed(2);
+        }
+    }
 
 
 
@@ -153,13 +176,14 @@ function recalcGrandTotal() {
     let grand = 0;
 
     document.querySelectorAll('[data-section-total]').forEach(el => {
-        console.log(el.id, el.textContent);
         grand += num(el.textContent);
     });
 
     const grandEl = document.getElementById('grand_total');
     if (grandEl) grandEl.textContent = grand.toFixed(2);
 }
+
+
 
 function recalcFunds() {
     const amountPerPax = num(document.getElementById('counterpart_amount_per_pax')?.value);
@@ -193,5 +217,25 @@ function initializeExistingRows() {
             calculateRowAmount(row);
         });
     });
+}
+
+
+
+function checkBudgetMatch() {
+    const grandTotal = num(document.getElementById('grand_total')?.textContent);
+    const proposalTotal = num(document.getElementById('proposal_total_budget')?.value);
+
+    const indicator = document.getElementById('budget_indicator');
+    if (!indicator) return;
+
+    indicator.classList.remove('hidden', 'text-green-600', 'text-red-600');
+
+    if (grandTotal === proposalTotal) {
+        indicator.classList.add('text-green-600');
+        indicator.innerText = "✔ Matches Project Proposal Budget";
+    } else {
+        indicator.classList.add('text-red-600');
+        indicator.innerText = `⚠ Not matching (Proposal: ₱ ${proposalTotal.toLocaleString()})`;
+    }
 }
 </script>

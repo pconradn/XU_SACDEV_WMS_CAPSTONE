@@ -212,6 +212,11 @@ Route::prefix('admin')
             [AdminProjectDocumentController::class,'retract']
         )->name('admin.projects.documents.retract');
 
+        Route::get(
+            '/projects/{project}/documents/{form}/print/{document?}',
+            [AdminProjectDocumentController::class, 'showPrint']
+        )->name('admin.projects.documents.print');
+
 
         /*
         |--------------------------------------------------------------------------

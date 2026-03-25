@@ -5,20 +5,6 @@
             <p class="mt-1 text-sm text-slate-600">Review submitted forms, return with remarks, or approve.</p>
         </div>
 
-        @if(session('success'))
-            <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
-                <div class="font-semibold">Success</div>
-                <div class="text-sm mt-1">{{ session('success') }}</div>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-900">
-                <div class="font-semibold">Error</div>
-                <div class="text-sm mt-1">{{ session('error') }}</div>
-            </div>
-        @endif
-
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm mb-4">
             <form method="GET" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div>

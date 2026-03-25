@@ -27,4 +27,24 @@ class ProjectAssignment extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function membership()
+    {
+        return $this->hasOne(\App\Models\OrgMembership::class, 'user_id', 'user_id');
+    }
+
+
+    public function officerEntry()
+    {
+        return $this->hasOneThrough(
+            \App\Models\OfficerEntry::class,
+            \App\Models\OrgMembership::class,
+            'user_id',    
+            'id',                
+            'user_id',        
+            'officer_entry_id'    
+        );
+    }
+
+
 }

@@ -120,4 +120,10 @@ class ModeratorSubmission extends Model
     {
         return $this->belongsTo(User::class, 'edit_requested_by_user_id');
     }
+
+    public function timelines()
+    {
+        return $this->morphMany(\App\Models\Timeline::class, 'timelineable')->latest();
+    }
+
 }

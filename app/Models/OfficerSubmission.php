@@ -93,4 +93,8 @@ class OfficerSubmission extends Model
     {
         return $this->status === 'approved_by_sacdev';
     }
+    public function timelines()
+    {
+        return $this->morphMany(Timeline::class, 'timelineable')->latest();
+    }
 }

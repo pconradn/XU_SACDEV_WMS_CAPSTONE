@@ -43,7 +43,7 @@
                     {{-- School Year --}}
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-slate-700">
-                            Target School Year
+                            Target School Yearss
                         </label>
 
                         <select name="school_year_id"

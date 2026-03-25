@@ -35,7 +35,6 @@ class OrgRoleMiddleware
             $hasRole = true;
         }
 
-      
         if (!$hasRole && in_array('president', $roles, true)) {
             $hasRole = OrganizationSchoolYear::query()
                 ->where('organization_id', $orgId)

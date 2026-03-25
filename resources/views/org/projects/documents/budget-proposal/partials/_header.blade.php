@@ -1,85 +1,72 @@
-<div class="border border-slate-300">
+<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
 
-
-    <div class="flex justify-end px-4 pt-3">
-        <div class="text-[12px] font-semibold text-slate-500 uppercase tracking-wide">
-            
-        </div>
-    </div>
-
-
-    <div class="px-4 pb-4 text-center">
-        <h1 class="text-[24px] font-bold tracking-wide text-slate-900">
-            BUDGET PROPOSAL
+    {{-- MAIN TITLE --}}
+    <div class="px-6 py-6 text-center">
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
+            Budget Proposal
         </h1>
+        <p class="text-sm text-slate-500 mt-1">
+            Plan and allocate financial resources for your project
+        </p>
     </div>
 
-
-    <div class="bg-slate-50 border-t border-b border-slate-300 px-4 py-1 text-center">
-        <div class="text-[12px] font-semibold text-slate-900 tracking-wide">
-            PROJECT FINANCIAL PLAN
-        </div>
+    {{-- SECTION LABEL --}}
+    <div class="bg-slate-50 border-y border-slate-200 px-6 py-2 text-center">
+        <span class="text-xs font-semibold text-slate-700 tracking-wide uppercase">
+            Project Financial Plan
+        </span>
     </div>
 
-
-    <div class="px-4 py-5">
-
-        <div class="text-[12px] font-medium text-slate-700 mb-2">
-            Name / Title of Project:
+    {{-- PROJECT TITLE --}}
+    <div class="px-6 py-6">
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 text-center">
+            Project Title
         </div>
 
         <div class="text-center">
-            <h2 class="text-[18px] font-semibold text-slate-900">
+            <h2 class="text-xl md:text-2xl font-semibold text-slate-900 tracking-tight">
                 {{ $project->title }}
             </h2>
         </div>
-
     </div>
 
+    {{-- PROJECT META --}}
+    <div class="border-t border-slate-200 px-6 py-6">
 
-    <div class="border-t border-slate-300 px-4 py-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-[12px]">
-
+            {{-- DATE --}}
             <div>
-                <div class="text-[10px] text-slate-500 uppercase tracking-wide">
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                     Implementation Date
                 </div>
 
-                @php
-                $startDate = $project->proposalDocument?->proposalData?->start_date;
-                @endphp
-
-                <div class="mt-1 font-medium text-slate-900">
-                    {{ $startDate ? \Carbon\Carbon::parse($startDate)->format('F d, Y') : 'Not specified' }}
+                <div class="mt-2 text-sm md:text-base font-medium text-slate-900">
+                    {{ $project->implementation_date_display ?? 'Not specified' }}
                 </div>
             </div>
 
-            @php
-            //dd($project->proposalDocument->proposalData->start_date);
-            @endphp
-
+            {{-- VENUE --}}
             <div>
-                <div class="text-[10px] text-slate-500 uppercase tracking-wide">
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                     Venue
                 </div>
 
-                <div class="mt-1 font-medium text-slate-900">
-                    {{ $project->proposalDocument->proposalData->venue_name ?? 'Not specified' }}
+                <div class="mt-2 text-sm md:text-base font-medium text-slate-900">
+                    {{ $project->implementation_venue ?? 'Not specified' }}
                 </div>
             </div>
 
-
+            {{-- ORGANIZATION --}}
             <div>
-                <div class="text-[10px] text-slate-500 uppercase tracking-wide">
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                     Organization
                 </div>
 
-                <div class="mt-1 font-medium text-slate-900">
+                <div class="mt-2 text-sm md:text-base font-medium text-slate-900">
                     {{ $project->organization->name ?? '—' }}
                 </div>
             </div>
-
 
         </div>
 

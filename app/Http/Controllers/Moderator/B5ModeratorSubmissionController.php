@@ -145,9 +145,31 @@ class B5ModeratorSubmissionController extends Controller
 
             $submission->fill($request->except(['leaderships', 'photo_id']));
             $submission->moderator_user_id = $submission->moderator_user_id ?: $userId;
+            
+            $this->persistDraftData($request, $submission, $userId);
+
+            $oldStatus = $submission->getOriginal('status');
+
             $submission->status = 'draft';
-            $submission->version = (int) $submission->version + 1;
             $submission->save();
+
+            $submission->timelines()->create([
+                'user_id' => $userId,
+                'action' => 'saved_as_draft',
+                'old_status' => $oldStatus,
+                'new_status' => 'draft',
+            ]);
+          
+
+            //dd(draft);
+            $submission->timelines()->create([
+                'user_id' => $userId,
+                'action' => 'saved_as_draft',
+                'remarks' => null,
+                'old_status' => $oldStatus,
+                'new_status' => 'draft',
+            ]);
+            
 
             $submission->leaderships()->delete();
 
@@ -204,9 +226,10 @@ class B5ModeratorSubmissionController extends Controller
         ]);
 
        
-        $this->saveDraft($request);
+  
 
         $submission->refresh();
+
 
         $submission->status = 'submitted_to_sacdev';
         $submission->submitted_at = now();
@@ -222,10 +245,58 @@ class B5ModeratorSubmissionController extends Controller
         $submission->edit_requested_by_user_id = null;
         $submission->edit_request_message = null;
 
+        $this->persistDraftData($request, $submission, $userId);
+
+        $oldStatus = $submission->getOriginal('status');
+
+        $submission->status = 'submitted_to_sacdev';
+        $submission->submitted_at = now();
+
         $submission->save();
+
+        $submission->timelines()->create([
+            'user_id' => $userId,
+            'action' => 'submitted_to_sacdev',
+            'old_status' => $oldStatus,
+            'new_status' => 'submitted_to_sacdev',
+        ]);
 
         return back()->with('success', 'Submitted to SACDEV successfully.');
     }
+
+
+    private function persistDraftData($request, $submission, $userId)
+    {
+        if ($request->hasFile('photo_id')) {
+            $path = $request->file('photo_id')->store('moderator-ids', 'public');
+            $submission->photo_id_path = $path;
+        }
+
+        $submission->fill($request->except(['leaderships', 'photo_id']));
+        $submission->moderator_user_id = $submission->moderator_user_id ?: $userId;
+
+        $submission->version = (int) $submission->version + 1;
+
+        $submission->save();
+
+        $submission->leaderships()->delete();
+
+        foreach (($request->input('leaderships') ?? []) as $i => $row) {
+            if (!is_array($row) || $this->rowEmpty($row)) continue;
+
+            $submission->leaderships()->create([
+                'organization_name'    => $row['organization_name'] ?? null,
+                'position'             => $row['position'] ?? null,
+                'organization_address' => $row['organization_address'] ?? null,
+                'inclusive_years'      => $row['inclusive_years'] ?? null,
+                'sort_order'           => $i + 1,
+            ]);
+        }
+    }
+
+
+
+
 
     public function unsubmit(Request $request)
     {
@@ -248,10 +319,18 @@ class B5ModeratorSubmissionController extends Controller
         if ($submission->sacdev_reviewed_at) {
             return back()->with('error', 'Cannot unsubmit because SACDEV has already started reviewing.');
         }
-
+        $oldStatus = $submission->status;
         $submission->status = 'draft';
         $submission->submitted_at = null;
         $submission->save();
+
+        $submission->timelines()->create([
+            'user_id' => $userId,
+            'action' => 'unsubmitted',
+            'remarks' => null,
+            'old_status' => $oldStatus,
+            'new_status' => 'draft',
+        ]);
 
         return back()->with('success', 'Submission was reverted back to draft.');
     }
@@ -290,6 +369,7 @@ class B5ModeratorSubmissionController extends Controller
 
         return back()->with('success', 'Edit request sent to SACDEV.');
     }
+
 
 
 
