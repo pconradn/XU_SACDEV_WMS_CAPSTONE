@@ -14,6 +14,8 @@
         $isTreasurer = $orgRole === 'treasurer';
         $isAuditor = $orgRole === 'auditor';
 
+        //dd($projects);
+
         $isProjectHead = \App\Models\ProjectAssignment::query()
             ->where('user_id', $user->id)
             ->whereNull('archived_at')

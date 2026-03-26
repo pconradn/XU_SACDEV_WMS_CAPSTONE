@@ -128,7 +128,7 @@
         <form method="POST"
             action="{{ $currentSignature->role === 'sacdev_admin'
                 ? route('admin.projects.documents.approve', [$project, $document->formType->code])
-                : route('org.projects.project-proposal.approve', $project) }}">
+                : route('org.projects.documents.project-proposal.approve', $project) }}">
 
             @csrf
             <button
@@ -197,7 +197,7 @@
         <form method="POST"
             action="{{ optional($currentSignature)->role === 'sacdev_admin' 
                 ? route('admin.projects.documents.return', [$project, $document->formType->code])
-                : route('org.projects.project-proposal.return', $project) }}">
+                : route('org.projects.documents.project-proposal.return', $project) }}">
 
             @csrf
 

@@ -55,11 +55,13 @@ class LiquidationReportController extends BaseProjectDocumentController
 
         [$data, $clean] = $this->normalizeData($data);
 
+        $document = $this->getOrCreateDocument($project, 'LIQUIDATION_REPORT');
+
         DB::transaction(function () use ($project, $formType, $data, $clean) {
 
             $document = $this->saveDocument($project, $formType);
 
-            if ($document->isLocked()) {
+            if ($document->isLocked() && !$document->edit_mode) {
                 abort(403, 'This liquidation report is already finalized.');
             }
 
@@ -67,11 +69,17 @@ class LiquidationReportController extends BaseProjectDocumentController
 
             $this->saveItems($document->id, $clean);
 
-            $this->resetApprovalsAfterEdit($document);
+            if (!$document->edit_mode) {
+                $this->resetApprovalsAfterEdit($document);
+            }
 
         });
 
         $action = request()->input('action');
+
+        if ($document && $document->edit_mode) {
+            $action = 'submit';
+        }
 
         if ($action === 'submit') {
             return $this->submit($project);
@@ -90,29 +98,29 @@ class LiquidationReportController extends BaseProjectDocumentController
             ->where('form_type_id', $formType->id)
             ->firstOrFail();
 
-        if ($document->status !== 'draft') {
-            return back()->with('error', 'This document was already submitted.');
+        if ($document->status !== 'draft' && !$document->edit_mode) {
+            return back()->with('error', 'This form cannot be submitted.');
         }
 
-        DB::transaction(function () use ($document) {
-
-            $document->update([
-                'status' => 'submitted',
-                'submitted_at' => now(),
-                'remarks' => null,
-                'returned_by' => null,
-                'returned_at' => null,
-            ]);
-
-            $document->signatures()->delete();
-
-            $this->createWorkflow($document);
-
-        });
+        $this->handleRequestSubmit($project, $document);
 
         $document->load('signatures','formType','project');
 
         $this->notifyNextApprover($document);
+
+        Audit::log(
+            'document.submitted',
+            'Liquidation report submitted',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'liquidation_report'
+                ]
+            ]
+        );
 
         return back()->with('success','Liquidation report submitted successfully.');
     }

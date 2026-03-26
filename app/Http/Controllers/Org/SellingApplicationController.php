@@ -13,6 +13,7 @@ use App\Models\ProjectDocumentSignature;
 use App\Models\SellingApplicationData;
 use App\Models\SellingApplicationItem;
 use App\Models\User;
+use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -99,7 +100,7 @@ class SellingApplicationController extends BaseProjectDocumentController
 
         $document = $this->getOrCreateDocument($project, 'SELLING_APPLICATION');
 
-        if ($document->isLocked()) {
+        if ($document->isLocked() && !$document->edit_mode) {
             abort(403, 'This document is already approved and cannot be edited.');
         }
 
@@ -144,12 +145,18 @@ class SellingApplicationController extends BaseProjectDocumentController
             }
 
 
-            $this->resetApprovalsAfterEdit($document);
+            if (!$document->edit_mode) {
+                $this->resetApprovalsAfterEdit($document);
+            }
 
         });
 
 
         $action = $request->input('action');
+
+        if ($document && $document->edit_mode) {
+            $action = 'submit';
+        }
 
         if ($action === 'submit') {
             return $this->submit($project);
@@ -189,87 +196,35 @@ class SellingApplicationController extends BaseProjectDocumentController
 
     public function submit(Project $project)
     {
-
         $formType = FormType::where('code', 'SELLING_APPLICATION')->firstOrFail();
 
         $document = ProjectDocument::where('project_id', $project->id)
             ->where('form_type_id', $formType->id)
             ->firstOrFail();
 
-
-        if ($document->status !== 'draft') {
-            return back()->with('error', 'This form is already submitted.');
+        if ($document->status !== 'draft' && !$document->edit_mode) {
+            return back()->with('error', 'This form cannot be submitted.');
         }
 
+        $this->handleRequestSubmit($project, $document);
 
-        DB::transaction(function () use ($project, $document) {
+        $document->load('signatures','formType','project');
 
-            $document->update([
-
-                'status' => 'submitted',
-                'submitted_at' => now(),
-
-                'remarks' => null,
-                'returned_by' => null,
-                'returned_at' => null,
-
-            ]);
-
-
-            $document->signatures()->delete();
-
-
-            $projectHead = ProjectAssignment::where('project_id', $project->id)
-                ->where('assignment_role', 'project_head')
-                ->whereNull('archived_at')
-                ->firstOrFail();
-
-            $this->createSignature(
-                $document->id,
-                $projectHead->user_id,
-                'project_head',
-                'signed'
-            );
-
-
-            $president = OrgMembership::where('organization_id', $project->organization_id)
-                ->where('school_year_id', $project->school_year_id)
-                ->where('role', 'president')
-                ->whereNull('archived_at')
-                ->firstOrFail();
-
-            $this->createSignature(
-                $document->id,
-                $president->user_id,
-                'president'
-            );
-
-
-            $moderator = OrgMembership::where('organization_id', $project->organization_id)
-                ->where('school_year_id', $project->school_year_id)
-                ->where('role', 'moderator')
-                ->whereNull('archived_at')
-                ->firstOrFail();
-
-            $this->createSignature(
-                $document->id,
-                $moderator->user_id,
-                'moderator'
-            );
-
-
-            $admin = User::where('system_role','sacdev_admin')->firstOrFail();
-
-            $this->createSignature(
-                $document->id,
-                $admin->id,
-                'sacdev_admin'
-            );
-
-        });
+        Audit::log(
+            'document.submitted',
+            'Selling application submitted',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'selling_application'
+                ]
+            ]
+        );
 
         return back()->with('success', 'Selling application submitted successfully.');
-
     }
 
 

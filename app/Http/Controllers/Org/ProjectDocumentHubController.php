@@ -332,19 +332,19 @@ class ProjectDocumentHubController extends Controller
             $proposalAction = [
                 'label' => 'Create Proposal',
                 'type' => 'create',
-                'url' => route('org.projects.project-proposal.create', $project),
+                'url' => route('org.projects.documents.project-proposal.create', $project),
             ];
         } elseif ($proposalDoc->isEditable() && $isProjectHead) {
             $proposalAction = [
                 'label' => 'Continue Proposal',
                 'type' => 'edit',
-                'url' => route('org.projects.project-proposal.create', $project),
+                'url' => route('org.projects.documents.project-proposal.create', $project),
             ];
         } else {
             $proposalAction = [
                 'label' => 'View Proposal',
                 'type' => 'view',
-                'url' => route('org.projects.project-proposal.create', $project),
+                'url' => route('org.projects.documents.project-proposal.create', $project),
             ];
         }
 
@@ -387,7 +387,7 @@ class ProjectDocumentHubController extends Controller
 
         $actions = [
             'can_generate_dv' => $budgetDoc !== null,
-            'dv_url' => route('org.projects.disbursement-voucher.create', $project),
+            'dv_url' => route('org.projects.documents.disbursement-voucher.create', $project),
 
             'can_postpone' => !$needsAgreement && $hasApprovedProposal && $isProjectHead && (
                 $postponements->isEmpty() ||
@@ -405,20 +405,20 @@ class ProjectDocumentHubController extends Controller
 
 
         $formRoutes = [
-            'PROJECT_PROPOSAL' => 'org.projects.project-proposal.create',
-            'BUDGET_PROPOSAL'  => 'org.projects.budget-proposal.create',
-            'OFF_CAMPUS_APPLICATION' => 'org.projects.off-campus.guidelines',
-            'SOLICITATION_APPLICATION' => 'org.projects.solicitation.create',
-            'SELLING_APPLICATION' => 'org.projects.selling.create',
-            'REQUEST_TO_PURCHASE' => 'org.projects.request-to-purchase.create',
+            'PROJECT_PROPOSAL' => 'org.projects.documents.project-proposal.create',
+            'BUDGET_PROPOSAL'  => 'org.projects.documents.budget-proposal.create',
+            'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.guidelines',
+            'SOLICITATION_APPLICATION' => 'org.projects.documents.solicitation.create',
+            'SELLING_APPLICATION' => 'org.projects.documents.selling.create',
+            'REQUEST_TO_PURCHASE' => 'org.projects.documents.request-to-purchase.create',
 
-            'FEES_COLLECTION_REPORT' => 'org.projects.fees-collection.create',
-            'SELLING_ACTIVITY_REPORT' => 'org.projects.selling-activity-report.create',
-            'SOLICITATION_SPONSORSHIP_REPORT' => 'org.projects.solicitation-sponsorship-report.create',
-            'TICKET_SELLING_REPORT' => 'org.projects.ticket-selling-report.create',
+            'FEES_COLLECTION_REPORT' => 'org.projects.documents.fees-collection.create',
+            'SELLING_ACTIVITY_REPORT' => 'org.projects.documents.selling-activity-report.create',
+            'SOLICITATION_SPONSORSHIP_REPORT' => 'org.projects.documents.solicitation-sponsorship-report.create',
+            'TICKET_SELLING_REPORT' => 'org.projects.documents.ticket-selling-report.create',
 
-            'DOCUMENTATION_REPORT' => 'org.projects.documentation-report.create',
-            'LIQUIDATION_REPORT' => 'org.projects.liquidation-report.create',
+            'DOCUMENTATION_REPORT' => 'org.projects.documents.documentation-report.create',
+            'LIQUIDATION_REPORT' => 'org.projects.documents.liquidation-report.create',
         ];
 
         $buildForm = function ($formType) use (

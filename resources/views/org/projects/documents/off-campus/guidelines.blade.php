@@ -42,7 +42,7 @@
             <div class="px-6 pt-4 pb-6">
 
                 <form method="POST"
-                      action="{{ route('org.projects.off-campus.acknowledge', $project) }}">
+                      action="{{ route('org.projects.documents.off-campus.acknowledge', $project) }}">
 
                     @csrf
 

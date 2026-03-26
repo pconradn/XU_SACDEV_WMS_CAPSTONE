@@ -9,14 +9,14 @@ Notices
 @include('org.projects.documents.partials.notice-card',[
 'title'=>'Postponement Notices',
 'items'=>$postponements,
-'createRoute'=>route('org.projects.postponement.create',$project),
+'createRoute'=>route('org.projects.documents.postponement.create',$project),
 'createAllowed'=>$postponements->where('status','!=','approved_by_sacdev')->count() === 0
 ])
 
 @include('org.projects.documents.partials.notice-card',[
 'title'=>'Cancellation Notices',
 'items'=>$cancellations,
-'createRoute'=>route('org.projects.cancellation.create',$project),
+'createRoute'=>route('org.projects.documents.cancellation.create',$project),
 'createAllowed'=>$cancellations->count() === 0
 ])
 

@@ -21,12 +21,24 @@ class RequireProjectRole
         }
 
         /** @var Project|null $project */
-        $project = $request->route('project');
+        $projectParam = $request->route('project');
 
-        if (!$project instanceof Project) {
-            abort(403, 'Project context required.');
+        if ($projectParam instanceof Project) {
+            $project = $projectParam;
+        } else {
+            if (!is_numeric($projectParam)) {
+                abort(403, 'Project context required.');
+            }
+
+            $project = Project::find((int) $projectParam);
         }
 
+        if (!$project) {
+            abort(403, 'Project not found.');
+        }
+
+
+        
         $orgId = $project->organization_id;
         $syId  = $project->school_year_id;
 
