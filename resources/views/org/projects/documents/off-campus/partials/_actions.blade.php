@@ -139,7 +139,7 @@
         <form method="POST"
             action="{{ $isAdmin
                 ? route('admin.projects.documents.approve', [$project, $document->formType->code])
-                : route('org.projects.off-campus.approve', $project) }}">
+                : route('org.projects.documents.off-campus.approve', $project) }}">
 
             @csrf
 
@@ -184,7 +184,7 @@
         <form method="POST"
             action="{{ $isAdmin
                 ? route('admin.projects.documents.return', [$project, $document->formType->code])
-                : route('org.projects.off-campus.return', $project) }}">
+                : route('org.projects.documents.off-campus.return', $project) }}">
 
             @csrf
 

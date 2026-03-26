@@ -21,7 +21,7 @@ Submission Packet
 
 <div class="flex items-center gap-3">
 
-<a href="{{ route('org.projects.packet.print', [$project,$packet]) }}"
+<a href="{{ route('org.projects.packets.print', [$project,$packet]) }}"
 class="px-3 py-2 text-xs bg-slate-800 text-white rounded hover:bg-slate-900">
 Print Cover
 </a>
@@ -109,7 +109,7 @@ Returned on {{ \Carbon\Carbon::parse($packet->returned_at)->format('F d, Y h:i A
 Documents Included in Packet
 </div>
 
-<form method="POST" action="{{ route('org.projects.packet.update', [$project,$packet]) }}">
+<form method="POST" action="{{ route('org.projects.packets.update', [$project,$packet]) }}">
 @csrf
 
 <div class="px-5 py-4 text-xs space-y-3">
@@ -225,7 +225,7 @@ Solicitation / Sponsorship Letters
 
 @if(!$locked)
 <form method="POST"
-action="{{ route('org.projects.packet.letters.destroy', [$project,$packet,$letter]) }}">
+action="{{ route('org.projects.packets.letters.destroy', [$project,$packet,$letter]) }}">
 @csrf
 @method('DELETE')
 
@@ -251,7 +251,7 @@ Remove
 @if(!$locked)
 
 <form method="POST"
-action="{{ route('org.projects.packet.letters.store', [$project,$packet]) }}">
+action="{{ route('org.projects.packets.letters.store', [$project,$packet]) }}">
 
 @csrf
 

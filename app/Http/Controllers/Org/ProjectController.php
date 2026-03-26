@@ -37,21 +37,40 @@ class ProjectController extends Controller
         $isPresident = $orgRole === 'president';
         $isTreasurer = $orgRole === 'treasurer';
         $isModerator = $orgRole === 'moderator';
+        $isAuditor   = $orgRole === 'auditor';
 
+        $isProjectHead = \App\Models\ProjectAssignment::query()
+            ->where('user_id', $user->id)
+            ->where('assignment_role', 'project_head')
+            ->whereNull('archived_at')
+            ->exists();
 
         $query = Project::query()
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
             ->orderBy('title');
 
-        if (!$isPresident && !$isTreasurer && !$isModerator) {
-            $query->whereHas('assignments', function ($q) use ($user) {
-                $q->where('user_id', $user->id)
-                ->where('assignment_role', 'project_head')
-                ->whereNull('archived_at');
-            });
-        }
+        $isPrivileged = $isPresident || $isTreasurer || $isModerator || $isAuditor;
 
+        $isProjectHead = \App\Models\ProjectAssignment::query()
+            ->where('user_id', $user->id)
+            ->where('assignment_role', 'project_head')
+            ->whereNull('archived_at')
+            ->exists();
+
+        if (!$isPrivileged) {
+
+            if ($isProjectHead) {
+                $query->whereHas('assignments', function ($q) use ($user) {
+                    $q->where('user_id', $user->id)
+                    ->where('assignment_role', 'project_head')
+                    ->whereNull('archived_at');
+                });
+            } else {
+               
+                $query->whereRaw('0 = 1'); 
+            }
+        }
 
         $projects = $query
             ->with([
@@ -64,7 +83,6 @@ class ProjectController extends Controller
             ])
             ->withCount('documents')
             ->get();
-
 
         $officers = OfficerEntry::query()
             ->where('organization_id', $orgId)
@@ -80,6 +98,7 @@ class ProjectController extends Controller
             'isPresident'  => $isPresident,
             'isTreasurer'  => $isTreasurer,
             'isModerator'  => $isModerator,
+            'isAuditor'    => $isAuditor,
         ]);
     }
 

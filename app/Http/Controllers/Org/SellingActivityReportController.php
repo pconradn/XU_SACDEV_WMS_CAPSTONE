@@ -93,7 +93,7 @@ class SellingActivityReportController extends BaseProjectDocumentController
 
         $document = $this->getOrCreateDocument($project, 'SELLING_ACTIVITY_REPORT');
 
-        if ($document->isLocked()) {
+        if ($document->isLocked() && !$document->edit_mode) {
             abort(403, 'This document is already approved and cannot be edited.');
         }
 
@@ -133,12 +133,18 @@ class SellingActivityReportController extends BaseProjectDocumentController
 
             }
 
-            $this->resetApprovalsAfterEdit($document);
+            if (!$document->edit_mode) {
+                $this->resetApprovalsAfterEdit($document);
+            }
 
         });
 
 
         $action = $request->input('action');
+
+        if ($document && $document->edit_mode) {
+            $action = 'submit';
+        }
 
         if ($action === 'submit') {
             return $this->submit($project);
@@ -178,36 +184,19 @@ class SellingActivityReportController extends BaseProjectDocumentController
 
     public function submit(Project $project)
     {
-
         $formType = FormType::where('code', 'SELLING_ACTIVITY_REPORT')->firstOrFail();
 
         $document = ProjectDocument::where('project_id', $project->id)
             ->where('form_type_id', $formType->id)
             ->firstOrFail();
 
-        if ($document->status !== 'draft') {
-            return back()->with('error', 'This form is already submitted.');
+        if ($document->status !== 'draft' && !$document->edit_mode) {
+            return back()->with('error', 'This form cannot be submitted.');
         }
 
-        DB::transaction(function () use ($document) {
-
-            $document->update([
-                'status' => 'submitted',
-                'submitted_at' => now(),
-                'remarks' => null,
-                'returned_by' => null,
-                'returned_at' => null,
-            ]);
-
-            $document->signatures()->delete();
-
-            $this->createWorkflow($document);
-
-        });
+        $this->handleRequestSubmit($project, $document);
 
         $document->load('signatures','formType','project');
-
-        $this->notifyNextApprover($document);
 
         Audit::log(
             'document.submitted',

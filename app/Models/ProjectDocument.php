@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Timeline;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -16,9 +18,54 @@ class ProjectDocument extends Model
         'reviewed_at',
         'reviewed_by_user_id',
         'remarks',
-        'archived_at'
+        'archived_at',
+
+
+        'edit_requested',
+        'edit_requested_at',
+        'edit_requested_by',
+        'edit_request_remarks',
+        'edit_mode',
+        'edit_requires_full_approval',
+
+
+
     ];
 
+    public function editRequestedBy()
+    {
+        return $this->belongsTo(User::class, 'edit_requested_by');
+    }
+
+    public function timelines()
+    {
+        return $this->morphMany(Timeline::class, 'timelineable')->latest();
+    }
+
+
+    public function getCanRequestEditAttribute(): bool
+    {
+        return $this->status === 'approved' && !$this->edit_requested;
+    }
+
+    public function getHasPendingEditRequestAttribute(): bool
+    {
+        return (bool) $this->edit_requested;
+    }
+
+    public function getIsInEditModeAttribute(): bool
+    {
+        return (bool) $this->edit_mode;
+    }
+
+    public function getCanEditContentAttribute(): bool
+    {
+        return $this->status === 'draft' || $this->edit_mode;
+    }
+
+
+
+    
     public function project()
     {
         return $this->belongsTo(Project::class);

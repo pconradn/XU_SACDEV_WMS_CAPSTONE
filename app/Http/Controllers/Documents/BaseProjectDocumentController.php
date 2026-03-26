@@ -148,8 +148,6 @@ abstract class BaseProjectDocumentController extends Controller
         ]));
     }
 
-
-
     protected function notifyProjectHead(Project $project, ProjectDocument $document, string $message){
         
         $assignment = ProjectAssignment::where('project_id', $project->id)
@@ -358,7 +356,9 @@ abstract class BaseProjectDocumentController extends Controller
             abort(403,'It is not your turn to approve yet.');
         }
 
-        DB::transaction(function () use ($document,$signature) {
+        DB::transaction(function () use ($document,$signature,$userId) {
+
+            $oldStatus = $document->status;
 
             $signature->update([
                 'status'=>'signed',
@@ -374,6 +374,14 @@ abstract class BaseProjectDocumentController extends Controller
                     'status'=>'approved'
                 ]);
             }
+
+            $document->timelines()->create([
+                'user_id' => $userId,
+                'action' => 'approved',
+                'remarks' => null,
+                'old_status' => $oldStatus,
+                'new_status' => $document->status,
+            ]);
 
         });
 
@@ -405,6 +413,8 @@ abstract class BaseProjectDocumentController extends Controller
     {
         DB::transaction(function () use ($document,$remarks){
 
+            $oldStatus = $document->status;
+
             foreach ($document->signatures as $signature) {
 
                 $signature->update([
@@ -419,6 +429,14 @@ abstract class BaseProjectDocumentController extends Controller
                 'remarks'=>$remarks,
                 'returned_by'=>auth()->id(),
                 'returned_at'=>now()
+            ]);
+
+            $document->timelines()->create([
+                'user_id' => auth()->id(),
+                'action' => 'returned',
+                'remarks' => $remarks,
+                'old_status' => $oldStatus,
+                'new_status' => 'draft',
             ]);
 
         });
@@ -445,44 +463,131 @@ abstract class BaseProjectDocumentController extends Controller
 
 
 
-    
 
-    protected function handleSubmit(Project $project, ProjectDocument $document): void
+
+
+    public function retract(Project $project, $formCode)
     {
-        DB::transaction(function () use ($document, $project) {
+        $formType = FormType::where('code', $formCode)->firstOrFail();
 
-        
-            if ($document->edit_mode && !$document->edit_requires_full_approval) {
+        $document = ProjectDocument::with('signatures')
+            ->where('project_id', $project->id)
+            ->where('form_type_id', $formType->id)
+            ->firstOrFail();
 
-            
-                $document->signatures()->delete();
+        if ($document->status !== 'submitted') {
+            return back()->with('error', 'Only submitted documents can be modified.');
+        }
 
-                
-                $sacdevId = $this->resolveUserByRole($project, 'sacdev_admin');
+        $userId = auth()->id();
 
-                ProjectDocumentSignature::create([
-                    'project_document_id' => $document->id,
-                    'user_id' => $sacdevId,
-                    'role' => 'sacdev_admin',
-                    'status' => 'pending'
+        $signatures = $document->signatures->sortBy('id')->values();
+
+        $currentIndex = $signatures->search(fn($sig) => $sig->user_id === $userId);
+
+        if ($currentIndex === false) {
+            return back()->with('error', 'You are not part of this approval workflow.');
+        }
+
+        $currentSignature = $signatures[$currentIndex];
+
+        if ($currentSignature->status !== 'signed') {
+            return back()->with('error', 'You have not approved this document yet.');
+        }
+
+        $hasLaterApproval = $signatures
+            ->slice($currentIndex + 1)
+            ->contains(fn($sig) => $sig->status === 'signed');
+
+        if ($hasLaterApproval) {
+            return back()->with('error', 'Cannot retract. A later approver has already approved.');
+        }
+
+        DB::transaction(function () use ($document, $userId) {
+
+            $document->signatures()
+                ->where('user_id', $userId)
+                ->update([
+                    'status' => 'pending',
+                    'signed_at' => null
                 ]);
 
+            $document->timelines()->create([
+                'user_id' => $userId,
+                'action' => 'signature_retracted',
+                'remarks' => null,
+                'old_status' => 'submitted',
+                'new_status' => 'submitted',
+            ]);
+        });
+
+        return back()->with('success', 'Your approval has been retracted.');
+    }
+
+    
+
+    protected function handleRequestEdit(Project $project, ProjectDocument $document, string $remarks): void
+    {
+        if ($document->status !== 'approved_by_sacdev') {
+            abort(403, 'Only SACDEV-approved documents can request edit.');
+        }
+
+        $document->update([
+            'edit_requested' => true,
+            'edit_requested_at' => now(),
+            'edit_requested_by' => auth()->id(),
+            'edit_request_remarks' => $remarks,
+        ]);
+
+        $document->timelines()->create([
+            'user_id' => auth()->id(),
+            'action' => 'edit_requested',
+            'remarks' => $remarks,
+            'old_status' => $document->status,
+            'new_status' => $document->status,
+        ]);
+    }
+
+
+
+    protected function handleRequestSubmit(Project $project, ProjectDocument $document): void
+    {
+        $oldStatus = $document->status;
+        //dd($document);
+
+        DB::transaction(function () use ($document, $project, $oldStatus) {
+
+            
+
+            if ($document->edit_mode && !$document->edit_requires_full_approval) {
+
+                //dd($document);
+
+                $document->signatures()
+                    ->where('role', 'sacdev_admin')
+                    ->update([
+                        'status' => 'pending',
+                        'signed_at' => null,
+                    ]);
+
             } else {
-                
+
                 $document->signatures()->delete();
                 $this->createWorkflow($document);
             }
 
             $document->update([
                 'status' => 'submitted',
-                'edit_mode' => false
+                'submitted_at' => now(),
+                'remarks' => null,
+                'edit_mode' => false,
             ]);
 
             $document->timelines()->create([
                 'user_id' => auth()->id(),
                 'action' => 'submitted',
                 'remarks' => null,
-                'old_status' => 'draft',
+                'old_status' => $oldStatus,
                 'new_status' => 'submitted',
             ]);
         });
@@ -490,69 +595,7 @@ abstract class BaseProjectDocumentController extends Controller
         $this->notifyNextApprover($document);
     }
 
-    protected function allowEdit(Project $project, ProjectDocument $document, ?string $remarks = null): void
-    {
-        if (!$document->edit_requested) {
-            abort(403, 'No edit request pending.');
-        }
-
-        DB::transaction(function () use ($document, $remarks) {
-
-            $document->update([
-                'edit_mode' => true,
-                'edit_requires_full_approval' => false, // 🔥 bypass flow
-                'edit_requested' => false,
-                'edit_requested_at' => null,
-                'edit_requested_by' => null,
-                'edit_request_remarks' => null,
-            ]);
-
-            $document->timelines()->create([
-                'user_id' => auth()->id(),
-                'action' => 'edit_granted',
-                'remarks' => $remarks,
-                'old_status' => $document->status,
-                'new_status' => $document->status,
-            ]);
-        });
-
-        $this->notifyProjectHead(
-            $project,
-            $document,
-            'Edit request granted. You may update and resubmit. Only SACDEV approval will be required.'
-        );
-    }
-
-    public function requestEdit(Project $project, ProjectDocument $document, Request $request)
-    {
-        $data = $request->validate([
-            'remarks' => ['required', 'string', 'min:3']
-        ]);
-
-        if ($document->status !== 'approved') {
-            abort(403, 'Only approved documents can request edit.');
-        }
-
-        $document->update([
-            'edit_requested' => true,
-            'edit_requested_at' => now(),
-            'edit_requested_by' => auth()->id(),
-            'edit_request_remarks' => $data['remarks'],
-        ]);
-
-        $document->timelines()->create([
-            'user_id' => auth()->id(),
-            'action' => 'edit_requested',
-            'remarks' => $data['remarks'],
-            'old_status' => $document->status,
-            'new_status' => $document->status,
-        ]);
-
-
-        return back()->with('success', 'Edit request sent.');
-    }
-
-    protected function revertApproval(Project $project, ProjectDocument $document, string $remarks): void
+    protected function handleRevertApproval(Project $project, ProjectDocument $document, string $remarks): void
     {
         if ($document->status !== 'approved') {
             abort(403, 'Only approved documents can be reverted.');
@@ -562,18 +605,20 @@ abstract class BaseProjectDocumentController extends Controller
 
             $oldStatus = $document->status;
 
-            foreach ($document->signatures as $sig) {
-                $sig->update([
+            $sacdevSignature = $document->signatures()
+                ->where('role', 'sacdev_admin')
+                ->first();
+
+            if ($sacdevSignature) {
+                $sacdevSignature->update([
                     'status' => 'pending',
                     'signed_at' => null
                 ]);
             }
 
             $document->update([
-                'status' => 'draft',
+                'status' => 'submitted',
                 'remarks' => $remarks,
-                'returned_by' => auth()->id(),
-                'returned_at' => now(),
             ]);
 
             $document->timelines()->create([
@@ -581,14 +626,14 @@ abstract class BaseProjectDocumentController extends Controller
                 'action' => 'approval_reverted',
                 'remarks' => $remarks,
                 'old_status' => $oldStatus,
-                'new_status' => 'draft',
+                'new_status' => 'submitted',
             ]);
         });
 
         $this->notifyProjectHead(
             $project,
             $document,
-            'Approval was reverted for '.$document->formType->name.'. Please revise and resubmit.'
+            'SACDEV approval was reverted. Document is now pending SACDEV approval again.'
         );
     }
 

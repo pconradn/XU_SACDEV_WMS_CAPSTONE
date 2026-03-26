@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Project;
-use App\Models\ProjectDocument;
 use App\Models\FormType;
+use App\Models\Project;
+use App\Models\ProjectAssignment;
+use App\Models\ProjectDocument;
+use App\Notifications\ReregActionNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -487,9 +489,6 @@ class AdminProjectDocumentController extends Controller
         return back()->with('success', 'Document approved successfully.');
     }
 
-
-
-
     public function return(Request $request, Project $project, $formCode, $documentId = null)
     {
 
@@ -560,7 +559,94 @@ class AdminProjectDocumentController extends Controller
         return back()->with('success', 'Document returned for revision.');
     }
 
+    public function allowEdit(Project $project, $formCode, Request $request)
+    {
+        $formType = FormType::where('code', $formCode)->firstOrFail();
+
+        $document = ProjectDocument::where('project_id', $project->id)
+            ->where('form_type_id', $formType->id)
+            ->firstOrFail();
+
+        $this->handleAllowEdit(
+            $project,
+            $document,
+            $request->input('remarks')
+        );
+
+        return back()->with('success', 'Edit request granted.');
+    }
     
+
+    protected function handleAllowEdit(Project $project, ProjectDocument $document, ?string $remarks = null): void
+    {
+        if (!$document->edit_requested) {
+            abort(403, 'No edit request pending.');
+        }
+
+      
+        if (!in_array($document->status, ['approved_by_sacdev', 'submitted'], true)) {
+            abort(403, 'Edit can only be granted on submitted or approved documents.');
+        }
+
+        DB::transaction(function () use ($project, $document, $remarks) {
+
+            $oldStatus = $document->status;
+
+            $document->update([
+                'edit_mode' => true,
+                'edit_requires_full_approval' => false, 
+
+
+                'edit_requested' => false,
+                'edit_requested_at' => null,
+                'edit_requested_by' => null,
+                'edit_request_remarks' => null,
+            ]);
+
+            $document->timelines()->create([
+                'user_id' => auth()->id(),
+                'action' => 'edit_granted',
+                'remarks' => $remarks,
+                'old_status' => $oldStatus,
+                'new_status' => $oldStatus,
+            ]);
+
+        });
+
+        DB::afterCommit(function () use ($project, $document) {
+
+            $this->notifyProjectHead(
+                $project,
+                $document,
+                'Edit request granted. You may update and resubmit. Only SACDEV approval will be required.'
+            );
+
+        });
+    }
+
+    protected function notifyProjectHead(Project $project, ProjectDocument $document, string $message){
+        
+        $assignment = ProjectAssignment::where('project_id', $project->id)
+            ->where('assignment_role', 'project_head')
+            ->whereNull('archived_at')
+            ->with('user')
+            ->first();
+
+        if (!$assignment || !$assignment->user) {
+            return;
+        }
+
+        $assignment->user->notify(new ReregActionNotification([
+            'title' => 'Project Document Update',
+            'message' => $message,
+            'action_url' => route('org.projects.documents.hub', $project),
+            'meta' => [
+                'document_id' => $document->id,
+                'form_type'   => $document->formType->code,
+                'project_id'  => $project->id
+            ]
+        ]));
+    }
 
     public function retract(Project $project, $formCode)
     {

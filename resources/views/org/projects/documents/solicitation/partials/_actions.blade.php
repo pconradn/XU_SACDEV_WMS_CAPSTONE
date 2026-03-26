@@ -172,7 +172,7 @@
         @else
 
             <form method="POST"
-                action="{{ route('org.projects.solicitation.approve', $project) }}">
+                action="{{ route('org.projects.documents.solicitation.approve', $project) }}">
 
                 @csrf
 
@@ -218,7 +218,7 @@
         <form method="POST"
               action="{{ $isAdmin
                 ? route('admin.projects.documents.return', [$project, $document->formType->code])
-                : route('org.projects.solicitation.return', $project) }}">
+                : route('org.projects.documents.solicitation.return', $project) }}">
 
             @csrf
 

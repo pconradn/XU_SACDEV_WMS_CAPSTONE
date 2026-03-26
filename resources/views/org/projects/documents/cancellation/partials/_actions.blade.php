@@ -176,7 +176,7 @@ Approve
 @else
 
 <form method="POST"
-action="{{ route('org.projects.cancellation.approve', [$project, $document]) }}">
+action="{{ route('org.projects.documents.cancellation.approve', [$project, $document]) }}">
 @csrf
 <button
 class="bg-emerald-600 px-4 py-2 text-white text-[12px] hover:bg-emerald-700">
@@ -221,7 +221,7 @@ Please provide remarks explaining the required changes.
 <form method="POST"
 action="{{ $isAdmin
 ? route('admin.projects.documents.return', [$project, $document->formType->code])
-: route('org.projects.cancellation.return', [$project, $document]) }}">
+: route('org.projects.documents.cancellation.return', [$project, $document]) }}">
 
 @csrf
 

@@ -119,7 +119,7 @@ function confirmPostponement(){
     if(confirm(
         "Changing the project date requires submitting a Notice of Postponement.\n\nContinue?"
     )){
-        window.location.href = "{{ route('org.projects.postponement.create',$project) }}";
+        window.location.href = "{{ route('org.projects.documents.postponement.create',$project) }}";
     }
 
 }
@@ -130,7 +130,7 @@ function confirmCancellation(){
     if(confirm(
         "Cancelling the project will create a Notice of Cancellation.\n\nContinue?"
     )){
-        window.location.href = "{{ route('org.projects.cancellation.create',$project) }}";
+        window.location.href = "{{ route('org.projects.documents.cancellation.create',$project) }}";
     }
 
 }

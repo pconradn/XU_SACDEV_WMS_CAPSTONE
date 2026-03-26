@@ -21,7 +21,7 @@
             ← Back to Project Hub
         </a>
 
-        <form method="POST" action="{{ route('org.projects.packet.create', $project) }}">
+        <form method="POST" action="{{ route('org.projects.packets.create', $project) }}">
             @csrf
 
             <button
@@ -87,13 +87,13 @@
 
 <td class="px-4 py-3 text-right space-x-3">
 
-<a href="{{ route('org.projects.packet.show', [$project, $packet]) }}"
+<a href="{{ route('org.projects.packets.show', [$project, $packet]) }}"
    class="text-blue-600 hover:underline">
 Manage
 </a>
 
 <form method="POST"
-      action="{{ route('org.projects.packet.destroy', [$project, $packet]) }}"
+      action="{{ route('org.projects.packets.destroy', [$project, $packet]) }}"
       class="inline">
 
 @csrf
@@ -119,7 +119,7 @@ No submission packets yet.
 
 <div class="mt-3">
 
-<form method="POST" action="{{ route('org.projects.packet.create', $project) }}">
+<form method="POST" action="{{ route('org.projects.packets.create', $project) }}">
 @csrf
 
 <button

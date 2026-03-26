@@ -173,7 +173,7 @@ Approve
 @else
 
 <form method="POST"
-action="{{ route('org.projects.request-to-purchase.approve', $project) }}">
+action="{{ route('org.projects.documents.request-to-purchase.approve', $project) }}">
 
 @csrf
 
@@ -221,7 +221,7 @@ Please provide remarks explaining the required changes.
 <form method="POST"
 action="{{ $isAdmin
 ? route('admin.projects.documents.return', [$project, $document->formType->code])
-: route('org.projects.request-to-purchase.return', $project) }}">
+: route('org.projects.documents.request-to-purchase.return', $project) }}">
 
 @csrf
 

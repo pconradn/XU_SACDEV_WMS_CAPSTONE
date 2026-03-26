@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     //add middlewares here 
     ->withMiddleware(function (Middleware $middleware): void {
+
+        $middleware->trustProxies('*');
+
         $middleware->alias([
             'must_change_password' => \App\Http\Middleware\MustChangePassword::class,
             'sacdev_admin' => \App\Http\Middleware\RequireSacdevAdmin::class,

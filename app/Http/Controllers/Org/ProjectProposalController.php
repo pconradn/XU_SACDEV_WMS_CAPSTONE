@@ -74,8 +74,8 @@ class ProjectProposalController extends BaseProjectDocumentController
             ->where('form_type_id', $formType->id)
             ->firstOrFail();
 
-        if ($document->status !== 'draft') {
-            return back()->with('error', 'This proposal is already submitted.');
+        if ($document->status !== 'draft' && !$document->edit_mode) {
+            return back()->with('error', 'This proposal cannot be submitted.');
         }
 
         $activeSy = SchoolYear::activeYear();
@@ -92,25 +92,9 @@ class ProjectProposalController extends BaseProjectDocumentController
             return back()->with('error', 'This organization is not registered for the active school year.');
         }
 
-        DB::transaction(function () use ($document) {
+        $this->handleRequestSubmit($project, $document);
 
-            $document->update([
-                'status' => 'submitted',
-                'submitted_at' => now(),
-                'remarks' => null,
-                'returned_by' => null,
-                'returned_at' => null,
-            ]);
-
-            $document->signatures()->delete();
-
-            $this->createWorkflow($document);
-
-        });
-
-        $document->load('signatures','formType','project');
-
-        $this->notifyNextApprover($document);
+        $document->load('signatures', 'formType', 'project');
 
         Audit::log(
             'document.submitted',
@@ -135,9 +119,7 @@ class ProjectProposalController extends BaseProjectDocumentController
             ->where('code', 'project_proposal')
             ->firstOrFail();
 
-
         $data = $this->validateRequest($request);
-
 
         if (
             empty($data['on_campus_venue']) &&
@@ -152,12 +134,14 @@ class ProjectProposalController extends BaseProjectDocumentController
 
         [$data, $clean] = $this->normalizeData($data);
 
-        DB::transaction(function () use ($project, $formType, $data, $clean) {
+        $document = $this->getOrCreateDocument($project, 'PROJECT_PROPOSAL');
+
+        DB::transaction(function () use ($project, $formType, $data, $clean, &$document) {
 
             $document = $this->saveDocument($project, $formType);
 
-            if ($document->isLocked()) {
-                abort(403, 'This proposal is already approved by the moderator and is locked.');
+            if ($document->isLocked() && !$document->edit_mode) {
+                abort(403, 'This proposal is locked and cannot be edited.');
             }
 
             $proposal = $this->saveMainProposal($document->id, $data);
@@ -166,18 +150,25 @@ class ProjectProposalController extends BaseProjectDocumentController
 
             $this->saveMultiEntries($document->id, $clean, $data);
 
-            $this->resetApprovalsAfterEdit($document);
+            if (!$document->edit_mode) {
+                $this->resetApprovalsAfterEdit($document);
+            }
+
         });
 
         $this->ensureOffCampusDocument($project);
 
         $action = $request->input('action');
 
+        if ($document && $document->edit_mode) {
+            $action = 'submit';
+        }
+
         if ($action === 'submit') {
             return $this->submit($project);
         }
 
-        return back()->with('success', 'Project Proposal saved as draft.');     
+        return back()->with('success', 'Project Proposal saved as draft.');
     }
 
     protected function ensureOffCampusDocument(Project $project): void
@@ -614,6 +605,8 @@ class ProjectProposalController extends BaseProjectDocumentController
 
         return back()->with('success','Project proposal returned for revision.');
     }
+
+
 
 
 }

@@ -70,7 +70,7 @@ Approved
 {{-- ACTIONS --}}
 @if($doc->status === 'draft')
 
-<a href="{{ route(str_contains($title,'Postponement') ? 'org.projects.postponement.edit' : 'org.projects.cancellation.edit',[$project,$doc]) }}"
+<a href="{{ route(str_contains($title,'Postponement') ? 'org.projects.documents.postponement.edit' : 'org.projects.documents.cancellation.edit',[$project,$doc]) }}"
 class="text-xs text-blue-600 hover:underline">
 Edit
 </a>
@@ -93,7 +93,7 @@ Remove
 
 @else
 
-<a href="{{ route(str_contains($title,'Postponement') ? 'org.projects.postponement.edit' : 'org.projects.cancellation.edit',[$project,$doc]) }}"
+<a href="{{ route(str_contains($title,'Postponement') ? 'org.projects.documents.postponement.edit' : 'org.projects.documents.cancellation.edit',[$project,$doc]) }}"
 class="text-xs text-slate-500 hover:underline">
 View
 </a>

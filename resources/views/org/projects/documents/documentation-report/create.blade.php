@@ -10,7 +10,10 @@ $status = $document->status ?? 'draft';
 
 $isProjectHead = $isProjectHead ?? false;
 
-$isEditable = $isProjectHead && in_array($status, ['draft','submitted','returned']);
+            $isEditable = $isProjectHead && (
+                in_array($status, ['draft','submitted','returned'])
+                || ($status === 'approved_by_sacdev' && $document->edit_mode)
+            );
 
 if ($status === 'approved') {
     $isEditable = false;
@@ -123,9 +126,9 @@ $currentApprover = $document?->signatures
 
 
 <form method="POST"
-      action="{{ route('org.projects.documentation-report.store', $project) }}"
+      action="{{ route('org.projects.documents.documentation-report.store', $project) }}"
       enctype="multipart/form-data"
-      id="documentationReportForm">
+      id="proposalForm">
 
 @csrf
 
@@ -175,8 +178,16 @@ $currentApprover = $document?->signatures
 
 
 {{-- ACTION BUTTONS --}}
-@include('org.projects.documents.documentation-report.partials._actions')
 
+    @include('components.project-document.actions._actions', [
+        'project' => $project,
+        'document' => $document,
+        'currentSignature' => $document?->signatures
+            ?->where('user_id', auth()->id())
+            ->first(),
+        'isProjectHead' => $isProjectHead ?? false,
+        'isAdmin' => auth()->user()->system_role === 'sacdev_admin',
+    ])
 
 </div>
 

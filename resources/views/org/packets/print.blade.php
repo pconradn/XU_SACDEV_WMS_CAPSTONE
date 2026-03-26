@@ -282,7 +282,7 @@ Other Items
 
 <div class="qr-box">
 
-{!! QrCode::size(120)->generate(route('org.projects.packet.show', [$project,$packet])) !!}
+{!! QrCode::size(120)->generate(route('org.projects.packets.show', [$project,$packet])) !!}
 
 <div class="qr-label">
 Organization View
