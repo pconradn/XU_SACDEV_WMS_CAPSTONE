@@ -128,12 +128,10 @@ class SolicitationApplicationController extends BaseProjectDocumentController
             return $this->submit($project);
         }
 
-        return redirect()
-            ->route('org.projects.documents.hub', $project)
-            ->with('success', 'Solicitation application saved as draft.');
+        return back()->with('success', 'Solicitation application submitted successfully.');
     }
 
-        public function submit(Project $project)
+    public function submit(Project $project)
     {
         $formType = FormType::where('code', 'SOLICITATION_APPLICATION')->firstOrFail();
 

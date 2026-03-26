@@ -150,9 +150,7 @@ class FeesCollectionReportController extends BaseProjectDocumentController
             return $this->submit($project);
         }
 
-        return redirect()
-            ->route('org.projects.documents.hub', $project)
-            ->with('success', 'Fees collection report saved as draft.');
+        return back()->with('success', 'Fees collection report saved.');
 
     }
 

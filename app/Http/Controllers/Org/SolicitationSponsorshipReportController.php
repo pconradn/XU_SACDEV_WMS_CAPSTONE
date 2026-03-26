@@ -164,9 +164,10 @@ class SolicitationSponsorshipReportController extends BaseProjectDocumentControl
             return $this->submit($project);
         }
 
-        return redirect()
-            ->route('org.projects.documents.hub', $project)
-            ->with('success', 'Solicitation / Sponsorship Report saved as draft.');
+        return back()->with(
+            'success',
+            'Solicitation / Sponsorship Report Saved.'
+        );
 
     }
 

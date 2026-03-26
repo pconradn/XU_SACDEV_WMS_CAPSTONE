@@ -1,94 +1,109 @@
-<div class="border border-slate-300 bg-white mb-6">
-
-<div class="bg-slate-50 border-b border-slate-300 px-4 py-2">
-<div class="text-[12px] font-semibold text-slate-900 tracking-wide">
-Selling Activity Information
-</div>
-</div>
-
-
-<div class="px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-
-{{-- Activity Name --}}
 <div>
 
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Name of Selling Activity
-</label>
+    {{-- SECTION HEADER --}}
+    <div class="mb-4">
+        <h3 class="text-sm font-semibold text-slate-900 tracking-wide">
+            Selling Activity Information
+        </h3>
+        <p class="text-xs text-slate-500 mt-1">
+            Provide details about the selling activity, including purpose, duration, and expected revenue.
+        </p>
+    </div>
 
-<input
-type="text"
-name="activity_name"
-value="{{ old('activity_name', $data->activity_name ?? $project->title) }}"
-class="mt-1 w-full border border-slate-300 px-3 py-1 text-[12px]">
+    @php
+        $activityName = old('activity_name', $data->activity_name ?? $project->title);
+        $projectedSales = old('projected_sales', $data->projected_sales ?? '');
+        $purpose = old('purpose', $data->purpose ?? '');
+        $durationFrom = old('duration_from', $data->duration_from ?? '');
+        $durationTo = old('duration_to', $data->duration_to ?? '');
+    @endphp
 
-</div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
+        {{-- ACTIVITY NAME --}}
+        <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                Name of Selling Activity
+            </label>
 
-{{-- Projected Sales --}}
-<div>
+            <input
+                type="text"
+                name="activity_name"
+                value="{{ $activityName }}"
+                placeholder="Enter activity name"
+                class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
 
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Projected Sales
-</label>
-
-<input
-type="number"
-step="0.01"
-name="projected_sales"
-value="{{ old('projected_sales', $data->projected_sales ?? '') }}"
-class="mt-1 w-full border border-slate-300 px-3 py-1 text-[12px]">
-
-</div>
-
-
-{{-- Purpose --}}
-<div class="md:col-span-2">
-
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Purpose of Selling Activity
-</label>
-
-<textarea
-name="purpose"
-rows="3"
-class="mt-1 w-full border border-slate-300 px-3 py-1 text-[12px]">{{ old('purpose', $data->purpose ?? '') }}</textarea>
-
-</div>
+            <p class="text-[11px] text-slate-400 mt-1">
+                This will be used as the official name of the selling activity.
+            </p>
+        </div>
 
 
-{{-- Duration From --}}
-<div>
+        {{-- PROJECTED SALES --}}
+        <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                Projected Sales (₱)
+            </label>
 
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Duration From
-</label>
+            <input
+                type="number"
+                step="0.01"
+                name="projected_sales"
+                value="{{ $projectedSales }}"
+                placeholder="0.00"
+                class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
 
-<input
-type="date"
-name="duration_from"
-value="{{ old('duration_from', $data->duration_from ?? '') }}"
-class="mt-1 w-full border border-slate-300 px-3 py-1 text-[12px]">
-
-</div>
-
-
-{{-- Duration To --}}
-<div>
-
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Duration To
-</label>
-
-<input
-type="date"
-name="duration_to"
-value="{{ old('duration_to', $data->duration_to ?? '') }}"
-class="mt-1 w-full border border-slate-300 px-3 py-1 text-[12px]">
-
-</div>
+            <p class="text-[11px] text-slate-400 mt-1">
+                Estimated total revenue from the selling activity.
+            </p>
+        </div>
 
 
-</div>
+        {{-- PURPOSE --}}
+        <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                Purpose of Selling Activity
+            </label>
+
+            <textarea
+                name="purpose"
+                rows="4"
+                placeholder="Explain the purpose and goals of this selling activity..."
+                class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">{{ $purpose }}</textarea>
+
+            <p class="text-[11px] text-slate-400 mt-1">
+                Describe why the organization is conducting this activity (e.g., fundraising, outreach, etc.).
+            </p>
+        </div>
+
+
+        {{-- DURATION FROM --}}
+        <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                Duration From
+            </label>
+
+            <input
+                type="date"
+                name="duration_from"
+                value="{{ $durationFrom }}"
+                class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+
+
+        {{-- DURATION TO --}}
+        <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                Duration To
+            </label>
+
+            <input
+                type="date"
+                name="duration_to"
+                value="{{ $durationTo }}"
+                class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+
+    </div>
 
 </div>

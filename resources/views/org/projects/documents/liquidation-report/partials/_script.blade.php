@@ -1,10 +1,10 @@
 <script>
+document.addEventListener('DOMContentLoaded', () => {
 
 let currentSection = '';
 let itemIndex = document.querySelectorAll('#expenseRows input[name^="items"]').length;
 
 const table = document.getElementById('expenseRows');
-
 const addSectionBtn = document.getElementById('addSectionBtn');
 const addExpenseBtn = document.getElementById('addExpenseBtn');
 
@@ -16,174 +16,226 @@ const addExpenseBtn = document.getElementById('addExpenseBtn');
 */
 
 if (addSectionBtn) {
+    addSectionBtn.addEventListener('click', () => {
 
-addSectionBtn.addEventListener('click', function () {
+        const sectionName = prompt('Enter section name (e.g. Food, Materials)');
+        if (!sectionName) return;
 
-    const sectionName = prompt('Enter section name (example: Food, Materials)');
+        currentSection = sectionName.trim();
+        if (!currentSection) return;
 
-    if (!sectionName) return;
+        const row = document.createElement('tr');
+        row.classList.add('section-row', 'bg-slate-100');
+        row.dataset.section = currentSection;
 
-    currentSection = sectionName.trim();
+        row.innerHTML = `
+            <td colspan="7" class="px-3 py-2 flex justify-between items-center">
+                <span class="font-semibold text-slate-700">${currentSection}</span>
+                <button type="button"
+                    class="text-xs text-red-500 hover:text-red-700 remove-section-btn">
+                    Remove Section
+                </button>
+            </td>
+        `;
 
-    const row = document.createElement('tr');
-
-    row.classList.add('section-row');
-    row.dataset.section = currentSection;
-
-    row.innerHTML = `
-        <td colspan="7"
-            class="border border-slate-300 bg-slate-100 px-2 py-1 font-semibold flex justify-between">
-
-            <span>${currentSection}</span>
-
-            <button type="button"
-                class="text-red-600 text-[11px] remove-section-btn">
-                Remove Section
-            </button>
-
-        </td>
-    `;
-
-    table.appendChild(row);
-
-});
-
+        table.appendChild(row);
+    });
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| ADD EXPENSE ROW
+| ADD EXPENSE
 |--------------------------------------------------------------------------
 */
 
 if (addExpenseBtn) {
+    addExpenseBtn.addEventListener('click', () => {
 
-addExpenseBtn.addEventListener('click', function () {
+        if (!currentSection) {
+            alert('Please add a section first.');
+            return;
+        }
 
-    if (!currentSection) {
-        alert('Please add a section first.');
-        return;
-    }
+        const row = document.createElement('tr');
+        row.dataset.section = currentSection;
 
-    const row = document.createElement('tr');
-
-    row.dataset.section = currentSection;
-
-    row.innerHTML = `
-
-<td class="border border-slate-300">
-<input type="hidden"
-name="items[${itemIndex}][section_label]"
-value="${currentSection}">
-
-<input type="date"
-name="items[${itemIndex}][date]"
-class="w-full px-2 py-1 border-0">
+        row.innerHTML = `
+<td class="px-2 py-1">
+<input type="hidden" name="items[${itemIndex}][section_label]" value="${currentSection}">
+<input type="date" name="items[${itemIndex}][date]" class="w-full border rounded-lg px-2 py-1 text-xs">
 </td>
 
-<td class="border border-slate-300">
-<input type="text"
-name="items[${itemIndex}][particulars]"
-class="w-full px-2 py-1 border-0">
+<td class="px-2 py-1">
+<input type="text" name="items[${itemIndex}][particulars]" class="w-full border rounded-lg px-2 py-1 text-xs">
 </td>
 
-<td class="border border-slate-300">
-<input type="number"
-step="0.01"
+<td class="px-2 py-1">
+<input type="number" step="0.01"
 name="items[${itemIndex}][amount]"
-class="w-full px-2 py-1 border-0">
+class="w-full border rounded-lg px-2 py-1 text-xs text-right amount-input">
 </td>
 
-<td class="border border-slate-300">
+<td class="px-2 py-1">
 <select name="items[${itemIndex}][source_document_type]"
-class="w-full border-0 px-2 py-1">
-
-<option value="">-</option>
+class="w-full border rounded-lg px-2 py-1 text-xs text-center">
+<option value=""></option>
 <option value="OR">OR</option>
 <option value="SR">SR</option>
 <option value="CI">CI</option>
 <option value="SI">SI</option>
 <option value="AR">AR</option>
 <option value="PV">PV</option>
-
 </select>
 </td>
 
-<td class="border border-slate-300">
+<td class="px-2 py-1">
 <input type="text"
 name="items[${itemIndex}][source_document_description]"
-class="w-full px-2 py-1 border-0">
+class="w-full border rounded-lg px-2 py-1 text-xs">
 </td>
 
-<td class="border border-slate-300">
+<td class="px-2 py-1">
 <input type="text"
 name="items[${itemIndex}][or_number]"
-class="w-full px-2 py-1 border-0">
+class="w-full border rounded-lg px-2 py-1 text-xs">
 </td>
 
-<td class="border border-slate-300 text-center">
-<button type="button"
-class="remove-row-btn text-red-600">
-✕
-</button>
+<td class="px-2 py-1 text-center">
+<button type="button" class="remove-row-btn text-red-500">✕</button>
 </td>
 `;
 
-    table.appendChild(row);
+        table.appendChild(row);
+        itemIndex++;
 
-    itemIndex++;
-
-});
-
+        calculateAll();
+    });
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| REMOVE ROW
+| REMOVE
 |--------------------------------------------------------------------------
 */
 
-document.addEventListener('click', function(e){
+document.addEventListener('click', (e) => {
 
-    if(!e.target.classList.contains('remove-row-btn')) return;
+    if (e.target.classList.contains('remove-row-btn')) {
+        e.target.closest('tr')?.remove();
+        calculateAll();
+    }
 
-    const row = e.target.closest('tr');
+    if (e.target.classList.contains('remove-section-btn')) {
 
-    if(row) row.remove();
+        const section = e.target.closest('.section-row')?.dataset.section;
+
+        if (!confirm('Remove this section and all its entries?')) return;
+
+        document.querySelectorAll('#expenseRows tr').forEach(row => {
+            if (row.dataset.section === section) row.remove();
+        });
+
+        calculateAll();
+    }
 
 });
 
 
 /*
 |--------------------------------------------------------------------------
-| REMOVE SECTION
+| CALCULATIONS
 |--------------------------------------------------------------------------
 */
 
-document.addEventListener('click', function(e){
+function calculateAll() {
 
-    if(!e.target.classList.contains('remove-section-btn')) return;
+    calculateExpenses();
+    calculateAdvanced();
+    calculateBalance();
 
-    const sectionRow = e.target.closest('.section-row');
+}
 
-    if(!sectionRow) return;
 
-    const sectionName = sectionRow.dataset.section;
+/* TOTAL EXPENSES */
+function calculateExpenses() {
 
-    if(!confirm('Remove this section? All entries in this section will be deleted.')){
-        return;
-    }
+    let total = 0;
 
-    document.querySelectorAll('#expenseRows tr').forEach(row => {
-
-        if(row.dataset.section === sectionName){
-            row.remove();
-        }
-
+    document.querySelectorAll('.amount-input').forEach(input => {
+        const val = parseFloat(input.value);
+        if (!isNaN(val)) total += val;
     });
+
+    const el = document.querySelector('input[name="total_expenses"]');
+    if (el) el.value = total.toFixed(2);
+}
+
+
+/* TOTAL ADVANCED (FROM CASH RECEIVED) */
+function calculateAdvanced() {
+
+    const fields = [
+        'finance_amount',
+        'fund_raising_amount',
+        'sacdev_amount',
+        'pta_amount'
+    ];
+
+    let total = 0;
+
+    fields.forEach(name => {
+        const input = document.querySelector(`input[name="${name}"]`);
+        if (!input) return;
+
+        const val = parseFloat(input.value);
+        if (!isNaN(val)) total += val;
+    });
+
+    const el = document.querySelector('input[name="total_advanced"]');
+    if (el) el.value = total.toFixed(2);
+}
+
+
+/* BALANCE */
+function calculateBalance() {
+
+    const expenses = parseFloat(document.querySelector('input[name="total_expenses"]')?.value) || 0;
+    const advanced = parseFloat(document.querySelector('input[name="total_advanced"]')?.value) || 0;
+
+    const balance = advanced - expenses;
+
+    const el = document.querySelector('input[name="balance"]');
+    if (el) el.value = balance.toFixed(2);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| LIVE EVENTS
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener('input', (e) => {
+
+    if (
+        e.target.classList.contains('amount-input') ||
+        ['finance_amount','fund_raising_amount','sacdev_amount','pta_amount'].includes(e.target.name)
+    ) {
+        calculateAll();
+    }
 
 });
 
+
+/*
+|--------------------------------------------------------------------------
+| INIT
+|--------------------------------------------------------------------------
+*/
+
+calculateAll();
+
+});
 </script>

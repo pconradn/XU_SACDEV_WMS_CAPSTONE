@@ -8,6 +8,7 @@
     $isFeesCollection = ($document->formType->code ?? null) === 'FEES_COLLECTION_REPORT';
     $isSelling = ($document->formType->code ?? null) === 'SELLING_APPLICATION';
     $isAdmin = auth()->user()->system_role === 'sacdev_admin';
+    $isSolicitation = $formCode === 'SOLICITATION_APPLICATION';
 @endphp
 
 @php
@@ -81,27 +82,93 @@ function lockButton(btn){
 
 
 {{-- ================= SUBMIT ================= --}}
-<div id="submitModal" class="modal-overlay">
-    <div class="modal">
-        <h3 class="text-sm font-semibold mb-2">Submit Document</h3>
+@if($isSolicitation && $isProjectHead)
 
-        <p class="text-xs text-slate-600 mb-4">
-            This will send the document into the approval workflow.
-            You will not be able to edit unless it is returned or edit access is granted.
-        </p>
+    {{-- ================= SOLICITATION AGREEMENT MODAL ================= --}}
+    <div id="submitModal"
+        class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
 
-        <button type="button"
-            onclick="submitMainForm('submit')"
-            class="w-full mb-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs">
-            Confirm Submit
-        </button>
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden">
 
-        <button type="button" onclick="closeModal('submitModal')" class="w-full text-xs text-slate-500">
-            Cancel
-        </button>
+            {{-- HEADER --}}
+            <div class="border-b px-5 py-3">
+                <h2 class="text-sm font-semibold text-slate-900">
+                    Solicitation Agreement
+                </h2>
+            </div>
+
+            {{-- BODY --}}
+            <div class="px-5 py-4 space-y-3">
+
+                <p class="text-sm text-slate-700 leading-relaxed">
+                    We understand that there are rules and regulations which govern
+                    solicitation activities using the name of the University.
+                </p>
+
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    Failure to abide by them and the approved terms and conditions of
+                    this form entails sanctions for the organization and disciplinary
+                    measures for the students involved.
+                </p>
+
+                {{-- OPTIONAL HIGHLIGHT --}}
+                <div class="mt-3 border border-amber-200 bg-amber-50 rounded-lg p-3 text-xs text-amber-800">
+                    By proceeding, you confirm that all information submitted is accurate
+                    and compliant with university policies.
+                </div>
+
+            </div>
+
+            {{-- FOOTER --}}
+            <div class="border-t px-5 py-3 flex justify-end gap-2">
+
+                <button type="button"
+                    onclick="closeModal('submitModal')"
+                    class="px-4 py-2 text-xs border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100">
+                    Cancel
+                </button>
+
+                <button type="submit"
+                    form="proposalForm"
+                    name="action"
+                    value="submit"
+                    class="px-4 py-2 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Agree and Submit
+                </button>
+
+            </div>
+
+        </div>
+
     </div>
-</div>
 
+@else
+
+    {{-- ================= DEFAULT SUBMIT MODAL ================= --}}
+    <div id="submitModal" class="modal-overlay">
+        <div class="modal">
+            <h3 class="text-sm font-semibold mb-2">Submit Document</h3>
+
+            <p class="text-xs text-slate-600 mb-4">
+                This will send the document into the approval workflow.
+                You will not be able to edit unless it is returned or edit access is granted.
+            </p>
+
+            <button type="button"
+                onclick="submitMainForm('submit')"
+                class="w-full mb-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs">
+                Confirm Submit
+            </button>
+
+            <button type="button"
+                onclick="closeModal('submitModal')"
+                class="w-full text-xs text-slate-500">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+@endif
 
 {{-- ================= RESUBMIT ================= --}}
 <div id="resubmitModal" class="modal-overlay">

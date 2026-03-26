@@ -1,71 +1,106 @@
-<div class="border border-slate-300 border-t-0">
+<div>
 
-{{-- Organization --}}
-<div class="px-4 pt-4 pb-3 border-b border-slate-300">
-
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Name of Organization
-</label>
-
-{{-- Hidden input so it saves to DB --}}
-<input type="hidden"
-       name="organization_name"
-       value="{{ $project->organization->name }}">
-
-<input type="text"
-       value="{{ $project->organization->name }}"
-       readonly
-       class="mt-1 w-full border border-slate-300 bg-slate-100 px-3 py-1 text-[10px]">
-
-</div>
+    {{-- SECTION HEADER --}}
+    <div class="mb-4">
+        <h3 class="text-sm font-semibold text-slate-900 tracking-wide">
+            Activity Information
+        </h3>
+        <p class="text-xs text-slate-500 mt-1">
+            Provide key details about the off-campus activity including schedule, location, and organizing body.
+        </p>
+    </div>
 
 
-{{-- Activity Name --}}
-<div class="px-4 pt-4 pb-3 border-b border-slate-300">
-
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Name of Activity
-</label>
-
-<input type="text"
-       name="activity_name"
-       value="{{ old('activity_name', optional($activity)->activity_name ?? $project->title) }}"
-       class="mt-1 w-full border border-slate-300 bg-white px-3 py-1 text-[10px]"
-       {{ $isReadOnly ? 'readonly' : '' }}>
-
-</div>
+    @php
+        $activityName = old('activity_name', optional($activity)->activity_name ?? $project->title);
+        $inclusiveDates = old('inclusive_dates', optional($activity)->inclusive_dates ?? '');
+        $venue = old('venue_destination', optional($activity)->venue_destination ?? '');
+    @endphp
 
 
-{{-- Inclusive Dates --}}
-<div class="px-4 pt-4 pb-3 border-b border-slate-300">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Inclusive Date(s) of Activity
-</label>
+        {{-- ORGANIZATION --}}
+        <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                Organization
+            </label>
 
-<input type="text"
-       name="inclusive_dates"
-       value="{{ old('inclusive_dates', optional($activity)->inclusive_dates) }}"
-       placeholder="Example: March 15–17, 2026"
-       class="mt-1 w-full border border-slate-300 bg-white px-3 py-1 text-[10px]"
-       {{ $isReadOnly ? 'readonly' : '' }}>
+            {{-- Hidden input for saving --}}
+            <input type="hidden"
+                   name="organization_name"
+                   value="{{ $project->organization->name }}">
 
-</div>
+            <input type="text"
+                   value="{{ $project->organization->name }}"
+                   disabled
+                   class="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
+
+            <p class="text-[11px] text-slate-400 mt-1">
+                Automatically populated based on the selected project.
+            </p>
+        </div>
 
 
-{{-- Venue --}}
-<div class="px-4 pt-4 pb-3">
+        {{-- ACTIVITY NAME --}}
+        <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                Name of Activity
+            </label>
 
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Venue / Destination
-</label>
+            <input
+                type="text"
+                name="activity_name"
+                value="{{ $activityName }}"
+                placeholder="Enter activity name"
+                class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                @if($isReadOnly) disabled @endif>
 
-<input type="text"
-       name="venue_destination"
-       value="{{ old('venue_destination', optional($activity)->venue_destination) }}"
-       class="mt-1 w-full border border-slate-300 bg-white px-3 py-1 text-[10px]"
-       {{ $isReadOnly ? 'readonly' : '' }}>
+            <p class="text-[11px] text-slate-400 mt-1">
+                This will be used as the official name of the off-campus activity.
+            </p>
+        </div>
 
-</div>
+
+        {{-- INCLUSIVE DATES --}}
+        <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                Inclusive Date(s)
+            </label>
+
+            <input
+                type="text"
+                name="inclusive_dates"
+                value="{{ $inclusiveDates }}"
+                placeholder="e.g. March 15–17, 2026"
+                class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                @if($isReadOnly) disabled @endif>
+
+            <p class="text-[11px] text-slate-400 mt-1">
+                Indicate the full duration of the activity, including start and end dates.
+            </p>
+        </div>
+
+
+        {{-- VENUE --}}
+        <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                Venue / Destination
+            </label>
+
+            <input
+                type="text"
+                name="venue_destination"
+                value="{{ $venue }}"
+                placeholder="Enter location or destination"
+                class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                @if($isReadOnly) disabled @endif>
+
+            <p class="text-[11px] text-slate-400 mt-1">
+                Specify where the activity will take place.
+            </p>
+        </div>
+
+    </div>
 
 </div>

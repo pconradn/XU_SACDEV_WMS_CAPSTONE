@@ -12,8 +12,8 @@ $docStatus = $document->status ?? 'draft';
 $isProjectHead = $isProjectHead ?? false;
 
             $isEditable = $isProjectHead && (
-                in_array($status, ['draft','submitted','returned'])
-                || ($status === 'approved_by_sacdev' && $document->edit_mode)
+                in_array($docStatus, ['draft','submitted','returned'])
+                || ($docStatus === 'approved_by_sacdev' && $document->edit_mode)
             );
 
 if (in_array($docStatus, ['approved', 'approved_by_sacdev'])) {

@@ -146,9 +146,7 @@ class TicketSellingReportController extends BaseProjectDocumentController
             return $this->submit($project);
         }
 
-        return redirect()
-            ->route('org.projects.documents.hub', $project)
-            ->with('success', 'Ticket Selling Report saved as draft.');
+        return back()->with('success', 'Ticket Selling Report Saved.');
 
     }
 

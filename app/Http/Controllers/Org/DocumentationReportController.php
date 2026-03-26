@@ -69,70 +69,6 @@ class DocumentationReportController extends BaseProjectDocumentController
         ]);
     }
 
-    public function store(Request $request, Project $project)
-    {
-        $formType = FormType::query()
-            ->where('code', 'DOCUMENTATION_REPORT')
-            ->firstOrFail();
-
-        $data = $this->validateRequest($request);
-
-        [$data, $clean] = $this->normalizeData($data);
-
-        $document = $this->getOrCreateDocument($project, 'DOCUMENTATION REPORT');
-
-        DB::transaction(function () use ($project, $formType, $data, $clean, $request) {
-
-            $document = $this->saveDocument($project, $formType);
-
-            if ($document->isLocked() && !$document->edit_mode) {
-                abort(403, 'This documentation report is already approved by the moderator and is locked.');
-            }
-
-            $this->copyProposalDataIfEmpty($project, $document);
-
-
-            $existingReport = DocumentationReportData::where('project_document_id', $document->id)->first();
-
-            $photoPath = $existingReport?->photo_document_path;
-
-            if ($request->hasFile('photo_document')) {
-
-                if ($photoPath && Storage::disk('public')->exists($photoPath)) {
-                    Storage::disk('public')->delete($photoPath);
-                }
-
-                $photoPath = $request->file('photo_document')
-                    ->store('documentation-reports/photo-documents', 'public');
-            }
-
-
-            $this->saveMainReport($document->id, $data, $photoPath);
-
-
-            $this->saveMultiEntries($document->id, $clean);
-
-
-            if (!$document->edit_mode) {
-                $this->resetApprovalsAfterEdit($document);
-            }
-        });
-
-        $action = $request->input('action');
-
-        if ($document && $document->edit_mode) {
-            $action = 'submit';
-        }
-
-        if ($action === 'submit') {
-            return $this->submit($project);
-        }
-
-        return redirect()
-            ->route('org.projects.documents.hub', $project)
-            ->with('success', 'Documentation Report saved as draft.');
-    }
-
     private function copyProposalDataIfEmpty(Project $project, ProjectDocument $document): void
     {
         if (DocumentationReportObjective::where('project_document_id', $document->id)->exists()) {
@@ -190,6 +126,67 @@ class DocumentationReportController extends BaseProjectDocumentController
         }
     }
 
+    public function store(Request $request, Project $project)
+    {
+        $formType = FormType::query()
+            ->where('code', 'DOCUMENTATION_REPORT')
+            ->firstOrFail();
+
+        $data = $this->validateRequest($request);
+
+        [$data, $clean] = $this->normalizeData($data);
+
+        $document = $this->getOrCreateDocument($project, 'DOCUMENTATION_REPORT');
+
+        DB::transaction(function () use ($project, $formType, $data, $clean, $request) {
+
+            $document = $this->saveDocument($project, $formType);
+
+            if ($document->isLocked() && !$document->edit_mode) {
+                abort(403, 'This documentation report is already approved by the moderator and is locked.');
+            }
+
+            $this->copyProposalDataIfEmpty($project, $document);
+
+
+            $existingReport = DocumentationReportData::where('project_document_id', $document->id)->first();
+
+            $photoPath = $existingReport?->photo_document_path;
+
+            if ($request->hasFile('photo_document')) {
+
+                if ($photoPath && Storage::disk('public')->exists($photoPath)) {
+                    Storage::disk('public')->delete($photoPath);
+                }
+
+                $photoPath = $request->file('photo_document')
+                    ->store('documentation-reports/photo-documents', 'public');
+            }
+
+
+            $this->saveMainReport($document->id, $data, $photoPath);
+
+
+            $this->saveMultiEntries($document->id, $clean);
+
+
+            if (!$document->edit_mode) {
+                $this->resetApprovalsAfterEdit($document);
+            }
+        });
+
+        $action = $request->input('action');
+
+        if ($document && $document->edit_mode) {
+            $action = 'submit';
+        }
+
+        if ($action === 'submit') {
+            return $this->submit($project);
+        }
+
+        return back()->with('success', 'Documentation Report Saved.');
+    }
 
     public function submit(Project $project)
     {
