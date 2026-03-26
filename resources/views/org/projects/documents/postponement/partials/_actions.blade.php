@@ -176,7 +176,7 @@ Approve
 @else
 
 <form method="POST"
-action="{{ route('org.projects.postponement.approve', [$project, $document]) }}">
+action="{{ route('org.projects.documents.postponement.approve', [$project, $document]) }}">
 
 @csrf
 
@@ -224,7 +224,7 @@ Please provide remarks explaining the required changes.
 <form method="POST"
 action="{{ $isAdmin
 ? route('admin.projects.documents.return', [$project, $document->formType->code])
-: route('org.projects.postponement.return', [$project, $document]) }}">
+: route('org.projects.documents.postponement.return', [$project, $document]) }}">
 
 @csrf
 

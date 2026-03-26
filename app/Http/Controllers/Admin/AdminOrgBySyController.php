@@ -50,7 +50,7 @@ class AdminOrgBySyController extends Controller
             })
             ->orderByDesc('id');
 
-        $orgSys = $orgSyQuery->paginate(20)->withQueryString();
+        $orgSys = $orgSyQuery->paginate(200)->withQueryString();
 
         $selectedSy = $syId > 0 ? $schoolYears->firstWhere('id', $syId) : null;
 

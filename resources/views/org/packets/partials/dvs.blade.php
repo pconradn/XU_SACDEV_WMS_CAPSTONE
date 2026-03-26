@@ -42,7 +42,7 @@ Disbursement Vouchers
 @if(!$locked)
 
 <form method="POST"
-action="{{ route('org.projects.packet.dvs.destroy', [$project,$packet,$dv]) }}">
+action="{{ route('org.projects.packets.dvs.destroy', [$project,$packet,$dv]) }}">
 
 @csrf
 @method('DELETE')
@@ -72,7 +72,7 @@ Remove
 @if(!$locked)
 
 <form method="POST"
-action="{{ route('org.projects.packet.dvs.store', [$project,$packet]) }}">
+action="{{ route('org.projects.packets.dvs.store', [$project,$packet]) }}">
 
 @csrf
 

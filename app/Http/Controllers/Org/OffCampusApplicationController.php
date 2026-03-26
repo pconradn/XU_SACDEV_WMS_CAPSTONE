@@ -90,7 +90,7 @@ class OffCampusApplicationController extends BaseProjectDocumentController
 
         $document = $this->getOrCreateDocument($project, 'OFF_CAMPUS_APPLICATION');
 
-        if ($document->isLocked()) {
+        if ($document->isLocked() && !$document->edit_mode) {
             abort(403, 'This document is already approved and cannot be edited.');
         }
 
@@ -110,10 +110,16 @@ class OffCampusApplicationController extends BaseProjectDocumentController
 
             $this->saveParticipants($activity, $request->participants ?? []);
 
-            $this->resetApprovalsAfterEdit($document);
+            if (!$document->edit_mode) {
+                $this->resetApprovalsAfterEdit($document);
+            }
         });
 
         $action = $request->input('action');
+
+        if ($document && $document->edit_mode) {
+            $action = 'submit';
+        }
 
         if ($action === 'submit') {
             return $this->submit($project);
@@ -122,6 +128,39 @@ class OffCampusApplicationController extends BaseProjectDocumentController
         return redirect()
             ->route('org.projects.documents.hub', $project)
             ->with('success', 'Off-campus form saved as draft.');
+    }
+
+        public function submit(Project $project)
+    {
+        $formType = FormType::where('code', 'OFF_CAMPUS_APPLICATION')->firstOrFail();
+
+        $document = ProjectDocument::where('project_id', $project->id)
+            ->where('form_type_id', $formType->id)
+            ->firstOrFail();
+
+        if ($document->status !== 'draft' && !$document->edit_mode) {
+            return back()->with('error', 'This form cannot be submitted.');
+        }
+
+        $this->handleRequestSubmit($project, $document);
+
+        $document->load('signatures','formType','project');
+
+        Audit::log(
+            'document.submitted',
+            'Off-campus application submitted',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'form_type' => 'off_campus_application'
+                ]
+            ]
+        );
+
+        return back()->with('success', 'Off-campus form submitted successfully.');
     }
 
 
@@ -168,118 +207,7 @@ class OffCampusApplicationController extends BaseProjectDocumentController
     }
 
 
-    public function submit(Project $project)
-    {
-        $formType = FormType::where('code', 'OFF_CAMPUS_APPLICATION')->firstOrFail();
 
-        $document = ProjectDocument::where('project_id', $project->id)
-            ->where('form_type_id', $formType->id)
-            ->firstOrFail();
-
-        if ($document->status !== 'draft') {
-            return back()->with('error', 'This form is already submitted.');
-        }
-
-        DB::transaction(function () use ($project, $document) {
-
-            $document->update([
-                'status' => 'submitted',
-                'submitted_at' => now(),
-                'remarks' => null,
-                'returned_by' => null,
-                'returned_at' => null,
-            ]);
-
-            $document->signatures()->delete();
-
-
-            $projectHead = ProjectAssignment::where('project_id', $project->id)
-                ->where('assignment_role', 'project_head')
-                ->whereNull('archived_at')
-                ->firstOrFail();
-
-            $this->createSignature(
-                $document->id,
-                $projectHead->user_id,
-                'project_head',
-                'signed'
-            );
-
-
-            $president = OrgMembership::where('organization_id', $project->organization_id)
-                ->where('school_year_id', $project->school_year_id)
-                ->where('role', 'president')
-                ->whereNull('archived_at')
-                ->firstOrFail();
-
-            $this->createSignature(
-                $document->id,
-                $president->user_id,
-                'president'
-            );
-
-
-            $moderator = OrgMembership::where('organization_id', $project->organization_id)
-                ->where('school_year_id', $project->school_year_id)
-                ->where('role', 'moderator')
-                ->whereNull('archived_at')
-                ->firstOrFail();
-
-            $this->createSignature(
-                $document->id,
-                $moderator->user_id,
-                'moderator'
-            );
-
-
-            $admin = User::where('system_role', 'sacdev_admin')->firstOrFail();
-
-            $this->createSignature(
-                $document->id,
-                $admin->id,
-                'sacdev_admin'
-            );
-
-        });
-
-
-        $document->load('signatures','formType','project');
-
-        $this->notifyNextApprover($document);
-
-        Audit::log(
-            'document.submitted',
-            'Off-campus application submitted',
-            [
-                'actor_user_id' => auth()->id(),
-                'organization_id' => $project->organization_id,
-                'school_year_id' => $project->school_year_id,
-                'meta' => [
-                    'document_id' => $document->id,
-                    'form_type' => 'off_campus_application'
-                ]
-            ]
-        );
-
-        return back()->with('success', 'Off-campus form submitted successfully.');
-    }
-
-
-    private function createSignature(
-        int $documentId,
-        int $userId,
-        string $role,
-        string $status = 'pending'
-    ): void {
-
-        ProjectDocumentSignature::create([
-            'project_document_id' => $documentId,
-            'user_id' => $userId,
-            'role' => $role,
-            'status' => $status,
-            'signed_at' => $status === 'signed' ? now() : null,
-        ]);
-    }
 
 
     public function guidelines(Project $project)
@@ -290,7 +218,7 @@ class OffCampusApplicationController extends BaseProjectDocumentController
 
         if (!$this->isProjectHead($project, $user->id)) {
             return redirect()->route(
-                'org.projects.off-campus.create',
+                'org.projects.documents.off-campus.create',
                 $project
             );
         }
@@ -301,7 +229,7 @@ class OffCampusApplicationController extends BaseProjectDocumentController
 
         if ($ack) {
             return redirect()->route(
-                'org.projects.off-campus.create',
+                'org.projects.documents.off-campus.create',
                 $project
             );
         }
@@ -340,7 +268,7 @@ class OffCampusApplicationController extends BaseProjectDocumentController
         ]);
 
         return redirect()->route(
-            'org.projects.off-campus.create',
+            'org.projects.documents.off-campus.create',
             $project
         );
     }

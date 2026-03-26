@@ -8,7 +8,7 @@
 @include('org.projects.documents.disbursement-voucher.partials._header')
 
 <form method="POST"
-      action="{{ route('org.projects.disbursement-voucher.generate', $project) }}">
+      action="{{ route('org.projects.documents.disbursement-voucher.generate', $project) }}">
 
 @csrf
 

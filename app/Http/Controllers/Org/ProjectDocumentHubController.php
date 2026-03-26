@@ -286,6 +286,18 @@ class ProjectDocumentHubController extends Controller
         $projectHead = $projectHeadAssignment?->user;
         $isProjectHead = $projectHead?->id === $user->id;
 
+        $assignment = ProjectAssignment::query()
+            ->where('project_id', $project->id)
+            ->where('user_id', $user->id)
+            ->where('assignment_role', 'project_head')
+            ->whereNull('archived_at')
+            ->first();
+
+        $needsAgreement = $assignment && !$assignment->agreement_accepted_at;
+
+
+
+
         $orgRole = \App\Models\OrgMembership::where('user_id', $user->id)
             ->where('organization_id', $project->organization_id)
             ->where('school_year_id', $project->school_year_id)
@@ -320,19 +332,19 @@ class ProjectDocumentHubController extends Controller
             $proposalAction = [
                 'label' => 'Create Proposal',
                 'type' => 'create',
-                'url' => route('org.projects.project-proposal.create', $project),
+                'url' => route('org.projects.documents.project-proposal.create', $project),
             ];
         } elseif ($proposalDoc->isEditable() && $isProjectHead) {
             $proposalAction = [
                 'label' => 'Continue Proposal',
                 'type' => 'edit',
-                'url' => route('org.projects.project-proposal.create', $project),
+                'url' => route('org.projects.documents.project-proposal.create', $project),
             ];
         } else {
             $proposalAction = [
                 'label' => 'View Proposal',
                 'type' => 'view',
-                'url' => route('org.projects.project-proposal.create', $project),
+                'url' => route('org.projects.documents.project-proposal.create', $project),
             ];
         }
 
@@ -375,35 +387,38 @@ class ProjectDocumentHubController extends Controller
 
         $actions = [
             'can_generate_dv' => $budgetDoc !== null,
-            'dv_url' => route('org.projects.disbursement-voucher.create', $project),
+            'dv_url' => route('org.projects.documents.disbursement-voucher.create', $project),
 
-            'can_postpone' => $hasApprovedProposal && $isProjectHead && (
+            'can_postpone' => !$needsAgreement && $hasApprovedProposal && $isProjectHead && (
                 $postponements->isEmpty() ||
                 $postponements->last()?->status === 'approved_by_sacdev'
             ),
 
-            'can_cancel' => $hasApprovedProposal && $isProjectHead && $cancellations->isEmpty(),
+            'can_cancel' => !$needsAgreement && $hasApprovedProposal && $isProjectHead && $cancellations->isEmpty(),
 
-            'can_packets' => $hasApprovedProposal,
+            'can_packets' => !$needsAgreement && $hasApprovedProposal,
             'packet_url' => route('org.projects.packets.index', $project),
+
+
+
         ];
 
 
         $formRoutes = [
-            'PROJECT_PROPOSAL' => 'org.projects.project-proposal.create',
-            'BUDGET_PROPOSAL'  => 'org.projects.budget-proposal.create',
-            'OFF_CAMPUS_APPLICATION' => 'org.projects.off-campus.guidelines',
-            'SOLICITATION_APPLICATION' => 'org.projects.solicitation.create',
-            'SELLING_APPLICATION' => 'org.projects.selling.create',
-            'REQUEST_TO_PURCHASE' => 'org.projects.request-to-purchase.create',
+            'PROJECT_PROPOSAL' => 'org.projects.documents.project-proposal.create',
+            'BUDGET_PROPOSAL'  => 'org.projects.documents.budget-proposal.create',
+            'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.guidelines',
+            'SOLICITATION_APPLICATION' => 'org.projects.documents.solicitation.create',
+            'SELLING_APPLICATION' => 'org.projects.documents.selling.create',
+            'REQUEST_TO_PURCHASE' => 'org.projects.documents.request-to-purchase.create',
 
-            'FEES_COLLECTION_REPORT' => 'org.projects.fees-collection.create',
-            'SELLING_ACTIVITY_REPORT' => 'org.projects.selling-activity-report.create',
-            'SOLICITATION_SPONSORSHIP_REPORT' => 'org.projects.solicitation-sponsorship-report.create',
-            'TICKET_SELLING_REPORT' => 'org.projects.ticket-selling-report.create',
+            'FEES_COLLECTION_REPORT' => 'org.projects.documents.fees-collection.create',
+            'SELLING_ACTIVITY_REPORT' => 'org.projects.documents.selling-activity-report.create',
+            'SOLICITATION_SPONSORSHIP_REPORT' => 'org.projects.documents.solicitation-sponsorship-report.create',
+            'TICKET_SELLING_REPORT' => 'org.projects.documents.ticket-selling-report.create',
 
-            'DOCUMENTATION_REPORT' => 'org.projects.documentation-report.create',
-            'LIQUIDATION_REPORT' => 'org.projects.liquidation-report.create',
+            'DOCUMENTATION_REPORT' => 'org.projects.documents.documentation-report.create',
+            'LIQUIDATION_REPORT' => 'org.projects.documents.liquidation-report.create',
         ];
 
         $buildForm = function ($formType) use (
@@ -411,7 +426,8 @@ class ProjectDocumentHubController extends Controller
             $user,
             $project,
             $formRoutes,
-            $isProjectHead
+            $isProjectHead,
+            $needsAgreement,
         ) {
 
             $doc = $documents[$formType->id] ?? null;
@@ -434,13 +450,15 @@ class ProjectDocumentHubController extends Controller
                 'waiting_for' => $nextRole,
 
                 
-                'can_create' => !$doc && $routeName && $isProjectHead,
-                'can_edit' => $doc?->isEditable() && $isProjectHead,
+                'can_create' => !$needsAgreement && !$doc && $routeName && $isProjectHead,
+                'can_edit'   => !$needsAgreement && $doc?->isEditable() && $isProjectHead,
                 'can_review' => $canReview,
 
                 'create_url' => (!$doc && $routeName) ? route($routeName, $project) : null,
                 'edit_url' => ($doc && $doc->isEditable() && $routeName) ? route($routeName, $project) : null,
                 'view_url' => ($doc && $routeName) ? route($routeName, $project) : null,
+
+
             ];
         };
 
@@ -535,6 +553,7 @@ class ProjectDocumentHubController extends Controller
             'clearance',
             'milestones',
             'currentStage',
+            'needsAgreement',
         ));
     }
 

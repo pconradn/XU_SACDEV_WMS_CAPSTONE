@@ -10,7 +10,10 @@
 
     $isProjectHead = $isProjectHead ?? false;
 
-    $isEditable = $isProjectHead && in_array($status, ['draft','returned']);
+            $isEditable = $isProjectHead && (
+                in_array($status, ['draft','submitted','returned'])
+                || ($status === 'approved_by_sacdev' && $document->edit_mode)
+            );
 
     if ($status === 'approved') {
         $isEditable = false;
@@ -104,12 +107,12 @@
 
 
 @include('org.projects.documents.budget-proposal.partials._header')
-@include('org.projects.documents.budget-proposal.partials._flash')
+
 
 
 <form method="POST"
-      action="{{ route('org.projects.budget-proposal.store', $project) }}"
-      id="budgetForm">
+      action="{{ route('org.projects.documents.budget-proposal.store', $project) }}"
+      id="proposalForm">
 
 @csrf
 
@@ -132,9 +135,17 @@
 
 @include('org.projects.documents.budget-proposal.partials._signatures')
 
-@include('org.projects.documents.budget-proposal.partials._actions')
-
 </div>
+
+    @include('components.project-document.actions._actions', [
+        'project' => $project,
+        'document' => $document,
+        'currentSignature' => $document?->signatures
+            ?->where('user_id', auth()->id())
+            ->first(),
+        'isProjectHead' => $isProjectHead ?? false,
+        'isAdmin' => auth()->user()->system_role === 'sacdev_admin',
+    ])
 
 
 @include('org.projects.documents.budget-proposal.partials._script')

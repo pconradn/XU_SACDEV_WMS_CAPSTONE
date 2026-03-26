@@ -1,17 +1,19 @@
 <x-app-layout>
 
     <div class="max-w-6xl mx-auto space-y-6">
+        
 
         @php
             $status = $document->status ?? 'draft';
 
             $isProjectHead = $isProjectHead ?? false;
 
-            $isEditable = $isProjectHead && in_array($status, ['draft','submitted','returned']);
+            $isEditable = $isProjectHead && (
+                in_array($status, ['draft','submitted','returned'])
+                || ($status === 'approved_by_sacdev' && $document->edit_mode)
+            );
 
-            if ($status === 'approved') {
-                $isEditable = false;
-            }
+            //dd($status);
 
             $isReadOnly = !$isEditable;
 
@@ -108,12 +110,12 @@
         {{-- @include('org.projects.documents.project-proposal.partials._flash') --}}
 
         {{-- ================= FORM ================= --}}
-        <form method="POST"
-              action="{{ route('org.projects.project-proposal.store', $project) }}"
-              id="proposalForm"
-              class="space-y-6">
+        <form id="proposalForm"
+            method="POST"
+            action="{{ route('org.projects.documents.project-proposal.store', $project) }}">
 
             @csrf
+            <input type="hidden" name="action" id="formAction">
 
             @if($isReadOnly)
                 <fieldset disabled class="space-y-6">
@@ -160,7 +162,15 @@
         </div>
 
         {{-- ================= ACTIONS ================= --}}
-        @include('org.projects.documents.project-proposal.partials._actions')
+        @include('components.project-document.actions._actions', [
+            'project' => $project,
+            'document' => $document,
+            'currentSignature' => $document?->signatures
+                ?->where('user_id', auth()->id())
+                ->first(),
+            'isProjectHead' => $isProjectHead ?? false,
+            'isAdmin' => auth()->user()->system_role === 'sacdev_admin',
+        ])
 
     </div>
 

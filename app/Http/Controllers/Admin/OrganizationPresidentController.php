@@ -73,7 +73,7 @@ class OrganizationPresidentController extends Controller
         
         $alreadyPresidentElsewhere = OfficerEntry::query()
             ->where('school_year_id', $syId)
-            ->where('major_officer_role', 'president')
+            //->where('major_officer_role', ['president', 'treasurer','vice_president', 'auditor'])
             ->where('is_major_officer', true)
             ->where('student_id_number', $data['student_id_number'])
             ->where('organization_id', '!=', $orgId)
@@ -82,10 +82,11 @@ class OrganizationPresidentController extends Controller
         if ($alreadyPresidentElsewhere) {
             return back()->withErrors([
                 'student_id_number' =>
-                    'This student is already assigned as President in another organization for this school year.',
+                    'This student is already assigned as a major officer in another organization for this school year.',
             ])->withInput();
         }
 
+        //dd($alreadyPresidentElsewhere);
     
         $existingPresidentEntry = OfficerEntry::query()
             ->where('organization_id', $orgId)
@@ -94,10 +95,26 @@ class OrganizationPresidentController extends Controller
             ->where('is_major_officer', true)
             ->first();
 
+
+        $hasOrgSyEntry = \App\Models\OrganizationSchoolYear::query()
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->exists();
+
         if ($existingPresidentEntry && $existingPresidentEntry->user_id) {
+
             $existingUser = User::find($existingPresidentEntry->user_id);
 
-            if ($existingUser && (int) $existingUser->must_change_password === 0) {
+            $hasOrgSyEntry = \App\Models\OrganizationSchoolYear::query()
+                ->where('organization_id', $orgId)
+                ->where('school_year_id', $syId)
+                ->exists();
+
+            if (
+                $existingUser &&
+                (int) $existingUser->must_change_password === 0 &&
+                $hasOrgSyEntry 
+            ) {
                 return back()->withErrors([
                     'president_name' =>
                         'This organization already has an activated President account. ' .

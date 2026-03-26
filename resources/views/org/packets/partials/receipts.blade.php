@@ -32,7 +32,7 @@ OR #{{ $receipt->or_number }}
 @if(!$locked)
 
 <form method="POST"
-action="{{ route('org.projects.packet.receipts.destroy', [$project,$packet,$receipt]) }}">
+action="{{ route('org.projects.packets.receipts.destroy', [$project,$packet,$receipt]) }}">
 
 @csrf
 @method('DELETE')
@@ -62,7 +62,7 @@ Remove
 @if(!$locked)
 
 <form method="POST"
-action="{{ route('org.projects.packet.receipts.store', [$project,$packet]) }}">
+action="{{ route('org.projects.packets.receipts.store', [$project,$packet]) }}">
 
 @csrf
 

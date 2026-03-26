@@ -5,6 +5,10 @@
 
 <body class="font-sans antialiased bg-slate-100 text-slate-900">
 
+<div id="page-loader" class="fixed inset-0 z-[9999] flex items-center justify-center bg-white">
+    <div class="loader"></div>
+</div>
+
 @auth
 @php
 $isAdmin = auth()->user()->system_role === 'sacdev_admin';
@@ -13,6 +17,23 @@ $activeSy = \App\Models\SchoolYear::activeYear();
 @endauth
 
 <style>
+    .loader {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgb(226 232 240);
+        border-top: 4px solid rgb(15 23 42); 
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+
+
     @keyframes fadeIn {
         from {
             opacity: 0;
@@ -163,5 +184,29 @@ document.addEventListener('submit', function (e) {
     }
 });
 </script>
+
+<script>
+window.addEventListener('load', function () {
+    const loader = document.getElementById('page-loader');
+
+    if (loader) {
+        loader.style.opacity = '0';
+        loader.style.transition = 'opacity 0.3s ease';
+
+        setTimeout(() => loader.remove(), 300);
+    }
+});
+</script>
+
+<script>
+document.addEventListener('submit', function () {
+    const loader = document.getElementById('page-loader');
+    if (loader) {
+        loader.style.opacity = '1';
+        loader.style.display = 'flex';
+    }
+});
+</script>
+
 </body>
 </html>

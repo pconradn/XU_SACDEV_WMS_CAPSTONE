@@ -20,7 +20,7 @@ Available once a Budget Proposal exists.
 
 <div>
 
-<a href="{{ route('org.projects.disbursement-voucher.create', $project) }}"
+<a href="{{ route('org.projects.documents.disbursement-voucher.create', $project) }}"
 class="inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
 Generate DV
 </a>

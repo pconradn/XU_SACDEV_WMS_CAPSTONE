@@ -12,6 +12,8 @@ class ProjectAssignment extends Model
         'user_id',
         'assignment_role',
         'archived_at',
+        'agreement_accepted_at',
+        'agreement_ip',
     ];
 
     protected $casts = [
@@ -44,6 +46,11 @@ class ProjectAssignment extends Model
             'user_id',        
             'officer_entry_id'    
         );
+    }
+
+    public function hasAcceptedAgreement(): bool
+    {
+        return !is_null($this->agreement_accepted_at);
     }
 
 

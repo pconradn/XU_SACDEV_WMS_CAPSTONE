@@ -11,7 +11,10 @@ $status = $document->status ?? 'draft';
 
 $isProjectHead = $isProjectHead ?? false;
 
-$isEditable = $isProjectHead && in_array($status, ['draft','submitted','returned']);
+            $isEditable = $isProjectHead && (
+                in_array($status, ['draft','submitted','returned'])
+                || ($status === 'approved_by_sacdev' && $document->edit_mode)
+            );
 
 if ($status === 'approved') {
     $isEditable = false;
@@ -122,9 +125,9 @@ Returned for revision. Please update and resubmit.
 @include('org.projects.documents.fees-collection.partials._flash')
 
 
-<form id="feesCollectionForm"
+<form id="proposalForm"
       method="POST"
-      action="{{ route('org.projects.fees-collection.store', $project) }}">
+      action="{{ route('org.projects.documents.fees-collection.store', $project) }}">
 
 @csrf
 
@@ -211,9 +214,17 @@ Pending
 @endif
 
 
+    @include('components.project-document.actions._actions', [
+        'project' => $project,
+        'document' => $document,
+        'currentSignature' => $document?->signatures
+            ?->where('user_id', auth()->id())
+            ->first(),
+        'isProjectHead' => $isProjectHead ?? false,
+        'isAdmin' => auth()->user()->system_role === 'sacdev_admin',
+    ])
 
 
-@include('org.projects.documents.fees-collection.partials._actions')
 
 @include('org.projects.documents.fees-collection.partials._scripts')
 

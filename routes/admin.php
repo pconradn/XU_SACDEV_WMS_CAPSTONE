@@ -179,16 +179,25 @@ Route::prefix('admin')
             [AdminProjectDocumentController::class, 'open']
         )->name('admin.projects.documents.open');
 
+        Route::prefix('/projects/{project}/documents')->group(function () {
 
-        Route::post(
-            '/projects/{project}/documents/{formCode}/approve',
-            [AdminProjectDocumentController::class, 'approve']
-        )->name('admin.projects.documents.approve');
+            Route::post('{formCode}/approve',
+                [AdminProjectDocumentController::class, 'approve']
+            )->name('admin.projects.documents.approve');
 
-        Route::post(
-            '/projects/{project}/documents/{formCode}/return',
-            [AdminProjectDocumentController::class, 'return']
-        )->name('admin.projects.documents.return');
+            Route::post('{formCode}/return',
+                [AdminProjectDocumentController::class, 'return']
+            )->name('admin.projects.documents.return');
+
+            Route::post('{formCode}/allow-edit',
+                [AdminProjectDocumentController::class, 'allowEdit']
+            )->name('admin.projects.documents.allow-edit');
+
+            Route::post('{formCode}/retract',
+                [AdminProjectDocumentController::class, 'retract']
+            )->name('admin.projects.documents.retract');
+
+        });
 
 
         Route::post(

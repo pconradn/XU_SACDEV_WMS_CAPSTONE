@@ -173,7 +173,7 @@ $currentSignature->user_id === auth()->id()
 
     @else
     <form method="POST"
-    action="{{ route('org.projects.selling.approve', $project) }}">
+    action="{{ route('org.projects.documents.selling.approve', $project) }}">
 
     @csrf
 
@@ -220,7 +220,7 @@ Please provide remarks explaining the required changes.
 <form method="POST"
 action="{{ $isAdmin
 ? route('admin.projects.documents.return', [$project, $document->formType->code])
-: route('org.projects.selling.return', $project) }}">
+: route('org.projects.documents.selling.return', $project) }}">
 
 @csrf
 
