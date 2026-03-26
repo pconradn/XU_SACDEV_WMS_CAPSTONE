@@ -137,16 +137,5 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-function openApproveModal() {
-    const modal = document.getElementById('approveModal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-function closeApproveModal() {
-    const modal = document.getElementById('approveModal');
-    modal.classList.remove('flex');
-    modal.classList.add('hidden');
-}
 
 </script>

@@ -54,25 +54,48 @@
 
     @include('org.projects.documents.v2.partials.section', [
         'title' => 'Pre-Implementation Documents',
-        'forms' => $pre
+        'forms' => $pre,
+        'sectionKey' => 'pre',
+        'sectionCounts' => $sectionCounts
     ])
 
 
     @if($preSubmitted)
 
+        @if(optional($project->proposalDocument?->proposalData)->off_campus_venue)
+
+            {{-- OFF CAMPUS --}}
+            @include('org.projects.documents.v2.partials.section', [
+                'title' => 'Off-Campus Requirements',
+                'forms' => $sections['offcampus'] ?? collect(),
+                'sectionKey' => 'offcampus',
+                'sectionCounts' => $sectionCounts
+            ])
+
+        @endif
+
+        {{-- NOTICES --}}
         @include('org.projects.documents.v2.partials.section', [
             'title' => 'Notices / Adjustments',
-            'forms' => $notices
+            'forms' => $notices,
+            'sectionKey' => 'notices',
+            'sectionCounts' => $sectionCounts
         ])
 
+        {{-- OTHER --}}
         @include('org.projects.documents.v2.partials.section', [
             'title' => 'Supporting Documents',
-            'forms' => $other
+            'forms' => $other,
+            'sectionKey' => 'other',
+            'sectionCounts' => $sectionCounts
         ])
 
+        {{-- POST --}}
         @include('org.projects.documents.v2.partials.section', [
             'title' => 'Post-Implementation Documents',
-            'forms' => $post
+            'forms' => $post,
+            'sectionKey' => 'post',
+            'sectionCounts' => $sectionCounts
         ])
 
     @else
@@ -184,5 +207,7 @@
 
 
 </div>
+
+
 
 </x-app-layout>

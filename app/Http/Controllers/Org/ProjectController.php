@@ -79,10 +79,23 @@ class ProjectController extends Controller
                     $q->where('assignment_role', 'project_head')
                     ->whereNull('archived_at')
                     ->with('officerEntry');
-                }
+                },
+                'documents.signatures',
             ])
             ->withCount('documents')
             ->get();
+
+        $projects->transform(function ($project) use ($user) {
+
+            $pendingCount = $project->documents->filter(function ($doc) use ($user) {
+                $pending = $doc->currentPendingSignature();
+                return $pending && $pending->user_id === $user->id;
+            })->count();
+
+            $project->pending_approvals = $pendingCount;
+
+            return $project;
+        });
 
         $officers = OfficerEntry::query()
             ->where('organization_id', $orgId)
