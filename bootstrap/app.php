@@ -29,6 +29,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'project.access' => \App\Http\Middleware\EnsureUserCanAccessProject::class,
             'project.role' => \App\Http\Middleware\RequireProjectRole::class,
             'document.type' => \App\Http\Middleware\EnsureDocumentType::class,
+
+
+            'permission' => \App\Http\Middleware\CheckPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

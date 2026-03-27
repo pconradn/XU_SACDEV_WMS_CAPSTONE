@@ -99,7 +99,7 @@
                    class="rounded-xl border border-slate-200 bg-white p-4 {{ $canEditMajor ? 'hover:bg-slate-50' : 'opacity-50 pointer-events-none' }}">
                     <div class="font-semibold text-slate-900">Major Officer Roles</div>
                     <div class="text-sm text-slate-600 mt-1">
-                        Replace president/VP/treasurer/auditor (Active SY only)
+                        Replace president/VP/treasurer/finance_officer (Active SY only)
                     </div>
                 </a>
             </div>

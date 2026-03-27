@@ -101,14 +101,14 @@
                         <td style="border:1px solid #000; padding:10px;">
 
                             <div style="margin-top:20px; font-weight:bold;">
-                                {{ sig('auditor', $sigs)?->user?->name ?? '—' }}
+                                {{ sig('finance_officer', $sigs)?->user?->name ?? '—' }}
                             </div>
 
                             <div style="font-size:12px;">
                                 Budget and Finance Officer
                             </div>
 
-                            {!! digitalApproval('auditor', $sigs) !!}
+                            {!! digitalApproval('finance_officer', $sigs) !!}
 
                         </td>
 

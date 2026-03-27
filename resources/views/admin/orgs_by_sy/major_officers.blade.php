@@ -41,7 +41,7 @@
                 'president' => 'President',
                 'vice_president' => 'Vice President',
                 'treasurer' => 'Treasurer',
-                'auditor' => 'Auditor',
+                'finance_officer' => 'finance_officer',
             ];
 
             $officerOptions = $officers;

@@ -27,7 +27,7 @@ return new class extends Migration
                 // president
                 // vice_president
                 // treasurer
-                // auditor
+                // finance_officer
 
 
             /*

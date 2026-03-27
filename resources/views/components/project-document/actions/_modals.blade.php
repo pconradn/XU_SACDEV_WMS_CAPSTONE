@@ -32,52 +32,52 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
 
 {{-- ================= MODAL STYLES ================= --}}
 <style>
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
-    backdrop-filter: blur(2px);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-}
-.modal {
-    background: white;
-    border-radius: 16px;
-    width: 100%;
-    max-width: 420px;
-    padding: 22px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    animation: fadeIn .2s ease;
-}
-@keyframes fadeIn {
-    from {opacity:0; transform:translateY(10px);}
-    to {opacity:1; transform:translateY(0);}
-}
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        backdrop-filter: blur(2px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+    .modal {
+        background: white;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 420px;
+        padding: 22px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        animation: fadeIn .2s ease;
+    }
+    @keyframes fadeIn {
+        from {opacity:0; transform:translateY(10px);}
+        to {opacity:1; transform:translateY(0);}
+    }
 </style>
 
 
 {{-- ================= CORE MODAL FUNCTIONS ================= --}}
 <script>
-function openModal(id){ document.getElementById(id).style.display = 'flex'; }
-function closeModal(id){ document.getElementById(id).style.display = 'none'; }
+    function openModal(id){ document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id){ document.getElementById(id).style.display = 'none'; }
 
-function submitMainForm(action = 'submit') {
-    const form = document.getElementById('proposalForm');
-    if (!form) return;
+    function submitMainForm(action = 'submit') {
+        const form = document.getElementById('proposalForm');
+        if (!form) return;
 
-    const actionInput = document.getElementById('formAction');
-    if (actionInput) actionInput.value = action;
+        const actionInput = document.getElementById('formAction');
+        if (actionInput) actionInput.value = action;
 
-    form.submit();
-}
+        form.submit();
+    }
 
-// prevent double click submit
-function lockButton(btn){
-    btn.disabled = true;
-    btn.innerText = 'Processing...';
-}
+    // prevent double click submit
+    function lockButton(btn){
+        btn.disabled = true;
+        btn.innerText = 'Processing...';
+    }
 </script>
 
 
@@ -207,13 +207,33 @@ function lockButton(btn){
             ⚠ This action cannot be undone and may affect the workflow.
         </p>
 
-        @if(($isAdmin && $formCode) || $routePrefix)
+        @if(!empty($isCombined))
 
         <form method="POST"
-              action="{{ $isAdmin
+            action="{{ $isAdmin
+                ? route('admin.projects.documents.combined-proposal.return', $project)
+                : route('org.projects.documents.combined-proposal.return', $project) }}"
+            onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+
+            @csrf
+
+            <textarea name="remarks"
+                class="w-full border border-slate-300 rounded-lg text-xs p-2 mb-3"
+                placeholder="Enter remarks..."
+                required></textarea>
+
+            <button class="w-full mb-2 px-4 py-2 bg-red-600 text-white rounded-lg text-xs">
+                Return Document
+            </button>
+        </form>
+
+        @elseif(($isAdmin && $formCode) || $routePrefix)
+
+        <form method="POST"
+            action="{{ $isAdmin
                 ? route('admin.projects.documents.return', [$project, $formCode])
                 : route("org.projects.documents.$routePrefix.return", $project) }}"
-              onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+            onsubmit="lockButton(this.querySelector('button[type=submit]'))">
 
             @csrf
 
@@ -253,28 +273,48 @@ function lockButton(btn){
             ⚠ This action cannot be undone and may impact document integrity.
         </p>
 
-        @if(($isAdmin && $formCode) || $routePrefix)
+        
+        @if(!empty($isCombined))
 
-        <form method="POST"
-            action="{{ $isAdmin
-                ? route('admin.projects.documents.retract', [$project, $formCode])
-                : route("org.projects.documents.retract", [$project, $formCode]) }}"
-            onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+            <form method="POST"
+                action="{{ $isAdmin
+                    ? route('admin.projects.documents.combined-proposal.retract', $project)
+                    : route('org.projects.documents.combined-proposal.retract', $project) }}"
+                onsubmit="lockButton(this.querySelector('button[type=submit]'))">
 
-            @csrf
+                @csrf
 
-            <button class="w-full mb-2 px-4 py-2 bg-red-600 text-white rounded-lg text-xs">
-                Confirm Retract
-            </button>
-        </form>
+                <button class="w-full mb-2 px-4 py-2 bg-red-600 text-white rounded-lg text-xs">
+                    Confirm Retract
+                </button>
+            </form>
 
+        
+        @elseif(($isAdmin && $formCode) || $routePrefix)
+
+            <form method="POST"
+                action="{{ $isAdmin
+                    ? route('admin.projects.documents.retract', [$project, $formCode])
+                    : route('org.projects.documents.retract', [$project, $formCode]) }}"
+                onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+
+                @csrf
+
+                <button class="w-full mb-2 px-4 py-2 bg-red-600 text-white rounded-lg text-xs">
+                    Confirm Retract
+                </button>
+            </form>
+
+        
         @else
-        <div class="text-xs text-red-500 text-center py-2">
-            ⚠ Unable to determine retract route.
-        </div>
+            <div class="text-xs text-red-500 text-center py-2">
+                ⚠ Unable to determine retract route.
+            </div>
         @endif
 
-        <button type="button" onclick="closeModal('retractModal')" class="w-full text-xs text-slate-500">
+        <button type="button"
+            onclick="closeModal('retractModal')"
+            class="w-full text-xs text-slate-500">
             Cancel
         </button>
     </div>
@@ -289,11 +329,29 @@ function lockButton(btn){
             This will request permission to edit this document after approval.
         </p>
 
-        @if($formCode)
+        @if(!empty($isCombined))
 
         <form method="POST"
-              action="{{ route('org.projects.documents.request-edit', [$project, $formCode]) }}"
-              onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+            action="{{ route('org.projects.documents.combined-proposal.request-edit', $project) }}"
+            onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+
+            @csrf
+
+            <textarea name="remarks"
+                class="w-full border border-slate-300 rounded-lg text-xs p-2 mb-3"
+                placeholder="Optional reason..."></textarea>
+
+            <button class="w-full mb-2 px-4 py-2 bg-amber-500 text-white rounded-lg text-xs">
+                Request Edit (Combined)
+            </button>
+        </form>
+
+        @elseif($formCode)
+
+        <form method="POST"
+            action="{{ route('org.projects.documents.request-edit', [$project, $formCode]) }}"
+            onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+
             @csrf
 
             <textarea name="remarks"
@@ -328,11 +386,25 @@ function lockButton(btn){
             This will allow the project head to edit and resubmit this document.
         </p>
 
-        @if($formCode)
+        @if(!empty($isCombined))
 
         <form method="POST"
-              action="{{ route('admin.projects.documents.allow-edit', [$project, $formCode]) }}"
-              onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+            action="{{ route('admin.projects.documents.combined-proposal.allow-edit', $project) }}"
+            onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+
+            @csrf
+
+            <button class="w-full mb-2 px-4 py-2 bg-amber-500 text-white rounded-lg text-xs">
+                Allow Edit (Combined)
+            </button>
+        </form>
+
+        @elseif($formCode)
+
+        <form method="POST"
+            action="{{ route('admin.projects.documents.allow-edit', [$project, $formCode]) }}"
+            onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+
             @csrf
 
             <button class="w-full mb-2 px-4 py-2 bg-amber-500 text-white rounded-lg text-xs">
@@ -554,7 +626,23 @@ function lockButton(btn){
                 This action will approve the document and move it to the next approver.
             </p>
 
-            @if($routePrefix || $isAdmin)
+            @if(!empty($isCombined))
+
+            <form method="POST"
+                onsubmit="lockButton(this.querySelector('button[type=submit]'))"
+                action="{{ $isAdmin
+                    ? route('admin.projects.documents.combined-proposal.approve', $project)
+                    : route('org.projects.documents.combined-proposal.approve', $project) }}">
+
+                @csrf
+
+                <button class="w-full mb-2 px-4 py-2 bg-green-600 text-white rounded-lg text-xs">
+                    Confirm Approval
+                </button>
+
+            </form>
+
+            @elseif($routePrefix || $isAdmin)
 
                 <form method="POST"
                     onsubmit="lockButton(this.querySelector('button[type=submit]'))"
@@ -604,20 +692,6 @@ function openAllowEditModal(){ openModal('allowEditModal'); }
 function openSubmitRevisionModal(){ openModal('submitRevisionModal'); }
 
 
-function submitMainForm(action) {
-    let form = document.getElementById('proposalForm');
 
-    let existing = form.querySelector('input[name="action"]');
-    if (existing) existing.remove();
-
-    let input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'action';
-    input.value = action;
-
-    form.appendChild(input);
-
-    form.submit();
-}
 
 </script>

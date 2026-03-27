@@ -315,7 +315,7 @@ class SacdevB3OfficerSubmissionController extends Controller
 
 
 
-                if ($item->isTreasurer() || $item->major_officer_role === 'auditor') {
+                if ($item->isTreasurer() || $item->major_officer_role === 'finance_officer') {
 
                     [$user, $tempPassword] =
                         AccountProvisioner::findOrCreateUser(

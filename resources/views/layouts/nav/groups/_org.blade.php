@@ -24,7 +24,7 @@ if ($activeOrgId) {
         ->whereNull('archived_at')
         ->value('role');
 
-    $isAuditor = ($orgRole === 'auditor');
+    $isFinance_Officer = ($orgRole === 'finance_officer');
     $isTreasurer = ($orgRole === 'treasurer');
     $isModerator = ($orgRole === 'moderator');
     $isPresident = ($orgRole === 'president');
@@ -141,7 +141,7 @@ if ($activeOrgId) {
 
 
 
-    if ($isTreasurer || $isAuditor) {
+    if ($isTreasurer || $isFinance_Officer) {
 
         $treasurer = [];
 

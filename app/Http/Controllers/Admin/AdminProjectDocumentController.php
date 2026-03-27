@@ -212,7 +212,7 @@ class AdminProjectDocumentController extends Controller
         $user = auth()->user();
         $userId = $user->id;
 
-        $isAdmin = $user->system_role === 'sacdev_admin';
+        $isAdmin = $user->isSacdev();
 
 
         $currentSignature = $document->signatures
@@ -266,6 +266,86 @@ class AdminProjectDocumentController extends Controller
             'currentSignature' => $currentSignature,
             'isAdmin' => $isAdmin,
         ]);
+    }
+
+    public function openCombined(Project $project)
+    {
+        //dd($project);
+        $proposalDoc = ProjectDocument::with(['signatures.user', 'formType'])
+            ->where('project_id', $project->id)
+            ->whereHas('formType', fn($q) => $q->where('code', 'project_proposal'))
+            ->first();
+
+        $budgetDoc = ProjectDocument::with(['signatures.user', 'formType'])
+            ->where('project_id', $project->id)
+            ->whereHas('formType', fn($q) => $q->where('code', 'budget_proposal'))
+            ->first();
+
+        if (!$proposalDoc || !$budgetDoc) {
+            abort(404, 'Combined documents not found.');
+        }
+
+        return view('org.projects.documents.combined.create', [
+            'project' => $project,
+            'proposalData' => [
+                'document' => $proposalDoc,
+                'proposal' => $proposalDoc->proposalData,
+                'isProjectHead' => false,
+            ],
+            'budgetData' => [
+                'document' => $budgetDoc,
+                'budget' => $budgetDoc->budgetProposal,
+            ],
+            'isAdmin' => true,
+        ]);
+    }
+
+    public function combinedApprove(Project $project)
+    {
+        DB::transaction(function () use ($project) {
+
+            $this->approve(request(), $project, 'PROJECT_PROPOSAL');
+            $this->approve(request(), $project, 'BUDGET_PROPOSAL');
+
+        });
+
+        return back()->with('success', 'Combined documents approved.');
+    }
+
+    public function combinedReturn(Request $request, Project $project)
+    {
+        DB::transaction(function () use ($request, $project) {
+
+            $this->return($request, $project, 'PROJECT_PROPOSAL');
+            $this->return($request, $project, 'BUDGET_PROPOSAL');
+
+        });
+
+        return back()->with('success', 'Combined documents returned.');
+    }
+
+    public function combinedRetract(Project $project)
+    {
+        DB::transaction(function () use ($project) {
+
+            $this->retract($project, 'PROJECT_PROPOSAL');
+            $this->retract($project, 'BUDGET_PROPOSAL');
+
+        });
+
+        return back()->with('success', 'Combined documents retracted.');
+    }
+
+    public function combinedAllowEdit(Project $project, Request $request)
+    {
+        DB::transaction(function () use ($project, $request) {
+
+            $this->allowEdit($project, 'PROJECT_PROPOSAL', $request);
+            $this->allowEdit($project, 'BUDGET_PROPOSAL', $request);
+
+        });
+
+        return back()->with('success', 'Edit allowed for combined documents.');
     }
 
 

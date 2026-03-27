@@ -43,7 +43,7 @@ class SellingApplicationController extends BaseProjectDocumentController
 
         $user = auth()->user();
 
-        $isAdmin = $user->system_role === 'sacdev_admin';
+        $isAdmin = $user->isSacdev();
 
         $orgId = session('active_org_id');
         $syId  = session('encode_sy_id');

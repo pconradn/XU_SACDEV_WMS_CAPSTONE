@@ -5,7 +5,7 @@ use App\Models\OrganizationSchoolYear;
 use App\Models\ProjectAssignment;
 
 $user = auth()->user();
-$isAdmin = $user && $user->system_role === 'sacdev_admin';
+$isAdmin = $user && $user->isSacdev();
 
 $linkClass = function (array $activePatterns) {
     $active = request()->routeIs(...$activePatterns);
@@ -43,15 +43,16 @@ if (Route::has('context.show') && !$isAdmin) {
 }
 
 
-
 if ($user && $isAdmin) {
+
+    $can = fn ($perm) => $user && ($user->isSuperAdmin() || $user->hasPermission($perm));
 
     $rereg = [];
     $queues = [];
     $orgTools = [];
     $system = [];
 
-    if (Route::has('admin.rereg.index')) {
+    if (Route::has('admin.rereg.index') && $can('projects.view')) {
         $rereg[] = $item(
             'Re-Registration Hub',
             route('admin.rereg.index'),
@@ -60,53 +61,65 @@ if ($user && $isAdmin) {
         );
     }
 
-    if (Route::has('admin.strategic_plans.index')) {
+
+    if (Route::has('admin.strategic_plans.index') && $can('projects.view')) {
         $queues[] = $item('Strategic Plans (B-1)', route('admin.strategic_plans.index'), ['admin.strategic_plans.*']);
     }
 
-    if (Route::has('admin.b2.president.index')) {
+    if (Route::has('admin.b2.president.index') && $can('projects.view')) {
         $queues[] = $item('President Registrations (B-2)', route('admin.b2.president.index'), ['admin.b2.president.*']);
     }
 
-    if (Route::has('admin.officer_submissions.index')) {
+    if (Route::has('admin.officer_submissions.index') && $can('projects.view')) {
         $queues[] = $item('Officer Submissions (B-3)', route('admin.officer_submissions.index'), ['admin.officer_submissions.*']);
     }
 
-    if (Route::has('admin.member_lists.index')) {
+    if (Route::has('admin.member_lists.index') && $can('projects.view')) {
         $queues[] = $item('Member Lists (B-4)', route('admin.member_lists.index'), ['admin.member_lists.*']);
     }
 
-    if (Route::has('admin.moderator_submissions.index')) {
+    if (Route::has('admin.moderator_submissions.index') && $can('projects.view')) {
         $queues[] = $item('Moderator Submissions (B-5)', route('admin.moderator_submissions.index'), ['admin.moderator_submissions.*']);
     }
 
-    if (Route::has('admin.review.index')) {
+
+    if (Route::has('admin.review.index') && $can('projects.view')) {
         $orgTools[] = $item('Organization Review', route('admin.review.index'), ['admin.review.*']);
     }
 
-    if (Route::has('admin.packets.receive')) {
+    if (Route::has('admin.packets.receive') && $can('documents.manage')) {
         $orgTools[] = $item('Packet Receiving', route('admin.packets.receive'), ['admin.packets.*']);
     }
 
-    if (Route::has('admin.school-years.index')) {
-        $system[] = $item('School Years', route('admin.school-years.index'), ['admin.school-years.*']);
-    }
-
-    if (Route::has('admin.organizations.index')) {
-        $system[] = $item('Organizations', route('admin.organizations.index'), ['admin.organizations.*']);
-    }
-
-    if (Route::has('admin.president_assignments.index')) {
-        $system[] = $item('President Assignments', route('admin.president_assignments.index'), ['admin.president_assignments.*']);
-    }
-
-    if (Route::has('admin.orgs_by_sy.index')) {
+    if (Route::has('admin.orgs_by_sy.index') && $can('projects.view')) {
         $orgTools[] = $item('Organizations (by SY)', route('admin.orgs_by_sy.index'), ['admin.orgs_by_sy.*']);
     }
 
-    if (Route::has('admin.audit-logs.index')) {
+
+    if (Route::has('admin.school-years.index') && $can('context.manage')) {
+        $system[] = $item('School Years', route('admin.school-years.index'), ['admin.school-years.*']);
+    }
+
+    if (Route::has('admin.users.index') && $can('users.manage')) {
+        $system[] = $item('Admin Users', route('admin.users.index'), ['admin.users.*']);
+    }
+
+    if (Route::has('admin.roles.index') && $can('roles.manage')) {
+        $system[] = $item('Manage Roles', route('admin.roles.index'), ['admin.roles.*']);
+    }
+
+    if (Route::has('admin.organizations.index') && $can('context.manage')) {
+        $system[] = $item('Organizations', route('admin.organizations.index'), ['admin.organizations.*']);
+    }
+
+    if (Route::has('admin.president_assignments.index') && $can('context.manage')) {
+        $system[] = $item('President Assignments', route('admin.president_assignments.index'), ['admin.president_assignments.*']);
+    }
+
+    if (Route::has('admin.audit-logs.index') && $can('projects.view')) {
         $system[] = $item('Audit Logs', route('admin.audit-logs.index'), ['admin.audit-logs.*']);
     }
+
 
     if ($rereg) {
         $groups[] = ['title' => 'Re-Registration Hub', 'links' => $rereg, 'icon' => 'clipboard', 'single' => true];
@@ -141,7 +154,7 @@ if ($user && $activeOrgId && $syId) {
     $isPresident = ($orgRole === 'president');
     $isModerator = ($orgRole === 'moderator');
     $isTreasurer = ($orgRole === 'treasurer');
-    $isAuditor = ($orgRole === 'auditor');
+    $isFinance_Officer = ($orgRole === 'finance_officer');
 
     $isProjectHead = ProjectAssignment::query()
         ->where('user_id', $user->id)
@@ -161,9 +174,7 @@ if ($user && $activeOrgId && $syId) {
         $isPresident = ((int)$osyPresident === (int)$user->id);
     }
 
-    /* ========================= */
-    /* PRESIDENT */
-    /* ========================= */
+ 
     if ($isPresident) {
 
         $rereg = [];
@@ -215,9 +226,7 @@ if ($user && $activeOrgId && $syId) {
     }
 
 
-    /* ========================= */
-    /* PROJECT ACCESS (ALL ROLES) */
-    /* ========================= */
+
 
     $projectLinks = [];
 
@@ -225,7 +234,7 @@ if ($user && $activeOrgId && $syId) {
         $projectLinks[] = $item('Projects', route('org.projects.index'), ['org.projects.*']);
     }
 
-    if (($isTreasurer || $isAuditor) && Route::has('org.projects.index')) {
+    if (($isTreasurer || $isFinance_Officer) && Route::has('org.projects.index')) {
         $projectLinks[] = $item('Projects', route('org.projects.index'), ['org.projects.*']);
     }
 
@@ -250,9 +259,6 @@ if ($user && $activeOrgId && $syId) {
     }
 
 
-    /* ========================= */
-    /* MODERATOR TOOLS */
-    /* ========================= */
 
     if ($isModerator) {
         $mod = [];

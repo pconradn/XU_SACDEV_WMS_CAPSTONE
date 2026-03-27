@@ -24,6 +24,14 @@ Project Documents — SACDEV Review
 </a>
 
 
+
+
+<a href="{{ route('admin.projects.documents.combined-proposal.open', $project) }}"
+   class="block w-full text-left px-4 py-3 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-sm font-medium transition">
+      Pre-Implementation
+</a>
+
+
 <a
 href="{{ route('admin.projects.packets.index', $project) }}"
 class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-md bg-indigo-600 text-white hover:bg-indigo-700">

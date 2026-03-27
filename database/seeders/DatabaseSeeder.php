@@ -20,7 +20,10 @@ class DatabaseSeeder extends Seeder
             ProjectProposalFormSeeder::class,
 
             SchoolYearOrganizationSetupSeeder::class,
-            StrategicPlanSeeder::class
+            StrategicPlanSeeder::class,
+
+            RolePermissionSeeder::class,
+            ClusterSeeder::class,
         ]);
 
 

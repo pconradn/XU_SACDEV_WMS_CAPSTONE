@@ -134,7 +134,7 @@ class Sprint1Seeder extends Seeder
             ['Moderator XUCS', 'moderator.xucs@my.xu.edu.ph', 'moderator'],
             ['Secretary XUCS', 'secretary.xucs@my.xu.edu.ph', 'secretary'],
             ['PRO XUCS', 'pro.xucs@my.xu.edu.ph', 'pro'],
-            ['Auditor XUCS', 'auditor.xucs@my.xu.edu.ph', 'auditor'],
+            ['finance_officer XUCS', 'finance_officer.xucs@my.xu.edu.ph', 'finance_officer'],
         ];
 
         foreach ($xucsOfficers as $i => $o)
@@ -179,7 +179,7 @@ class Sprint1Seeder extends Seeder
             ['Moderator XUTI', 'moderator.xuti@my.xu.edu.ph', 'moderator'],
             ['Secretary XUTI', 'secretary.xuti@my.xu.edu.ph', 'secretary'],
             ['PRO XUTI', 'pro.xuti@my.xu.edu.ph', 'pro'],
-            ['Auditor XUTI', 'auditor.xuti@my.xu.edu.ph', 'auditor'],
+            ['finance_officer XUTI', 'finance_officer.xuti@my.xu.edu.ph', 'finance_officer'],
         ];
 
         foreach ($xutiOfficers as $i => $o)

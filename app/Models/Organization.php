@@ -84,4 +84,11 @@ class Organization extends Model
             $query->whereNull('archived_at');
         });
     }
+
+    public function cluster()
+    {
+        return $this->belongsTo(\App\Models\Cluster::class);
+    }
+
+
 }

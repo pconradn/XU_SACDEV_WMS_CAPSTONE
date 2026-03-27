@@ -16,7 +16,7 @@ class RequireSacdevAdmin
 
         $user = auth()->user();
 
-        if ($user->system_role !== 'sacdev_admin') {
+        if (!$user->isSacdev()) {
             abort(403, 'Forbidden: SacDev admin only.');
         }
 

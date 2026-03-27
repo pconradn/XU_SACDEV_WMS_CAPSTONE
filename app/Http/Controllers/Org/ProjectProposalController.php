@@ -68,7 +68,7 @@ class ProjectProposalController extends BaseProjectDocumentController
 
     public function submit(Project $project)
     {
-        $formType = FormType::where('code', 'project_proposal')->firstOrFail();
+        $formType = FormType::where('code', 'PROJECT_PROPOSAL')->firstOrFail();
 
         $document = ProjectDocument::where('project_id', $project->id)
             ->where('form_type_id', $formType->id)
@@ -549,7 +549,7 @@ class ProjectProposalController extends BaseProjectDocumentController
 
     public function show(Project $project)
     {
-        $formType = FormType::where('code', 'project_proposal')->firstOrFail();
+        $formType = FormType::where('code', 'PROJECT_PROPOSAL')->firstOrFail();
 
         $document = ProjectDocument::where('project_id', $project->id)
             ->where('form_type_id', $formType->id)

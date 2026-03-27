@@ -21,7 +21,7 @@ class RequireOperationalAccess
 
 
 
-        if ($user->system_role === 'sacdev_admin') {
+        if ($user->isSacdev()) {
             return $next($request);
         }
 
