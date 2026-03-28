@@ -24,6 +24,8 @@ class DatabaseSeeder extends Seeder
 
             RolePermissionSeeder::class,
             ClusterSeeder::class,
+
+            ProjectFormRequirementSeeder::class,
         ]);
 
 

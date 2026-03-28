@@ -23,24 +23,29 @@
 
     </div>
 
-    {{-- BODY --}}
-    <div class="divide-y">
+    <div class="divide-y max-h-[400px] overflow-y-auto">
 
         @forelse($pendingTasks as $task)
 
             @php
                 $project = $task->project;
-                $pending = $task->currentPendingSignature();
+
+                $isApproval = $task->type === 'approval';
+
+                $pending = $isApproval ? $task->currentPendingSignature() : null;
             @endphp
 
-            <div class="px-5 py-4 flex items-center justify-between bg-red-50/40">
 
-                {{-- LEFT --}}
+            <div class="px-5 py-4 flex items-center justify-between 
+                {{ $task->type === 'approval' ? 'bg-red-50/40' : 'bg-amber-50/40' }}">
+
                 <div class="space-y-1">
 
-                    {{-- FORM NAME --}}
+                    {{-- NAME --}}
                     <p class="text-sm font-semibold text-slate-900">
-                        {{ $task->formType->name ?? 'Document' }}
+                        {{ $task->type === 'approval'
+                            ? $task->formType->name
+                            : $task->form_name }}
                     </p>
 
                     {{-- PROJECT --}}
@@ -49,15 +54,29 @@
                     </p>
 
                     {{-- STATUS --}}
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
 
-                        <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full ring-1 {{ $task->status_badge_class }}">
-                            {{ $task->status_label }}
-                        </span>
+                        @if($task->type === 'approval')
 
-                        <span class="text-xs font-semibold text-red-700">
-                            • Awaiting your approval
-                        </span>
+                            <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full ring-1 {{ $task->status_badge_class }}">
+                                {{ $task->status_label }}
+                            </span>
+
+                            <span class="text-xs font-semibold text-red-700">
+                                • Awaiting your approval
+                            </span>
+
+                        @else
+
+                            <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700">
+                                Required
+                            </span>
+
+                            <span class="text-xs font-semibold text-amber-700">
+                                • Action needed (Project Head)
+                            </span>
+
+                        @endif
 
                     </div>
 
@@ -65,9 +84,13 @@
 
                 {{-- ACTION --}}
                 <div>
-                    <a href="{{ route('org.projects.documents.hub', $project) }}"
-                       class="text-xs px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
-                        Review
+                    <a href="{{ $task->link }}"
+                    class="text-xs px-3 py-2 
+                    {{ $task->type === 'approval'
+                            ? 'bg-red-600 hover:bg-red-700'
+                            : 'bg-amber-600 hover:bg-amber-700' }}
+                    text-white rounded-md">
+                        {{ $task->type === 'approval' ? 'Review' : 'Complete' }}
                     </a>
                 </div>
 

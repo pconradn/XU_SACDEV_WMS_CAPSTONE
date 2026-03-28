@@ -7,14 +7,14 @@ use App\Models\FormType;
 use App\Models\Project;
 use App\Models\ProjectAssignment;
 use App\Models\ProjectDocument;
-use App\Models\ProjectDocumentRequirement;
+use App\Services\ProjectFormRequirementResolver;
 use Carbon\Carbon;
 
 class ProjectDocumentHubController extends Controller
 {
 
 
-    public function showV2(Project $project)
+    public function showV2(Project $project, ProjectFormRequirementResolver $resolver)
     {
 
         $activeOrgId = (int) session('active_org_id');
@@ -96,23 +96,25 @@ class ProjectDocumentHubController extends Controller
 
         $proposalData = $proposalDoc?->proposalData;
 
+        $requiredFormTypes = $resolver->resolve($project);
+
         if (!$proposalDoc) {
             $proposalAction = [
                 'label' => 'Create Proposal',
                 'type' => 'create',
-                'url' => route('org.projects.documents.project-proposal.create', $project),
+                'url' => route('org.projects.documents.combined-proposal.create', $project),
             ];
         } elseif ($proposalDoc->isEditable() && $isProjectHead) {
             $proposalAction = [
                 'label' => 'Continue Proposal',
                 'type' => 'edit',
-                'url' => route('org.projects.documents.project-proposal.create', $project),
+                'url' => route('org.projects.documents.combined-proposal.create', $project),
             ];
         } else {
             $proposalAction = [
                 'label' => 'View Proposal',
                 'type' => 'view',
-                'url' => route('org.projects.documents.project-proposal.create', $project),
+                'url' => route('org.projects.documents.combined-proposal.create', $project),
             ];
         }
 
@@ -235,6 +237,8 @@ class ProjectDocumentHubController extends Controller
                 'name' => $formType->name,
                 'code' => $formType->code,
 
+                'phase' => $formType->phase,
+
                 'document' => $doc,
 
                 'status_label' => $doc?->status_label ?? 'Not started',
@@ -255,47 +259,47 @@ class ProjectDocumentHubController extends Controller
             ];
         };
 
-        $offCampusForms = FormType::where('phase', 'off-campus')
+
+        
+        // dd(FormType::where('phase', 'off-campus')->get());
+
+        $requiredForms = collect($requiredFormTypes)->map($buildForm);
+
+        $alwaysAvailableCodes = [
+            'POSTPONEMENT_NOTICE',
+            'CANCELLATION_NOTICE',
+            'REQUEST_TO_PURCHASE',
+            'SELLING_APPLICATION',
+        ];
+
+        $alwaysAvailableForms = FormType::whereIn('code', $alwaysAvailableCodes)
             ->get()
             ->map($buildForm);
-        
-       // dd(FormType::where('phase', 'off-campus')->get());
+
+        $workflowForms = collect();
+
+        if ($sellingApproved) {
+            $sellingReport = FormType::where('code', 'SELLING_ACTIVITY_REPORT')->first();
+
+            if ($sellingReport) {
+                $workflowForms->push($buildForm($sellingReport));
+            }
+        }
 
         $sections = [
             'pre' => $formTypes->where('phase', 'pre_implementation')->map($buildForm),
-            'notices' => $formTypes->where('phase', 'notice')->map($buildForm),
-            'other' => $formTypes
-                ->where('phase', 'other')
-                ->filter(function ($formType) use ($solicitationApproved, $sellingApproved) {
-
-                    if ($formType->code === 'SOLICITATION_SPONSORSHIP_REPORT') {
-                        return $solicitationApproved;
-                    }
-
-                    if (in_array($formType->code, [
-                        'SELLING_ACTIVITY_REPORT',
-                        'TICKET_SELLING_REPORT'
-                    ])) {
-                        return $sellingApproved;
-                    }
-
-                    return true;
-                })
-                ->map($buildForm),
-            'post' => $formTypes->where('phase', 'post_implementation')->map($buildForm),
-            'offcampus' => $offCampusForms,
+            'required' => $requiredForms,
+            'optional' => $alwaysAvailableForms,
+            'workflow' => $workflowForms,
         ];
 
+        // dd(FormType::where('phase', 'off-campus')->get());
 
-
-        // GLOBAL PENDING COUNT
         $pendingCount = $allDocuments->filter(function ($doc) use ($user) {
             $pending = $doc->currentPendingSignature();
             return $pending && $pending->user_id === $user->id;
         })->count();
 
-
-        // SECTION-LEVEL PENDING COUNTS
         $sectionCounts = [];
 
         foreach ($sections as $key => $forms) {
@@ -316,13 +320,9 @@ class ProjectDocumentHubController extends Controller
             'upload_url' => route('org.projects.clearance.upload', $project),
         ];
 
-
-
-
         $today = Carbon::today();
 
-        $currentStage = 'submitted'; // default
-
+        $currentStage = 'submitted'; 
 
         $proposalApproved = $proposalDoc && $proposalDoc->status === 'approved_by_sacdev';
         $budgetApproved   = $budgetDoc && $budgetDoc->status === 'approved_by_sacdev';
@@ -360,7 +360,11 @@ class ProjectDocumentHubController extends Controller
         }
 
 
-        $postFormsApproved = collect($sections['post'] ?? [])
+        $postFormsApproved = collect($sections['required'] ?? [])
+            ->filter(fn($f) => in_array($f['code'], [
+                'DOCUMENTATION_REPORT',
+                'LIQUIDATION_REPORT'
+            ]))
             ->every(fn ($f) =>
                 $f['document'] &&
                 $f['document']->status === 'approved_by_sacdev'
@@ -379,6 +383,8 @@ class ProjectDocumentHubController extends Controller
             ['key' => 'completed', 'label' => 'Completed'],
         ];
 
+      
+
         return view('org.projects.documents.hub', compact(
             'project',
             'header',
@@ -389,6 +395,9 @@ class ProjectDocumentHubController extends Controller
             'milestones',
             'currentStage',
             'needsAgreement',
+
+            'proposalDoc',
+            'budgetDoc',
 
             'pendingCount',
             'sectionCounts'

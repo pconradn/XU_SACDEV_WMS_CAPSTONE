@@ -9,6 +9,8 @@ use App\Models\ProjectDocument;
 use App\Models\Project;
 use App\Models\SchoolYear;
 use Illuminate\Http\Request;
+use App\Services\ProjectFormRequirementResolver;
+use App\Services\ProjectFormRouteResolver;
 
 class OrgDashboardController extends Controller
 {
@@ -31,7 +33,6 @@ class OrgDashboardController extends Controller
 
         $selectedSy = SchoolYear::find($selectedSyId);
 
-  
         $memberships = OrgMembership::query()
             ->with('organization')
             ->where('user_id', $user->id)
@@ -39,7 +40,6 @@ class OrgDashboardController extends Controller
             ->whereNull('archived_at')
             ->get();
 
- 
         $sessionOrgId = (int) $request->session()->get('active_org_id', 0);
 
         $currentMembership = $memberships->firstWhere('organization_id', $sessionOrgId)
@@ -57,6 +57,8 @@ class OrgDashboardController extends Controller
             ? $memberships->where('organization_id', $currentOrg->id)->pluck('role')->unique()->values()
             : collect();
 
+        $resolver = app(ProjectFormRequirementResolver::class);
+
 
         $projectHeadCount = 0;
 
@@ -67,19 +69,23 @@ class OrgDashboardController extends Controller
                 ->where('assignment_role', 'project_head')
                 ->whereHas('project', function ($q) use ($selectedSyId, $currentOrg) {
                     $q->where('school_year_id', $selectedSyId)
-                      ->where('organization_id', $currentOrg->id);
+                        ->where('organization_id', $currentOrg->id);
                 })
                 ->count();
         }
 
-
-        $pendingTasks = collect();
+  
+        $approvalTasks = collect();
 
         if ($currentOrg) {
-            $pendingTasks = ProjectDocument::with(['project', 'signatures'])
+            $approvalTasks = ProjectDocument::with([
+                    'project',
+                    'signatures',
+                    'formType',
+                ])
                 ->whereHas('project', function ($q) use ($selectedSyId, $currentOrg) {
                     $q->where('school_year_id', $selectedSyId)
-                      ->where('organization_id', $currentOrg->id);
+                        ->where('organization_id', $currentOrg->id);
                 })
                 ->get()
                 ->filter(function ($doc) use ($user) {
@@ -87,18 +93,32 @@ class OrgDashboardController extends Controller
                     return $pending && $pending->user_id === $user->id;
                 })
                 ->values();
+
+            $approvalTasks = $approvalTasks->map(function ($task) {
+                $task->type = 'approval';
+                return $task;
+            });
         }
 
-   
+
         $assignedProjects = collect();
 
         if ($currentOrg) {
-            $assignedProjects = ProjectAssignment::with('project')
+            $assignedProjects = ProjectAssignment::query()
+                ->with([
+                    'project' => function ($q) {
+                        $q->with([
+                            'documents.formType',
+                            'documents.signatures',
+                        ]);
+                    },
+                ])
                 ->where('user_id', $user->id)
                 ->whereNull('archived_at')
+                ->where('assignment_role', 'project_head')
                 ->whereHas('project', function ($q) use ($selectedSyId, $currentOrg) {
                     $q->where('school_year_id', $selectedSyId)
-                      ->where('organization_id', $currentOrg->id);
+                        ->where('organization_id', $currentOrg->id);
                 })
                 ->get()
                 ->pluck('project')
@@ -106,8 +126,90 @@ class OrgDashboardController extends Controller
                 ->values();
         }
 
-  
-        $pendingCount = $pendingTasks->count();
+
+        $projectHeadTasks = collect();
+
+        if ($currentOrg) {
+            foreach ($assignedProjects as $project) {
+                $requiredForms = $resolver->resolve($project);
+
+                foreach ($requiredForms as $req) {
+                    $doc = $project->documents
+                        ->first(fn ($d) => (int) $d->form_type_id === (int) $req->form_type_id);
+
+               
+                    if (!$doc || $doc->status !== 'approved_by_sacdev') {
+                        $projectHeadTasks->push((object) [
+                            'type' => 'required',
+                            'phase' => $req->phase ?? 'other',
+                            'form_name' => $req->name ?? $req->code,
+                            'project' => $project,
+                            'status' => $doc?->status ?? 'not_started',
+                            'form_type_id' => $req->form_type_id,
+                            'form_code' => $req->code, 
+                        ]);
+                    }
+                }
+            }
+        }
+
+ 
+        $assignedProjects = $assignedProjects->map(function ($project) use ($resolver) {
+            $requiredForms = $resolver->resolve($project);
+
+            $pendingRequiredCount = 0;
+
+            foreach ($requiredForms as $req) {
+                $doc = $project->documents
+                    ->first(fn ($d) => (int) $d->form_type_id === (int) $req->form_type_id);
+
+                if (!$doc || $doc->status !== 'approved_by_sacdev') {
+                    $pendingRequiredCount++;
+                }
+            }
+
+            $project->pending_required_count = $pendingRequiredCount;
+
+            return $project;
+        })->values();
+
+
+        $pendingTasks = collect()
+            ->merge($approvalTasks)
+            ->merge($projectHeadTasks)
+            ->sortBy(function ($task) {
+
+                $order = [
+                    'pre_implementation',
+                    'off-campus',
+                    'other',
+                    'post_implementation',
+                    'notice',
+                ];
+
+                $phase = $task->type === 'approval'
+                    ? ($task->formType->phase ?? 'other')
+                    : ($task->phase ?? 'other');
+
+                return array_search($phase, $order) !== false
+                    ? array_search($phase, $order)
+                    : 999;
+            })
+            ->values();
+
+
+        
+        $pendingTasks = $pendingTasks->map(function ($task) {
+            $task->link = ProjectFormRouteResolver::resolve($task);
+            return $task;
+        });
+        
+        
+        
+        $pendingApprovalCount = $approvalTasks->count();
+        $projectHeadPendingCount = $projectHeadTasks->count();
+        $pendingCount = $pendingApprovalCount + $projectHeadPendingCount;
+
 
         $projectCount = 0;
         $documentCount = 0;
@@ -119,12 +221,11 @@ class OrgDashboardController extends Controller
 
             $documentCount = ProjectDocument::whereHas('project', function ($q) use ($selectedSyId, $currentOrg) {
                     $q->where('school_year_id', $selectedSyId)
-                      ->where('organization_id', $currentOrg->id);
+                        ->where('organization_id', $currentOrg->id);
                 })
                 ->count();
         }
 
-    
         return view('portals.org-dashboard', [
             'activeSy' => $activeSy,
             'selectedSy' => $selectedSy,
@@ -133,9 +234,13 @@ class OrgDashboardController extends Controller
             'roles' => $roles,
             'projectHeadCount' => $projectHeadCount,
 
+            // blade expects these
             'pendingTasks' => $pendingTasks,
             'assignedProjects' => $assignedProjects,
             'pendingCount' => $pendingCount,
+            'pendingApprovalCount' => $pendingApprovalCount,
+            'projectHeadPendingCount' => $projectHeadPendingCount,
+
             'projectCount' => $projectCount,
             'documentCount' => $documentCount,
         ]);

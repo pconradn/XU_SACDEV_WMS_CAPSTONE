@@ -7,17 +7,9 @@
 
     <div class="space-y-2">
 
-
-        
-            <a href="{{ route('org.projects.documents.combined-proposal.create', $project) }}"
-               class="block w-full text-left px-4 py-3 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-sm font-medium transition">
-                Pre-Implementation
-            </a>
         
 
-        {{-- ===================== --}}
-        {{-- DV (PRIMARY) --}}
-        {{-- ===================== --}}
+
         @if($actions['can_generate_dv'])
             <a href="{{ $actions['dv_url'] }}"
                class="block w-full text-left px-4 py-3 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-sm font-medium transition">
@@ -26,9 +18,7 @@
         @endif
 
 
-        {{-- ===================== --}}
-        {{-- POSTPONEMENT --}}
-        {{-- ===================== --}}
+
         @if($actions['postponement']['exists'])
 
             <a href="{{ $actions['postponement']['view_url'] }}"

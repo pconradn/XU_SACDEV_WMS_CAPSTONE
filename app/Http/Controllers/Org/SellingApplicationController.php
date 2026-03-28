@@ -208,7 +208,7 @@ class SellingApplicationController extends BaseProjectDocumentController
 
         $this->handleRequestSubmit($project, $document);
 
-        $document->load('signatures','formType','project');
+        return back()->with('success', 'Selling application submitted successfully.');
 
         Audit::log(
             'document.submitted',

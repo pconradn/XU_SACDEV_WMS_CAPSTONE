@@ -18,15 +18,30 @@
 
         @forelse($assignedProjects as $project)
 
+            @php
+                $pending = $project->pending_required_count ?? 0;
+            @endphp
+
             <div class="px-5 py-4 flex items-center justify-between">
 
                 {{-- LEFT --}}
                 <div class="space-y-1">
 
                     {{-- TITLE --}}
-                    <p class="text-sm font-semibold text-slate-900">
-                        {{ $project->title }}
-                    </p>
+                    <div class="flex items-center gap-2">
+
+                        <p class="text-sm font-semibold text-slate-900">
+                            {{ $project->title }}
+                        </p>
+
+                        {{-- 🔥 PENDING BADGE --}}
+                        @if($pending > 0)
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">
+                                {{ $pending }} tasks
+                            </span>
+                        @endif
+
+                    </div>
 
                     {{-- DATE --}}
                     <p class="text-xs text-slate-500">
