@@ -33,7 +33,17 @@
             {{-- LEFT --}}
             <div class="flex flex-col gap-1">
                 <div class="text-sm font-semibold text-slate-900 capitalize">
-                    {{ str_replace('_',' ', $sig->role) }}
+                    @php
+                        $role = $sig->role;
+
+                        if (str_contains($role, 'sacdev')) {
+                            $roleLabel = strtoupper(str_replace('_', ' ', $role));
+                        } else {
+                            $roleLabel = ucwords(str_replace('_', ' ', $role));
+                        }
+                    @endphp
+
+                    {{ $roleLabel }}
                 </div>
 
                 <div class="text-xs text-slate-500">
