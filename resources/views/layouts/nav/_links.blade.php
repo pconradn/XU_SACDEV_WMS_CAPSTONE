@@ -87,6 +87,13 @@ if ($user && $isAdmin) {
         $orgTools[] = $item('Organization Review', route('admin.review.index'), ['admin.review.*']);
     }
 
+    if (Route::has('admin.president_assignments.index') && $can('context.manage')) {
+        $orgTools[] = $item('Assign Org President', route('admin.president_assignments.index'), ['admin.president_assignments.*']);
+    }
+
+
+    //admin.organizations.assign-president
+
     if (Route::has('admin.packets.receive') && $can('documents.manage')) {
         $orgTools[] = $item('Packet Receiving', route('admin.packets.receive'), ['admin.packets.*']);
     }
@@ -94,6 +101,8 @@ if ($user && $isAdmin) {
     if (Route::has('admin.orgs_by_sy.index') && $can('projects.view')) {
         $orgTools[] = $item('Organizations (by SY)', route('admin.orgs_by_sy.index'), ['admin.orgs_by_sy.*']);
     }
+
+
 
 
     if (Route::has('admin.school-years.index') && $can('context.manage')) {

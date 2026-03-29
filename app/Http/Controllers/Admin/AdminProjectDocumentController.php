@@ -414,7 +414,7 @@ class AdminProjectDocumentController extends Controller
             'DOCUMENTATION_REPORT',
             'LIQUIDATION_REPORT',
 
-            // NEW
+            
             'POSTPONEMENT_NOTICE',
             'CANCELLATION_NOTICE',
 

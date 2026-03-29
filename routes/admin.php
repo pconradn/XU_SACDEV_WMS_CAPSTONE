@@ -125,6 +125,15 @@ Route::prefix('admin')
         });
 
 
+        Route::middleware('permission:context.manage')->group(function () {
+            Route::get('president-assignments', [OrganizationPresidentController::class, 'index'])
+                ->name('admin.president_assignments.index');
+
+            Route::post('president-assignments/assign', [OrganizationPresidentController::class, 'assign'])
+                ->name('admin.president_assignments.assign');
+        });
+
+
         /*
         |--------------------------------------------------------------------------
         | STRATEGIC PLANS

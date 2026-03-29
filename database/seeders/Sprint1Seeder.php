@@ -37,7 +37,7 @@ class Sprint1Seeder extends Seeder
         $admin = User::query()->updateOrCreate(
             ['email' => 'sacdev.admin@my.xu.edu.ph'],
             [
-                'name' => 'SACDEV Admin',
+                'name' => 'Engr. Billy Jhones A. Adaya',
                 'password' => $password,
                 'system_role' => 'sacdev_admin',
                 'must_change_password' => false,
