@@ -1,4 +1,4 @@
-@if(!$isProjectHead && !$isAdmin && $document->status === 'submitted')
+@if(!$isProjectHead && !$isAdmin && $document?->status === 'submitted')
 
 <div class="flex flex-wrap gap-2 justify-end">
 

@@ -1,130 +1,164 @@
-<div class="border border-slate-300 bg-white mb-6">
+<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
 
-<div class="bg-slate-50 border-b border-slate-300 px-4 py-2">
-    <div class="text-[12px] font-semibold text-slate-900 tracking-wide">
-        Cash Received (Source of Funds)
+    {{-- HEADER --}}
+    <div class="px-6 py-5 border-b border-slate-200">
+        <h2 class="text-base font-semibold text-slate-900">
+            Cash Received (Source of Funds)
+        </h2>
+        <p class="text-sm text-slate-500 mt-1">
+            Enter all financial sources that contributed to the project. Ensure amounts match actual received funds.
+        </p>
     </div>
-</div>
-
-<div class="px-4 py-4 text-[12px]">
-
-<table class="w-full border border-slate-300 text-[12px]">
-
-<thead class="bg-slate-50">
-<tr>
-    <th class="border border-slate-300 px-2 py-1">Cluster A</th>
-    <th class="border border-slate-300 px-2 py-1">Cluster B</th>
-</tr>
-</thead>
-
-<tbody>
-
-<tr>
-<td class="border border-slate-300 p-2">
-
-<div class="space-y-2">
-
-<div>
-<label class="block text-[11px]">XU Finance</label>
-<input type="number"
-name="finance_amount"
-step="0.01"
-value="{{ old('finance_amount', $report->finance_amount ?? '') }}"
-class="border border-slate-300 px-2 py-1 w-full">
-</div>
-
-<div>
-<label class="block text-[11px]">Fund Raising</label>
-<input type="number"
-name="fund_raising_amount"
-step="0.01"
-value="{{ old('fund_raising_amount', $report->fund_raising_amount ?? '') }}"
-class="border border-slate-300 px-2 py-1 w-full">
-</div>
-
-<div>
-<label class="block text-[11px]">SACDEV</label>
-<input type="number"
-name="sacdev_amount"
-step="0.01"
-value="{{ old('sacdev_amount', $report->sacdev_amount ?? '') }}"
-class="border border-slate-300 px-2 py-1 w-full">
-</div>
-
-</div>
-
-</td>
-
-<td class="border border-slate-300 p-2">
-
-<label class="block text-[11px]">
-PTA / College / Department
-</label>
-
-<input type="number"
-name="pta_amount"
-step="0.01"
-value="{{ old('pta_amount', $report->pta_amount ?? '') }}"
-class="border border-slate-300 px-2 py-1 w-full">
-
-</td>
-</tr>
-
-</tbody>
-
-</table>
 
 
-<div class="mt-4">
+    <div class="px-6 py-6 space-y-6">
 
-<label class="text-[11px] block mb-1">
-If Fund Raising, check among the options:
-</label>
+        {{-- CLUSTERS --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-@php
-$fundraisingTypes = old(
-    'fundraising_types',
-    $report->fundraising_types ?? []
-);
-@endphp
+            {{-- CLUSTER A --}}
+            <div class="rounded-xl border border-slate-200 p-5 bg-slate-50/40">
 
-<div class="flex flex-wrap gap-4 text-[11px]">
+                <div class="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-4 text-center">
+                    Cluster A (Internal Sources)
+                </div>
 
-<label class="flex items-center gap-1">
-<input type="checkbox"
-name="fundraising_types[]"
-value="solicitation"
-@checked(in_array('solicitation', $fundraisingTypes))>
-Solicitation
-</label>
+                <div class="space-y-4">
 
-<label class="flex items-center gap-1">
-<input type="checkbox"
-name="fundraising_types[]"
-value="counterpart"
-@checked(in_array('counterpart', $fundraisingTypes))>
-Counterpart
-</label>
+                    {{-- XU FINANCE --}}
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                            XU Finance
+                        </label>
+                        <input
+                            type="number"
+                            name="finance_amount"
+                            step="0.01"
+                            value="{{ old('finance_amount', $report->finance_amount ?? '') }}"
+                            placeholder="0.00"
+                            class="mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                        <p class="text-[11px] text-slate-400 mt-1">
+                            Funds directly allocated by university finance.
+                        </p>
+                    </div>
 
-<label class="flex items-center gap-1">
-<input type="checkbox"
-name="fundraising_types[]"
-value="ticket_selling"
-@checked(in_array('ticket_selling', $fundraisingTypes))>
-Ticket Selling
-</label>
+                    {{-- FUND RAISING --}}
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                            Fund Raising
+                        </label>
+                        <input
+                            type="number"
+                            name="fund_raising_amount"
+                            step="0.01"
+                            value="{{ old('fund_raising_amount', $report->fund_raising_amount ?? '') }}"
+                            placeholder="0.00"
+                            class="mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                        <p class="text-[11px] text-slate-400 mt-1">
+                            Income generated through fundraising activities.
+                        </p>
+                    </div>
 
-<label class="flex items-center gap-1">
-<input type="checkbox"
-name="fundraising_types[]"
-value="selling"
-@checked(in_array('selling', $fundraisingTypes))>
-Selling
-</label>
+                    {{-- SACDEV --}}
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                            SACDEV Support
+                        </label>
+                        <input
+                            type="number"
+                            name="sacdev_amount"
+                            step="0.01"
+                            value="{{ old('sacdev_amount', $report->sacdev_amount ?? '') }}"
+                            placeholder="0.00"
+                            class="mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                        <p class="text-[11px] text-slate-400 mt-1">
+                            Financial assistance provided by SACDEV.
+                        </p>
+                    </div>
 
-</div>
+                </div>
 
-</div>
+            </div>
 
-</div>
+
+            {{-- CLUSTER B --}}
+            <div class="rounded-xl border border-slate-200 p-5 bg-slate-50/40">
+
+                <div class="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-4 text-center">
+                    Cluster B (External Sources)
+                </div>
+
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                        PTA / College / Department
+                    </label>
+
+                    <input
+                        type="number"
+                        name="pta_amount"
+                        step="0.01"
+                        value="{{ old('pta_amount', $report->pta_amount ?? '') }}"
+                        placeholder="0.00"
+                        class="mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+
+                    <p class="text-[11px] text-slate-400 mt-1">
+                        Contributions from partner offices, departments, or external sponsors.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        {{-- FUNDRAISING TYPES --}}
+        <div class="pt-4 border-t border-slate-200">
+
+            <div class="text-sm font-semibold text-slate-900 mb-2">
+                Fundraising Breakdown
+            </div>
+
+            <p class="text-xs text-slate-500 mb-4">
+                If "Fund Raising" has a value above, specify the methods used.
+            </p>
+
+            @php
+                $fundraisingTypes = old(
+                    'fundraising_types',
+                    $report->fundraising_types ?? []
+                );
+            @endphp
+
+            <div class="flex flex-wrap gap-3">
+
+                @foreach([
+                    'solicitation' => 'Solicitation',
+                    'counterpart' => 'Counterpart',
+                    'ticket_selling' => 'Ticket Selling',
+                    'selling' => 'Selling'
+                ] as $value => $label)
+
+                <label class="flex items-center gap-2 text-sm border border-slate-200 rounded-lg px-3 py-2 hover:bg-slate-50 cursor-pointer">
+                    <input type="checkbox"
+                           name="fundraising_types[]"
+                           value="{{ $value }}"
+                           @checked(in_array($value, $fundraisingTypes))
+                           class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+
+                    {{ $label }}
+                </label>
+
+                @endforeach
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>

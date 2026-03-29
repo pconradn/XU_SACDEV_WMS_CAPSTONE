@@ -44,7 +44,7 @@ class RequestToPurchaseController extends BaseProjectDocumentController
 
         $user = auth()->user();
 
-        $isAdmin = $user->system_role === 'sacdev_admin';
+        $isAdmin = $user->isSacdev();
 
         $orgId = session('active_org_id');
         $syId  = session('encode_sy_id');
@@ -157,9 +157,7 @@ class RequestToPurchaseController extends BaseProjectDocumentController
             return $this->submit($project);
         }
 
-        return redirect()
-            ->route('org.projects.documents.hub', $project)
-            ->with('success', 'Request to Purchase saved as draft.');
+        return back()->with('success', 'Request to Purchase saved.');
 
     }
 

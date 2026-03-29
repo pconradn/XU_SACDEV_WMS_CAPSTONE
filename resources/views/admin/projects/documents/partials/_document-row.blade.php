@@ -35,17 +35,24 @@
         <div class="flex justify-end gap-2">
 
             {{-- OPEN --}}
-            <a href="{{ route('admin.projects.documents.open', [$project, $code]) }}"
-               class="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 transition">
-                Open
+            <a href="{{ route('admin.projects.documents.open', [
+                'project' => $project,
+                'formType' => $code
+            ]) }}"
+               class="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                Review
             </a>
 
-            {{-- PRINT (ONLY IF APPROVED) --}}
+            {{-- PRINT --}}
             @if($status === 'approved_by_sacdev')
 
-                <a href="{{ route('admin.projects.documents.print', [$project, $code, $doc->id]) }}"
+                <a href="{{ route('admin.projects.documents.print', [
+                    'project' => $project,
+                    'form' => $code,
+                    'document' => $doc->id
+                ]) }}"
                    target="_blank"
-                   class="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-slate-800 transition">
+                   class="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
                     Print
                 </a>
 

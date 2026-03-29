@@ -1,15 +1,16 @@
 <?php
 
-use App\Http\Controllers\Org\ProjectDocumentActionController;
 use App\Http\Controllers\Org\ActivityNoticeController;
 use App\Http\Controllers\Org\BudgetProposalController;
 use App\Http\Controllers\Org\ClearanceController;
+use App\Http\Controllers\Org\CombinedProposalController;
 use App\Http\Controllers\Org\DisbursementVoucherController;
 use App\Http\Controllers\Org\DocumentationReportController;
 use App\Http\Controllers\Org\FeesCollectionReportController;
 use App\Http\Controllers\Org\LiquidationReportController;
 use App\Http\Controllers\Org\OffCampusApplicationController;
 use App\Http\Controllers\Org\ProjectController;
+use App\Http\Controllers\Org\ProjectDocumentActionController;
 use App\Http\Controllers\Org\ProjectDocumentHubController;
 use App\Http\Controllers\Org\ProjectProposalController;
 use App\Http\Controllers\Org\RequestToPurchaseController;
@@ -57,18 +58,7 @@ Route::prefix('projects/{project}')
         Route::post('clearance/upload', [ClearanceController::class, 'upload'])
             ->name('clearance.upload');
 
-        /*
-        |--------------------------------------------------------------------------
-        | Reusable standard document route registrar
-        |--------------------------------------------------------------------------
-        |
-        | Standard pattern:
-        | - GET    create
-        | - POST   store
-        | - POST   approve
-        | - POST   return
-        |
-        */
+   
         $standardDocument = function (
             string $prefix,
             string $name,
@@ -122,16 +112,16 @@ Route::prefix('projects/{project}')
             prefix: 'project-proposal',
             name: 'project-proposal',
             controller: ProjectProposalController::class,
-            createRoles: 'project_head,treasurer,auditor,president,moderator',
-            approveRoles: 'treasurer,auditor,president,moderator'
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
+            approveRoles: 'treasurer,finance_officer,president,moderator'
         );
 
         $standardDocument(
             prefix: 'budget-proposal',
             name: 'budget-proposal',
             controller: BudgetProposalController::class,
-            createRoles: 'project_head,treasurer,auditor,president,moderator',
-            approveRoles: 'treasurer,auditor,president,moderator'
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
+            approveRoles: 'treasurer,finance_officer,president,moderator'
         );
 
         $standardDocument(
@@ -146,7 +136,7 @@ Route::prefix('projects/{project}')
             prefix: 'selling',
             name: 'selling',
             controller: SellingApplicationController::class,
-            createRoles: 'project_head,treasurer,auditor,president,moderator',
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
             approveRoles: 'president,moderator'
         );
 
@@ -154,15 +144,15 @@ Route::prefix('projects/{project}')
             prefix: 'request-to-purchase',
             name: 'request-to-purchase',
             controller: RequestToPurchaseController::class,
-            createRoles: 'project_head,treasurer,auditor,president,moderator',
-            approveRoles: 'president,moderator,treasurer,auditor'
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
+            approveRoles: 'president,moderator,treasurer,finance_officer'
         );
 
         $standardDocument(
             prefix: 'fees-collection',
             name: 'fees-collection',
             controller: FeesCollectionReportController::class,
-            createRoles: 'project_head,treasurer,auditor,president,moderator',
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
             approveRoles: 'president,moderator'
         );
 
@@ -170,7 +160,7 @@ Route::prefix('projects/{project}')
             prefix: 'selling-activity-report',
             name: 'selling-activity-report',
             controller: SellingActivityReportController::class,
-            createRoles: 'project_head,treasurer,auditor,president,moderator',
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
             approveRoles: 'president,moderator',
             createUsesCreateSuffix: false
         );
@@ -179,7 +169,7 @@ Route::prefix('projects/{project}')
             prefix: 'solicitation-sponsorship-report',
             name: 'solicitation-sponsorship-report',
             controller: SolicitationSponsorshipReportController::class,
-            createRoles: 'project_head,treasurer,auditor,president,moderator',
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
             approveRoles: 'president,moderator',
             createUsesCreateSuffix: false
         );
@@ -188,7 +178,7 @@ Route::prefix('projects/{project}')
             prefix: 'ticket-selling-report',
             name: 'ticket-selling-report',
             controller: TicketSellingReportController::class,
-            createRoles: 'project_head,treasurer,auditor,president,moderator',
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
             approveRoles: 'sacdev_admin',
             createUsesCreateSuffix: false
         );
@@ -197,7 +187,7 @@ Route::prefix('projects/{project}')
             prefix: 'documentation-report',
             name: 'documentation-report',
             controller: DocumentationReportController::class,
-            createRoles: 'project_head,treasurer,auditor,president,moderator',
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
             approveRoles: 'president,moderator,sacdev_admin',
             createUsesCreateSuffix: false
         );
@@ -206,10 +196,44 @@ Route::prefix('projects/{project}')
             prefix: 'liquidation-report',
             name: 'liquidation-report',
             controller: LiquidationReportController::class,
-            createRoles: 'project_head,president,moderator,treasurer,auditor',
-            approveRoles: 'president,moderator,sacdev_admin,treasurer,auditor',
+            createRoles: 'project_head,president,moderator,treasurer,finance_officer',
+            approveRoles: 'president,moderator,sacdev_admin,treasurer,finance_officer',
             createUsesCreateSuffix: false
         );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Combined Pre-Implementation
+        |--------------------------------------------------------------------------
+        */
+
+        Route::prefix('combined-proposal')->name('documents.combined-proposal.')->group(function () {
+            Route::get('/', [CombinedProposalController::class, 'create'])
+                ->middleware('org.role:project_head,treasurer,finance_officer,president,moderator')
+                ->name('create');
+
+            Route::post('/', [CombinedProposalController::class, 'store'])
+                ->middleware('project.role:project_head')
+                ->name('store');
+
+            Route::post('approve', [CombinedProposalController::class, 'approve'])
+                ->middleware('project.role:treasurer,finance_officer,president,moderator')
+                ->name('approve');
+
+            Route::post('return', [CombinedProposalController::class, 'return'])
+                ->middleware('project.role:treasurer,finance_officer,president,moderator')
+                ->name('return');
+
+            Route::post('request-edit', [CombinedProposalController::class, 'requestEdit'])
+                ->middleware('project.role:project_head')
+                ->name('request-edit');
+
+            Route::post('retract', [CombinedProposalController::class, 'retract'])
+                ->middleware('project.role:treasurer,finance_officer,president,moderator')
+                ->name('retract');
+                        
+        });
+
 
         /*
         |--------------------------------------------------------------------------

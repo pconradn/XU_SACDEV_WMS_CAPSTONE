@@ -178,8 +178,8 @@ abstract class BaseProjectDocumentController extends Controller
 
             'PROJECT_PROPOSAL' => [
                 'project_head',
-                'auditor',
                 'treasurer',
+                'finance_officer',
                 'president',
                 'moderator',
                 'sacdev_admin'
@@ -188,6 +188,7 @@ abstract class BaseProjectDocumentController extends Controller
             'BUDGET_PROPOSAL' => [
                 'project_head',
                 'treasurer',
+                'finance_officer',
                 'president',
                 'moderator',
                 'sacdev_admin'
@@ -258,7 +259,7 @@ abstract class BaseProjectDocumentController extends Controller
             'LIQUIDATION_REPORT' => [
                 'project_head',
                 'treasurer',
-                'auditor',
+                'finance_officer',
                 'president',
                 'moderator',
                 'sacdev_admin'
@@ -289,26 +290,50 @@ abstract class BaseProjectDocumentController extends Controller
 
     protected function resolveUserByRole(Project $project, string $role): int
     {
+
+
         if ($role === 'project_head') {
 
-            $assignment = ProjectAssignment::where('project_id',$project->id)
-                ->where('assignment_role','project_head')
+            $assignment = ProjectAssignment::where('project_id', $project->id)
+                ->where('assignment_role', 'project_head')
                 ->whereNull('archived_at')
                 ->firstOrFail();
 
             return $assignment->user_id;
         }
 
+
         if ($role === 'sacdev_admin') {
 
-            return User::where('system_role','sacdev_admin')
-                ->firstOrFail()
-                ->id;
+            $user = getSacdevApprover($project);
+
+            if (!$user) {
+                // fallback to old behavior (VERY SAFE)
+                return User::where('system_role', 'sacdev_admin')
+                    ->firstOrFail()
+                    ->id;
+            }
+
+            return $user->id;
         }
 
-        $member = OrgMembership::where('organization_id',$project->organization_id)
-            ->where('school_year_id',$project->school_year_id)
-            ->where('role',$role)
+        if ($role === 'osa_head') {
+
+            $user = getOsaApprover();
+
+            if (!$user) {
+                return User::where('system_role', 'sacdev_admin')
+                    ->firstOrFail()
+                    ->id;
+            }
+
+            return $user->id;
+        }
+
+
+        $member = OrgMembership::where('organization_id', $project->organization_id)
+            ->where('school_year_id', $project->school_year_id)
+            ->where('role', $role)
             ->whereNull('archived_at')
             ->firstOrFail();
 

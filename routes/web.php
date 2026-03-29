@@ -93,7 +93,9 @@ Route::middleware(['auth'])->group(function () {
         ->name('notifications.show');
 });
 
-
+Route::get('/test-permission', function () {
+    return 'Allowed';
+})->middleware('permission:projects.view');
 
 
 require __DIR__ . '/admin.php';
@@ -101,3 +103,5 @@ require __DIR__ . '/admin.php';
 require __DIR__ . '/org.php';
 
 require __DIR__ . '/auth.php';
+
+

@@ -37,7 +37,7 @@ class ProjectController extends Controller
         $isPresident = $orgRole === 'president';
         $isTreasurer = $orgRole === 'treasurer';
         $isModerator = $orgRole === 'moderator';
-        $isAuditor   = $orgRole === 'auditor';
+        $isfinance_officer   = $orgRole === 'finance_officer';
 
         $isProjectHead = \App\Models\ProjectAssignment::query()
             ->where('user_id', $user->id)
@@ -50,7 +50,7 @@ class ProjectController extends Controller
             ->where('school_year_id', $syId)
             ->orderBy('title');
 
-        $isPrivileged = $isPresident || $isTreasurer || $isModerator || $isAuditor;
+        $isPrivileged = $isPresident || $isTreasurer || $isModerator || $isfinance_officer;
 
         $isProjectHead = \App\Models\ProjectAssignment::query()
             ->where('user_id', $user->id)
@@ -79,10 +79,23 @@ class ProjectController extends Controller
                     $q->where('assignment_role', 'project_head')
                     ->whereNull('archived_at')
                     ->with('officerEntry');
-                }
+                },
+                'documents.signatures',
             ])
             ->withCount('documents')
             ->get();
+
+        $projects->transform(function ($project) use ($user) {
+
+            $pendingCount = $project->documents->filter(function ($doc) use ($user) {
+                $pending = $doc->currentPendingSignature();
+                return $pending && $pending->user_id === $user->id;
+            })->count();
+
+            $project->pending_approvals = $pendingCount;
+
+            return $project;
+        });
 
         $officers = OfficerEntry::query()
             ->where('organization_id', $orgId)
@@ -98,7 +111,7 @@ class ProjectController extends Controller
             'isPresident'  => $isPresident,
             'isTreasurer'  => $isTreasurer,
             'isModerator'  => $isModerator,
-            'isAuditor'    => $isAuditor,
+            'isfinance_officer'    => $isfinance_officer,
         ]);
     }
 

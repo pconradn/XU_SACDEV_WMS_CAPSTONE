@@ -30,7 +30,7 @@ class ForcedPasswordController extends Controller
         $user->save();
 
        
-        if ($user->system_role === 'sacdev_admin') {
+        if ($user->isSacdev()) {
             return redirect()->route('admin.home')->with('status', 'Password updated.');
         }
 

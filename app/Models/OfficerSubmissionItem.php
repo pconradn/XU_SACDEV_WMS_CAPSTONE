@@ -90,9 +90,9 @@ class OfficerSubmissionItem extends Model
         return $this->major_officer_role === 'treasurer';
     }
 
-    public function isAuditor(): bool
+    public function isfinance_officer(): bool
     {
-        return $this->major_officer_role === 'auditor';
+        return $this->major_officer_role === 'finance_officer';
     }
 
     /*

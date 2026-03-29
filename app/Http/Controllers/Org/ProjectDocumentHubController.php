@@ -7,262 +7,14 @@ use App\Models\FormType;
 use App\Models\Project;
 use App\Models\ProjectAssignment;
 use App\Models\ProjectDocument;
-use App\Models\ProjectDocumentRequirement;
+use App\Services\ProjectFormRequirementResolver;
 use Carbon\Carbon;
 
 class ProjectDocumentHubController extends Controller
 {
-    public function show(Project $project)
-    {
-        $activeOrgId = (int) session('active_org_id');
-        $encodeSyId  = (int) session('encode_sy_id');
 
-        if (
-            $project->organization_id !== $activeOrgId ||
-            $project->school_year_id !== $encodeSyId
-        ) {
-            abort(403);
-        }
 
-        $user = auth()->user();
-
-
-        $projectHeadAssignment = ProjectAssignment::with('user')
-            ->where('project_id', $project->id)
-            ->where('assignment_role', 'project_head')
-            ->whereNull('archived_at')
-            ->first();
-
-        $projectHead = $projectHeadAssignment?->user;
-        $isProjectHead = $projectHead?->id === $user->id;
-
-
-        $requirements = ProjectDocumentRequirement::with('formType')
-            ->where('project_id', $project->id)
-            ->get()
-            ->keyBy('form_type_id');
-
-
-        $allDocuments = ProjectDocument::where('project_id', $project->id)
-            ->whereNull('archived_at')
-            ->get();
-
-
-        $documents = $allDocuments->keyBy('form_type_id');
-
-
-        $documentsByType = $allDocuments->groupBy('form_type_id');
-
-
-        $formTypes = FormType::orderByRaw("
-            CASE
-                WHEN code = 'PROJECT_PROPOSAL' THEN 1
-                WHEN code = 'BUDGET_PROPOSAL' THEN 2
-                ELSE 3
-            END
-        ")->orderBy('name')->get();
-
-
-
-        $proposalFormType = $formTypes->firstWhere('code', 'PROJECT_PROPOSAL');
-
-        $proposalDocument = $proposalFormType
-            ? ($documents[$proposalFormType->id] ?? null)
-            : null;
-
-        $proposalData = $proposalDocument
-            ? $proposalDocument->proposalData
-            : null;
-
-
-
-        $budgetFormType = $formTypes->firstWhere('code', 'BUDGET_PROPOSAL');
-
-        $budgetDocument = $budgetFormType
-            ? ($documents[$budgetFormType->id] ?? null)
-            : null;
-
-
-
-        $preImplementationForms = $formTypes
-            ->where('phase', 'pre_implementation')
-            ->map(function ($formType) use ($requirements, $documents) {
-
-                return (object)[
-                    'formType' => $formType,
-                    'required' => isset($requirements[$formType->id]),
-                    'document' => $documents[$formType->id] ?? null,
-                ];
-
-            });
-
-        $postImplementationForms = $formTypes
-            ->where('phase', 'post_implementation')
-            ->map(function ($formType) use ($requirements, $documents) {
-
-                return (object)[
-                    'formType' => $formType,
-                    'required' => isset($requirements[$formType->id]),
-                    'document' => $documents[$formType->id] ?? null,
-                ];
-
-            });
-
-
-        $showOffCampus = false;
-
-        if ($proposalData) {
-
-            if (!empty(trim($proposalData->off_campus_venue ?? ''))) {
-                $showOffCampus = true;
-            }
-
-        }
-
-
-
-        $showOtherForms = $proposalDocument !== null;
-
-
-
-        $postponementType = $formTypes->firstWhere('code', 'POSTPONEMENT_NOTICE');
-        $cancellationType = $formTypes->firstWhere('code', 'CANCELLATION_NOTICE');
-
-        $postponements = $postponementType
-            ? ($documentsByType[$postponementType->id] ?? collect())
-            : collect();
-
-        $cancellations = $cancellationType
-            ? ($documentsByType[$cancellationType->id] ?? collect())
-            : collect();
-
-
-        $projectStage = 'pre';
-
-        if ($proposalDocument && $proposalDocument->status === 'approved_by_sacdev') {
-
-            $projectStage = 'ready';
-
-        }
-
-        if ($postImplementationForms->contains(fn ($f) => $f->document)) {
-
-            $projectStage = 'post_processing';
-
-        }
-
-
-
-        $offCampusForms = $formTypes
-            ->where('phase', 'off-campus')
-            ->map(function ($formType) use ($requirements, $documents) {
-
-                return (object)[
-                    'formType' => $formType,
-                    'required' => isset($requirements[$formType->id]),
-                    'document' => $documents[$formType->id] ?? null,
-                ];
-
-            });
-
-
-
-
-        $solicitationForm = $formTypes->firstWhere('code','SOLICITATION_APPLICATION');
-        $sellingForm = $formTypes->firstWhere('code','SELLING_APPLICATION');
-        $proposalForm = $formTypes->firstWhere('code','PROJECT_PROPOSAL');
-
-        $solicitationDoc = $solicitationForm ? ($documents[$solicitationForm->id] ?? null) : null;
-        $sellingDoc = $sellingForm ? ($documents[$sellingForm->id] ?? null) : null;
-        $proposalDoc = $proposalForm ? ($documents[$proposalForm->id] ?? null) : null;
-
-
-        $otherForms = $formTypes
-            ->where('phase','other')
-            ->map(function($formType) use ($requirements,$documents,$solicitationDoc,$sellingDoc,$proposalDoc){
-
-                $allowCreation = true;
-
-
-
-                if($formType->code === 'SOLICITATION_COLLECTION_REPORT'){
-
-                    $allowCreation =
-                        $solicitationDoc &&
-                        $solicitationDoc->status === 'approved_by_sacdev';
-
-                }
-
-
-                if($formType->code === 'TICKET_SELLING_REPORT'){
-
-                    $allowCreation =
-                        $sellingDoc &&
-                        $sellingDoc->status === 'approved_by_sacdev';
-
-                }
-
-
-                if($formType->code === 'SELLING_ACTIVITY_REPORT'){
-
-                    $allowCreation =
-                        $sellingDoc &&
-                        $sellingDoc->status === 'approved_by_sacdev';
-
-                }
-
-
-
-                if($formType->code === 'FEES_COLLECTION_REPORT'){
-
-                    $allowCreation =
-                        $proposalDoc &&
-                        $proposalDoc->status === 'approved_by_sacdev';
-
-                }
-
-                return (object)[
-                    'formType' => $formType,
-                    'required' => isset($requirements[$formType->id]),
-                    'document' => $documents[$formType->id] ?? null,
-                    'allowed' => $allowCreation
-                ];
-
-            });
-
-
-
-        return view('org.projects.documents.hub', [
-
-            'project' => $project,
-
-            'projectHead' => $projectHead,
-            'isProjectHead' => $isProjectHead,
-
-            'proposalDocument' => $proposalDocument,
-            'proposalData' => $proposalData,
-
-            'budgetDocument' => $budgetDocument,
-
-            'preForms' => $preImplementationForms,
-            'postForms' => $postImplementationForms,
-
-            'offCampusForms' => $offCampusForms,
-            'otherForms' => $otherForms,
-            
-
-            'showOffCampus' => $showOffCampus,
-            'showOtherForms' => $showOtherForms,
-
-            'postponements' => $postponements,
-            'cancellations' => $cancellations,
-
-            'projectStage' => $projectStage,
-
-        ]);
-    }
-
-    public function showV2(Project $project)
+    public function showV2(Project $project, ProjectFormRequirementResolver $resolver)
     {
 
         $activeOrgId = (int) session('active_org_id');
@@ -310,6 +62,22 @@ class ProjectDocumentHubController extends Controller
             ->get();
 
         $documents = $allDocuments->keyBy('form_type_id');
+
+
+        //form dependencies
+
+        $solicitationApp = $allDocuments->first(function ($doc) {
+            return $doc->formType?->code === 'SOLICITATION_APPLICATION';
+        });
+
+        $sellingApp = $allDocuments->first(function ($doc) {
+            return $doc->formType?->code === 'SELLING_APPLICATION';
+        });
+
+        $solicitationApproved = $solicitationApp?->status === 'approved_by_sacdev';
+        $sellingApproved = $sellingApp?->status === 'approved_by_sacdev';
+
+
         $documentsByType = $allDocuments->groupBy('form_type_id');
 
         $formTypes = FormType::orderByRaw("
@@ -328,23 +96,25 @@ class ProjectDocumentHubController extends Controller
 
         $proposalData = $proposalDoc?->proposalData;
 
+        $requiredFormTypes = $resolver->resolve($project);
+
         if (!$proposalDoc) {
             $proposalAction = [
                 'label' => 'Create Proposal',
                 'type' => 'create',
-                'url' => route('org.projects.documents.project-proposal.create', $project),
+                'url' => route('org.projects.documents.combined-proposal.create', $project),
             ];
         } elseif ($proposalDoc->isEditable() && $isProjectHead) {
             $proposalAction = [
                 'label' => 'Continue Proposal',
                 'type' => 'edit',
-                'url' => route('org.projects.documents.project-proposal.create', $project),
+                'url' => route('org.projects.documents.combined-proposal.create', $project),
             ];
         } else {
             $proposalAction = [
                 'label' => 'View Proposal',
                 'type' => 'view',
-                'url' => route('org.projects.documents.project-proposal.create', $project),
+                'url' => route('org.projects.documents.combined-proposal.create', $project),
             ];
         }
 
@@ -372,29 +142,54 @@ class ProjectDocumentHubController extends Controller
             'is_off_campus' => $project->implementation_venue_type === 'off_campus',
         ];
 
-        $postponementType = $formTypes->firstWhere('code', 'POSTPONEMENT_NOTICE');
-        $cancellationType = $formTypes->firstWhere('code', 'CANCELLATION_NOTICE');
-
-        $postponements = $postponementType
-            ? ($documentsByType[$postponementType->id] ?? collect())
-            : collect();
-
-        $cancellations = $cancellationType
-            ? ($documentsByType[$cancellationType->id] ?? collect())
-            : collect();
-
         $hasApprovedProposal = $proposalDoc && $proposalDoc->status === 'approved_by_sacdev';
+
+        $postponementType = FormType::where('code', 'POSTPONEMENT_NOTICE')->first();
+        $cancellationType = FormType::where('code', 'CANCELLATION_NOTICE')->first();
+
+        $postponementDoc = $postponementType
+            ? ($documents[$postponementType->id] ?? null)
+            : null;
+
+        $cancellationDoc = $cancellationType
+            ? ($documents[$cancellationType->id] ?? null)
+            : null;
+
+        
 
         $actions = [
             'can_generate_dv' => $budgetDoc !== null,
             'dv_url' => route('org.projects.documents.disbursement-voucher.create', $project),
 
-            'can_postpone' => !$needsAgreement && $hasApprovedProposal && $isProjectHead && (
-                $postponements->isEmpty() ||
-                $postponements->last()?->status === 'approved_by_sacdev'
-            ),
+           
+            'postponement' => [
+                'exists' => (bool) $postponementDoc,
+                'can_create' => $hasApprovedProposal && (
+                    !$postponementDoc ||
+                    $postponementDoc->status === 'approved_by_sacdev'
+                ),
+                'create_url' => route('org.projects.documents.postponement.create', $project),
+                'view_url' => $postponementDoc
+                    ? route('org.projects.documents.postponement.edit', [
+                        'project' => $project,
+                        'document' => $postponementDoc->id
+                    ])
+                    : null,
+            ],
 
-            'can_cancel' => !$needsAgreement && $hasApprovedProposal && $isProjectHead && $cancellations->isEmpty(),
+            
+            'cancellation' => [
+                'exists' => (bool) $cancellationDoc,
+                'can_create' => $hasApprovedProposal && !$cancellationDoc,
+                'create_url' => route('org.projects.documents.cancellation.create', $project),
+                'view_url' => $cancellationDoc
+                    ? route('org.projects.documents.cancellation.edit', [
+                        'project' => $project,
+                        'document' => $cancellationDoc->id
+                    ])
+                    : null,
+            ],
+
 
             'can_packets' => !$needsAgreement && $hasApprovedProposal,
             'packet_url' => route('org.projects.packets.index', $project),
@@ -436,11 +231,13 @@ class ProjectDocumentHubController extends Controller
             $pending = $doc?->currentPendingSignature();
             $nextRole = $doc?->nextPendingRole();
 
-            $canReview = $pending && $pending->user_id === $user->id;
+            $isMine = $pending && $pending->user_id === $user->id;
 
             return [
                 'name' => $formType->name,
                 'code' => $formType->code,
+
+                'phase' => $formType->phase,
 
                 'document' => $doc,
 
@@ -449,25 +246,67 @@ class ProjectDocumentHubController extends Controller
 
                 'waiting_for' => $nextRole,
 
-                
+                'is_waiting_for_me' => $isMine,
+                'is_waiting_for_others' => $doc && !$isMine && $nextRole,
+
                 'can_create' => !$needsAgreement && !$doc && $routeName && $isProjectHead,
                 'can_edit'   => !$needsAgreement && $doc?->isEditable() && $isProjectHead,
-                'can_review' => $canReview,
+                'can_review' => $isMine,
 
                 'create_url' => (!$doc && $routeName) ? route($routeName, $project) : null,
                 'edit_url' => ($doc && $doc->isEditable() && $routeName) ? route($routeName, $project) : null,
                 'view_url' => ($doc && $routeName) ? route($routeName, $project) : null,
-
-
             ];
         };
 
+
+        
+        // dd(FormType::where('phase', 'off-campus')->get());
+
+        $requiredForms = collect($requiredFormTypes)->map($buildForm);
+
+        $alwaysAvailableCodes = [
+            'POSTPONEMENT_NOTICE',
+            'CANCELLATION_NOTICE',
+            'REQUEST_TO_PURCHASE',
+            'SELLING_APPLICATION',
+        ];
+
+        $alwaysAvailableForms = FormType::whereIn('code', $alwaysAvailableCodes)
+            ->get()
+            ->map($buildForm);
+
+        $workflowForms = collect();
+
+        if ($sellingApproved) {
+            $sellingReport = FormType::where('code', 'SELLING_ACTIVITY_REPORT')->first();
+
+            if ($sellingReport) {
+                $workflowForms->push($buildForm($sellingReport));
+            }
+        }
+
         $sections = [
             'pre' => $formTypes->where('phase', 'pre_implementation')->map($buildForm),
-            'notices' => $formTypes->where('phase', 'notice')->map($buildForm),
-            'other' => $formTypes->where('phase', 'other')->map($buildForm),
-            'post' => $formTypes->where('phase', 'post_implementation')->map($buildForm),
+            'required' => $requiredForms,
+            'optional' => $alwaysAvailableForms,
+            'workflow' => $workflowForms,
         ];
+
+        // dd(FormType::where('phase', 'off-campus')->get());
+
+        $pendingCount = $allDocuments->filter(function ($doc) use ($user) {
+            $pending = $doc->currentPendingSignature();
+            return $pending && $pending->user_id === $user->id;
+        })->count();
+
+        $sectionCounts = [];
+
+        foreach ($sections as $key => $forms) {
+            $sectionCounts[$key] = collect($forms)->filter(function ($form) {
+                return $form['is_waiting_for_me'] ?? false;
+            })->count();
+        }
 
         $clearance = [
             'required' => $project->requires_clearance,
@@ -481,13 +320,9 @@ class ProjectDocumentHubController extends Controller
             'upload_url' => route('org.projects.clearance.upload', $project),
         ];
 
-
-
-
         $today = Carbon::today();
 
-        $currentStage = 'submitted'; // default
-
+        $currentStage = 'submitted'; 
 
         $proposalApproved = $proposalDoc && $proposalDoc->status === 'approved_by_sacdev';
         $budgetApproved   = $budgetDoc && $budgetDoc->status === 'approved_by_sacdev';
@@ -525,7 +360,11 @@ class ProjectDocumentHubController extends Controller
         }
 
 
-        $postFormsApproved = collect($sections['post'] ?? [])
+        $postFormsApproved = collect($sections['required'] ?? [])
+            ->filter(fn($f) => in_array($f['code'], [
+                'DOCUMENTATION_REPORT',
+                'LIQUIDATION_REPORT'
+            ]))
             ->every(fn ($f) =>
                 $f['document'] &&
                 $f['document']->status === 'approved_by_sacdev'
@@ -544,6 +383,8 @@ class ProjectDocumentHubController extends Controller
             ['key' => 'completed', 'label' => 'Completed'],
         ];
 
+      
+
         return view('org.projects.documents.hub', compact(
             'project',
             'header',
@@ -554,6 +395,12 @@ class ProjectDocumentHubController extends Controller
             'milestones',
             'currentStage',
             'needsAgreement',
+
+            'proposalDoc',
+            'budgetDoc',
+
+            'pendingCount',
+            'sectionCounts'
         ));
     }
 

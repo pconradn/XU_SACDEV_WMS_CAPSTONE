@@ -36,7 +36,7 @@ Project Workflow System
 
 @php
 $user = Auth::user();
-$isAdmin = $user && $user->system_role === 'sacdev_admin';
+$isAdmin = $user && $user->isSacdev();
 @endphp
 
 

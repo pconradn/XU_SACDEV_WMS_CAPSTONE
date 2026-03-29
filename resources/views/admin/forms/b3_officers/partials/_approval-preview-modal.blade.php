@@ -61,9 +61,9 @@
                             </span>
                         @endif
 
-                        @if($item->isAuditor())
+                        @if($item->isFinance_Officer())
                             <span class="text-indigo-700">
-                                • Provision Auditor account
+                                • Provision finance_officer account
                             </span>
                         @endif
 

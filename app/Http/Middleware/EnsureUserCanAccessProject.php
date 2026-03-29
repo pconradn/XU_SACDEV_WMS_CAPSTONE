@@ -18,7 +18,7 @@ class EnsureUserCanAccessProject
             abort(403);
         }
 
-        if ($user->system_role === 'sacdev_admin') {
+        if ($user->isSacdev()) {
             return $next($request);
         }
 
@@ -51,7 +51,7 @@ class EnsureUserCanAccessProject
                 'president',
                 'treasurer',
                 'moderator',
-                'auditor',
+                'finance_officer',
             ])
             ->exists();
 

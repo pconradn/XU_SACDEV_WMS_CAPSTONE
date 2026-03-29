@@ -73,7 +73,7 @@ class OrganizationPresidentController extends Controller
         
         $alreadyPresidentElsewhere = OfficerEntry::query()
             ->where('school_year_id', $syId)
-            //->where('major_officer_role', ['president', 'treasurer','vice_president', 'auditor'])
+            //->where('major_officer_role', ['president', 'treasurer','vice_president', 'finance_officer'])
             ->where('is_major_officer', true)
             ->where('student_id_number', $data['student_id_number'])
             ->where('organization_id', '!=', $orgId)

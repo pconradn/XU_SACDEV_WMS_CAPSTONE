@@ -17,35 +17,254 @@ class AdminProjectDocumentController extends Controller
 
     public function hub(Project $project)
     {
+
         $documents = ProjectDocument::query()
-            ->with(['formType', 'signatures.user'])
+            ->with(['formType', 'signatures.user', 'proposalData'])
             ->where('project_id', $project->id)
+            ->whereNull('archived_at')
             ->get()
             ->keyBy(fn($d) => $d->formType->code);
 
+
+        $projectHead = ProjectAssignment::with('user')
+            ->where('project_id', $project->id)
+            ->where('assignment_role', 'project_head')
+            ->whereNull('archived_at')
+            ->first()?->user;
+
+        $header = [
+            'title' => $project->title,
+            'org' => $project->organization->name ?? null,
+            'school_year' => $project->schoolYear->name ?? null,
+            'project_head' => $projectHead?->name ?? null,
+
+            'status' => $project->workflow_status,
+            'status_label' => $project->workflow_status_label,
+        ];
+
+
+        $proposalDoc = $documents['PROJECT_PROPOSAL'] ?? null;
+        $budgetDoc   = $documents['BUDGET_PROPOSAL'] ?? null;
+
+        $proposalData = $proposalDoc?->proposalData;
+
+        //dd($proposalData);
+
+        $snapshot = [
+            'date' => $project->implementation_date_display,
+            'time' => $project->implementation_time_display,
+            'venue' => $project->implementation_venue,
+
+            'description' => $proposalData->description ?? $project->description,
+
+          
+            'status' => $proposalDoc?->status,
+            'status_label' => $proposalDoc?->status_label,
+
+            'is_off_campus' => $proposalData?->off_campus_venue,
+
+            'total_budget' => $proposalData->total_budget ?? null,
+
+            
+            'fund_sources' => $proposalData?->fundSources ?? collect(),
+        ];
+
+
+        $hasProposal = isset($documents['PROJECT_PROPOSAL']);
+        $hasBudget   = isset($documents['BUDGET_PROPOSAL']);
+
+        $combined = [
+            'exists' => $hasProposal || $hasBudget,
+
+            'view_url' => ($hasProposal || $hasBudget)
+                ? route('admin.projects.documents.combined-proposal.open', $project)
+                : null,
+
+            'proposal_print_url' => $hasProposal
+                ? route('admin.projects.documents.print', [
+                    'project' => $project,
+                    'form' => 'PROJECT_PROPOSAL',
+                    'document' => $proposalDoc->id ?? null
+                ])
+                : null,
+
+            'budget_print_url' => $hasBudget
+                ? route('admin.projects.documents.print', [
+                    'project' => $project,
+                    'form' => 'BUDGET_PROPOSAL',
+                    'document' => $budgetDoc->id ?? null
+                ])
+                : null,
+        ];
+
+
+        $buildForm = function ($formType) use ($documents, $project) {
+
+            $doc = $documents[$formType->code] ?? null;
+
+            $pendingSignature = $doc?->signatures
+                ?->where('status', 'pending')
+                ->sortBy('id')
+                ->first();
+
+            $nextRole = $pendingSignature?->role;
+            $pendingUser = $pendingSignature?->user;
+
+            $pending = $pendingSignature !== null;
+
+            $isMine = $pendingSignature && $pendingSignature->user_id === auth()->id();
+
+            $isSacdevStep = $nextRole === 'sacdev_admin';
+
+            return [
+                'name' => $formType->name,
+                'code' => $formType->code,
+                'phase' => $formType->phase,
+
+                'document' => $doc,
+
+                'status_label' => $doc?->status_label ?? 'Not started',
+                'status_class' => $doc?->status_badge_class ?? 'bg-slate-100 text-slate-600',
+
+                'waiting_for' => $nextRole,
+
+                'is_pending' => $pending,
+                'is_approved' => $doc && $doc->status === 'approved_by_sacdev',
+
+                'view_url' => $doc
+                    ? route('admin.projects.documents.open', [$project, $formType->code])
+                    : null,
+
+                'print_url' => ($doc && $doc->status === 'approved_by_sacdev')
+                    ? route('admin.projects.documents.print', [$project, $formType->code, $doc->id])
+                    : null,
+
+                'pending' => $pending,
+                'is_pending_for_me' => $isMine,
+                'is_sacdev_step' => $isSacdevStep,
+                'pending_user_name' => $pendingUser?->name,
+                'pending_user_id' => $pendingUser?->id,
+            ];
+        };
+
+        $formTypes = FormType::whereIn('code', [
+            'PROJECT_PROPOSAL',
+            'BUDGET_PROPOSAL',
+            'OFF_CAMPUS_APPLICATION',
+            'SOLICITATION_APPLICATION',
+            'SELLING_APPLICATION',
+            'REQUEST_TO_PURCHASE',
+            'FEES_COLLECTION_REPORT',
+            'SELLING_ACTIVITY_REPORT',
+            'SOLICITATION_SPONSORSHIP_REPORT',
+            'TICKET_SELLING_REPORT',
+            'DOCUMENTATION_REPORT',
+            'LIQUIDATION_REPORT',
+        ])->get();
+
+        $forms = $formTypes
+            ->reject(fn($f) => in_array($f->code, [
+                'PROJECT_PROPOSAL',
+                'BUDGET_PROPOSAL'
+            ]))
+            ->map($buildForm);
+
+        $pendingForAdmin = $forms->filter(function ($f) {
+            return $f['is_pending'] && $f['waiting_for'] === 'sacdev_admin';
+        })->count();
+
+        //$forms = $formTypes->map($buildForm);
+
+        $groupedForms = $forms->groupBy('phase');
+
+
+        $totalForms = $forms->count();
+
+        $approvedForms = $documents->filter(function ($doc) {
+            return $doc->status === 'approved_by_sacdev';
+        })->count();
+
+        $progress = [
+            'total' => $totalForms,
+            'approved' => $approvedForms,
+            'percentage' => $totalForms > 0
+                ? round(($approvedForms / $totalForms) * 100)
+                : 0,
+        ];
+
+
         $postponementType = FormType::where('code','POSTPONEMENT_NOTICE')->first();
+
+        $postponements = $postponementType
+            ? ProjectDocument::where('project_id',$project->id)
+                ->where('form_type_id',$postponementType->id)
+                ->whereNull('archived_at')
+                ->latest()
+                ->get()
+                ->map(fn($doc) => [
+                    'id' => $doc->id,
+                    'status' => $doc->status,
+                    'status_label' => $doc->status_label,
+                    'view_url' => route('admin.projects.documents.open', [
+                        'project' => $project,
+                        'formType' => 'POSTPONEMENT_NOTICE',
+                    ]),
+                ])
+            : collect();
+
+
         $cancellationType = FormType::where('code','CANCELLATION_NOTICE')->first();
 
-        $postponements = ProjectDocument::where('project_id',$project->id)
-            ->where('form_type_id',$postponementType->id)
-            ->whereNull('archived_at')
-            ->latest()
-            ->get();
+        $cancellations = $cancellationType
+            ? ProjectDocument::where('project_id',$project->id)
+                ->where('form_type_id',$cancellationType->id)
+                ->whereNull('archived_at')
+                ->latest()
+                ->get()
+                ->map(fn($doc) => [
+                    'id' => $doc->id,
+                    'status' => $doc->status,
+                    'status_label' => $doc->status_label,
+                    'view_url' => route('admin.projects.documents.open', [
+                        'project' => $project,
+                        'formType' => 'CANCELLATION_NOTICE',
+                    ]),
+                ])
+            : collect();
 
-        $cancellations = ProjectDocument::where('project_id',$project->id)
-            ->where('form_type_id',$cancellationType->id)
-            ->whereNull('archived_at')
-            ->latest()
-            ->get();
-        
 
-        
+        $canMarkComplete =
+            $project->workflow_status !== 'completed' &&
+            $documents->every(fn($doc) => $doc->status === 'approved_by_sacdev');
+
+        $actions = [
+            'can_mark_complete' => false, // disabled for now
+            'mark_complete_url' => null,
+        ];
+
+
+
 
         return view('admin.projects.documents.hub', [
-            'project'   => $project,
-            'documents' => $documents,
+            'project' => $project,
+
+            'header' => $header,
+            'snapshot' => $snapshot,
+            'combined' => $combined,
+
+            'forms' => $forms,
+            'progress' => $progress,
+
             'postponements' => $postponements,
             'cancellations' => $cancellations,
+
+            'actions' => $actions,
+            'groupedForms' => $groupedForms,
+
+            'proposalDoc' => $proposalDoc,
+            'budgetDoc' => $budgetDoc,
+
+            'pendingForAdmin' => $pendingForAdmin,
         ]);
     }
 
@@ -86,8 +305,8 @@ class AdminProjectDocumentController extends Controller
 
         $viewMap = [
 
-            'PROJECT_PROPOSAL' => 'org.projects.documents.project-proposal.create',
-            'BUDGET_PROPOSAL' => 'org.projects.documents.budget-proposal.create',
+            'PROJECT_PROPOSAL' => 'org.projects.documents.combined.create',
+            'BUDGET_PROPOSAL' => 'org.projects.documents.combined.create',
 
             'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.create',
 
@@ -212,7 +431,7 @@ class AdminProjectDocumentController extends Controller
         $user = auth()->user();
         $userId = $user->id;
 
-        $isAdmin = $user->system_role === 'sacdev_admin';
+        $isAdmin = $user->isSacdev();
 
 
         $currentSignature = $document->signatures
@@ -266,6 +485,86 @@ class AdminProjectDocumentController extends Controller
             'currentSignature' => $currentSignature,
             'isAdmin' => $isAdmin,
         ]);
+    }
+
+    public function openCombined(Project $project)
+    {
+        //dd($project);
+        $proposalDoc = ProjectDocument::with(['signatures.user', 'formType'])
+            ->where('project_id', $project->id)
+            ->whereHas('formType', fn($q) => $q->where('code', 'project_proposal'))
+            ->first();
+
+        $budgetDoc = ProjectDocument::with(['signatures.user', 'formType'])
+            ->where('project_id', $project->id)
+            ->whereHas('formType', fn($q) => $q->where('code', 'budget_proposal'))
+            ->first();
+
+        if (!$proposalDoc || !$budgetDoc) {
+            abort(404, 'Combined documents not found.');
+        }
+
+        return view('org.projects.documents.combined.create', [
+            'project' => $project,
+            'proposalData' => [
+                'document' => $proposalDoc,
+                'proposal' => $proposalDoc->proposalData,
+                'isProjectHead' => false,
+            ],
+            'budgetData' => [
+                'document' => $budgetDoc,
+                'budget' => $budgetDoc->budgetProposal,
+            ],
+            'isAdmin' => true,
+        ]);
+    }
+
+    public function combinedApprove(Project $project)
+    {
+        DB::transaction(function () use ($project) {
+
+            $this->approve(request(), $project, 'PROJECT_PROPOSAL');
+            $this->approve(request(), $project, 'BUDGET_PROPOSAL');
+
+        });
+
+        return back()->with('success', 'Combined documents approved.');
+    }
+
+    public function combinedReturn(Request $request, Project $project)
+    {
+        DB::transaction(function () use ($request, $project) {
+
+            $this->return($request, $project, 'PROJECT_PROPOSAL');
+            $this->return($request, $project, 'BUDGET_PROPOSAL');
+
+        });
+
+        return back()->with('success', 'Combined documents returned.');
+    }
+
+    public function combinedRetract(Project $project)
+    {
+        DB::transaction(function () use ($project) {
+
+            $this->retract($project, 'PROJECT_PROPOSAL');
+            $this->retract($project, 'BUDGET_PROPOSAL');
+
+        });
+
+        return back()->with('success', 'Combined documents retracted.');
+    }
+
+    public function combinedAllowEdit(Project $project, Request $request)
+    {
+        DB::transaction(function () use ($project, $request) {
+
+            $this->allowEdit($project, 'PROJECT_PROPOSAL', $request);
+            $this->allowEdit($project, 'BUDGET_PROPOSAL', $request);
+
+        });
+
+        return back()->with('success', 'Edit allowed for combined documents.');
     }
 
 
@@ -334,7 +633,7 @@ class AdminProjectDocumentController extends Controller
             'DOCUMENTATION_REPORT',
             'LIQUIDATION_REPORT',
 
-            // NEW
+            
             'POSTPONEMENT_NOTICE',
             'CANCELLATION_NOTICE',
 

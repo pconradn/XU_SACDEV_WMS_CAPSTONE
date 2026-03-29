@@ -20,6 +20,6 @@ class FormType extends Model
 
     public function requirements()
     {
-        return $this->hasMany(ProjectDocumentRequirement::class);
+        return $this->hasMany(ProjectFormRequirement::class);
     }
 }
