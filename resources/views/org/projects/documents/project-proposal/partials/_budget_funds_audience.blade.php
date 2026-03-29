@@ -4,85 +4,13 @@
 
     <div>
         <h3 class="text-sm font-semibold text-slate-900">
-            Budget & Participants
+            Participants
         </h3>
         <p class="text-xs text-slate-500">
-            Define funding sources and expected participants
+            Define expected participants
         </p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        <div>
-            <label class="block text-xs font-medium text-slate-700 mb-1">
-                Total Estimated Amount
-            </label>
-
-            <input type="number"
-                step="0.01"
-                min="0"
-                name="total_budget"
-                id="totalBudget"
-                value="{{ old('total_budget', $proposal->total_budget ?? '') }}"
-                readonly
-                class="w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-900">
-        </div>
-
-        <div class="md:col-span-2">
-            <label class="block text-xs font-medium text-slate-700 mb-2">
-                Sources of Funds
-            </label>
-
-            @php
-                $sources = [
-                    'Finance Office',
-                    'PTA',
-                    'OSA-SACDEV',
-                    'Counterpart',
-                    'Solicitation',
-                    'Ticket-Selling',
-                    'Others',
-                ];
-
-                $existingFunds = old('fund_sources') ?? 
-                    ($proposal?->fundSources?->pluck('amount', 'source_name')->toArray() ?? []);
-            @endphp
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-
-                @foreach($sources as $source)
-
-                    @php
-                        $oldValue = $existingFunds[$source] ?? null;
-                        $isChecked = $oldValue !== null;
-                    @endphp
-
-                    <div class="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2">
-
-                        <label class="flex items-center gap-2 text-sm text-slate-700">
-                            <input type="checkbox"
-                                class="fund-source-checkbox"
-                                data-target="amount-{{ Str::slug($source) }}"
-                                @checked($isChecked)>
-                            {{ $source }}
-                        </label>
-
-                        <input type="number"
-                            step="0.01"
-                            min="0"
-                            name="fund_sources[{{ $source }}]"
-                            value="{{ $oldValue }}"
-                            placeholder="0.00"
-                            id="amount-{{ Str::slug($source) }}"
-                            class="fund-amount w-24 rounded-lg border border-slate-300 px-2 py-1 text-sm {{ $isChecked ? '' : 'hidden' }}">
-                    </div>
-
-                @endforeach
-
-            </div>
-        </div>
-
-    </div>
 
     <div class="border-t border-slate-200 pt-4">
 

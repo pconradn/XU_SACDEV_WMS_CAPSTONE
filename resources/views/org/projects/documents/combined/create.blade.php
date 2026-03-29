@@ -101,7 +101,14 @@ $budgetDoc   = $budgetData['document'] ?? null;
     @include('org.projects.documents.project-proposal.partials._nature_sdg_area')
     @include('org.projects.documents.project-proposal.partials._description_link_cluster')
     @include('org.projects.documents.project-proposal.partials._multi_entries')
+
     @include('org.projects.documents.project-proposal.partials._budget_funds_audience')
+
+
+    @include('org.projects.documents.combined.partials._combined_funding')
+
+
+
     @include('org.projects.documents.project-proposal.partials._guests_plan_of_action')
 </div>
 
@@ -112,8 +119,11 @@ $budgetDoc   = $budgetData['document'] ?? null;
         Budget Proposal Section
     </div>
 
-    @include('org.projects.documents.budget-proposal.partials._budget_sections')
-    @include('org.projects.documents.budget-proposal.partials._sources_of_funds')
+    <div id="budgetSectionsWrapper">
+        @include('org.projects.documents.budget-proposal.partials._budget_sections')
+    </div>
+
+
 
 </div>
 
@@ -143,5 +153,46 @@ $budgetDoc   = $budgetData['document'] ?? null;
 {{-- SCRIPTS --}}
 @include('org.projects.documents.project-proposal.partials._script')
 @include('org.projects.documents.budget-proposal.partials._script')
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    function toggleBudgetSections() {
+
+        const total = parseFloat(
+            document.getElementById('hidden_total_budget')?.value || 0
+        );
+
+        const sections = document.querySelectorAll('[data-budget-section]');
+        const budgetWrapper = document.querySelector('#budgetSectionsWrapper');
+
+        if (total <= 0) {
+
+            sections.forEach(el => el.classList.add('hidden'));
+
+            if (budgetWrapper) {
+                budgetWrapper.classList.add('hidden');
+            }
+
+        } else {
+
+            sections.forEach(el => el.classList.remove('hidden'));
+
+            if (budgetWrapper) {
+                budgetWrapper.classList.remove('hidden');
+            }
+        }
+    }
+
+    toggleBudgetSections();
+
+    document.addEventListener('input', () => {
+        toggleBudgetSections();
+    });
+
+});
+</script>
+
+
 
 </x-app-layout>
