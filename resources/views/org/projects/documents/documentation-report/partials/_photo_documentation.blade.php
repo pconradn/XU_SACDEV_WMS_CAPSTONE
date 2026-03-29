@@ -1,38 +1,62 @@
-<div class="border border-slate-300">
+<div>
 
-    <div class="flex justify-start px-4 pt-1">
-        <div class="text-[12px] font-medium text-slate-700">
+    {{-- SECTION HEADER --}}
+    <div class="mb-4">
+        <h3 class="text-sm font-semibold text-slate-900 tracking-wide">
             Photo Documentation
-        </div>
+        </h3>
+        <p class="text-xs text-slate-500 mt-1">
+            Upload supporting photo evidence of the project implementation.
+        </p>
     </div>
 
-    <div class="px-4 py-3 space-y-3">
 
-        <div class="text-[10px] italic text-blue-900">
-            Upload a compiled photo documentation file (PDF).  
-            Include captions and brief descriptions for each photo.
+    <div class="border border-slate-200 rounded-xl bg-white p-4 space-y-4">
+
+        {{-- HELPER TEXT --}}
+        <div class="text-xs text-slate-500 leading-relaxed">
+            Upload a compiled <span class="font-semibold text-slate-700">PDF file</span> containing photos of the project.
+            Each photo should include a short caption or description explaining the activity shown.
         </div>
 
-        <input type="file"
-               name="photo_document"
-               accept=".pdf"
-               class="w-full border border-slate-300 px-3 py-1 text-[12px]">
 
+        {{-- FILE INPUT --}}
+        <div>
+            <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                Upload Photo Documentation (PDF)
+            </label>
+
+            <input type="file"
+                name="photo_document"
+                accept=".pdf"
+                class="mt-2 w-full text-sm border border-slate-200 rounded-md px-3 py-2 bg-white file:mr-3 file:px-3 file:py-1 file:rounded file:border-0 file:text-xs file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+        </div>
+
+
+        {{-- EXISTING FILE --}}
         @if(isset($report) && $report->photo_document_path)
 
-        <div class="text-[11px] text-slate-700">
+        <div class="border border-slate-200 rounded-lg bg-slate-50 px-3 py-2 text-sm flex items-center justify-between">
 
-            Current file:
+            <div class="text-slate-600">
+                📄 Uploaded File Available
+            </div>
 
             <a href="{{ Storage::url($report->photo_document_path) }}"
-               target="_blank"
-               class="text-blue-700 underline">
-               View Uploaded Document
+                target="_blank"
+                class="text-blue-600 text-xs font-medium hover:underline">
+                View Document
             </a>
 
         </div>
 
         @endif
+
+
+        {{-- EXTRA NOTE --}}
+        <p class="text-[11px] text-slate-400">
+            Ensure that the uploaded file clearly documents the project activities for validation and evaluation.
+        </p>
 
     </div>
 

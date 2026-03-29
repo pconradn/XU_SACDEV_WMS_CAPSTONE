@@ -12,7 +12,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name', 'email', 'password',
-        'system_role',
+        'system_role','role_id',
         'must_change_password',
         'password_changed_at',
     ];
@@ -60,5 +60,68 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\ModeratorSubmission::class, 'moderator_user_id');
     }
+
+    public function role()
+    {
+        return $this->belongsTo(\App\Models\Role::class);
+    }
+
+    public function hasRole(string $roleName): bool
+    {
+        if (!$this->relationLoaded('role')) {
+            $this->load('role');
+        }
+
+        return $this->role?->name === $roleName;
+    }
+
+    public function hasPermission(string $permissionCode): bool
+    {
+        if (!$this->relationLoaded('role')) {
+            $this->load('role.permissions');
+        } elseif ($this->role && !$this->role->relationLoaded('permissions')) {
+            $this->role->load('permissions');
+        }
+
+        return $this->role?->permissions?->contains('code', $permissionCode) ?? false;
+    }
+
+    public function isSacdev(): bool
+    {
+        return $this->system_role === 'sacdev_admin'
+            || $this->hasRole('sacdev')
+            || $this->hasRole('super_admin');
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole('super_admin');
+    }
+
+    public function clusters()
+    {
+        return $this->belongsToMany(\App\Models\Cluster::class, 'cluster_user')
+            ->withTimestamps();
+    }
+
+    function getSacdevApprover($project)
+    {
+        $clusterId = $project->organization->cluster_id ?? null;
+
+        if (!$clusterId) {
+            return getFallbackAdmin();
+        }
+
+        $user = User::whereHas('role', function ($q) {
+                $q->where('name', 'sacdev');
+            })
+            ->whereHas('clusters', function ($q) use ($clusterId) {
+                $q->where('clusters.id', $clusterId);
+            })
+            ->first();
+
+        return $user ?? getFallbackAdmin();
+    }
+
 
 }

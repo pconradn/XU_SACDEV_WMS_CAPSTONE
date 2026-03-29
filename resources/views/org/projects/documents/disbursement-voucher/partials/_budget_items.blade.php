@@ -1,79 +1,99 @@
-<div class="border border-slate-300 bg-white mb-6">
+<div>
 
-<div class="border-b px-4 py-2 text-[12px] font-semibold bg-slate-50">
-Select Budget Items to Include in DV
-</div>
+    {{-- SECTION HEADER --}}
+    <div class="mb-4">
+        <h3 class="text-sm font-semibold text-slate-900 tracking-wide">
+            Select Budget Items
+        </h3>
+        <p class="text-xs text-slate-500 mt-1">
+            Choose which approved budget items to include in this disbursement voucher. You may adjust the amount if needed.
+        </p>
+    </div>
 
-<div class="p-4">
 
-@if($budgetItems->count())
+    @if($budgetItems->count())
 
-<table class="w-full text-[12px] border">
+    <div class="overflow-x-auto border border-slate-200 rounded-xl">
 
-<thead class="bg-slate-100">
+        <table class="min-w-full text-sm">
 
-<tr>
+            <thead class="bg-slate-50">
+                <tr class="text-slate-600 text-xs uppercase tracking-wide">
+                    <th class="px-3 py-3 text-left">Select</th>
+                    <th class="px-3 py-3 text-left">Particulars</th>
+                    <th class="px-3 py-3 text-left">Section</th>
+                    <th class="px-3 py-3 text-right">Budget Amount</th>
+                    <th class="px-3 py-3 text-left">Charge Account</th>
+                </tr>
+            </thead>
 
-<th class="border px-2 py-2 text-left">Select</th>
-<th class="border px-2 py-2 text-left">Particulars</th>
-<th class="border px-2 py-2 text-left">Section</th>
-<th class="border px-2 py-2 text-right">Amount</th>
-<th class="border px-2 py-2 text-left">Charge Account</th>
+            <tbody class="divide-y">
 
-</tr>
+                @foreach($budgetItems as $item)
 
-</thead>
+                <tr class="hover:bg-slate-50 transition">
 
-<tbody>
+                    {{-- CHECKBOX --}}
+                     <td class="px-3 py-3 text-center">
+                     <input type="checkbox"
+                            class="dv-item rounded border-slate-300"
+                            name="items[]"
+                            value="{{ $item->id }}"
+                            data-amount="{{ $item->amount }}"
+                            data-id="{{ $item->id }}">
+                     </td>
 
-@foreach($budgetItems as $item)
 
-<tr>
+                    {{-- PARTICULARS --}}
+                    <td class="px-3 py-3 text-slate-800">
+                        {{ $item->particulars }}
+                    </td>
 
-<td class="border px-2 py-2 text-center">
-<input type="checkbox"
-       class="dv-item"
-       data-amount="{{ $item->amount }}"
-       name="items[]"
-       value="{{ $item->id }}">
-</td>
 
-<td class="border px-2 py-2">
-{{ $item->particulars }}
-</td>
+                    {{-- SECTION --}}
+                    <td class="px-3 py-3 text-slate-600 capitalize">
+                        {{ str_replace('_',' ', $item->section) }}
+                    </td>
 
-<td class="border px-2 py-2 capitalize">
-{{ str_replace('_',' ', $item->section) }}
-</td>
 
-<td class="border px-2 py-2 text-right">
-₱ {{ number_format($item->amount,2) }}
-</td>
-
-<td class="border px-2 py-2">
-<input type="text"
-       name="charge_account[{{ $item->id }}]"
-       class="w-full border border-slate-300 px-2 py-1">
-</td>
-
-</tr>
-
-@endforeach
-
-</tbody>
-
-</table>
+                    {{-- ORIGINAL AMOUNT --}}
+                    <td class="px-3 py-3 text-right font-medium text-slate-900">
+                        ₱ {{ number_format($item->amount,2) }}
+                    </td>
 
 
 
-@else
 
-<div class="text-slate-500 text-sm">
-No budget proposal items found.
-</div>
 
-@endif
+                    {{-- CHARGE ACCOUNT --}}
+                    <td class="px-3 py-3">
+                        <input
+                            type="text"
+                            name="charge_account[{{ $item->id }}]"
+                            class="w-full rounded-lg border border-slate-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            placeholder="Enter account"
+                        >
+                    </td>
 
-</div>
+                </tr>
+
+                @endforeach
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+
+
+    @else
+
+    <div class="text-slate-500 text-sm">
+        No budget proposal items found.
+    </div>
+
+    @endif
 
 </div>

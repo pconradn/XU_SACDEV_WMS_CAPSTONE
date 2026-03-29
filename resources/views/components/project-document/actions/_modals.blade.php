@@ -8,6 +8,7 @@
     $isFeesCollection = ($document->formType->code ?? null) === 'FEES_COLLECTION_REPORT';
     $isSelling = ($document->formType->code ?? null) === 'SELLING_APPLICATION';
     $isAdmin = auth()->user()->system_role === 'sacdev_admin';
+    $isSolicitation = $formCode === 'SOLICITATION_APPLICATION';
 @endphp
 
 @php
@@ -31,77 +32,143 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
 
 {{-- ================= MODAL STYLES ================= --}}
 <style>
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
-    backdrop-filter: blur(2px);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-}
-.modal {
-    background: white;
-    border-radius: 16px;
-    width: 100%;
-    max-width: 420px;
-    padding: 22px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    animation: fadeIn .2s ease;
-}
-@keyframes fadeIn {
-    from {opacity:0; transform:translateY(10px);}
-    to {opacity:1; transform:translateY(0);}
-}
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        backdrop-filter: blur(2px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+    .modal {
+        background: white;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 420px;
+        padding: 22px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        animation: fadeIn .2s ease;
+    }
+    @keyframes fadeIn {
+        from {opacity:0; transform:translateY(10px);}
+        to {opacity:1; transform:translateY(0);}
+    }
 </style>
 
 
 {{-- ================= CORE MODAL FUNCTIONS ================= --}}
 <script>
-function openModal(id){ document.getElementById(id).style.display = 'flex'; }
-function closeModal(id){ document.getElementById(id).style.display = 'none'; }
+    function openModal(id){ document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id){ document.getElementById(id).style.display = 'none'; }
 
-function submitMainForm(action = 'submit') {
-    const form = document.getElementById('proposalForm');
-    if (!form) return;
+    function submitMainForm(action = 'submit') {
+        const form = document.getElementById('proposalForm');
+        if (!form) return;
 
-    const actionInput = document.getElementById('formAction');
-    if (actionInput) actionInput.value = action;
+        const actionInput = document.getElementById('formAction');
+        if (actionInput) actionInput.value = action;
 
-    form.submit();
-}
+        form.submit();
+    }
 
-// prevent double click submit
-function lockButton(btn){
-    btn.disabled = true;
-    btn.innerText = 'Processing...';
-}
+    // prevent double click submit
+    function lockButton(btn){
+        btn.disabled = true;
+        btn.innerText = 'Processing...';
+    }
 </script>
 
 
 {{-- ================= SUBMIT ================= --}}
-<div id="submitModal" class="modal-overlay">
-    <div class="modal">
-        <h3 class="text-sm font-semibold mb-2">Submit Document</h3>
+@if($isSolicitation && $isProjectHead)
 
-        <p class="text-xs text-slate-600 mb-4">
-            This will send the document into the approval workflow.
-            You will not be able to edit unless it is returned or edit access is granted.
-        </p>
+    {{-- ================= SOLICITATION AGREEMENT MODAL ================= --}}
+    <div id="submitModal"
+        class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
 
-        <button type="button"
-            onclick="submitMainForm('submit')"
-            class="w-full mb-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs">
-            Confirm Submit
-        </button>
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden">
 
-        <button type="button" onclick="closeModal('submitModal')" class="w-full text-xs text-slate-500">
-            Cancel
-        </button>
+            {{-- HEADER --}}
+            <div class="border-b px-5 py-3">
+                <h2 class="text-sm font-semibold text-slate-900">
+                    Solicitation Agreement
+                </h2>
+            </div>
+
+            {{-- BODY --}}
+            <div class="px-5 py-4 space-y-3">
+
+                <p class="text-sm text-slate-700 leading-relaxed">
+                    We understand that there are rules and regulations which govern
+                    solicitation activities using the name of the University.
+                </p>
+
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    Failure to abide by them and the approved terms and conditions of
+                    this form entails sanctions for the organization and disciplinary
+                    measures for the students involved.
+                </p>
+
+                {{-- OPTIONAL HIGHLIGHT --}}
+                <div class="mt-3 border border-amber-200 bg-amber-50 rounded-lg p-3 text-xs text-amber-800">
+                    By proceeding, you confirm that all information submitted is accurate
+                    and compliant with university policies.
+                </div>
+
+            </div>
+
+            {{-- FOOTER --}}
+            <div class="border-t px-5 py-3 flex justify-end gap-2">
+
+                <button type="button"
+                    onclick="closeModal('submitModal')"
+                    class="px-4 py-2 text-xs border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100">
+                    Cancel
+                </button>
+
+                <button type="submit"
+                    form="proposalForm"
+                    name="action"
+                    value="submit"
+                    class="px-4 py-2 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Agree and Submit
+                </button>
+
+            </div>
+
+        </div>
+
     </div>
-</div>
 
+@else
+
+    {{-- ================= DEFAULT SUBMIT MODAL ================= --}}
+    <div id="submitModal" class="modal-overlay">
+        <div class="modal">
+            <h3 class="text-sm font-semibold mb-2">Submit Document</h3>
+
+            <p class="text-xs text-slate-600 mb-4">
+                This will send the document into the approval workflow.
+                You will not be able to edit unless it is returned or edit access is granted.
+            </p>
+
+            <button type="button"
+                onclick="submitMainForm('submit')"
+                class="w-full mb-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs">
+                Confirm Submit
+            </button>
+
+            <button type="button"
+                onclick="closeModal('submitModal')"
+                class="w-full text-xs text-slate-500">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+@endif
 
 {{-- ================= RESUBMIT ================= --}}
 <div id="resubmitModal" class="modal-overlay">
@@ -140,13 +207,33 @@ function lockButton(btn){
             ⚠ This action cannot be undone and may affect the workflow.
         </p>
 
-        @if(($isAdmin && $formCode) || $routePrefix)
+        @if(!empty($isCombined))
 
         <form method="POST"
-              action="{{ $isAdmin
+            action="{{ $isAdmin
+                ? route('admin.projects.documents.combined-proposal.return', $project)
+                : route('org.projects.documents.combined-proposal.return', $project) }}"
+            onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+
+            @csrf
+
+            <textarea name="remarks"
+                class="w-full border border-slate-300 rounded-lg text-xs p-2 mb-3"
+                placeholder="Enter remarks..."
+                required></textarea>
+
+            <button class="w-full mb-2 px-4 py-2 bg-red-600 text-white rounded-lg text-xs">
+                Return Document
+            </button>
+        </form>
+
+        @elseif(($isAdmin && $formCode) || $routePrefix)
+
+        <form method="POST"
+            action="{{ $isAdmin
                 ? route('admin.projects.documents.return', [$project, $formCode])
                 : route("org.projects.documents.$routePrefix.return", $project) }}"
-              onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+            onsubmit="lockButton(this.querySelector('button[type=submit]'))">
 
             @csrf
 
@@ -186,28 +273,48 @@ function lockButton(btn){
             ⚠ This action cannot be undone and may impact document integrity.
         </p>
 
-        @if(($isAdmin && $formCode) || $routePrefix)
+        
+        @if(!empty($isCombined))
 
-        <form method="POST"
-            action="{{ $isAdmin
-                ? route('admin.projects.documents.retract', [$project, $formCode])
-                : route("org.projects.documents.retract", [$project, $formCode]) }}"
-            onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+            <form method="POST"
+                action="{{ $isAdmin
+                    ? route('admin.projects.documents.combined-proposal.retract', $project)
+                    : route('org.projects.documents.combined-proposal.retract', $project) }}"
+                onsubmit="lockButton(this.querySelector('button[type=submit]'))">
 
-            @csrf
+                @csrf
 
-            <button class="w-full mb-2 px-4 py-2 bg-red-600 text-white rounded-lg text-xs">
-                Confirm Retract
-            </button>
-        </form>
+                <button class="w-full mb-2 px-4 py-2 bg-red-600 text-white rounded-lg text-xs">
+                    Confirm Retract
+                </button>
+            </form>
 
+        
+        @elseif(($isAdmin && $formCode) || $routePrefix)
+
+            <form method="POST"
+                action="{{ $isAdmin
+                    ? route('admin.projects.documents.retract', [$project, $formCode])
+                    : route('org.projects.documents.retract', [$project, $formCode]) }}"
+                onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+
+                @csrf
+
+                <button class="w-full mb-2 px-4 py-2 bg-red-600 text-white rounded-lg text-xs">
+                    Confirm Retract
+                </button>
+            </form>
+
+        
         @else
-        <div class="text-xs text-red-500 text-center py-2">
-            ⚠ Unable to determine retract route.
-        </div>
+            <div class="text-xs text-red-500 text-center py-2">
+                ⚠ Unable to determine retract route.
+            </div>
         @endif
 
-        <button type="button" onclick="closeModal('retractModal')" class="w-full text-xs text-slate-500">
+        <button type="button"
+            onclick="closeModal('retractModal')"
+            class="w-full text-xs text-slate-500">
             Cancel
         </button>
     </div>
@@ -222,11 +329,29 @@ function lockButton(btn){
             This will request permission to edit this document after approval.
         </p>
 
-        @if($formCode)
+        @if(!empty($isCombined))
 
         <form method="POST"
-              action="{{ route('org.projects.documents.request-edit', [$project, $formCode]) }}"
-              onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+            action="{{ route('org.projects.documents.combined-proposal.request-edit', $project) }}"
+            onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+
+            @csrf
+
+            <textarea name="remarks"
+                class="w-full border border-slate-300 rounded-lg text-xs p-2 mb-3"
+                placeholder="Optional reason..."></textarea>
+
+            <button class="w-full mb-2 px-4 py-2 bg-amber-500 text-white rounded-lg text-xs">
+                Request Edit (Combined)
+            </button>
+        </form>
+
+        @elseif($formCode)
+
+        <form method="POST"
+            action="{{ route('org.projects.documents.request-edit', [$project, $formCode]) }}"
+            onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+
             @csrf
 
             <textarea name="remarks"
@@ -261,11 +386,25 @@ function lockButton(btn){
             This will allow the project head to edit and resubmit this document.
         </p>
 
-        @if($formCode)
+        @if(!empty($isCombined))
 
         <form method="POST"
-              action="{{ route('admin.projects.documents.allow-edit', [$project, $formCode]) }}"
-              onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+            action="{{ route('admin.projects.documents.combined-proposal.allow-edit', $project) }}"
+            onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+
+            @csrf
+
+            <button class="w-full mb-2 px-4 py-2 bg-amber-500 text-white rounded-lg text-xs">
+                Allow Edit (Combined)
+            </button>
+        </form>
+
+        @elseif($formCode)
+
+        <form method="POST"
+            action="{{ route('admin.projects.documents.allow-edit', [$project, $formCode]) }}"
+            onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+
             @csrf
 
             <button class="w-full mb-2 px-4 py-2 bg-amber-500 text-white rounded-lg text-xs">
@@ -487,7 +626,23 @@ function lockButton(btn){
                 This action will approve the document and move it to the next approver.
             </p>
 
-            @if($routePrefix || $isAdmin)
+            @if(!empty($isCombined))
+
+            <form method="POST"
+                onsubmit="lockButton(this.querySelector('button[type=submit]'))"
+                action="{{ $isAdmin
+                    ? route('admin.projects.documents.combined-proposal.approve', $project)
+                    : route('org.projects.documents.combined-proposal.approve', $project) }}">
+
+                @csrf
+
+                <button class="w-full mb-2 px-4 py-2 bg-green-600 text-white rounded-lg text-xs">
+                    Confirm Approval
+                </button>
+
+            </form>
+
+            @elseif($routePrefix || $isAdmin)
 
                 <form method="POST"
                     onsubmit="lockButton(this.querySelector('button[type=submit]'))"
@@ -537,20 +692,6 @@ function openAllowEditModal(){ openModal('allowEditModal'); }
 function openSubmitRevisionModal(){ openModal('submitRevisionModal'); }
 
 
-function submitMainForm(action) {
-    let form = document.getElementById('proposalForm');
 
-    let existing = form.querySelector('input[name="action"]');
-    if (existing) existing.remove();
-
-    let input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'action';
-    input.value = action;
-
-    form.appendChild(input);
-
-    form.submit();
-}
 
 </script>

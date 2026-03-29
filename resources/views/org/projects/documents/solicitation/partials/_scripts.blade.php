@@ -1,65 +1,55 @@
 <script>
 
-function openResubmitModal() {
-    const modal = document.getElementById('resubmitModal');
-    if (!modal) return;
 
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+
+// ================= SPECIFIC MODALS =================
+
+
+function openInstructionModal() {
+    openModal('instructionModal');
 }
 
-function closeResubmitModal() {
-    const modal = document.getElementById('resubmitModal');
-    if (!modal) return;
-
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-}
-
-
-function openReturnModal() {
-    const modal = document.getElementById('returnModal');
-    if (!modal) return;
-
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-function closeReturnModal() {
-    const modal = document.getElementById('returnModal');
-    if (!modal) return;
-
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-}
-function openInstructionsModal() {
-    const modal = document.getElementById('instructionsModal');
-    modal?.classList.remove('hidden');
-    modal?.classList.add('flex');
-}
-
-function closeInstructionsModal() {
-    const modal = document.getElementById('instructionsModal');
-    modal?.classList.add('hidden');
-    modal?.classList.remove('flex');
-}
-
-
-function openAgreementModal() {
-    const modal = document.getElementById('agreementModal');
-    modal?.classList.remove('hidden');
-    modal?.classList.add('flex');
-}
-
-function closeAgreementModal() {
-    const modal = document.getElementById('agreementModal');
-    modal?.classList.add('hidden');
-    modal?.classList.remove('flex');
+function closeInstructionModal() {
+    closeModal('instructionModal');
 }
 
 
 
+// ================= BENEFICIARIES "OTHERS" TOGGLE =================
+document.addEventListener('DOMContentLoaded', function () {
 
+    const checkbox = document.getElementById('othersCheckbox');
+    const input = document.getElementById('othersInput');
 
+    if (checkbox && input) {
+
+        function toggleInput() {
+            input.disabled = !checkbox.checked;
+
+            if (!checkbox.checked) {
+                input.value = '';
+            }
+        }
+
+        checkbox.addEventListener('change', toggleInput);
+
+        toggleInput();
+    }
+
+});
+
+</script>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const status = @json($status ?? 'draft');
+
+    if (status === 'draft') {
+        openInstructionModal();
+    }
+
+});
 
 </script>

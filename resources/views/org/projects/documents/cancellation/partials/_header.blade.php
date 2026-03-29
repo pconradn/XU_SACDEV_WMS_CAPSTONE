@@ -1,35 +1,51 @@
-<div class="border border-slate-300 bg-white mb-6">
+<div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
 
-    <div class="bg-slate-50 border-b border-slate-300 px-4 py-2">
-        <div class="text-[12px] font-semibold text-slate-900 tracking-wide">
+    {{-- TITLE BAR (SUBTLE) --}}
+    <div class="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+
+        <div class="text-sm font-semibold text-slate-800 tracking-wide">
             Notice of Cancellation
         </div>
-    </div>
 
-    <div class="px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-[12px]">
-
-        <div>
-            <label class="block text-[10px] font-medium text-blue-900 italic">
-                Organization
-            </label>
-
-            <input
-            type="text"
-            value="{{ $project->organization->name }}"
-            disabled
-            class="mt-1 w-full border border-slate-300 px-3 py-1 text-[12px] bg-slate-50">
+        <div class="text-[11px] text-slate-400 uppercase tracking-wide">
+            Form A13
         </div>
 
-        <div>
-            <label class="block text-[10px] font-medium text-blue-900 italic">
-                Name of Activity
-            </label>
+    </div>
 
-            <input
-            type="text"
-            value="{{ $project->title }}"
-            disabled
-            class="mt-1 w-full border border-slate-300 px-3 py-1 text-[12px] bg-slate-50">
+
+    {{-- META --}}
+    <div class="px-5 py-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+
+        {{-- ORGANIZATION --}}
+        <div>
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Organization
+            </div>
+
+            <div class="mt-2 text-sm font-medium text-slate-900">
+                {{ $project->organization->name ?? '—' }}
+            </div>
+
+            <p class="text-[11px] text-slate-400 mt-1">
+                Organization responsible for the activity.
+            </p>
+        </div>
+
+
+        {{-- ACTIVITY --}}
+        <div>
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Activity Name
+            </div>
+
+            <div class="mt-2 text-sm font-medium text-slate-900">
+                {{ $project->title ?? '—' }}
+            </div>
+
+            <p class="text-[11px] text-slate-400 mt-1">
+                Original project or activity being cancelled.
+            </p>
         </div>
 
     </div>

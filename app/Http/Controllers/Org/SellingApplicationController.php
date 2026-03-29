@@ -43,7 +43,7 @@ class SellingApplicationController extends BaseProjectDocumentController
 
         $user = auth()->user();
 
-        $isAdmin = $user->system_role === 'sacdev_admin';
+        $isAdmin = $user->isSacdev();
 
         $orgId = session('active_org_id');
         $syId  = session('encode_sy_id');
@@ -208,7 +208,7 @@ class SellingApplicationController extends BaseProjectDocumentController
 
         $this->handleRequestSubmit($project, $document);
 
-        $document->load('signatures','formType','project');
+        return back()->with('success', 'Selling application submitted successfully.');
 
         Audit::log(
             'document.submitted',

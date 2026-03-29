@@ -32,8 +32,8 @@
                     </div>
 
                     <div class="text-xs text-slate-500 mt-1">
-                        @if($p->target_date)
-                            Target: {{ \Carbon\Carbon::parse($p->target_date)->format('M d, Y') }}
+                        @if($p->implementation_start_date)
+                            Target: {{ \Carbon\Carbon::parse($p->implementation_start_date)->format('M d, Y') }}
                         @else
                             No target date set
                         @endif
@@ -73,17 +73,26 @@
 
                 {{-- DOCUMENTS --}}
                 <td class="px-6 py-5 align-top">
-
+                    
                     <div class="flex flex-col gap-2">
 
+                        {{-- MANAGE BUTTON --}}
                         <a href="{{ route('org.projects.documents.hub', $p) }}"
-                           class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition">
+                        class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition">
                             Manage
                         </a>
 
+                        {{-- DOCUMENT COUNT --}}
                         <span class="text-xs text-slate-500">
                             {{ $p->documents_count }} document(s)
                         </span>
+
+                        {{-- 🔴 PENDING APPROVALS --}}
+                        @if(($p->pending_approvals ?? 0) > 0)
+                            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-red-700 bg-red-50 px-2 py-1 rounded-md w-fit">
+                                ● {{ $p->pending_approvals }} pending
+                            </span>
+                        @endif
 
                     </div>
 

@@ -42,7 +42,7 @@ class AdminMajorOfficerController extends Controller
        
         $currentByRole = [];
 
-        foreach (['president','vice_president','treasurer','auditor'] as $role) {
+        foreach (['president','vice_president','treasurer','finance_officer'] as $role) {
 
             $membership = OrgMembership::query()
                 ->where('organization_id', $organization->id)
@@ -108,7 +108,7 @@ class AdminMajorOfficerController extends Controller
             return back()->withErrors(['general' => 'Major officers can only be edited for Active School Year.']);
         }
 
-        $allowedRoles = ['president','vice_president','treasurer','auditor'];
+        $allowedRoles = ['president','vice_president','treasurer','finance_officer'];
         if (!in_array($role, $allowedRoles, true)) {
             return back()->withErrors(['general' => 'Invalid role.']);
         }

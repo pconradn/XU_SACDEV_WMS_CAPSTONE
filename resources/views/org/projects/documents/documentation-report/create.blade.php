@@ -1,79 +1,77 @@
-<x-layouts.form-only
-    title="Documentation Report — {{ $project->title }}"
-    :backRoute="route('org.projects.documents.hub', $project)"
->
+<x-app-layout>
 
-<div class="mx-auto max-w-5xl">
+<div class="max-w-6xl mx-auto space-y-6">
+
+    
 
 @php
-$status = $document->status ?? 'draft';
+    $status = $document->status ?? 'draft';
 
-$isProjectHead = $isProjectHead ?? false;
+    $isProjectHead = $isProjectHead ?? false;
 
-            $isEditable = $isProjectHead && (
-                in_array($status, ['draft','submitted','returned'])
-                || ($status === 'approved_by_sacdev' && $document->edit_mode)
-            );
+    $isEditable = $isProjectHead && (
+        in_array($status, ['draft','submitted','returned'])
+        || ($status === 'approved_by_sacdev' && $document->edit_mode)
+    );
 
-if ($status === 'approved') {
-    $isEditable = false;
-}
+    if (in_array($status, ['approved','approved_by_sacdev'])) {
+        $isEditable = false;
+    }
 
-$isReadOnly = !$isEditable;
+    $isReadOnly = !$isEditable;
 
-$statusStyles = [
-    'draft'     => 'bg-slate-50 text-slate-700',
-    'submitted' => 'bg-blue-50 text-blue-800',
-    'returned'  => 'bg-rose-50 text-rose-800',
-    'approved'  => 'bg-emerald-50 text-emerald-800',
-];
+    $statusStyles = [
+        'draft'              => 'bg-slate-50 text-slate-700 border-slate-200',
+        'submitted'          => 'bg-blue-50 text-blue-800 border-blue-200',
+        'returned'           => 'bg-rose-50 text-rose-800 border-rose-200',
+        'approved'           => 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        'approved_by_sacdev' => 'bg-emerald-50 text-emerald-800 border-emerald-200',
+    ];
 
-$style = $statusStyles[$status] ?? $statusStyles['draft'];
+    $style = $statusStyles[$status] ?? $statusStyles['draft'];
 
-$currentApprover = $document?->signatures
-    ?->where('status', 'pending')
-    ->sortBy('id')
-    ->first();
+    $currentApprover = $document?->signatures
+        ?->where('status', 'pending')
+        ->sortBy('id')
+        ->first();
 @endphp
 
 
-{{-- STATUS BAR --}}
-<div class="border border-slate-300 {{ $style }} px-4 py-3 text-sm mb-6">
+{{-- ================= STATUS CARD ================= --}}
+<div class="rounded-2xl border {{ $style }} px-5 py-4 shadow-sm">
 
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
 
         <div class="font-semibold tracking-wide">
             DOCUMENTATION REPORT STATUS:
-            <span class="ml-1 uppercase">
-                {{ $status }}
-            </span>
+            <span class="ml-1 uppercase">{{ $status }}</span>
         </div>
 
         @if($status === 'submitted' && $currentApprover)
-        <div class="text-[12px] font-medium">
-            Awaiting:
-            <span class="capitalize font-semibold">
-                {{ str_replace('_', ' ', $currentApprover->role) }}
-            </span>
-        </div>
+            <div class="text-xs font-medium">
+                Awaiting:
+                <span class="capitalize font-semibold">
+                    {{ str_replace('_', ' ', $currentApprover->role) }}
+                </span>
+            </div>
         @endif
 
-        @if($status === 'approved')
-        <div class="text-[12px] font-medium">
-            Fully approved and finalized.
-        </div>
+        @if(in_array($status, ['approved','approved_by_sacdev']))
+            <div class="text-xs font-medium">
+                Fully approved and finalized.
+            </div>
         @endif
 
         @if($status === 'draft')
-        <div class="text-[12px]">
-            This report is still editable.
-        </div>
+            <div class="text-xs">
+                This report is still editable.
+            </div>
         @endif
 
         @if($status === 'returned')
-        <div class="text-[12px] font-medium">
-            Returned for revision. Please update and resubmit.
-        </div>
+            <div class="text-xs font-medium">
+                Returned for revision. Please update and resubmit.
+            </div>
         @endif
 
     </div>
@@ -81,31 +79,30 @@ $currentApprover = $document?->signatures
 </div>
 
 
-{{-- RETURN REMARKS --}}
+{{-- ================= RETURN REMARKS ================= --}}
 @if(isset($document) && $document->remarks && $isProjectHead)
 
-<div class="remarks-card border border-amber-200 bg-amber-50 shadow-lg rounded-xl p-4 text-sm text-amber-800 relative mb-6">
+<div class="rounded-2xl border border-amber-200 bg-amber-50 shadow-sm p-5 relative">
 
     <button
-        onclick="this.closest('.remarks-card').remove()"
-        class="absolute top-2 right-3 text-amber-500 hover:text-amber-700 text-[14px]">
-        ×
+        onclick="this.closest('div').remove()"
+        class="absolute top-3 right-4 text-amber-500 hover:text-amber-700 text-sm">
+        ✕
     </button>
 
-    <div class="font-semibold mb-2 flex items-center gap-2">
-        <span class="text-amber-600">⚠</span>
+    <div class="font-semibold text-amber-800 mb-2">
         Returned for Revision
     </div>
 
-    <div class="text-[12px] leading-relaxed mb-2">
+    <div class="text-sm text-amber-700 mb-2">
         {{ $document->remarks }}
     </div>
 
     @if($document->returnedBy)
-    <div class="text-[11px] text-amber-700 italic">
+    <div class="text-xs text-amber-600 italic">
         Returned by {{ $document->returnedBy->name }}
         @if($document->returned_at)
-        on {{ \Carbon\Carbon::parse($document->returned_at)->format('F d, Y h:i A') }}
+            on {{ \Carbon\Carbon::parse($document->returned_at)->format('F d, Y h:i A') }}
         @endif
     </div>
     @endif
@@ -115,16 +112,11 @@ $currentApprover = $document?->signatures
 @endif
 
 
-{{-- HEADER --}}
-@include('org.projects.documents.documentation-report.partials._header', [
-    'project' => $project,
-])
+{{-- ================= HEADER ================= --}}
+@include('org.projects.documents.documentation-report.partials._header')
 
 
-{{-- FLASH --}}
-@include('org.projects.documents.documentation-report.partials._flash')
-
-
+{{-- ================= FORM ================= --}}
 <form method="POST"
       action="{{ route('org.projects.documents.documentation-report.store', $project) }}"
       enctype="multipart/form-data"
@@ -132,38 +124,42 @@ $currentApprover = $document?->signatures
 
 @csrf
 
-
 @if($isReadOnly)
 <fieldset disabled class="space-y-6">
 @endif
 
 
-{{-- PROJECT DEFINITION --}}
-@include('org.projects.documents.documentation-report.partials._project_definition')
+<div class="grid gap-6">
 
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+        @include('org.projects.documents.documentation-report.partials._project_definition')
+    </div>
 
-{{-- ATTENDEES --}}
-@include('org.projects.documents.documentation-report.partials._attendees')
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+        @include('org.projects.documents.documentation-report.partials._attendees')
+    </div>
 
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+        @include('org.projects.documents.documentation-report.partials._partners_sponsors')
+    </div>
 
-{{-- PARTNERS / SPONSORS --}}
-@include('org.projects.documents.documentation-report.partials._partners_sponsors')
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+        @include('org.projects.documents.documentation-report.partials._evaluation')
+    </div>
 
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+        @include('org.projects.documents.documentation-report.partials._implementation')
+    </div>
 
-{{-- EVALUATION --}}
-@include('org.projects.documents.documentation-report.partials._evaluation')
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+        @include('org.projects.documents.documentation-report.partials._financial')
+    </div>
 
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+        @include('org.projects.documents.documentation-report.partials._photo_documentation')
+    </div>
 
-{{-- PROJECT IMPLEMENTATION --}}
-@include('org.projects.documents.documentation-report.partials._implementation')
-
-
-{{-- FINANCIAL REPORT --}}
-@include('org.projects.documents.documentation-report.partials._financial')
-
-
-{{-- PHOTO DOCUMENTATION --}}
-@include('org.projects.documents.documentation-report.partials._photo_documentation')
+</div>
 
 
 @if($isReadOnly)
@@ -173,25 +169,24 @@ $currentApprover = $document?->signatures
 </form>
 
 
-{{-- SIGNATURES --}}
+{{-- ================= SIGNATURES ================= --}}
 @include('org.projects.documents.documentation-report.partials._signatures')
 
 
-{{-- ACTION BUTTONS --}}
-
-    @include('components.project-document.actions._actions', [
-        'project' => $project,
-        'document' => $document,
-        'currentSignature' => $document?->signatures
-            ?->where('user_id', auth()->id())
-            ->first(),
-        'isProjectHead' => $isProjectHead ?? false,
-        'isAdmin' => auth()->user()->system_role === 'sacdev_admin',
-    ])
-
-</div>
+{{-- ================= ACTIONS ================= --}}
+@include('components.project-document.actions._actions', [
+    'project' => $project,
+    'document' => $document,
+    'currentSignature' => $document?->signatures
+        ?->where('user_id', auth()->id())
+        ->first(),
+    'isProjectHead' => $isProjectHead ?? false,
+    'isAdmin' => auth()->user()->system_role === 'sacdev_admin',
+])
 
 
 @include('org.projects.documents.documentation-report.partials._script')
 
-</x-layouts.form-only>
+</div>
+
+</x-app-layout>

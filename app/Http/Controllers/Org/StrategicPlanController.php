@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Org;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Org\SaveDraftStrategicPlanRequest;
 use App\Http\Requests\Org\SubmitStrategicPlanRequest;
+use App\Models\Organization;
 use App\Models\OrgMembership;
 use App\Models\SchoolYear;
 use App\Models\StrategicPlanBeneficiary;
@@ -127,7 +128,14 @@ class StrategicPlanController extends Controller
             StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
         ], true);
 
-        return view('org.strategic_plan.edit', compact('submission', 'schoolYear', 'canEdit'));
+        $organization = Organization::findOrFail($orgId);
+
+        return view('org.strategic_plan.edit', compact(
+            'submission',
+            'schoolYear',
+            'canEdit',
+            'organization'
+        ));
     }
 
    

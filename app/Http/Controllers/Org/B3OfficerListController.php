@@ -216,7 +216,7 @@ class B3OfficerListController extends Controller
 
             'items.*.major_officer_role' => [
                 'nullable',
-                Rule::in(['president', 'vice_president', 'treasurer', 'auditor'])
+                Rule::in(['president', 'vice_president', 'treasurer', 'finance_officer'])
             ],
 
         ]);
@@ -273,7 +273,7 @@ class B3OfficerListController extends Controller
 
             'items.*.major_officer_role' => [
                 'nullable',
-                Rule::in(['president', 'vice_president', 'treasurer', 'auditor'])
+                Rule::in(['president', 'vice_president', 'treasurer', 'finance_officer'])
             ],
 
 

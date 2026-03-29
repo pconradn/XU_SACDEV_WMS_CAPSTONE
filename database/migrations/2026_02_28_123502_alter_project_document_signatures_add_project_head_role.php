@@ -25,7 +25,7 @@ return new class extends Migration {
     {
         DB::statement("
             DELETE FROM project_document_signatures
-            WHERE role = 'auditor'
+            WHERE role = 'finance_officer'
         ");
 
         DB::statement("

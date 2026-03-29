@@ -12,7 +12,7 @@
         $isPresident = $orgRole === 'president';
         $isModerator = $orgRole === 'moderator';
         $isTreasurer = $orgRole === 'treasurer';
-        $isAuditor = $orgRole === 'auditor';
+        $isFinance_Officer = $orgRole === 'finance_officer';
 
         //dd($projects);
 
@@ -26,7 +26,7 @@
             ->exists();
 
         $canManageProjects = $isPresident;
-        $canViewProjects = $isPresident || $isModerator || $isTreasurer || $isAuditor || $isProjectHead;
+        $canViewProjects = $isPresident || $isModerator || $isTreasurer || $isFinance_Officer || $isProjectHead;
     @endphp
 
     <div

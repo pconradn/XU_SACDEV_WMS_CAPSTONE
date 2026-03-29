@@ -1,153 +1,126 @@
-<x-layouts.form-only
-    title="Solicitation / Sponsorship Report — {{ $project->title }}"
-    :backRoute="route('org.projects.documents.hub', $project)"
->
+<x-app-layout>
 
-<div class="mx-auto max-w-5xl">
+<div class="max-w-6xl mx-auto space-y-6">
 
 @php
+    $status = $document->status ?? 'draft';
 
-$docStatus = $document->status ?? 'draft';
+    $isProjectHead = $isProjectHead ?? false;
 
-$isProjectHead = $isProjectHead ?? false;
+    $isEditable = $isProjectHead && (
+        in_array($status, ['draft','submitted','returned'])
+        || ($status === 'approved_by_sacdev' && $document->edit_mode)
+    );
 
-            $isEditable = $isProjectHead && (
-                in_array($status, ['draft','submitted','returned'])
-                || ($status === 'approved_by_sacdev' && $document->edit_mode)
-            );
+    if (in_array($status, ['approved','approved_by_sacdev'])) {
+        $isEditable = false;
+    }
 
-if (in_array($docStatus, ['approved','approved_by_sacdev'])) {
-    $isEditable = false;
-}
+    $isReadOnly = !$isEditable;
 
-$isReadOnly = !$isEditable;
+    $statusStyles = [
+        'draft' => 'bg-slate-50 text-slate-700 border-slate-200',
+        'submitted' => 'bg-blue-50 text-blue-800 border-blue-200',
+        'returned' => 'bg-rose-50 text-rose-800 border-rose-200',
+        'approved' => 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        'approved_by_sacdev' => 'bg-emerald-50 text-emerald-800 border-emerald-200',
+    ];
 
-$statusStyles = [
-    'draft' => 'bg-slate-50 text-slate-700',
-    'submitted' => 'bg-blue-50 text-blue-800',
-    'returned' => 'bg-rose-50 text-rose-800',
-    'approved' => 'bg-emerald-50 text-emerald-800',
-    'approved_by_sacdev' => 'bg-emerald-50 text-emerald-800',
-];
+    $style = $statusStyles[$status] ?? $statusStyles['draft'];
 
-$style = $statusStyles[$docStatus] ?? $statusStyles['draft'];
-
-$currentApprover = $document?->signatures
-    ?->where('status','pending')
-    ->sortBy('id')
-    ->first();
-
+    $currentApprover = $document?->signatures
+        ?->where('status','pending')
+        ->sortBy('id')
+        ->first();
 @endphp
 
+{{-- ================= STATUS CARD ================= --}}
+<div class="rounded-2xl border {{ $style }} px-5 py-4 shadow-sm">
 
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
 
-@include('org.projects.documents.partials._instructions-modal', [
+        <div class="font-semibold tracking-wide">
+            SOLICITATION REPORT STATUS:
+            <span class="ml-1 uppercase">{{ $status }}</span>
+        </div>
 
-'title' => 'Solicitation Report Instructions',
+        @if($status === 'submitted' && $currentApprover)
+            <div class="text-xs font-medium">
+                Awaiting:
+                <span class="capitalize font-semibold">
+                    {{ str_replace('_',' ', $currentApprover->role) }}
+                </span>
+            </div>
+        @endif
 
-'instructions' => '
+        @if(in_array($status,['approved','approved_by_sacdev']))
+            <div class="text-xs font-medium">
+                Fully approved and finalized.
+            </div>
+        @endif
 
-<p>
-Before submitting this report, please ensure that all solicitation letters
-distributed during the activity are properly accounted for.
-</p>
+        @if($status === 'draft')
+            <div class="text-xs">
+                This form is still editable.
+            </div>
+        @endif
 
-<ul class="list-disc ml-5 space-y-1">
+        @if($status === 'returned')
+            <div class="text-xs font-medium">
+                Returned for revision. Please update and resubmit.
+            </div>
+        @endif
 
-<li>
-If a recipient did not provide any contribution, the person-in-charge must
-retrieve the solicitation letter and return it to the organization for
-submission to SACDEV.
-</li>
-
-<li>
-If a solicitation letter was lost, the person-in-charge must secure a
-written waiver from the recipient confirming that no contribution was given.
-</li>
-
-<li>
-This waiver must be attached to the report together with the
-acknowledgement receipts issued to donors.
-</li>
-
-<li>
-Ensure that the control numbers listed in the table match the physical
-documents submitted to SACDEV.
-</li>
-
-</ul>
-
-'
-
-])
-
-
-
-{{-- STATUS BANNER --}}
-<div class="border border-slate-300 {{ $style }} px-4 py-3 text-sm mb-6">
-
-<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-
-<div class="font-semibold tracking-wide">
-SOLICITATION / SPONSORSHIP REPORT STATUS:
-<span class="ml-1 uppercase">
-{{ $docStatus }}
-</span>
-</div>
-
-@if($docStatus === 'submitted' && $currentApprover)
-<div class="text-[12px] font-medium">
-Awaiting:
-<span class="capitalize font-semibold">
-{{ str_replace('_',' ', $currentApprover->role) }}
-</span>
-</div>
-@endif
-
-@if(in_array($docStatus,['approved','approved_by_sacdev']))
-<div class="text-[12px] font-medium">
-Fully approved and finalized.
-</div>
-@endif
-
-@if($docStatus === 'draft')
-<div class="text-[12px]">
-This form is still editable.
-</div>
-@endif
-
-@if($docStatus === 'returned')
-<div class="text-[12px] font-medium">
-Returned for revision. Please update and resubmit.
-</div>
-@endif
-
-</div>
+    </div>
 
 </div>
 
 
-
+{{-- ================= HEADER ================= --}}
 @include('org.projects.documents.solicitation-sponsorship-report.partials._header')
 
-@include('org.projects.documents.solicitation-sponsorship-report.partials._flash')
+
+<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 flex justify-between items-center">
+
+    <div class="text-xs text-slate-600">
+        Please review submission guidelines before proceeding.
+    </div>
+
+    <button onclick="openModal('instructionsModal')"
+        class="text-xs font-medium text-blue-600 hover:underline">
+        View Full Instructions
+    </button>
+
+</div>
 
 
+{{-- ================= FORM ================= --}}
 <form
     id="proposalForm"
     method="POST"
     action="{{ route('org.projects.documents.solicitation-sponsorship-report.store', $project) }}"
 >
-
 @csrf
 
 @if($isReadOnly)
 <fieldset disabled class="space-y-6">
 @endif
 
-@include('org.projects.documents.solicitation-sponsorship-report.partials._activity-info')
+<div class="grid gap-6">
 
-@include('org.projects.documents.solicitation-sponsorship-report.partials._items-table')
+    {{-- ACTIVITY INFO --}}
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+        @include('org.projects.documents.solicitation-sponsorship-report.partials._activity-info')
+    </div>
+
+    {{-- ITEMS TABLE --}}
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+
+        @include('org.projects.documents.solicitation-sponsorship-report.partials._items-table')
+
+    </div>
+
+</div>
 
 @if($isReadOnly)
 </fieldset>
@@ -156,80 +129,32 @@ Returned for revision. Please update and resubmit.
 </form>
 
 
-
-{{-- SIGNATURE TRAIL --}}
-@if($document && $document->signatures && $document->signatures->count())
-
-<div class="border border-slate-300 bg-white mt-8">
-
-<div class="bg-slate-50 border-b border-slate-300 px-4 py-2 text-[12px] font-semibold tracking-wide">
-Approval Trail
+{{-- ================= SIGNATURES ================= --}}
+<div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+    @include('org.projects.documents.project-proposal.partials._signatures')
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x">
 
-@foreach($document->signatures->sortBy('id') as $sig)
+{{-- ================= ACTIONS ================= --}}
+@include('components.project-document.actions._actions', [
+    'project' => $project,
+    'document' => $document,
+    'currentSignature' => $document?->signatures
+        ?->where('user_id', auth()->id())
+        ->first(),
+    'isProjectHead' => $isProjectHead ?? false,
+    'isAdmin' => auth()->user()->system_role === 'sacdev_admin',
+])
 
-@php
-$sigStatus = $sig->status;
-@endphp
 
-<div class="px-4 py-4 text-[12px] flex justify-between items-center">
+{{-- ================= MODALS ================= --}}
+@include('org.projects.documents.solicitation-sponsorship-report.partials._items-modal')
 
-<div class="flex flex-col">
+@include('org.projects.documents.solicitation-sponsorship-report.partials._instructions-modal')
 
-<div class="font-medium capitalize">
-{{ str_replace('_',' ', $sig->role) }}
-</div>
 
-<div class="text-slate-500">
-{{ $sig->user?->name ?? 'Unknown User' }}
-</div>
-
-</div>
-
-<div class="text-right">
-
-@if($sigStatus === 'signed')
-
-<div class="text-emerald-700 font-medium">
-Approved
-</div>
-
-<div class="text-slate-500 text-[11px]">
-{{ $sig->signed_at?->format('M d, Y h:i A') }}
-</div>
-
-@elseif($sigStatus === 'pending')
-
-<div class="text-amber-600 font-medium">
-Pending
-</div>
-
-@endif
-
-</div>
-
-</div>
-
-@endforeach
-
-</div>
-
-</div>
-
-@endif
-    @include('components.project-document.actions._actions', [
-        'project' => $project,
-        'document' => $document,
-        'currentSignature' => $document?->signatures
-            ?->where('user_id', auth()->id())
-            ->first(),
-        'isProjectHead' => $isProjectHead ?? false,
-        'isAdmin' => auth()->user()->system_role === 'sacdev_admin',
-    ])
 @include('org.projects.documents.solicitation-sponsorship-report.partials._scripts')
 
 </div>
 
-</x-layouts.form-only>
+</x-app-layout>

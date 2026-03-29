@@ -1,93 +1,77 @@
 <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
 
-<table class="min-w-full text-sm">
+    {{-- HEADER --}}
+    <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
 
-<thead class="bg-slate-50 border-b border-slate-200">
+        <div>
+            <h3 class="text-sm font-semibold text-slate-900">
+                Project Documents
+            </h3>
+            <p class="text-xs text-slate-500 mt-1">
+                Review and approve submitted forms
+            </p>
+        </div>
 
-<tr class="text-left text-slate-700 font-semibold">
+        {{-- PROGRESS --}}
+        <div class="text-right">
+            <div class="text-xs text-slate-500">
+                Progress
+            </div>
+            <div class="text-sm font-semibold text-slate-900">
+                {{ $progress['approved'] }} / {{ $progress['total'] }}
+            </div>
+        </div>
 
-<th class="px-6 py-4">
-Document
-</th>
+    </div>
 
-<th class="px-6 py-4 w-[160px]">
-Status
-</th>
-
-<th class="px-6 py-4 w-[220px] text-right">
-Action
-</th>
-
-</tr>
-
-</thead>
-
-<tbody class="divide-y divide-slate-200">
-
-@php
-
-$types = [
-
-    'PROJECT_PROPOSAL'                   => 'Project Proposal',
-    'BUDGET_PROPOSAL'                    => 'Budget Proposal',
-
-    'OFF_CAMPUS_APPLICATION'             => 'Off-Campus Form',
-
-    'SOLICITATION_APPLICATION'           => 'Solicitation / Sponsorship Application',
-    'SELLING_APPLICATION'                => 'Selling Application',
-
-    'REQUEST_TO_PURCHASE'                => 'Request to Purchase',
-
-    'FEES_COLLECTION_REPORT'             => 'Fees Collection Report',
-    'SELLING_ACTIVITY_REPORT'            => 'Selling Activity Report',
-    'SOLICITATION_SPONSORSHIP_REPORT'    => 'Solicitation / Sponsorship Report',
-    'TICKET_SELLING_REPORT'              => 'Ticket Selling Report',
-
-    'DOCUMENTATION_REPORT'               => 'Documentation Report',
-    'LIQUIDATION_REPORT'                 => 'Liquidation Report',
-
-];
-
-$formRoutes = [
-
-    'PROJECT_PROPOSAL'                   => 'org.projects.documents.project-proposal.create',
-    'BUDGET_PROPOSAL'                    => 'org.projects.documents.budget-proposal.create',
-
-    'OFF_CAMPUS_APPLICATION'             => 'org.projects.documents.off-campus.create',
-
-    'SOLICITATION_APPLICATION'           => 'org.projects.documents.solicitation.create',
-    'SELLING_APPLICATION'                => 'org.projects.documents.selling.create',
-
-    'REQUEST_TO_PURCHASE'                => 'org.projects.documents.request-to-purchase.create',
-
-    'FEES_COLLECTION_REPORT'             => 'org.projects.documents.fees-collection.create',
-    'SELLING_ACTIVITY_REPORT'            => 'org.projects.documents.selling-activity-report.create',
-    'SOLICITATION_SPONSORSHIP_REPORT'    => 'org.projects.documents.solicitation-sponsorship-report.create',
-    'TICKET_SELLING_REPORT'              => 'org.projects.documents.ticket-selling-report.create',
-
-    'DOCUMENTATION_REPORT'               => 'org.projects.documents.documentation-report.create',
-    'LIQUIDATION_REPORT'                 => 'org.projects.documents.liquidation-report.create',
+    {{-- PROGRESS BAR --}}
+    <div class="px-6 pt-3">
+        <div class="w-full bg-slate-100 rounded-full h-2">
+            <div class="bg-emerald-500 h-2 rounded-full"
+                 style="width: {{ $progress['percentage'] }}%">
+            </div>
+        </div>
+    </div>
 
 
-    
-];
+    <div class="mt-6 space-y-6">
 
-@endphp
+        @forelse($groupedForms as $phase => $forms)
 
+            <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
 
-@foreach($types as $code => $label)
+                {{-- SECTION HEADER --}}
+                <div class="flex justify-between items-center mb-4">
 
-@include('admin.projects.documents.partials._document-row', [
-    'code' => $code,
-    'label' => $label,
-    'doc' => $documents[$code] ?? null,
-    'project' => $project
-])
+                    <h3 class="text-sm font-semibold text-slate-800">
+                        {{ strtoupper(str_replace('_',' ', $phase)) }}
+                    </h3>
 
-@endforeach
+                    <span class="text-xs text-slate-400">
+                        {{ count($forms) }} forms
+                    </span>
 
-</tbody>
+                </div>
 
-</table>
+                {{-- GRID --}}
+                <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+                    @foreach($forms as $form)
+                        @include('admin.projects.documents.partials._form-card')
+                    @endforeach
+
+                </div>
+
+            </div>
+
+        @empty
+
+            <div class="text-center text-sm text-slate-500 py-10">
+                No documents found.
+            </div>
+
+        @endforelse
+
+    </div>
 
 </div>
