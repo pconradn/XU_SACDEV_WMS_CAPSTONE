@@ -44,16 +44,16 @@ class CombinedProposalController extends Controller
 
         DB::transaction(function () use ($request, $project) {
 
-            // 🔹 FORCE BOTH TO SAVE ONLY (NO SUBMIT YET)
+            //dd($request);
             $request->merge([
-                'action' => 'draft',
                 'from_combined' => true,
             ]);
-
             $this->proposalController->store($request, $project);
             $this->budgetController->store($request, $project);
 
         });
+
+        //dd($action);
 
         if ($action === 'submit') {
             return $this->submit($project);

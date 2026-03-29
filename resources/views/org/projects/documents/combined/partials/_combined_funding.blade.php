@@ -28,8 +28,10 @@
             <label class="block text-xs font-medium text-slate-700 mb-1">
                 PTA Contribution
             </label>
-            <input type="number" step="0.01" min="0"
+            <input type="text"
+                inputmode="decimal"
                 id="pta_input"
+                value="0.00"
                 class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
         </div>
 
@@ -40,13 +42,18 @@
             </label>
 
             <div class="flex gap-2">
-                <input type="number" step="0.01"
+                <input type="text"
+                    inputmode="decimal"
                     id="counterpart_amount"
+                    name="counterpart_amount_per_pax"
+                    value="0.00"
                     placeholder="Amount"
                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
 
                 <input type="number"
                     id="counterpart_pax"
+                    name="counterpart_pax"
+                    value="0"
                     placeholder="Pax"
                     class="w-24 rounded-lg border border-slate-300 px-3 py-2 text-sm text-center">
             </div>
@@ -54,6 +61,7 @@
 
     </div>
 
+    {{-- RAISED FUNDS --}}
     <div>
         <label class="block text-xs font-medium text-slate-700 mb-2">
             Raised Funds (Auto-totaled)
@@ -62,8 +70,9 @@
         <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
 
             @foreach(['Solicitation','Ticket-Selling','Others'] as $src)
-                <input type="number"
-                    step="0.01"
+                <input type="text"
+                    inputmode="decimal"
+                    value="0.00"
                     placeholder="{{ $src }}"
                     data-raised="{{ $src }}"
                     class="raised-input rounded-lg border border-slate-300 px-3 py-2 text-sm">
@@ -106,37 +115,49 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
+    function parseNumber(value) {
+        return parseFloat((value || '').toString().replace(/,/g, '')) || 0;
+    }
+
+    function formatNumber(value) {
+        const num = parseFloat(value) || 0;
+        return num.toLocaleString('en-PH', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
     function computeAll() {
 
-        const pta = parseFloat(document.getElementById('pta_input').value) || 0;
+        const pta = parseNumber(document.getElementById('pta_input').value);
 
-        const cpAmount = parseFloat(document.getElementById('counterpart_amount').value) || 0;
+        const cpAmount = parseNumber(document.getElementById('counterpart_amount').value);
         const cpPax = parseFloat(document.getElementById('counterpart_pax').value) || 0;
         const counterpartTotal = cpAmount * cpPax;
 
         let raised = 0;
 
         document.querySelectorAll('.raised-input').forEach(input => {
-            raised += parseFloat(input.value) || 0;
+            raised += parseNumber(input.value);
         });
 
         const total = pta + counterpartTotal + raised;
 
         // DISPLAY
-        document.getElementById('combined_total_display').innerText = total.toFixed(2);
+        document.getElementById('combined_total_display').innerText = formatNumber(total);
 
         // PROPOSAL
         document.getElementById('hidden_pta').value = pta;
         document.getElementById('hidden_counterpart').value = counterpartTotal;
 
         document.getElementById('hidden_solicitation').value =
-            document.querySelector('[data-raised="Solicitation"]').value || 0;
+            parseNumber(document.querySelector('[data-raised="Solicitation"]').value);
 
         document.getElementById('hidden_ticket').value =
-            document.querySelector('[data-raised="Ticket-Selling"]').value || 0;
+            parseNumber(document.querySelector('[data-raised="Ticket-Selling"]').value);
 
         document.getElementById('hidden_others').value =
-            document.querySelector('[data-raised="Others"]').value || 0;
+            parseNumber(document.querySelector('[data-raised="Others"]').value);
 
         document.getElementById('hidden_total_budget').value = total;
 
@@ -148,6 +169,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }
 
+    function attachFormatting(input) {
+
+        input.addEventListener('focus', () => {
+            input.value = parseNumber(input.value) || 0;
+        });
+
+        input.addEventListener('blur', () => {
+            input.value = formatNumber(parseNumber(input.value));
+        });
+
+    }
+
+    // Apply formatting
+    document.querySelectorAll('#pta_input, #counterpart_amount, .raised-input')
+        .forEach(input => {
+            attachFormatting(input);
+
+            // ensure default
+            if (!input.value) {
+                input.value = '0.00';
+            } else {
+                input.value = formatNumber(parseNumber(input.value));
+            }
+        });
+
+    // Recompute on input
     document.addEventListener('input', computeAll);
 
     computeAll();
