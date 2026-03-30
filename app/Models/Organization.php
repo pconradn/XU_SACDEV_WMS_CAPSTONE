@@ -90,5 +90,10 @@ class Organization extends Model
         return $this->belongsTo(\App\Models\Cluster::class);
     }
 
+    public function memberRecords()
+    {
+        return $this->hasMany(OrganizationMemberRecord::class);
+    }
+
 
 }

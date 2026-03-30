@@ -10,8 +10,16 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::resource('officers', OfficerEntryController::class)
-    ->except(['show'])
+    ->only(['index'])
     ->names('org.officers');
+
+Route::put(
+    'officers/{officer}/qpi',
+    [OfficerEntryController::class, 'updateQpi']
+    )->name('org.officers.update-qpi');
+
+
+
 Route::post(
     'officers/{officer}/resend-invite',
     [OfficerInviteController::class, 'resend']

@@ -1,6 +1,6 @@
 <x-app-layout>
 
-@include('admin.rereg.partials._success_toast')
+
 
 <div class="mx-auto max-w-7xl px-4 py-6 space-y-6">
 

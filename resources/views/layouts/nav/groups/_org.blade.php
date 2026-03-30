@@ -1,8 +1,12 @@
+
+@dd(Route::has('org.organization-info.show'));
 <div></div>
 @php
 use App\Models\SchoolYear;
 use App\Models\OrgMembership;
 use App\Models\OrganizationSchoolYear;
+
+
 
 $user = auth()->user();
 
@@ -29,6 +33,26 @@ if ($activeOrgId) {
     $isModerator = ($orgRole === 'moderator');
     $isPresident = ($orgRole === 'president');
 
+    // ================= GLOBAL ORG ACCESS =================
+    $orgGeneral = [];
+
+    if (Route::has('org.organization-info.show')) {
+        $orgGeneral[] = $item(
+            'Organization',
+            route('org.organization-info.show'),
+            ['org.organization-info.*']
+        );
+    }
+    if (!empty($orgGeneral)) {
+        $orgGroups[] = [
+            'key' => 'org_general',
+            'title' => 'Organization',
+            'links' => $orgGeneral,
+            'icon' => 'building'
+        ];
+    }
+
+
     if (!$isPresident) {
         $osyPresident = OrganizationSchoolYear::query()
             ->where('organization_id', $activeOrgId)
@@ -54,6 +78,7 @@ if ($activeOrgId) {
                 ['org.provision.*']
             );
         }
+        
 
         if (Route::has('org.officers.index')) {
             $ops[] = $item('Officer List', route('org.officers.index'), ['org.officers.*']);
@@ -226,6 +251,8 @@ $orgGroups[] = [
     ],
     'icon' => 'clipboard'
 ];
+
+
 @endphp
 
 @php
@@ -240,3 +267,4 @@ return $orgGroups;
     isModerator: {{ $isModerator ? 'true' : 'false' }} <br>
     isTreasurer: {{ $isTreasurer ? 'true' : 'false' }}
 </div>
+

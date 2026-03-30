@@ -3,31 +3,44 @@
     <div class="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
         {{-- LEFT: STATUS INFO --}}
-        <div>
+        @php
+            $isCompleted = $project->workflow_status === 'completed';
+        @endphp
 
-            @if($actions['can_mark_complete'])
+        @if($isCompleted)
 
-                <div class="text-sm font-semibold text-emerald-700">
-                    Project is ready for completion
-                </div>
+            <div class="text-sm font-semibold text-emerald-700">
+                Project Completed
+            </div>
 
-                <div class="text-xs text-slate-500 mt-1">
-                    All required documents have been approved.
-                </div>
+            <div class="text-xs text-slate-500 mt-1">
+                All requirements have been accomplished.
+                @if($project->completed_at)
+                    ({{ \Carbon\Carbon::parse($project->completed_at)->format('M d, Y h:i A') }})
+                @endif
+            </div>
 
-            @else
+        @elseif($actions['can_mark_complete'])
 
-                <div class="text-sm font-semibold text-amber-700">
-                    Project not yet complete
-                </div>
+            <div class="text-sm font-semibold text-emerald-700">
+                Project is ready for completion
+            </div>
 
-                <div class="text-xs text-slate-500 mt-1">
-                    Some documents are still pending approval.
-                </div>
+            <div class="text-xs text-slate-500 mt-1">
+                All required documents have been approved.
+            </div>
 
-            @endif
+        @else
 
-        </div>
+            <div class="text-sm font-semibold text-amber-700">
+                Project not yet complete
+            </div>
+
+            <div class="text-xs text-slate-500 mt-1">
+                Some documents are still pending approval.
+            </div>
+
+        @endif
 
 
         {{-- RIGHT: ACTIONS --}}

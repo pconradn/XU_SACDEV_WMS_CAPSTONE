@@ -165,7 +165,7 @@ class AdminDashboardController extends Controller
                     'school_year_id' => (int) $syId,
                     'organization' => Organization::find($orgId),
                     'school_year' => SchoolYear::find($syId),
-                    'route' => route('admin.orgs_by_sy.show', $orgId),
+                    'route' => route('admin.rereg.index', $orgId),
                 ];
             })
             ->values();

@@ -123,6 +123,7 @@
       id="proposalForm">
 
 @csrf
+<input type="hidden" name="action" id="formAction" value="draft">
 
 @if($isReadOnly)
 <fieldset disabled class="space-y-6">

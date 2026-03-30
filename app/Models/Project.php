@@ -18,8 +18,9 @@ class Project extends Model
         'budget',
 
         'description', 
+        
 
-        'source_strategic_plan_project_id',
+        'source_strategic_plan_project_id', 'status' , 'workflow_status',
 
         'requires_clearance',
         'clearance_reference',

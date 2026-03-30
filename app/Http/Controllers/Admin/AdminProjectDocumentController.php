@@ -8,6 +8,8 @@ use App\Models\Project;
 use App\Models\ProjectAssignment;
 use App\Models\ProjectDocument;
 use App\Notifications\ReregActionNotification;
+use App\Services\ProjectFormRequirementResolver;
+use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 class AdminProjectDocumentController extends Controller
 {
 
-    public function hub(Project $project)
+    public function hub(Project $project, \App\Services\ProjectFormRequirementResolver $resolver)
     {
 
         $documents = ProjectDocument::query()
@@ -184,12 +186,31 @@ class AdminProjectDocumentController extends Controller
             return $doc->status === 'approved_by_sacdev';
         })->count();
 
+        $requiredFormTypes = $resolver->resolve($project);
+
+        // map required docs
+        $requiredDocs = collect($requiredFormTypes)->map(function (FormType $formType) use ($documents) {
+            return $documents[$formType->code] ?? null;
+        });
+
+        // total required
+        $totalRequired = $requiredDocs->count();
+
+        // approved required only
+        $approvedRequired = $requiredDocs
+            ->filter()
+            ->where('status', 'approved_by_sacdev')
+            ->count();
+
+        // percentage
+        $percentage = $totalRequired > 0
+            ? round(($approvedRequired / $totalRequired) * 100)
+            : 0;
+
         $progress = [
-            'total' => $totalForms,
-            'approved' => $approvedForms,
-            'percentage' => $totalForms > 0
-                ? round(($approvedForms / $totalForms) * 100)
-                : 0,
+            'total' => $totalRequired,
+            'approved' => $approvedRequired,
+            'percentage' => $percentage,
         ];
 
 
@@ -233,13 +254,26 @@ class AdminProjectDocumentController extends Controller
             : collect();
 
 
+        $requiredFormTypes = $resolver->resolve($project);
+
+        $requiredDocs = collect($requiredFormTypes)->map(function (\App\Models\FormType $formType) use ($documents) {
+            return $documents[$formType->code] ?? null;
+        });
+
+        $allRequiredApproved = $requiredDocs
+            ->filter() // remove nulls
+            ->every(fn($doc) => $doc->status === 'approved_by_sacdev');
+
         $canMarkComplete =
             $project->workflow_status !== 'completed' &&
-            $documents->every(fn($doc) => $doc->status === 'approved_by_sacdev');
+            $requiredDocs->isNotEmpty() &&
+            $allRequiredApproved;
 
         $actions = [
-            'can_mark_complete' => false, // disabled for now
-            'mark_complete_url' => null,
+            'can_mark_complete' => $canMarkComplete,
+            'mark_complete_url' => $canMarkComplete
+                ? route('admin.projects.mark-complete', $project)
+                : null,
         ];
 
 
@@ -268,6 +302,82 @@ class AdminProjectDocumentController extends Controller
         ]);
     }
 
+
+
+    public function markComplete(Project $project, ProjectFormRequirementResolver $resolver)
+    {
+        $documents = ProjectDocument::query()
+            ->with('formType')
+            ->where('project_id', $project->id)
+            ->whereNull('archived_at')
+            ->get()
+            ->keyBy(fn($d) => $d->formType->code);
+
+        $requiredFormTypes = $resolver->resolve($project);
+
+        $requiredDocs = collect($requiredFormTypes)->map(function (FormType $formType) use ($documents) {
+            return $documents[$formType->code] ?? null;
+        });
+
+        $allApproved = $requiredDocs
+            ->filter()
+            ->every(fn($doc) => $doc->status === 'approved_by_sacdev');
+
+        if (!$allApproved) {
+            return back()->with('error', 'Project cannot be marked as completed. Some required documents are not yet approved.');
+        }
+
+        if ($project->workflow_status === 'completed') {
+            return back()->with('status', 'Project is already marked as completed.');
+        }
+
+        $project->update([
+            'workflow_status' => 'completed',
+            'status' => 'completed',
+            'completed_at' => now(),
+        ]);
+
+        $this->notifyProjectHeadCompleted($project);
+
+        Audit::log(
+            'project.completed',
+            'Project marked as completed',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'project_id' => $project->id,
+                    'title' => $project->title,
+                ]
+            ]
+        );
+
+        return back()->with('success', 'Project marked as completed successfully.');
+    }
+
+    protected function notifyProjectHeadCompleted(Project $project)
+    {
+        $assignment = ProjectAssignment::where('project_id', $project->id)
+            ->where('assignment_role', 'project_head')
+            ->whereNull('archived_at')
+            ->with('user')
+            ->first();
+
+        if (!$assignment || !$assignment->user) {
+            return;
+        }
+
+        $assignment->user->notify(new ReregActionNotification([
+            'title' => 'Project Completed',
+            'message' => 'Your project "' . $project->title . '" has been marked as completed by SACDEV.',
+            'action_url' => route('org.projects.documents.hub', $project),
+            'meta' => [
+                'project_id' => $project->id,
+                'type' => 'project_completed'
+            ]
+        ]));
+    }
 
     public function open(Project $project, $formType, $documentId = null)
     {

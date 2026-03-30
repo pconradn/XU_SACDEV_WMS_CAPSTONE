@@ -104,7 +104,7 @@
                             <tr>
                                 <th class="px-5 py-4 text-left">Organization</th>
                                 <th class="px-5 py-4 text-left">Status</th>
-                                <th class="px-5 py-4 text-right">Action</th>
+                                <th class="px-5 py-4 text-center">Action</th>
                             </tr>
                         </thead>
 
@@ -152,12 +152,20 @@
                                             <span class="text-slate-400 text-xs">—</span>
                                         @endif
                                     </td>
-
-                                    <td class="px-5 py-4 text-right">
+                                    <td class="px-5 py-4 text-center">
                                         <a href="{{ route('rereg.hub', $org->id) }}"
-                                           class="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-800">
+                                        class="inline-flex items-center gap-1 rounded-lg border border-slate-200 
+                                                px-3 py-1.5 text-xs font-semibold text-slate-700 
+                                                bg-white hover:bg-slate-50 hover:border-slate-300 transition">
+
                                             Open
-                                            <span class="ml-1">→</span>
+
+                                            <svg class="w-3 h-3 opacity-70" fill="none" stroke="currentColor" stroke-width="2"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M9 5l7 7-7 7"/>
+                                            </svg>
+
                                         </a>
                                     </td>
                                 </tr>

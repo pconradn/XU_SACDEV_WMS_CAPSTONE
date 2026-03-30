@@ -274,20 +274,32 @@ class SacdevB3OfficerSubmissionController extends Controller
                 $entry->sort_order = $item->sort_order;
                 $entry->source_officer_submission_item_id = $item->id;
 
+                $entry->current_first_sem_qpi = null;
+                $entry->current_second_sem_qpi = null;
+
                 $entry->save();
 
 
 
-                $failingCount = collect([
-                    $item->first_sem_qpi,
-                    $item->second_sem_qpi,
-                    $item->intersession_qpi
-                ])
-                ->filter()
-                ->filter(fn($qpi) => $qpi < 2.0)
-                ->count();
+                $first  = $item->first_sem_qpi;
+                $second = $item->second_sem_qpi;
+                $inter  = $item->intersession_qpi;
 
-                $isUnderProbation = $failingCount >= 2;
+                $isUnderProbation = false;
+
+               
+                if (!is_null($first) && !is_null($second)) {
+                    if ($first < 2.0 && $second < 2.0) {
+                        $isUnderProbation = true;
+                    }
+                }
+
+              
+                if (!$isUnderProbation && !is_null($inter)) {
+                    if (!is_null($second) && $second < 2.0 && $inter < 2.0) {
+                        $isUnderProbation = true;
+                    }
+                }
 
 
                 $membership = OrgMembership::query()

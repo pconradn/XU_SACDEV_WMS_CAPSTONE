@@ -74,7 +74,7 @@ class OfficerEntry extends Model
 
     public function membership()
     {
-        return $this->hasMany(\App\Models\OrgMembership::class, 'officer_entry_id');
+        return $this->hasOne(OrgMembership::class, 'officer_entry_id');
     }
 
     /*

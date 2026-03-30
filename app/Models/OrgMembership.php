@@ -17,6 +17,8 @@ class OrgMembership extends Model
         'role',
         'archived_at',
         'officer_entry_id',
+        'is_under_probation',
+        'is_suspended',
     ];
 
     protected $casts = [
