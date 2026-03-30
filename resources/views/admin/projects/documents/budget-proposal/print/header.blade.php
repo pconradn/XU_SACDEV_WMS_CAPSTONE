@@ -2,7 +2,7 @@
 
     {{-- TOP LEFT NOTES --}}
     <div style="font-size:11px; margin-bottom:10px;">
-        <em>Your org letterhead here.</em><br>
+        <em></em><br>
         <em>Please use A4 paper.</em>
     </div>
 

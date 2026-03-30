@@ -1,11 +1,11 @@
 @php
 $sections = [
-    'cash_advance'       => 'A. For Cash Advance (Finance Office)',
-    'fund_transfer'      => 'B. For Fund Transfer/Direct Payment to Supplier',
-    'xucmpc'             => 'C. For XUCMPC',
-    'bookstore'          => 'D. For Bookstore',
-    'central_purchasing' => 'E. For Central Purchasing Unit',
-    'counterpart'        => 'F. Counterpart'
+    
+    'fund_transfer'      => 'A. For Fund Transfer/Direct Payment to Supplier',
+    'xucmpc'             => 'B. For XUCMPC',
+    'bookstore'          => 'C. For Bookstore',
+    'central_purchasing' => 'D. For Central Purchasing Unit',
+    'cash_advance'       => 'E. For Cash Advance (Finance Office)',
 ];
 @endphp
 
@@ -25,7 +25,7 @@ $sections = [
 
     @php
         $items = $budget->items->where('section', $code);
-        $rowCount = max(count($items), 5); // ensure at least 5 rows
+        $rowCount = max(count($items), 3);
         $subtotal = $budget->section_totals[$code] ?? 0;
     @endphp
 
@@ -84,3 +84,5 @@ $sections = [
     </tr>
 
 </table>
+
+

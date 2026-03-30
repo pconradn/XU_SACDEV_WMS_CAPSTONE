@@ -1,58 +1,68 @@
 <table class="no-border">
 
-<tr class="no-border">
+<div style="margin-top:0px;">
 
-<td class="no-border" width="60%">
+    <div style="
+        display:grid;
+        grid-template-columns: 3fr 2fr;
+        font-size:12px;
+    ">
 
-<strong>Requested by:</strong>
+        {{-- LEFT --}}
+        <div style="
+            
+            padding:3px;
+        ">
 
-<br><br><br>
+            <strong>Requested by:</strong>
 
-____________________________  
-Project Head
+            <div style="margin-top:0px; text-align:center;">
+                ________________________________________________
+                <div style="margin-top:4px;">Project Head</div>
+            </div>
 
-<br><br>
+            <div style="margin-top:9px; text-align:center;">
+                ________________________________________________
+                <div style="margin-top:4px;">Treasurer</div>
+            </div>
 
-____________________________  
-Treasurer
+            <div style="margin-top:9px; text-align:center;">
+                ________________________________________________
+                <div style="margin-top:4px;">President</div>
+            </div>
 
-<br><br>
+        </div>
 
-____________________________  
-President
+        {{-- RIGHT --}}
+        <div style="padding:8px;">
 
-</td>
+            <strong >Checked against Budget/Funding:__________________</strong>
+
+            {{-- empty space intentionally --}}
+            <div style="height:120px;"></div>
+
+        </div>
+
+    </div>
 
 
-<td class="no-border" width="40%">
+    
 
-<table>
-
-<tr>
-<td colspan="2"><strong>BUDGET ALLOCATION</strong></td>
-</tr>
-
-<tr>
-<td>EXPENSES to date</td>
-<td></td>
-</tr>
-
-<tr>
-<td>BUDGET AVAILABLE</td>
-<td></td>
-</tr>
-
-<tr>
-<td>Source of funds</td>
-<td></td>
-</tr>
-
+</div>
 </table>
 
-</td>
 
-</tr>
 
-</table>
 
-<br>
+
+
+
+
+
+
+
+
+
+
+
+
