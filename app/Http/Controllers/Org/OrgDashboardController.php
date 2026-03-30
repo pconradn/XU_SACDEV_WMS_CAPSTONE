@@ -134,10 +134,16 @@ class OrgDashboardController extends Controller
                 $requiredForms = $resolver->resolve($project);
 
                 foreach ($requiredForms as $req) {
-                    $doc = $project->documents
-                        ->first(fn ($d) => (int) $d->form_type_id === (int) $req->form_type_id);
+                    $doc = null;
 
-               
+                    if (!empty($req->id)) {
+                        $doc = $project->documents
+                            ->first(fn ($d) => (int) $d->form_type_id === (int) $req->id);
+                    } elseif (!empty($req->code)) {
+                        $doc = $project->documents
+                            ->first(fn ($d) => $d->formType?->code === $req->code);
+                    }
+
                     if (!$doc || $doc->status !== 'approved_by_sacdev') {
                         $projectHeadTasks->push((object) [
                             'type' => 'required',
@@ -145,7 +151,7 @@ class OrgDashboardController extends Controller
                             'form_name' => $req->name ?? $req->code,
                             'project' => $project,
                             'status' => $doc?->status ?? 'not_started',
-                            'form_type_id' => $req->form_type_id,
+                            'form_type_id' => $req->id,
                             'form_code' => $req->code, 
                         ]);
                     }
@@ -160,8 +166,15 @@ class OrgDashboardController extends Controller
             $pendingRequiredCount = 0;
 
             foreach ($requiredForms as $req) {
-                $doc = $project->documents
-                    ->first(fn ($d) => (int) $d->form_type_id === (int) $req->form_type_id);
+                $doc = null;
+
+                if (!empty($req->id)) {
+                    $doc = $project->documents
+                        ->first(fn ($d) => (int) $d->form_type_id === (int) $req->id);
+                } elseif (!empty($req->code)) {
+                    $doc = $project->documents
+                        ->first(fn ($d) => $d->formType?->code === $req->code);
+                }
 
                 if (!$doc || $doc->status !== 'approved_by_sacdev') {
                     $pendingRequiredCount++;

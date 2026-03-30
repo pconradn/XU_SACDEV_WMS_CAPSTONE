@@ -146,31 +146,135 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
 
     {{-- ================= DEFAULT SUBMIT MODAL ================= --}}
     <div id="submitModal" class="modal-overlay">
+
         <div class="modal">
-            <h3 class="text-sm font-semibold mb-2">Submit Document</h3>
 
-            <p class="text-xs text-slate-600 mb-4">
-                This will send the document into the approval workflow.
-                You will not be able to edit unless it is returned or edit access is granted.
-            </p>
+            {{-- ================= AGREEMENT STEP (ONLY IF COMBINED) ================= --}}
+            @if($isCombined ?? false)
 
-            <button type="button"
-                onclick="submitMainForm('submit')"
-                class="w-full mb-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs">
-                Confirm Submit
-            </button>
+                <div id="agreementStep">
 
-            <button type="button"
-                onclick="closeModal('submitModal')"
-                class="w-full text-xs text-slate-500">
-                Cancel
-            </button>
+                    <h3 class="text-sm font-semibold mb-2">
+                        Student Agreement
+                    </h3>
+
+                    <p class="text-xs text-slate-600 mb-3">
+                        Please review the agreement before submitting this combined proposal.
+                    </p>
+
+                    <div class="text-xs text-slate-700 space-y-2 max-h-[200px] overflow-y-auto pr-2">
+
+                        <p><strong>1. Responsibilities</strong></p>
+                        <p>
+                            I acknowledge that I am responsible for submitting all post-documentation requirements.
+                        </p>
+
+                        <p><strong>2. Consequences</strong></p>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Inability to take examinations</li>
+                            <li>Inability to obtain official documents</li>
+                            <li>Restrictions on future projects</li>
+                        </ul>
+
+                        <p><strong>3. Commitment</strong></p>
+                        <p>
+                            I commit to fulfilling all requirements on time.
+                        </p>
+
+                        <div class="border border-amber-200 bg-amber-50 rounded-lg p-2 text-[11px] text-amber-800">
+                            ⚠ This submission will be officially recorded.
+                        </div>
+
+                    </div>
+
+                    {{-- ACTIONS --}}
+                    <div class="mt-4 flex justify-between items-center">
+
+                        <button type="button"
+                            onclick="closeModal('submitModal')"
+                            class="px-3 py-1.5 text-xs border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100">
+                            Cancel
+                        </button>
+
+                        <button type="button"
+                            id="agreementProceedBtn"
+                            class="px-3 py-1.5 text-xs bg-slate-400 text-white rounded-lg cursor-not-allowed"
+                            disabled>
+                            Please wait 4s...
+                        </button>
+
+                    </div>
+
+                </div>
+
+            @endif
 
 
+            {{-- ================= ORIGINAL SUBMIT CONFIRM ================= --}}
+            <div id="confirmStep" class="{{ ($isCombined ?? false) ? 'hidden' : '' }}">
 
+                <h3 class="text-sm font-semibold mb-2">Submit Document</h3>
+
+                <p class="text-xs text-slate-600 mb-4">
+                    This will send the document into the approval workflow.
+                    You will not be able to edit unless it is returned or edit access is granted.
+                </p>
+
+                <button type="button"
+                    onclick="submitMainForm('submit')"
+                    class="w-full mb-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs">
+                    Confirm Submit
+                </button>
+
+                <button type="button"
+                    onclick="closeModal('submitModal')"
+                    class="w-full text-xs text-slate-500">
+                    Cancel
+                </button>
+
+            </div>
 
         </div>
+
     </div>
+
+
+    {{-- ================= SCRIPT (SAFE, LOCAL ONLY) ================= --}}
+    @if($isCombined ?? false)
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const btn = document.getElementById('agreementProceedBtn');
+            const agreement = document.getElementById('agreementStep');
+            const confirm = document.getElementById('confirmStep');
+
+            if (!btn) return;
+
+            let countdown = 4;
+
+            const interval = setInterval(() => {
+                countdown--;
+
+                if (countdown > 0) {
+                    btn.innerText = `Please wait ${countdown}s...`;
+                } else {
+                    clearInterval(interval);
+
+                    btn.disabled = false;
+                    btn.classList.remove('bg-slate-400', 'cursor-not-allowed');
+                    btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+                    btn.innerText = 'Proceed';
+                }
+            }, 1000);
+
+            btn.addEventListener('click', function () {
+                agreement.classList.add('hidden');
+                confirm.classList.remove('hidden');
+            });
+
+        });
+    </script>
+    @endif
 
 @endif
 

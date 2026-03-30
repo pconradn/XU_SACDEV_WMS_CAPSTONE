@@ -400,7 +400,9 @@ class ProjectDocumentHubController extends Controller
             'budgetDoc',
 
             'pendingCount',
-            'sectionCounts'
+            'sectionCounts',
+
+            'isProjectHead'
         ));
     }
 

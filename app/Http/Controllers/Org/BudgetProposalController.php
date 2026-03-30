@@ -123,7 +123,7 @@ class BudgetProposalController extends BaseProjectDocumentController
             ->firstOrFail();
 
         if ($document->status !== 'draft' && !$document->edit_mode) {
-            return back()->with('error', 'This budget proposal cannot be submitted.');
+            return back()->with('');
         }
 
         $activeSy = SchoolYear::activeYear();
@@ -311,7 +311,7 @@ class BudgetProposalController extends BaseProjectDocumentController
         $document = $this->getDocument($project,'budget_proposal');
 
         if ($document->status !== 'submitted') {
-            return back()->with('error','This budget proposal cannot be returned.');
+            return back()->with();
         }
 
         $this->handleReturn(

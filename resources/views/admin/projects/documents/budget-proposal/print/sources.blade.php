@@ -5,7 +5,7 @@
         {{-- HEADER --}}
         <tr style="background:#1f6fb2; color:#fff; font-weight:bold;">
             <td style="padding:4px; border:1px solid #1f6fb2;">
-                Sources of Funds:
+                Less (Source of funds rather than finance) 
             </td>
             <td style="padding:4px; border:1px solid #1f6fb2; text-align:center;">
                 Amount/Pax

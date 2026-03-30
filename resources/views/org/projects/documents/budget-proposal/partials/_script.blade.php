@@ -220,22 +220,35 @@ function initializeExistingRows() {
 }
 
 
-
 function checkBudgetMatch() {
     const grandTotal = num(document.getElementById('grand_total')?.textContent);
-    const proposalTotal = num(document.getElementById('proposal_total_budget')?.value);
+
+    const systemTotal = num(document.getElementById('combined_total_display')?.textContent);
 
     const indicator = document.getElementById('budget_indicator');
     if (!indicator) return;
 
-    indicator.classList.remove('hidden', 'text-green-600', 'text-red-600');
+    indicator.classList.remove(
+        'hidden',
+        'text-green-600',
+        'text-red-600',
+        'bg-green-50',
+        'bg-red-50'
+    );
 
-    if (grandTotal === proposalTotal) {
-        indicator.classList.add('text-green-600');
-        indicator.innerText = "✔ Matches Project Proposal Budget";
+    if (Math.abs(grandTotal - systemTotal) < 0.01) {
+        indicator.classList.add('text-green-600', 'bg-green-50', 'px-2', 'py-1', 'rounded');
+        indicator.innerText = "✔ Budget Balanced";
     } else {
-        indicator.classList.add('text-red-600');
-        indicator.innerText = `⚠ Not matching (Proposal: ₱ ${proposalTotal.toLocaleString()})`;
+        indicator.classList.add('text-red-600', 'bg-red-50', 'px-2', 'py-1', 'rounded');
+
+        const diff = Math.abs(grandTotal - systemTotal);
+
+        indicator.innerText = `⚠ Difference: ₱ ${diff.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}`;
     }
+
 }
 </script>

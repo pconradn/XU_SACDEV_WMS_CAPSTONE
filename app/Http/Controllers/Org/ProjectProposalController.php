@@ -75,7 +75,7 @@ class ProjectProposalController extends BaseProjectDocumentController
             ->firstOrFail();
 
         if ($document->status !== 'draft' && !$document->edit_mode) {
-            return back()->with('error', 'This proposal cannot be submitted.');
+            return back()->with('error');
         }
 
         $activeSy = SchoolYear::activeYear();

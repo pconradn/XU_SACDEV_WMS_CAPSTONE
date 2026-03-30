@@ -9,7 +9,7 @@
         const index = wrap.querySelectorAll('input, textarea').length; 
 
         const row = document.createElement('div');
-        row.className = 'flex gap-2';
+        row.className = 'flex gap-2 items-center dynamic-row';
 
         const input = document.createElement('input');
         input.type = 'text';
@@ -36,9 +36,11 @@
         row.className = 'grid grid-cols-1 gap-2 md:grid-cols-3';
 
         row.innerHTML = `
-            <input type="text" name="partners[${i}][name]" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="Name">
-            <input type="text" name="partners[${i}][type]" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="Type (optional)">
-            <button type="button" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">Remove</button>
+            <input type="text" name="partners[${i}][name]" class="rounded-lg border border-slate-300 px-3 py-2 text-sm 
+       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition" placeholder="Name">
+            <input type="text" name="partners[${i}][type]" class="rounded-lg border border-slate-300 px-3 py-2 text-sm 
+       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition" placeholder="Type (optional)">
+            <button type="button" class="remove-btn text-slate-400 hover:text-red-600 text-sm px-2">Remove</button>
         `;
         row.querySelector('button').onclick = () => row.remove();
         wrap.appendChild(row);
@@ -53,9 +55,11 @@
         row.className = 'grid grid-cols-1 gap-2 md:grid-cols-3';
 
         row.innerHTML = `
-            <input type="text" name="roles[${i}][role_name]" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="Role name">
-            <input type="text" name="roles[${i}][description]" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="Description (optional)">
-            <button type="button" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">Remove</button>
+            <input type="text" name="roles[${i}][role_name]" class="rounded-lg border border-slate-300 px-3 py-2 text-sm 
+       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition" placeholder="Role name">
+            <input type="text" name="roles[${i}][description]" class="rounded-lg border border-slate-300 px-3 py-2 text-sm 
+       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition" placeholder="Description (optional)">
+            <button type="button" class="remove-btn text-slate-400 hover:text-red-600 text-sm px-2">Remove</button>
         `;
         row.querySelector('button').onclick = () => row.remove();
         wrap.appendChild(row);
@@ -70,10 +74,13 @@
         row.className = 'grid grid-cols-1 gap-2 lg:grid-cols-4';
 
         row.innerHTML = `
-            <input type="text" name="guests[${i}][full_name]" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="Full Name">
-            <input type="text" name="guests[${i}][affiliation]" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="Affiliation">
-            <input type="text" name="guests[${i}][designation]" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="Designation">
-            <button type="button" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">Remove</button>
+            <input type="text" name="guests[${i}][full_name]" class="rounded-lg border border-slate-300 px-3 py-2 text-sm 
+       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition" placeholder="Full Name">
+            <input type="text" name="guests[${i}][affiliation]" class="rounded-lg border border-slate-300 px-3 py-2 text-sm 
+       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition" placeholder="Affiliation">
+            <input type="text" name="guests[${i}][designation]" class="rounded-lg border border-slate-300 px-3 py-2 text-sm 
+       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition" placeholder="Designation">
+            <button type="button" class="remove-btn text-slate-400 hover:text-red-600 text-sm px-2">Remove</button>
         `;
         row.querySelector('button').onclick = () => row.remove();
         wrap.appendChild(row);
@@ -88,11 +95,14 @@
         row.className = 'grid grid-cols-1 gap-2 lg:grid-cols-5';
 
         row.innerHTML = `
-            <input type="date" name="plan[${i}][date]" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
-            <input type="time" name="plan[${i}][time]" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+            <input type="date" name="plan[${i}][date]" class="rounded-lg border border-slate-300 px-3 py-2 text-sm 
+       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
+            <input type="time" name="plan[${i}][time]" class="rounded-lg border border-slate-300 px-3 py-2 text-sm 
+       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
             <input type="text" name="plan[${i}][activity]" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm lg:col-span-2" placeholder="Activity / Particulars">
-            <input type="text" name="plan[${i}][venue]" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="Venue">
-            <button type="button" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">Remove</button>
+            <input type="text" name="plan[${i}][venue]" class="rounded-lg border border-slate-300 px-3 py-2 text-sm 
+       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition" placeholder="Venue">
+            <button type="button" class="remove-btn text-slate-400 hover:text-red-600 text-sm px-2">Remove</button>
         `;
         row.querySelector('button').onclick = () => row.remove();
         wrap.appendChild(row);
@@ -152,7 +162,8 @@
             row.innerHTML = `
                 <input type="text"
                     name="${name}"
-                    class="w-full border border-slate-300 bg-white px-3 py-1 text-[12px]"
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
+       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
                     placeholder="${placeholder}">
                 <button type="button"
                         class="text-red-600 text-[12px] px-2 remove-btn">
@@ -268,11 +279,33 @@ document.addEventListener('DOMContentLoaded', function () {
         const i = wrap.querySelectorAll('.guest-row').length;
 
         wrap.insertAdjacentHTML('beforeend', `
-            <div class="grid grid-cols-1 gap-2 md:grid-cols-4 guest-row">
-                <input type="text" name="guests[${i}][full_name]" class="border border-slate-300 bg-white px-3 py-1 text-[12px]" placeholder="Full Name">
-                <input type="text" name="guests[${i}][affiliation]" class="border border-slate-300 bg-white px-3 py-1 text-[12px]" placeholder="Affiliation">
-                <input type="text" name="guests[${i}][designation]" class="border border-slate-300 bg-white px-3 py-1 text-[12px]" placeholder="Designation">
-                <button type="button" class="remove-btn text-red-600 text-[12px] px-2">✕</button>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center guest-row">
+
+                <input type="text"
+                    name="guests[${i}][full_name]"
+                    class="md:col-span-4 rounded-lg border border-slate-300 px-3 py-2 text-sm 
+                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
+                    placeholder="Full Name">
+
+                <input type="text"
+                    name="guests[${i}][affiliation]"
+                    class="md:col-span-3 rounded-lg border border-slate-300 px-3 py-2 text-sm 
+                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
+                    placeholder="Affiliation">
+
+                <input type="text"
+                    name="guests[${i}][designation]"
+                    class="md:col-span-3 rounded-lg border border-slate-300 px-3 py-2 text-sm 
+                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
+                    placeholder="Designation">
+
+                <div class="md:col-span-2 flex justify-end">
+                    <button type="button"
+                        class="remove-btn text-xs font-medium text-slate-400 hover:text-red-600 transition">
+                        Remove
+                    </button>
+                </div>
+
             </div>
         `);
     });
@@ -284,30 +317,36 @@ document.addEventListener('DOMContentLoaded', function () {
         const i = wrap.querySelectorAll('.plan-row').length;
 
         wrap.insertAdjacentHTML('beforeend', `
-            <div class="grid grid-cols-1 gap-2 md:grid-cols-7 plan-row">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center plan-row">
 
                 <input type="date"
                     name="plan_of_actions[${i}][date]"
-                    class="border border-slate-300 bg-white px-3 py-1 text-[12px]">
+                    class="md:col-span-2 rounded-lg border border-slate-300 px-2 py-2 text-sm 
+                        focus:ring-2 focus:ring-blue-500 focus:outline-none">
 
                 <input type="time"
                     name="plan_of_actions[${i}][time]"
-                    class="border border-slate-300 bg-white px-3 py-1 text-[12px]">
+                    class="md:col-span-2 rounded-lg border border-slate-300 px-2 py-2 text-sm 
+                        focus:ring-2 focus:ring-blue-500 focus:outline-none">
 
                 <input type="text"
                     name="plan_of_actions[${i}][activity]"
-                    class="border border-slate-300 bg-white px-3 py-1 text-[12px] md:col-span-2"
-                    placeholder="Activity / Particulars">
+                    class="md:col-span-4 rounded-lg border border-slate-300 px-3 py-2 text-sm 
+                        focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="Activity">
 
                 <input type="text"
                     name="plan_of_actions[${i}][venue]"
-                    class="border border-slate-300 bg-white px-3 py-1 text-[12px] md:col-span-2"
+                    class="md:col-span-3 rounded-lg border border-slate-300 px-3 py-2 text-sm 
+                        focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     placeholder="Venue">
 
-                <button type="button"
-                        class="remove-btn text-red-600 text-[12px] px-2">
-                    ✕
-                </button>
+                <div class="md:col-span-1 flex justify-end">
+                    <button type="button"
+                        class="remove-btn text-xs font-medium text-slate-400 hover:text-red-600 transition">
+                        Remove
+                    </button>
+                </div>
 
             </div>
         `);
