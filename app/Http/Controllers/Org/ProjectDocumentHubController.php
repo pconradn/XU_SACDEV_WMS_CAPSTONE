@@ -199,6 +199,13 @@ class ProjectDocumentHubController extends Controller
         ];
 
 
+        $actions['travel_form'] = [
+            'can_create' => $proposalDoc && $proposalDoc->status === 'approved_by_sacdev',
+
+            'create_url' => route('org.projects.documents.off-campus.travel-form.create', $project),
+        ];
+
+
         $formRoutes = [
             'PROJECT_PROPOSAL' => 'org.projects.documents.project-proposal.create',
             'BUDGET_PROPOSAL'  => 'org.projects.documents.budget-proposal.create',

@@ -156,4 +156,19 @@
         </div>
     </div>
 
+
+    @if($actions['travel_form']['can_create'])
+        <a href="{{ $actions['travel_form']['create_url'] }}"
+        class="block w-full text-left px-4 py-3 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition">
+
+            <div class="flex justify-between items-center">
+                <span>Generate Travel Consent Form</span>
+                <span class="text-xs text-slate-600 font-semibold">
+                    Open
+                </span>
+            </div>
+
+        </a>
+    @endif
+
 </div>

@@ -57,7 +57,6 @@
             </span>
 
 
-            {{-- 🔥 NEW: ADMIN ACTION BADGE --}}
             @if(($pendingForAdmin ?? 0) > 0)
                   <span class="px-3 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">
                      {{ $pendingForAdmin }} awaiting review
