@@ -17,32 +17,45 @@ $linkClass = function (array $activePatterns) {
         : 'bg-white text-slate-700 border-transparent hover:bg-slate-50 hover:text-slate-900';
 };
 
-$item = function (string $label, string $href, array $activePatterns, $badge = null) use ($linkClass) {
+$item = function (string $label, string $href, array $activePatterns, $badge = null, $icon = null) use ($linkClass) {
     return [
         'label' => $label,
         'href' => $href,
         'class' => $linkClass($activePatterns),
         'badge' => $badge,
+        'icon' => $icon,
     ];
 };
 
 $dashboardLinks = [];
 $contextLinks = [];
-$groups = [];
-
-
 
 if (Route::has('dashboard')) {
-    $dashboardLinks[] = $item('Dashboard', route('dashboard'), ['dashboard']);
+    $dashboardLinks[] = $item(
+        'Dashboard',
+        route('dashboard'),
+        ['dashboard'],
+        null,
+        'dashboard'
+    );
 }
 
 if (Route::has('context.show') && !$isAdmin) {
     $contextLinks[] = $item(
         'Select SY / Organization',
         route('context.show'),
-        ['context.*', 'org.encode-sy.*']
+        ['context.*', 'org.encode-sy.*'],
+        null,
+        'folder'
     );
 }
+
+
+
+$groups = [];
+
+
+
 
 
 if ($user && $isAdmin) {
@@ -59,7 +72,8 @@ if ($user && $isAdmin) {
             'Re-Registration Hub',
             route('admin.rereg.index'),
             ['admin.rereg.*','rereg.*'],
-            $adminReregBadgeCount ?? null
+            $adminReregBadgeCount ?? null,
+            'clipboard'
         );
     }
 
@@ -133,7 +147,9 @@ if ($user && $activeOrgId && $syId) {
         $orgLinks[] = $item(
             'Organization',
             route('org.organization-info.show'),
-            ['org.organization-info.*']
+            ['org.organization-info.*'],
+            null,
+            'house'
         );
     }
 
@@ -218,24 +234,42 @@ if ($user && $activeOrgId && $syId) {
 
 
 
-
     $projectLinks = [];
 
     if ($isModerator && Route::has('org.projects.index')) {
-        $projectLinks[] = $item('Projects', route('org.projects.index'), ['org.projects.*']);
+        $projectLinks[] = $item(
+            'Projects',
+            route('org.projects.index'),
+            ['org.projects.*'],
+            null,
+            'folder'
+        );
     }
 
     if (($isTreasurer || $isFinance_Officer) && Route::has('org.projects.index')) {
-        $projectLinks[] = $item('Projects', route('org.projects.index'), ['org.projects.*']);
+        $projectLinks[] = $item(
+            'Projects',
+            route('org.projects.index'),
+            ['org.projects.*'],
+            null,
+            'folder'
+        );
     }
 
     if ($isProjectHead && Route::has('org.projects.index')) {
-        $projectLinks[] = $item('My Projects', route('org.projects.index'), ['org.projects.*']);
+        $projectLinks[] = $item(
+            'My Projects',
+            route('org.projects.index'),
+            ['org.projects.*'],
+            null,
+            'folder'
+        );
     }
 
     /* remove duplicates */
     if (!empty($projectLinks)) {
         $seen = [];
+
         $projectLinks = array_values(array_filter($projectLinks, function ($link) use (&$seen) {
             if (in_array($link['label'], $seen, true)) return false;
             $seen[] = $link['label'];
@@ -245,7 +279,7 @@ if ($user && $activeOrgId && $syId) {
         $groups[] = [
             'title' => 'Projects',
             'links' => $projectLinks,
-            'icon' => 'clipboard'
+            'icon' => 'folder' // <- updated
         ];
     }
 

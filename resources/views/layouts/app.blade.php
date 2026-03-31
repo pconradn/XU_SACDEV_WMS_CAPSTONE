@@ -62,6 +62,29 @@ $activeSy = \App\Models\SchoolYear::activeYear();
     .content-frame.soft {
         background: rgb(248 250 252);
     }
+
+    .custom-sidebar-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+    }
+
+    .custom-sidebar-scroll::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .custom-sidebar-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .custom-sidebar-scroll::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.20);
+        border-radius: 9999px;
+    }
+
+    .custom-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+        background: rgba(148, 163, 184, 0.35);
+    }
+
 </style>
 
 
