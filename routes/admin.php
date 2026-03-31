@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\SchoolYearController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\OrgConstitutionSubmissionController;
 use App\Http\Controllers\SACDEV\SacdevB2PresidentRegistrationController;
+use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -46,8 +47,13 @@ Route::middleware(['auth', 'sacdev_admin', 'must_change_password'])
 
     });
 
+Route::get('/admin/organizations/{organization}/open', [OrganizationController::class, 'open'])
+    ->middleware(['auth', 'sacdev_admin', 'must_change_password', 'permission:projects.view'])
+    ->name('organizations.open');
 
-
+Route::get('/search', [SearchController::class, 'index'])
+    ->middleware(['auth', 'sacdev_admin', 'must_change_password'])
+    ->name('search.index');
 
 Route::prefix('admin')
     ->middleware(['auth', 'sacdev_admin', 'must_change_password'])

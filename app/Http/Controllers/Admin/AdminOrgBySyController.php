@@ -84,19 +84,11 @@ class AdminOrgBySyController extends Controller
                 ->with('error', 'Select a school year first.');
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | LOAD CONTEXT
-        |--------------------------------------------------------------------------
-        */
+
         $activeSy = $this->activeSy();
         $selectedSy = SchoolYear::find($syId);
 
-        /*
-        |--------------------------------------------------------------------------
-        | LOAD ORG SY RECORD
-        |--------------------------------------------------------------------------
-        */
+
         $orgSy = OrganizationSchoolYear::query()
             ->with(['president'])
             ->where('organization_id', $organization->id)
@@ -108,11 +100,7 @@ class AdminOrgBySyController extends Controller
                 ->with('error', 'This organization has no registration record for the selected school year.');
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | ROUTES (SCOPED)
-        |--------------------------------------------------------------------------
-        */
+
         $routes = [
             'rereg' => route('rereg.hub', $organization->id),
 

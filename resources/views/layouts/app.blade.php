@@ -3,7 +3,8 @@
 
 @include('layouts.partials._head')
 
-<body class="font-sans antialiased bg-slate-100 text-slate-900">
+<body class="font-sans antialiased text-slate-900"
+      style="background: linear-gradient(to bottom, #f8fafc, #f1f5f9);">
 
 <div id="page-loader" class="fixed inset-0 z-[9999] flex items-center justify-center bg-white">
     <div class="loader"></div>
@@ -52,10 +53,10 @@ $activeSy = \App\Models\SchoolYear::activeYear();
 
     .content-frame {
         background: #ffffff;
-        border: 1px solid rgb(226 232 240);
+        border: 1px solid rgb(226 232 240 / 0.7);
         border-radius: 1.25rem;
         padding: 1.5rem;
-        box-shadow: 0 8px 28px -12px rgb(15 23 42 / 0.08);
+        box-shadow: 0 12px 30px -12px rgb(15 23 42 / 0.12);
         min-height: calc(100vh - 120px);
     }
 
@@ -106,7 +107,7 @@ $activeSy = \App\Models\SchoolYear::activeYear();
 
 
         {{-- PAGE CONTENT --}}
-        <main class="flex-1 overflow-y-auto p-6">
+        <main class="flex-1 overflow-y-auto p-5">
 
             <div class="max-w-7xl mx-auto">
 
