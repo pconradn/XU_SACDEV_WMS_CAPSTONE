@@ -37,7 +37,13 @@
 
 
             <div class="px-5 py-4 flex items-center justify-between 
-                {{ $task->type === 'approval' ? 'bg-red-50/40' : 'bg-amber-50/40' }}">
+                {{ 
+                    $task->type === 'approval' 
+                        ? 'bg-red-50/40' 
+                        : ($task->type === 'revision' 
+                            ? 'bg-orange-50/40' 
+                            : 'bg-amber-50/40') 
+                }}">
 
                 <div class="space-y-1">
 
@@ -64,6 +70,15 @@
 
                             <span class="text-xs font-semibold text-red-700">
                                 • Awaiting your approval
+                            </span>
+                        @elseif($task->type === 'revision')
+
+                            <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-orange-100 text-orange-700">
+                                Returned
+                            </span>
+
+                            <span class="text-xs font-semibold text-orange-700">
+                                • Needs revision
                             </span>
 
                         @else

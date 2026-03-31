@@ -83,9 +83,7 @@ class LiquidationReportController extends BaseProjectDocumentController
             return $this->submit($project);
         }
 
-        return redirect()
-            ->route('org.projects.documents.hub', $project)
-            ->with('success', 'Liquidation report saved as draft.');
+        return back()->with('success','Liquidation report saved.');
     }
 
     public function submit(Project $project)

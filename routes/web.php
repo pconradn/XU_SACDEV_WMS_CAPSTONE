@@ -6,9 +6,32 @@ use App\Http\Controllers\Org\ClearanceController;
 use App\Models\OrgMembership;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\File;
 
+Route::get('/admin/logs', function () {
 
+    $logPath = storage_path('logs/laravel.log');
 
+    if (!file_exists($logPath)) {
+        return "Log file not found.";
+    }
+
+    $lines = file($logPath);
+
+    $filtered = array_filter($lines, function ($line) {
+        $line = trim($line);
+
+        return !str_starts_with($line, '#') &&
+            !str_starts_with($line, '<') &&
+            !str_starts_with($line, '[') &&
+            !str_starts_with($line, '"');
+    });
+
+    
+
+    return response("<pre>" . implode("", $filtered) . "</pre>");
+
+});
 
 /*
 |--------------------------------------------------------------------------

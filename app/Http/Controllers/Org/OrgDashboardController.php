@@ -90,7 +90,10 @@ class OrgDashboardController extends Controller
                 ->get()
                 ->filter(function ($doc) use ($user) {
                     $pending = $doc->currentPendingSignature();
-                    return $pending && $pending->user_id === $user->id;
+
+                    return $pending
+                        && $pending->user_id === $user->id
+                        && $pending->role !== 'project_head'; // 🔥 THIS LINE FIXES IT
                 })
                 ->values();
 
@@ -145,15 +148,27 @@ class OrgDashboardController extends Controller
                     }
 
                     if (!$doc || $doc->status !== 'approved_by_sacdev') {
+
+                        $status = $doc?->status ?? 'not_started';
+
+                        $type = 'required';
+
+                        if ($status === 'returned') {
+                            $type = 'revision';
+                        }
+
                         $projectHeadTasks->push((object) [
-                            'type' => 'required',
+                            'type' => $type,
                             'phase' => $req->phase ?? 'other',
                             'form_name' => $req->name ?? $req->code,
                             'project' => $project,
-                            'status' => $doc?->status ?? 'not_started',
+                            'status' => $status,
                             'form_type_id' => $req->id,
-                            'form_code' => $req->code, 
+                            'form_code' => $req->code,
                         ]);
+
+
+
                     }
                 }
             }

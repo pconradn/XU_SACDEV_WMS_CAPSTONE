@@ -24,6 +24,7 @@ $formRouteMap = [
     'TICKET_SELLING_REPORT' => 'ticket-selling-report',
     'DOCUMENTATION_REPORT' => 'documentation-report',
     'LIQUIDATION_REPORT' => 'liquidation-report',
+    'OFF_CAMPUS_APPLICATION' => 'off-campus',
 ];
 
 $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
@@ -722,6 +723,97 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
 
         </div>
     </div>
+
+
+@elseif($isAdmin && $isSolicitation)
+
+    {{-- ================= SOLICITATION APPROVAL MODAL ================= --}}
+    <div id="approveModal"
+        class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-xl">
+
+            {{-- HEADER --}}
+            <div class="border-b px-4 py-3 font-semibold text-sm">
+                Assign Solicitation Letter Control Numbers
+            </div>
+
+            <form method="POST"
+                action="{{ route('admin.projects.documents.approve', [$project, $formCode]) }}"
+                onsubmit="lockButton(this.querySelector('button[type=submit]'))">
+
+                @csrf
+
+                <div class="p-4 space-y-4">
+
+                    {{-- APPROVED COUNT --}}
+                    <div>
+                        <label class="text-[12px] font-medium">
+                            Approved Number of Letters
+                        </label>
+
+                        <input
+                            type="number"
+                            name="approved_letter_count"
+                            required
+                            class="w-full border border-slate-300 px-3 py-2 text-[12px] rounded">
+                    </div>
+
+                    {{-- CONTROL SERIES --}}
+                    <div class="grid grid-cols-2 gap-3">
+
+                        <div>
+                            <label class="text-[12px] font-medium">
+                                Control Series Start
+                            </label>
+
+                            <input
+                                type="text"
+                                name="control_series_start"
+                                required
+                                class="w-full border border-slate-300 px-3 py-2 text-[12px] rounded">
+                        </div>
+
+                        <div>
+                            <label class="text-[12px] font-medium">
+                                Control Series End
+                            </label>
+
+                            <input
+                                type="text"
+                                name="control_series_end"
+                                required
+                                class="w-full border border-slate-300 px-3 py-2 text-[12px] rounded">
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {{-- FOOTER --}}
+                <div class="border-t px-4 py-3 flex justify-end gap-2">
+
+                    <button
+                        type="button"
+                        onclick="closeModal('approveModal')"
+                        class="border border-slate-300 px-4 py-2 text-[12px] rounded hover:bg-slate-100">
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="bg-emerald-600 text-white px-4 py-2 text-[12px] rounded hover:bg-emerald-700">
+                        Approve
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+
 
 @else
 

@@ -687,6 +687,7 @@ class AdminProjectDocumentController extends Controller
                 'proposalData.guests',
                 'proposalData.planOfActions',
                 'budgetProposal.items',
+                'offCampusActivity.participants',
             ])
             ->where('project_id', $project->id)
             ->whereHas('formType', fn($q) => $q->where('code', $formType));
@@ -705,10 +706,17 @@ class AdminProjectDocumentController extends Controller
 
         $proposal = $document->proposalData;
         $budget = $document->budgetProposal;
+        $offcampus = $document->offCampusActivity;
+        $participants = $offcampus?->participants ?? collect();
+        $solicitation = $document->solicitationData;
 
         $view = match ($formType) {
             'PROJECT_PROPOSAL' => 'admin.projects.documents.project-proposal.print',
             'BUDGET_PROPOSAL'  => 'admin.projects.documents.budget-proposal.print',
+            'OFF_CAMPUS_APPLICATION' => 'admin.projects.documents.off-campus.print',
+            'SOLICITATION_APPLICATION' => 'admin.projects.documents.solicitation.print',
+            'SELLING_APPLICATION' => 'admin.projects.documents.selling.print',
+            'LIQUIDATION_REPORT' => 'admin.projects.documents.liquidation.print',
             default => abort(404),
         };
 
@@ -717,6 +725,10 @@ class AdminProjectDocumentController extends Controller
             'document' => $document,
             'proposal' => $proposal,
             'budget' => $budget,
+            'offcampus'=> $offcampus,
+            'participants'=> $participants,
+            'solicitation' => $solicitation,
+
         ]);
     }
 
