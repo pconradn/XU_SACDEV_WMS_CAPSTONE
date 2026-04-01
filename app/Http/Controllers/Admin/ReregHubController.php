@@ -425,6 +425,30 @@ class ReregHubController extends Controller
                 ->all();
         }
 
+        // ================= NEW UNIFIED ORG DATA =================
+        $orgData = [];
+
+        foreach ($organizations as $org) {
+
+            $pending = (int)($orgBadges[$org->id] ?? 0);
+            $isReady = in_array((int)$org->id, $readyOrgIds ?? [], true);
+            $isRegistered = in_array((int)$org->id, $activatedOrgIds ?? [], true);
+
+            $orgData[$org->id] = [
+                'pending' => $pending,
+                'is_ready' => $isReady,
+                'is_registered' => $isRegistered,
+            ];
+        }
+
+        // ================= SUMMARY =================
+        $summary = [
+            'total' => $organizations->count(),
+            'pending' => collect($orgData)->filter(fn($o) => $o['pending'] > 0)->count(),
+            'ready' => collect($orgData)->filter(fn($o) => $o['is_ready'])->count(),
+            'registered' => collect($orgData)->filter(fn($o) => $o['is_registered'])->count(),
+        ];
+
         return view('admin.rereg.index', compact(
             'encodeSyId',
             'activeSy',
@@ -436,6 +460,8 @@ class ReregHubController extends Controller
             'orgBadges',
             'readyOrgIds',
             'activatedOrgIds',
+            'orgData',
+            'summary',
         ));
     }
 

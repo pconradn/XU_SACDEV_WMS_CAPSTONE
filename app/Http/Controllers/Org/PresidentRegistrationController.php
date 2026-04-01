@@ -140,18 +140,18 @@ class PresidentRegistrationController extends Controller
 
             'siblings_count' => ['nullable', 'integer', 'min:0', 'max:30'],
 
-            'high_school_name' => ['nullable', 'string', 'max:255'],
-            'high_school_address' => ['nullable', 'string', 'max:255'],
-            'high_school_year_graduated' => ['nullable', 'string', 'max:10'],
+            'high_school_name' => ['required', 'string', 'max:255'],
+            'high_school_address' => ['required', 'string', 'max:255'],
+            'high_school_year_graduated' => ['required', 'string', 'max:10'],
 
-            'grade_school_name' => ['nullable', 'string', 'max:255'],
-            'grade_school_address' => ['nullable', 'string', 'max:255'],
-            'grade_school_year_graduated' => ['nullable', 'string', 'max:10'],
+            'grade_school_name' => ['required', 'string', 'max:255'],
+            'grade_school_address' => ['required', 'string', 'max:255'],
+            'grade_school_year_graduated' => ['required', 'string', 'max:10'],
 
             'scholarship_name' => ['nullable', 'string', 'max:255'],
             'scholarship_year_granted' => ['nullable', 'string', 'max:10'],
 
-            'skills_and_interests' => ['nullable', 'string'],
+            'skills_and_interests' => ['required', 'string'],
 
             'certified' => ['nullable', 'boolean'],
 
@@ -244,7 +244,7 @@ class PresidentRegistrationController extends Controller
             return back()->with('error', 'This form cannot be submitted right now.');
         }
 
-        $request->validate([
+        $validator = \Validator::make($request->all(), [
             'photo_id' => [$registration->photo_id_path ? 'nullable' : 'required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
 
             'full_name' => ['required', 'string', 'max:255'],
@@ -262,7 +262,17 @@ class PresidentRegistrationController extends Controller
             'certified' => ['required', Rule::in(['1', 1, true, 'on'])],
         ]);
 
-        $this->saveDraft($request);
+        if ($validator->fails()) {
+
+            // Save as draft instead
+            $this->persistDraft($request, $registration, $userId);
+
+            return back()
+                ->withErrors($validator)
+                ->with('error', 'Submission has errors. Saved as draft instead.');
+        }
+
+        $this->persistDraft($request, $registration, $userId);
 
         $registration->refresh();
         $oldStatus = $registration->getOriginal('status');
@@ -286,6 +296,47 @@ class PresidentRegistrationController extends Controller
         
 
         return back()->with('success', 'Submitted to SACDEV successfully.');
+    }
+
+
+    private function persistDraft($request, $registration, $userId)
+    {
+        DB::transaction(function () use ($request, $registration, $userId) {
+
+            if ($request->hasFile('photo_id')) {
+                if ($registration->photo_id_path && \Storage::disk('public')->exists($registration->photo_id_path)) {
+                    \Storage::disk('public')->delete($registration->photo_id_path);
+                }
+
+                $path = $request->file('photo_id')->store('president-ids', 'public');
+                $registration->photo_id_path = $path;
+            }
+
+            $registration->fill($request->except(['leaderships', 'trainings', 'awards', 'photo_id']));
+            $registration->encoded_by_user_id = $registration->encoded_by_user_id ?: $userId;
+
+            $registration->version = ((int) $registration->version) + 1;
+            $registration->status = 'draft';
+            $registration->save();
+
+            $registration->leaderships()->delete();
+            foreach (($request->input('leaderships') ?? []) as $i => $row) {
+                if ($this->rowEmpty($row)) continue;
+                $registration->leaderships()->create(array_merge($row, ['sort_order' => $i + 1]));
+            }
+
+            $registration->trainings()->delete();
+            foreach (($request->input('trainings') ?? []) as $i => $row) {
+                if ($this->rowEmpty($row)) continue;
+                $registration->trainings()->create(array_merge($row, ['sort_order' => $i + 1]));
+            }
+
+            $registration->awards()->delete();
+            foreach (($request->input('awards') ?? []) as $i => $row) {
+                if ($this->rowEmpty($row)) continue;
+                $registration->awards()->create(array_merge($row, ['sort_order' => $i + 1]));
+            }
+        });
     }
 
     public function unsubmit(Request $request)

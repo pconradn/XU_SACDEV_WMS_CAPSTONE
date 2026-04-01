@@ -58,49 +58,6 @@
 
 
 
-        {{-- School Year Selector --}}
-        <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-
-            <form method="POST"
-                  action="{{ route('org.rereg.setSy') }}"
-                  class="flex flex-col gap-3 sm:flex-row sm:items-end">
-
-                @csrf
-
-                <div class="flex-1">
-
-                    <label class="block text-sm font-medium text-slate-700">
-                        Encode / Target School Year
-                    </label>
-
-                    <select name="encode_school_year_id"
-                            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                            required>
-
-                        <option value="" disabled @selected(!$encodeSyId)>
-                            Select a school year...
-                        </option>
-
-                        @foreach($schoolYears as $sy)
-                            <option value="{{ $sy->id }}"
-                                @selected($encodeSyId && (int)$sy->id === (int)$encodeSyId)>
-                                {{ $sy->name ?? $sy->label ?? ('SY #' . $sy->id) }}
-                            </option>
-                        @endforeach
-
-                    </select>
-
-                </div>
-
-
-                <button class="inline-flex justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-                    Set SY
-                </button>
-
-            </form>
-
-        </div>
-
 
 
         @if(!$encodeSyId)

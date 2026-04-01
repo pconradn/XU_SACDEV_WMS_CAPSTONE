@@ -63,7 +63,7 @@
 
                         @if($item->isFinance_Officer())
                             <span class="text-indigo-700">
-                                • Provision finance_officer account
+                                • Provision Budget and Finance Officer account
                             </span>
                         @endif
 

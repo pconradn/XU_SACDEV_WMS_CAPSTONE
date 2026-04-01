@@ -199,7 +199,7 @@ class B3OfficerListController extends Controller
         }
 
 
-        $request->validate([
+        $validator = \Validator::make($request->all(), [
             'certified' => ['nullable', 'boolean'],
 
             'items' => ['nullable', 'array'],
@@ -220,6 +220,17 @@ class B3OfficerListController extends Controller
             ],
 
         ]);
+
+        if ($validator->fails()) {
+
+            // Save as draft
+            $this->persistDraft($request, $registration);
+
+            return back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Submission has errors. Saved as draft instead.');
+        }
 
         $this->persistDraft($request, $registration);
         $this->persistDraft($request, $registration);
@@ -260,12 +271,13 @@ class B3OfficerListController extends Controller
             'certified' => ['required', Rule::in(['1', 1, true, 'on'])],
 
             'items' => ['nullable', 'array'],
-            'items.*.position' => ['required_with:items.*.officer_name,items.*.student_id_number,items.*.course_and_year,items.*.mobile_number', 'nullable', 'string', 'max:255'],
-            'items.*.officer_name' => ['required_with:items.*.position,items.*.student_id_number,items.*.course_and_year,items.*.mobile_number', 'nullable', 'string', 'max:255'],
-            'items.*.student_id_number' => ['required_with:items.*.position,items.*.officer_name,items.*.course_and_year,items.*.mobile_number', 'nullable', 'string', 'max:50'],
-            'items.*.course_and_year' => ['required_with:items.*.position,items.*.officer_name,items.*.student_id_number,items.*.mobile_number', 'nullable', 'string', 'max:255'],
-            
-            'items.*.mobile_number' => ['required_with:items.*.position,items.*.officer_name,items.*.student_id_number,items.*.course_and_year', 'nullable', 'string', 'max:30'],
+
+            'items.*.position' => ['required', 'string', 'max:255'],
+            'items.*.position' => ['nullable', 'string', 'max:255'],
+            'items.*.officer_name' => ['nullable', 'string', 'max:255'],
+            'items.*.student_id_number' => ['nullable', 'string', 'max:50'],
+            'items.*.course_and_year' => ['nullable', 'string', 'max:255'],
+            'items.*.mobile_number' => ['nullable', 'string', 'max:30'],
 
             'items.*.first_sem_qpi' => ['nullable', 'numeric', 'min:0', 'max:4'],
             'items.*.second_sem_qpi' => ['nullable', 'numeric', 'min:0', 'max:4'],
@@ -278,6 +290,28 @@ class B3OfficerListController extends Controller
 
 
         ]);
+
+        foreach ($request->input('items', []) as $index => $row) {
+
+            if ($this->rowEmpty($row)) continue;
+
+            $requiredFields = [
+                'position',
+                'officer_name',
+                'student_id_number',
+                'course_and_year',
+                'mobile_number',
+            ];
+
+            foreach ($requiredFields as $field) {
+                if (empty($row[$field])) {
+                    return back()
+                        ->withErrors(["items.$index.$field" => "This field is required."])
+                        ->withInput()
+                        ->with('error', 'Incomplete officer row. Saved as draft.');
+                }
+            }
+        }
 
    
         $this->persistDraft($request, $registration);

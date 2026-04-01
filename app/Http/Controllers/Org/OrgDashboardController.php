@@ -12,6 +12,12 @@ use Illuminate\Http\Request;
 use App\Services\ProjectFormRequirementResolver;
 use App\Services\ProjectFormRouteResolver;
 
+use App\Models\StrategicPlanSubmission;
+use App\Models\OfficerSubmission;
+use App\Models\PresidentRegistration;
+use App\Models\OrgConstitutionSubmission;
+use App\Models\ModeratorSubmission;
+
 class OrgDashboardController extends Controller
 {
     private function selectedSyId(Request $request): ?int
@@ -129,7 +135,7 @@ class OrgDashboardController extends Controller
                 ->values();
         }
 
-
+        $reregTasks = collect();
         $projectHeadTasks = collect();
 
         if ($currentOrg) {
@@ -173,6 +179,92 @@ class OrgDashboardController extends Controller
                 }
             }
         }
+        if ($currentOrg) {
+
+            $orgId = $currentOrg->id;
+            $syId = $selectedSyId;
+
+        
+            $sp = StrategicPlanSubmission::where('organization_id', $orgId)
+                ->where('target_school_year_id', $syId)
+                ->first();
+
+            if (!$sp || $sp->status === 'draft') {
+                $reregTasks->push((object)[
+                    'type' => 'rereg_required',
+                    'form_name' => 'Strategic Plan',
+                    'status' => $sp->status ?? 'not_started',
+                    'link' => route('org.rereg.b1.edit'),
+                ]);
+            }
+
+    
+            $officers = OfficerSubmission::where('organization_id', $orgId)
+                ->where('target_school_year_id', $syId)
+                ->first();
+
+            if (!$officers || $officers->status === 'draft') {
+                $reregTasks->push((object)[
+                    'type' => 'rereg_required',
+                    'form_name' => 'Officers List',
+                    'status' => $officers->status ?? 'not_started',
+                    'link' => route('org.rereg.b3.officers-list.edit'),
+                ]);
+            }
+
+    
+            $pres = PresidentRegistration::where('organization_id', $orgId)
+                ->where('target_school_year_id', $syId)
+                ->first();
+
+            if (!$pres || $pres->status === 'draft') {
+                $reregTasks->push((object)[
+                    'type' => 'rereg_required',
+                    'form_name' => 'President Registration',
+                    'status' => $pres->status ?? 'not_started',
+                    'link' => route('org.rereg.b2.president.edit'),
+                ]);
+            }
+
+       
+            $consti = OrgConstitutionSubmission::where('organization_id', $orgId)
+                ->where('school_year_id', $syId)
+                ->first();
+
+            if (!$consti || $consti->status === 'draft') {
+                $reregTasks->push((object)[
+                    'type' => 'rereg_required',
+                    'form_name' => 'Organization Constitution',
+                    'status' => $consti->status ?? 'not_started',
+                    'link' => route('org.rereg.index'),
+                ]);
+            }
+
+
+            if ($sp && $sp->status === 'submitted_to_moderator') {
+                $reregTasks->push((object)[
+                    'type' => 'rereg_moderator_review',
+                    'form_name' => 'Strategic Plan Review',
+                    'status' => $sp->status,
+                    'link' => route('org.moderator.strategic_plans.show '), // 🔥 adjust if needed
+                ]);
+            }
+
+
+            $moderator = ModeratorSubmission::where('organization_id', $orgId)
+                ->where('target_school_year_id', $syId)
+                ->where('moderator_user_id', $user->id)
+                ->first();
+
+            if ($moderator && in_array($moderator->status, ['draft', 'returned'])) {
+                $reregTasks->push((object)[
+                    'type' => 'rereg_moderator',
+                    'form_name' => 'Moderator Registration',
+                    'status' => $moderator->status,
+                    'link' => route('org.moderator.rereg.b5.edit'),
+                ]);
+            }
+        }       
 
  
         $assignedProjects = $assignedProjects->map(function ($project) use ($resolver) {
@@ -205,6 +297,7 @@ class OrgDashboardController extends Controller
         $pendingTasks = collect()
             ->merge($approvalTasks)
             ->merge($projectHeadTasks)
+            ->merge($reregTasks)
             ->sortBy(function ($task) {
 
                 $order = [
@@ -228,7 +321,9 @@ class OrgDashboardController extends Controller
 
         
         $pendingTasks = $pendingTasks->map(function ($task) {
-            $task->link = ProjectFormRouteResolver::resolve($task);
+            if (!isset($task->link)) {
+                $task->link = ProjectFormRouteResolver::resolve($task);
+            }
             return $task;
         });
         
@@ -236,7 +331,9 @@ class OrgDashboardController extends Controller
         
         $pendingApprovalCount = $approvalTasks->count();
         $projectHeadPendingCount = $projectHeadTasks->count();
-        $pendingCount = $pendingApprovalCount + $projectHeadPendingCount;
+        $reregCount = $reregTasks->count();
+
+        $pendingCount = $pendingApprovalCount + $projectHeadPendingCount + $reregCount;
 
 
         $projectCount = 0;

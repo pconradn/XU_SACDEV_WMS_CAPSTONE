@@ -69,7 +69,7 @@ if ($user && $isAdmin) {
 
     if (Route::has('admin.rereg.index') && $can('projects.view')) {
         $rereg[] = $item(
-            'Re-Registration Hub',
+            'Manage Submissions',
             route('admin.rereg.index'),
             ['admin.rereg.*','rereg.*'],
             $adminReregBadgeCount ?? null,
@@ -88,7 +88,7 @@ if ($user && $isAdmin) {
     }
 
     if (Route::has('admin.orgs_by_sy.index') && $can('projects.view')) {
-        $orgTools[] = $item('Organizations (by SY)', route('admin.orgs_by_sy.index'), ['admin.orgs_by_sy.*']);
+        $orgTools[] = $item('Manage Projects', route('admin.orgs_by_sy.index'), ['admin.orgs_by_sy.*']);
     }
 
 

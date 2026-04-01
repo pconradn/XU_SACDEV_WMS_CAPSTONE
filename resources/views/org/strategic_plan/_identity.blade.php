@@ -1,140 +1,161 @@
+<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
 
+    {{-- HEADER --}}
+    <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <h2 class="text-sm font-semibold text-slate-900">
+            Organization Identity
+        </h2>
+        <p class="text-xs text-slate-500 mt-1">
+            Basic organization details for this school year
+        </p>
+    </div>
 
+    <div class="px-6 py-6">
 
-<div class="bg-white shadow-sm rounded-xl border border-slate-200 p-5">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-    <h2 class="text-base font-semibold text-slate-900">
-        Organization Identity
-    </h2>
+            {{-- ================= LOGO CARD ================= --}}
+            <div class="lg:col-span-1">
 
-    <p class="text-sm text-slate-500 mt-1">
-        Fill in your organization’s basic details for this school year.
-    </p>
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
 
-    <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                        Organization Logo
+                    </div>
 
-        {{-- ================= LOGO ================= --}}
-        <div class="md:col-span-1">
+                    @php
+                        $logoPath = $submission->logo_path ?? $organization->logo_path ?? null;
+                    @endphp
 
-            <label class="block text-sm font-medium text-slate-700">
-                Organization Logo
-            </label>
+                    {{-- PREVIEW --}}
+                    <div class="flex items-center justify-center rounded-lg border border-slate-200 bg-white h-40">
 
-            @php
-                $logoPath = $submission->logo_path ?? $organization->logo_path ?? null;
-            @endphp
+                        @if($logoPath)
+                            <img id="logoPreview"
+                                 src="{{ asset('storage/'.$logoPath) }}"
+                                 class="max-h-32 object-contain">
+                        @else
+                            <img id="logoPreview"
+                                 src=""
+                                 class="hidden max-h-32 object-contain">
 
-            {{-- Logo Preview --}}
-            <div class="mt-2 flex items-center justify-center border border-slate-200 rounded-lg bg-slate-50 h-40">
+                            <span id="logoPlaceholder"
+                                  class="text-xs text-slate-400">
+                                No logo uploaded
+                            </span>
+                        @endif
 
-                @if($logoPath)
-                    <img id="logoPreview"
-                         src="{{ asset('storage/'.$logoPath) }}"
-                         alt="Organization Logo"
-                         class="max-h-36 object-contain">
-                @else
-                    <img id="logoPreview"
-                         src=""
-                         alt="Logo Preview"
-                         class="hidden max-h-36 object-contain">
+                    </div>
 
-                    <span id="logoPlaceholder"
-                          class="text-sm text-slate-400">
-                        No logo uploaded
-                    </span>
-                @endif
+                    {{-- INPUT --}}
+                    <input type="file"
+                           name="logo"
+                           accept="image/*"
+                           onchange="previewLogo(event)"
+                           class="block w-full text-xs text-slate-700 file:mr-2 file:py-1.5 file:px-3
+                                  file:rounded-lg file:border-0 file:text-xs file:font-medium
+                                  file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300
+                                  border border-slate-200 rounded-lg">
+
+                    <p class="text-[11px] text-slate-400">
+                        PNG, JPG, WEBP • Max 2MB
+                    </p>
+
+                    @error('logo')
+                        <p class="text-xs text-rose-600">{{ $message }}</p>
+                    @enderror
+
+                </div>
 
             </div>
 
-            {{-- File Input --}}
-            <input type="file"
-                   name="logo"
-                   accept="image/*"
-                   onchange="previewLogo(event)"
-                   class="mt-3 block w-full text-sm text-slate-700 file:mr-3 file:py-2 file:px-3
-                          file:rounded-lg file:border-0 file:text-sm file:font-medium
-                          file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200
-                          border border-slate-200 rounded-lg">
+            {{-- ================= FORM ================= --}}
+            <div class="lg:col-span-2 space-y-5">
 
-            <p class="text-xs text-slate-500 mt-1">
-                PNG, JPG, or WEBP. Max 2MB.
-            </p>
+                {{-- BASIC INFO --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-            @error('logo')
-                <p class="text-sm text-rose-600 mt-1">{{ $message }}</p>
-            @enderror
+                    {{-- ACRONYM --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                            Acronym
+                        </label>
 
-        </div>
+                        <input type="text"
+                               name="org_acronym"
+                               value="{{ old('org_acronym', $submission->org_acronym ?? $organization->acronym ?? '') }}"
+                               class="mt-1 w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm">
 
-        {{-- ================= TEXT FIELDS ================= --}}
-        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <p class="text-[11px] text-slate-400 mt-1">
+                            Editable if needed
+                        </p>
+                    </div>
 
-            {{-- Acronym --}}
-            <div>
-                <label class="block text-sm font-medium text-slate-700">
-                    Acronym
-                </label>
+                    {{-- EMPTY (spacing balance) --}}
+                    <div></div>
 
-                <input type="text"
-                       name="org_acronym"
-                       value="{{ old('org_acronym', $submission->org_acronym ?? $organization->acronym ?? '') }}"
-                       class="mt-1 w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500">
+                    {{-- NAME --}}
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                            Organization Name
+                        </label>
 
-                <p class="text-xs text-slate-400 mt-1">
-                    Auto-filled from organization profile. You may edit if needed.
-                </p>
-            </div>
+                        <input type="text"
+                               name="org_name"
+                               value="{{ old('org_name') !== null && old('org_name') !== '' 
+                                    ? old('org_name') 
+                                    : ($submission->org_name ?: $organization->name ?? '') }}"
+                               class="mt-1 w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm">
 
-            {{-- Complete Name --}}
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-slate-700">
-                    Complete Organization Name
-                </label>
+                        @error('org_name')
+                            <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
+                        @enderror
 
-                <input type="text"
-                       name="org_name"
-                       value="{{ old('org_name') !== null && old('org_name') !== '' 
-                            ? old('org_name') 
-                            : ($submission->org_name ?: $organization->name ?? '') }}"
-                       class="mt-1 w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500">
+                        <p class="text-[11px] text-slate-400 mt-1">
+                            Defaults to registered organization name
+                        </p>
+                    </div>
 
-                @error('org_name')
-                    <p class="text-sm text-rose-600 mt-1">{{ $message }}</p>
-                @enderror
+                </div>
 
-                <p class="text-xs text-slate-400 mt-1">
-                    Defaults to your registered organization name.
-                </p>
-            </div>
+                {{-- DIVIDER --}}
+                <div class="border-t border-slate-200"></div>
 
-            {{-- Mission --}}
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-slate-700">
-                    Mission
-                </label>
+                {{-- MISSION & VISION --}}
+                <div class="space-y-4">
 
-                <textarea name="mission"
-                          rows="3"
-                          class="mt-1 w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500">{{ old('mission', $submission->mission ?? $organization->mission ?? '') }}</textarea>
+                    {{-- MISSION --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                            Mission
+                        </label>
 
-                <p class="text-xs text-slate-400 mt-1">
-                    Editable version of your organization's mission.
-                </p>
-            </div>
+                        <textarea name="mission"
+                                  rows="3"
+                                  class="mt-1 w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm">{{ old('mission', $submission->mission ?? $organization->mission ?? '') }}</textarea>
 
-            {{-- Vision --}}
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-slate-700">
-                    Vision
-                </label>
+                        <p class="text-[11px] text-slate-400 mt-1">
+                            Editable version of mission
+                        </p>
+                    </div>
 
-                <textarea name="vision"
-                          rows="3"
-                          class="mt-1 w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500">{{ old('vision', $submission->vision ?? $organization->vision ?? '') }}</textarea>
+                    {{-- VISION --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                            Vision
+                        </label>
 
-                <p class="text-xs text-slate-400 mt-1">
-                    Editable version of your organization's vision.
-                </p>
+                        <textarea name="vision"
+                                  rows="3"
+                                  class="mt-1 w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm">{{ old('vision', $submission->vision ?? $organization->vision ?? '') }}</textarea>
+
+                        <p class="text-[11px] text-slate-400 mt-1">
+                            Editable version of vision
+                        </p>
+                    </div>
+
+                </div>
+
             </div>
 
         </div>
@@ -143,25 +164,30 @@
 
 </div>
 
-{{-- ================= SCRIPT ================= --}}
 <script>
+
+const preview = document.getElementById('logoPreview');
+const placeholder = document.getElementById('logoPlaceholder');
 function previewLogo(event)
 {
-    const file = event.target.files[0];
+    const input = event.target;
+    const container = input.closest('div'); // logo card
+
+    const preview = container.querySelector('#logoPreview');
+    const placeholder = container.querySelector('#logoPlaceholder');
+
+    const file = input.files[0];
     if (!file) return;
 
     const reader = new FileReader();
 
     reader.onload = function(e)
     {
-        const preview = document.getElementById('logoPreview');
-        const placeholder = document.getElementById('logoPlaceholder');
-
         preview.src = e.target.result;
         preview.classList.remove('hidden');
 
         if (placeholder) {
-            placeholder.style.display = 'none';
+            placeholder.classList.add('hidden');
         }
     };
 

@@ -28,9 +28,10 @@
         @forelse($pendingTasks as $task)
 
             @php
-                $project = $task->project;
+                $project = $task->project ?? null;
 
                 $isApproval = $task->type === 'approval';
+                $isRereg = str_starts_with($task->type, 'rereg');
 
                 $pending = $isApproval ? $task->currentPendingSignature() : null;
             @endphp
@@ -56,7 +57,11 @@
 
                     {{-- PROJECT --}}
                     <p class="text-xs text-slate-500">
-                        Project: {{ $project->title ?? '—' }}
+                        @if($isRereg)
+                            Re-registration
+                        @else
+                            Project: {{ $project->title ?? '—' }}
+                        @endif
                     </p>
 
                     {{-- STATUS --}}

@@ -103,6 +103,11 @@ class B5ModeratorSubmissionController extends Controller
             return back()->with('error', 'This form is locked and cannot be edited unless returned.');
         }
 
+        if ($request->hasFile('photo_id')) {
+            $path = $request->file('photo_id')->store('moderator-ids', 'public');
+            $submission->photo_id_path = $path;
+        }
+
         $validated = $request->validate([
             'photo_id' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
 
@@ -208,7 +213,7 @@ class B5ModeratorSubmissionController extends Controller
         }
 
        
-        $request->validate([
+        $validator = \Validator::make($request->all(), [
             'photo_id' => [$submission->photo_id_path ? 'nullable' : 'required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
 
             'full_name' => ['required', 'string', 'max:255'],
@@ -225,7 +230,26 @@ class B5ModeratorSubmissionController extends Controller
             'city_address' => ['required', 'string'],
         ]);
 
-       
+        if ($validator->fails()) {
+
+            $this->persistDraftData($request, $submission, $userId);
+
+            $oldStatus = $submission->getOriginal('status');
+
+            $submission->status = 'draft';
+            $submission->save();
+
+            $submission->timelines()->create([
+                'user_id' => $userId,
+                'action' => 'auto_saved_draft_on_submit_error',
+                'old_status' => $oldStatus,
+                'new_status' => 'draft',
+            ]);
+
+            return back()
+                ->withErrors($validator)
+                ->with('error');
+        }     
   
 
         $submission->refresh();

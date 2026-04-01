@@ -56,13 +56,13 @@
 
         <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-                <label class="text-sm font-medium text-slate-700">Scholarship Name</label>
+                <label class="text-sm font-medium text-slate-700">Scholarship Name<span class="text-xs text-slate-400"> (Optional)</span></label>
                 <input type="text" name="scholarship_name"
                        value="{{ old('scholarship_name', $registration->scholarship_name) }}"
                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" {{ $isLocked ? 'disabled' : '' }}>
             </div>
             <div>
-                <label class="text-sm font-medium text-slate-700">Year Granted</label>
+                <label class="text-sm font-medium text-slate-700">Year Granted<span class="text-xs text-slate-400"> (Optional)</span></label>
                 <input type="text" name="scholarship_year_granted"
                        value="{{ old('scholarship_year_granted', $registration->scholarship_year_granted) }}"
                        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" {{ $isLocked ? 'disabled' : '' }}>

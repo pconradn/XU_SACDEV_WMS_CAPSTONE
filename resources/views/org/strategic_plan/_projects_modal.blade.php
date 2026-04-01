@@ -1,162 +1,168 @@
-{{-- Project Modal (Create + Edit) --}}
 <div x-show="detailsOpen" x-cloak
      class="fixed inset-0 z-50 flex items-center justify-center p-4"
      @keydown.escape.window="closeDetails()">
 
-    <div class="absolute inset-0 bg-slate-900/50" @click="closeDetails()"></div>
+    {{-- BACKDROP --}}
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" @click="closeDetails()"></div>
 
-    <div class="relative w-full max-w-4xl rounded-2xl bg-white shadow-xl border border-slate-200 max-h-[90vh] overflow-hidden">
-        <div class="flex items-start justify-between p-5 border-b border-slate-200">
+    {{-- MODAL --}}
+    <div class="relative w-full max-w-4xl rounded-2xl bg-white shadow-xl border border-slate-200 max-h-[90vh] flex flex-col overflow-hidden">
+
+        {{-- HEADER --}}
+        <div class="px-6 py-5 border-b bg-slate-50 flex items-start justify-between">
+
             <div>
-                <h3 class="text-lg font-semibold text-slate-900"
-                    x-text="draftMode === 'edit' ? 'Edit Project' : 'Add Project'"></h3>
-                <p class="text-sm text-slate-500 mt-1">
-                    Fill in the project info, then add objectives, beneficiaries, deliverables, and partners.
+                <h3 class="text-base font-semibold text-slate-900"
+                    x-text="draftMode === 'edit' ? 'Edit Project' : 'Add Project'">
+                </h3>
+
+                <p class="text-xs text-slate-500 mt-1">
+                    Define the project details and supporting information.
                 </p>
             </div>
+
             <button type="button"
-                    class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    class="text-xs font-medium text-slate-500 hover:text-slate-700"
                     @click="closeDetails()">
-                Close
+                ✕
             </button>
+
         </div>
 
-        <div class="p-5 space-y-5 overflow-y-auto max-h-[calc(90vh-140px)]" x-show="draftProject">
-            {{-- Core info --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Target Date</label>
-                    <input type="date"
-                           class="w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                           x-model="draftProject.target_date">
+        {{-- BODY --}}
+        <div class="flex-1 overflow-y-auto px-6 py-6 space-y-6" x-show="draftProject">
+
+            {{-- CORE INFO --}}
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-5">
+
+                <div class="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-3">
+                    Core Information
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Budget (₱)</label>
-                    <input type="number" step="0.01" min="0"
-                           class="w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                           x-model="draftProject.budget"
-                           placeholder="0.00">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600">Target Date</label>
+                        <input type="date"
+                               class="mt-1 w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm"
+                               x-model="draftProject.target_date">
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600">Budget (₱)</label>
+
+                        <div class="relative mt-1">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">₱</span>
+
+                            <input type="text"
+                                inputmode="decimal"
+                                class="w-full pl-7 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm text-right"
+                                :value="formatMoney(draftProject.budget)"
+                                @input="
+                                    let raw = $event.target.value.replace(/,/g,'');
+                                    draftProject.budget = raw === '' ? '' : parseFloat(raw);
+                                "
+                                placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="text-xs font-semibold text-slate-600">Project Title</label>
+                        <input type="text"
+                               class="mt-1 w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm"
+                               x-model="draftProject.title">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="text-xs font-semibold text-slate-600">Implementing Body (optional)</label>
+                        <input type="text"
+                               class="mt-1 w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm"
+                               x-model="draftProject.implementing_body">
+                    </div>
+
                 </div>
 
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Project / Initiative Title</label>
-                    <input type="text"
-                           class="w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                           x-model="draftProject.title"
-                           placeholder="e.g., Leadership Training Seminar">
-                </div>
-
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Implementing Body (optional)</label>
-                    <input type="text"
-                           class="w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                           x-model="draftProject.implementing_body"
-                           placeholder="(optional)">
-                </div>
             </div>
 
-
-
-            {{-- inline validation hint --}}
+            {{-- VALIDATION --}}
             <div x-show="draftProject && !isDraftComplete()"
-                 class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                Complete Target Date, Title, Budget, and at least one Objective, Beneficiary, and Deliverable before saving.
+                 class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+                Complete all required fields (date, title, budget, objectives, beneficiaries, deliverables).
             </div>
 
-            {{-- Details lists --}}
+            {{-- LISTS --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {{-- Objectives --}}
-                <div class="rounded-xl border border-slate-200 p-4">
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm font-semibold text-slate-800">Objectives (at least 1)</p>
-                        <button type="button" class="text-xs font-medium text-blue-700 hover:underline"
-                                @click="addTextItem(draftProject,'objectives')">+ Add</button>
+
+                {{-- FUNCTIONAL BLOCK --}}
+                <template x-for="section in [
+                    { key: 'objectives', label: 'Objectives', required: true },
+                    { key: 'beneficiaries', label: 'Beneficiaries', required: true },
+                    { key: 'deliverables', label: 'Deliverables', required: true },
+                    { key: 'partners', label: 'Partners / Stakeholders', required: false }
+                ]" :key="section.key">
+
+                    <div class="rounded-xl border border-slate-200 p-4 bg-white">
+
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs font-semibold text-slate-700"
+                               x-text="section.label + (section.required ? ' (required)' : '')"></p>
+
+                            <button type="button"
+                                class="text-xs font-semibold text-blue-600 hover:underline"
+                                @click="addTextItem(draftProject, section.key)">
+                                + Add
+                            </button>
+                        </div>
+
+                        <template x-for="(t, j) in draftProject[section.key]" :key="j">
+                            <div class="mt-2 flex gap-2">
+
+                                <input type="text"
+                                    class="flex-1 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm py-2"
+                                    x-model="draftProject[section.key][j]">
+
+                                <button type="button"
+                                    class="rounded-lg border border-rose-200 bg-rose-50 px-2 text-rose-700 hover:bg-rose-100"
+                                    @click="removeTextItem(draftProject, section.key, j)">
+                                    ✕
+                                </button>
+
+                            </div>
+                        </template>
+
                     </div>
 
-                    <template x-for="(t, j) in draftProject.objectives" :key="j">
-                        <div class="mt-2 flex gap-2">
-                            <input type="text"
-                                   class="flex-1 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 py-2"
-                                   x-model="draftProject.objectives[j]">
-                            <button type="button"
-                                    class="rounded-lg border border-rose-200 bg-rose-50 px-2 text-rose-700 hover:bg-rose-100"
-                                    @click="removeTextItem(draftProject,'objectives',j)">✕</button>
-                        </div>
-                    </template>
-                </div>
+                </template>
 
-                {{-- Beneficiaries --}}
-                <div class="rounded-xl border border-slate-200 p-4">
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm font-semibold text-slate-800">Beneficiaries (at least 1)</p>
-                        <button type="button" class="text-xs font-medium text-blue-700 hover:underline"
-                                @click="addTextItem(draftProject,'beneficiaries')">+ Add</button>
-                    </div>
-
-                    <template x-for="(t, j) in draftProject.beneficiaries" :key="j">
-                        <div class="mt-2 flex gap-2">
-                            <input type="text"
-                                   class="flex-1 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 py-2"
-                                   x-model="draftProject.beneficiaries[j]">
-                            <button type="button"
-                                    class="rounded-lg border border-rose-200 bg-rose-50 px-2 text-rose-700 hover:bg-rose-100"
-                                    @click="removeTextItem(draftProject,'beneficiaries',j)">✕</button>
-                        </div>
-                    </template>
-                </div>
-
-                {{-- Deliverables --}}
-                <div class="rounded-xl border border-slate-200 p-4">
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm font-semibold text-slate-800">Deliverables (at least 1)</p>
-                        <button type="button" class="text-xs font-medium text-blue-700 hover:underline"
-                                @click="addTextItem(draftProject,'deliverables')">+ Add</button>
-                    </div>
-
-                    <template x-for="(t, j) in draftProject.deliverables" :key="j">
-                        <div class="mt-2 flex gap-2">
-                            <input type="text"
-                                   class="flex-1 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 py-2"
-                                   x-model="draftProject.deliverables[j]">
-                            <button type="button"
-                                    class="rounded-lg border border-rose-200 bg-rose-50 px-2 text-rose-700 hover:bg-rose-100"
-                                    @click="removeTextItem(draftProject,'deliverables',j)">✕</button>
-                        </div>
-                    </template>
-                </div>
-
-                {{-- Partners --}}
-                <div class="rounded-xl border border-slate-200 p-4">
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm font-semibold text-slate-800">Partners / Stakeholders (optional)</p>
-                        <button type="button" class="text-xs font-medium text-blue-700 hover:underline"
-                                @click="addTextItem(draftProject,'partners')">+ Add</button>
-                    </div>
-
-                    <template x-for="(t, j) in draftProject.partners" :key="j">
-                        <div class="mt-2 flex gap-2">
-                            <input type="text"
-                                   class="flex-1 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 py-2"
-                                   x-model="draftProject.partners[j]">
-                            <button type="button"
-                                    class="rounded-lg border border-rose-200 bg-rose-50 px-2 text-rose-700 hover:bg-rose-100"
-                                    @click="removeTextItem(draftProject,'partners',j)">✕</button>
-                        </div>
-                    </template>
-                </div>
             </div>
+
         </div>
 
-        <div class="p-5 border-t border-slate-200 flex items-center justify-between">
-            <p class="text-sm text-slate-500">Tip: press <span class="font-medium">Esc</span> to close</p>
+        {{-- FOOTER --}}
+        <div class="px-6 py-4 border-t bg-white flex items-center justify-between">
 
-            <button type="button"
-                    class="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    :disabled="!isDraftComplete()"
-                    @click="saveDraftProject()">
-                Save Project
-            </button>
+            <span class="text-xs text-slate-400">
+                Press Esc to close
+            </span>
+
+            <div class="flex items-center gap-2">
+
+                <button type="button"
+                        class="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        @click="closeDetails()">
+                    Cancel
+                </button>
+
+                <button type="button"
+                        class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                        :disabled="!isDraftComplete()"
+                        @click="saveDraftProject()">
+                    Save Project
+                </button>
+
+            </div>
+
         </div>
+
     </div>
 </div>

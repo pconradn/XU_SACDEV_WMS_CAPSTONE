@@ -7,25 +7,43 @@ use Illuminate\Notifications\DatabaseNotification;
 
 class InAppNotifier
 {
-    /**
-     * Sends a database notification once per user per dedupe_key.
-     */
+    
     public static function notifyOnce($user, array $payload): void
     {
         if (!$user) return;
 
         $dedupeKey = $payload['dedupe_key'] ?? null;
-        if (!$dedupeKey) return;
 
-        // Works on MySQL 5.7+/8+ and most MariaDB builds with JSON support
-        $exists = DatabaseNotification::query()
+        if (!$dedupeKey) {
+            // no dedupe → just send normally
+            $user->notify(new ReregActionNotification($payload));
+            return;
+        }
+
+        $existing = DatabaseNotification::query()
             ->where('notifiable_type', get_class($user))
             ->where('notifiable_id', $user->getKey())
             ->where('data->dedupe_key', $dedupeKey)
-            ->exists();
+            ->latest()
+            ->first();
 
-        if ($exists) return;
+        if ($existing) {
+            // 🔥 UPDATE existing notification instead of skipping
+            $data = is_array($existing->data)
+                ? $existing->data
+                : json_decode($existing->data, true);
+
+            $existing->update([
+                'data' => array_merge($data ?? [], $payload),
+                'read_at' => null, 
+                'updated_at' => now(),
+            ]);
+
+            return;
+        }
 
         $user->notify(new ReregActionNotification($payload));
     }
+
+
 }

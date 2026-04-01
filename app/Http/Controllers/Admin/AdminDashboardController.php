@@ -17,6 +17,9 @@ class AdminDashboardController extends Controller
 {
     public function index()
     {
+        $user = auth()->user();
+        $user->load('clusters');
+        
         $activeSy = SchoolYear::activeYear();
         $activeSyId = $activeSy?->id;
 
@@ -33,18 +36,24 @@ class AdminDashboardController extends Controller
         $actionable = ['submitted_to_sacdev', 'forwarded_to_sacdev'];
         $approved = 'approved_by_sacdev';
 
+        
+
         $pendingCases = collect()
             ->merge(
                 StrategicPlanSubmission::query()
+                    ->with('organization')
                     ->whereIn('target_school_year_id', $targetSyIds)
                     ->whereIn('status', $actionable)
+                    ->whereHas('organization', function ($q) use ($user) {
+                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    })
                     ->get()
                     ->map(function ($r) {
                         return (object) [
                             'type' => 'Strategic Plan',
                             'organization_id' => $r->organization_id,
                             'school_year_id' => $r->target_school_year_id,
-                            'organization' => Organization::find($r->organization_id),
+                            'organization' => $r->organization,
                             'school_year' => SchoolYear::find($r->target_school_year_id),
                             'status' => $r->status,
                             'created_at' => $r->created_at,
@@ -53,16 +62,24 @@ class AdminDashboardController extends Controller
                     })
             )
             ->merge(
+
+
+
+            
                 PresidentRegistration::query()
+                    ->with('organization')
                     ->whereIn('target_school_year_id', $targetSyIds)
                     ->whereIn('status', $actionable)
+                    ->whereHas('organization', function ($q) use ($user) {
+                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    })
                     ->get()
                     ->map(function ($r) {
                         return (object) [
                             'type' => 'President Registration',
                             'organization_id' => $r->organization_id,
                             'school_year_id' => $r->target_school_year_id,
-                            'organization' => Organization::find($r->organization_id),
+                            'organization' => $r->organization,
                             'school_year' => SchoolYear::find($r->target_school_year_id),
                             'status' => $r->status,
                             'created_at' => $r->created_at,
@@ -72,15 +89,19 @@ class AdminDashboardController extends Controller
             )
             ->merge(
                 OfficerSubmission::query()
+                    ->with('organization')
                     ->whereIn('target_school_year_id', $targetSyIds)
                     ->whereIn('status', $actionable)
+                    ->whereHas('organization', function ($q) use ($user) {
+                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    })
                     ->get()
                     ->map(function ($r) {
                         return (object) [
                             'type' => 'Officer Submission',
                             'organization_id' => $r->organization_id,
                             'school_year_id' => $r->target_school_year_id,
-                            'organization' => Organization::find($r->organization_id),
+                            'organization' => $r->organization,
                             'school_year' => SchoolYear::find($r->target_school_year_id),
                             'status' => $r->status,
                             'created_at' => $r->created_at,
@@ -90,15 +111,19 @@ class AdminDashboardController extends Controller
             )
             ->merge(
                 ModeratorSubmission::query()
+                    ->with('organization')
                     ->whereIn('target_school_year_id', $targetSyIds)
                     ->whereIn('status', $actionable)
+                    ->whereHas('organization', function ($q) use ($user) {
+                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    })
                     ->get()
                     ->map(function ($r) {
                         return (object) [
                             'type' => 'Moderator Submission',
                             'organization_id' => $r->organization_id,
                             'school_year_id' => $r->target_school_year_id,
-                            'organization' => Organization::find($r->organization_id),
+                            'organization' => $r->organization,
                             'school_year' => SchoolYear::find($r->target_school_year_id),
                             'status' => $r->status,
                             'created_at' => $r->created_at,
@@ -155,20 +180,24 @@ class AdminDashboardController extends Controller
                 ->toArray()
         )));
 
-        $readyForActivation = $readyKeys
-            ->diff($activatedKeys)
-            ->map(function ($key) {
+            $readyForActivation = $readyKeys
+                ->diff($activatedKeys)
+                ->map(function ($key) use ($user) {
+                
                 [$orgId, $syId] = explode('|', $key);
 
                 return (object) [
                     'organization_id' => (int) $orgId,
                     'school_year_id' => (int) $syId,
-                    'organization' => Organization::find($orgId),
+                    'organization' => Organization::where('id', $orgId)
+                        ->whereIn('cluster_id', $user->clusters->pluck('id'))
+                        ->first(),
                     'school_year' => SchoolYear::find($syId),
-                    'route' => route('admin.rereg.index', $orgId),
+                    'route' => route('rereg.hub', $orgId),
                 ];
             })
-            ->values();
+            ->values()
+            ->filter(fn ($r) => $r->organization !== null);
 
         $projectApprovals = ProjectDocument::with([
                 'project.organization',

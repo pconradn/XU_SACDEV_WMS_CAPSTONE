@@ -12,6 +12,7 @@ use App\Models\ProjectDocumentSignature;
 use App\Models\ProjectProposalData;
 use App\Models\User;
 use App\Notifications\ReregActionNotification;
+use App\Support\InAppNotifier;
 use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -135,17 +136,21 @@ abstract class BaseProjectDocumentController extends Controller
 
         
 
-        $signature->user->notify(new ReregActionNotification([
+        InAppNotifier::notifyOnce($signature->user, [
             'title' => 'Document awaiting review',
             'message' => $document->formType->name .
                 ' for project "' . $document->project->title . '" requires your approval.',
-            'action_url' => route('org.projects.documents.hub', $document->project),
+
+            'action_url' => $this->resolveOrgDocumentRoute($document),
+
+            'dedupe_key' => 'doc_'.$document->id.'_approval_queue',
+
             'meta' => [
                 'document_id' => $document->id,
                 'form_type'   => $document->formType->code,
                 'project_id'  => $document->project->id
             ]
-        ]));
+        ]);
     }
 
     protected function notifyProjectHead(Project $project, ProjectDocument $document, string $message){
@@ -160,16 +165,22 @@ abstract class BaseProjectDocumentController extends Controller
             return;
         }
 
-        $assignment->user->notify(new ReregActionNotification([
+        InAppNotifier::notifyOnce($assignment->user, [
             'title' => 'Project Document Update',
             'message' => $message,
-            'action_url' => route('org.projects.documents.hub', $project),
+
+            'action_url' => $this->resolveOrgDocumentRoute($document),
+
+            'dedupe_key' => 'doc_'.$document->id.'_status_update',
+
             'meta' => [
                 'document_id' => $document->id,
                 'form_type'   => $document->formType->code,
                 'project_id'  => $project->id
             ]
-        ]));
+        ]);
+
+
     }
 
     protected function approvalFlow(string $formCode): array
@@ -412,11 +423,13 @@ abstract class BaseProjectDocumentController extends Controller
 
         $document->load('signatures','formType','project');
 
-        $this->notifyProjectHead(
-            $project,
-            $document,
-            auth()->user()->name.' approved the '.$document->formType->name.'.'
-        );
+        if ($document->status === 'approved') {
+            $message = $document->formType->name.' has been fully approved.';
+        } else {
+            $message = $document->formType->name.' was approved by '.auth()->user()->name.'.';
+        }
+
+        $this->notifyProjectHead($project, $document, $message);
 
         $this->notifyNextApprover($document);
 
@@ -469,7 +482,7 @@ abstract class BaseProjectDocumentController extends Controller
         $this->notifyProjectHead(
             $project,
             $document,
-            'Your '.$document->formType->name.' was returned for revision by'
+            'Your '.$document->formType->name.' was returned for revision by '.auth()->user()->name.'.'
         );
 
         Audit::log(
@@ -658,8 +671,37 @@ abstract class BaseProjectDocumentController extends Controller
         $this->notifyProjectHead(
             $project,
             $document,
-            'SACDEV approval was reverted. Document is now pending SACDEV approval again.'
+            $document->formType->name.' approval was reverted. It is now pending SACDEV review again.'
         );
+    }
+
+
+    protected function resolveOrgDocumentRoute(ProjectDocument $document): string
+    {
+        $map = [
+            'PROJECT_PROPOSAL' => 'org.projects.documents.project-proposal.create',
+            'BUDGET_PROPOSAL' => 'org.projects.documents.budget-proposal.create',
+            'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.travel-form.create',
+
+            'SOLICITATION_APPLICATION' => 'org.projects.documents.solicitation.create',
+            'SELLING_APPLICATION' => 'org.projects.documents.selling.create',
+            'REQUEST_TO_PURCHASE' => 'org.projects.documents.request-to-purchase.create',
+
+            'FEES_COLLECTION_REPORT' => 'org.projects.documents.fees-collection.create',
+            'SELLING_ACTIVITY_REPORT' => 'org.projects.documents.selling-report.create',
+            'SOLICITATION_SPONSORSHIP_REPORT' => 'org.projects.documents.solicitation-report.create',
+            'TICKET_SELLING_REPORT' => 'org.projects.documents.ticket-selling.create',
+
+            'DOCUMENTATION_REPORT' => 'org.projects.documents.documentation.create',
+            'LIQUIDATION_REPORT' => 'org.projects.documents.liquidation.create',
+
+            'POSTPONEMENT_NOTICE' => 'org.projects.documents.postponement.create',
+            'CANCELLATION_NOTICE' => 'org.projects.documents.cancellation.create',
+        ];
+
+        $routeName = $map[$document->formType->code] ?? 'org.projects.documents.hub';
+
+        return route($routeName, $document->project);
     }
 
 }

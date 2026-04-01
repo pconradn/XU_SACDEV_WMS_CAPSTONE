@@ -10,6 +10,7 @@ use App\Models\ProjectDocument;
 use App\Notifications\ReregActionNotification;
 use App\Services\ProjectFormRequirementResolver;
 use App\Support\Audit;
+use App\Support\InAppNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -907,6 +908,27 @@ class AdminProjectDocumentController extends Controller
 
         });
 
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            $document->formType->name . ' was approved by SACDEV.'
+        );
+
+        Audit::log(
+            'document.approved_by_sacdev',
+            $document->formType->name . ' approved by SACDEV',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'project_id' => $project->id,
+                    'form_type' => $document->formType->code,
+                ],
+            ]
+        );
+
         return back()->with('success', 'Document approved successfully.');
     }
 
@@ -977,6 +999,28 @@ class AdminProjectDocumentController extends Controller
 
         });
 
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            'Your ' . $document->formType->name . ' was returned for revision by SACDEV.'
+        );
+
+        Audit::log(
+            'document.returned_by_sacdev',
+            $document->formType->name . ' returned for revision by SACDEV',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'project_id' => $project->id,
+                    'form_type' => $document->formType->code,
+                    'remarks' => $request->remarks,
+                ],
+            ]
+        );      
+
         return back()->with('success', 'Document returned for revision.');
     }
 
@@ -1045,6 +1089,8 @@ class AdminProjectDocumentController extends Controller
         });
     }
 
+
+
     protected function notifyProjectHead(Project $project, ProjectDocument $document, string $message){
         
         $assignment = ProjectAssignment::where('project_id', $project->id)
@@ -1057,16 +1103,17 @@ class AdminProjectDocumentController extends Controller
             return;
         }
 
-        $assignment->user->notify(new ReregActionNotification([
+        InAppNotifier::notifyOnce($assignment->user, [
             'title' => 'Project Document Update',
             'message' => $message,
-            'action_url' => route('org.projects.documents.hub', $project),
+            'action_url' => $this->resolveOrgDocumentRoute($document),
+            'dedupe_key' => 'doc_'.$document->id.'_status_update',
             'meta' => [
                 'document_id' => $document->id,
                 'form_type'   => $document->formType->code,
                 'project_id'  => $project->id
             ]
-        ]));
+        ]);
     }
 
     public function retract(Project $project, $formCode)
@@ -1147,8 +1194,58 @@ class AdminProjectDocumentController extends Controller
 
         });
 
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            $document->formType->name . ' approval was retracted by SACDEV and is now pending review again.'
+        );
+
+        Audit::log(
+            'document.sacdev_approval_retracted',
+            'SACDEV approval retracted for ' . $document->formType->name,
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'project_id' => $project->id,
+                    'form_type' => $document->formType->code,
+                ],
+            ]
+        );        
+
         return back()->with('success', 'SACDEV approval has been retracted.');
 
+    }
+
+    protected function resolveOrgDocumentRoute(ProjectDocument $document): string
+    {
+        $map = [
+            'PROJECT_PROPOSAL' => 'org.projects.documents.project-proposal.create',
+            'BUDGET_PROPOSAL' => 'org.projects.documents.budget-proposal.create',
+            'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.travel-form.create',
+
+            'SOLICITATION_APPLICATION' => 'org.projects.documents.solicitation.create',
+            'SELLING_APPLICATION' => 'org.projects.documents.selling.create',
+            'REQUEST_TO_PURCHASE' => 'org.projects.documents.request-to-purchase.create',
+
+            'FEES_COLLECTION_REPORT' => 'org.projects.documents.fees-collection.create',
+            'SELLING_ACTIVITY_REPORT' => 'org.projects.documents.selling-activity-report.create',
+            'SOLICITATION_SPONSORSHIP_REPORT' => 'org.projects.documents.solicitation-sponsorship-report.create',
+            'TICKET_SELLING_REPORT' => 'org.projects.documents.ticket-selling-report.create',
+
+            'DOCUMENTATION_REPORT' => 'org.projects.documents.documentation-report.create',
+            'LIQUIDATION_REPORT' => 'org.projects.documents.liquidation-report.create',
+
+            'POSTPONEMENT_NOTICE' => 'org.projects.documents.postponement.create',
+            'CANCELLATION_NOTICE' => 'org.projects.documents.cancellation.create',
+        ];
+
+        $routeName = $map[$document->formType->code] ?? 'org.projects.documents.hub';
+
+        return route($routeName, $document->project);
     }
 
 

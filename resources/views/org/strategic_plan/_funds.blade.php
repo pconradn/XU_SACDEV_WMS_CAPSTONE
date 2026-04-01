@@ -5,7 +5,6 @@
         Enter the estimated breakdown of your funding sources for this strategic plan. These values are for planning and reference only.
     </p>
 
-
     {{-- Fixed Fund Types --}}
     <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
 
@@ -17,12 +16,19 @@
                        x-text="src.label">
                 </label>
 
-                <input type="number"
-                       step="0.01"
-                       min="0"
-                       class="mt-1 w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                       x-model="fixedFundAmounts[src.type]"
-                       :name="'fund_sources['+fundSourceIndex(src.type)+'][amount]'">
+                <div class="relative mt-1">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">₱</span>
+
+                    <input type="text"
+                        inputmode="decimal"
+                        class="w-full pl-7 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-right"
+                        :value="formatMoney(fixedFundAmounts[src.type])"
+                        @input="
+                            let raw = $event.target.value.replace(/,/g,'');
+                            fixedFundAmounts[src.type] = raw === '' ? '' : parseFloat(raw);
+                        "
+                        :name="'fund_sources['+fundSourceIndex(src.type)+'][amount]'">
+                </div>
 
                 <input type="hidden"
                        :name="'fund_sources['+fundSourceIndex(src.type)+'][type]'"
@@ -60,7 +66,6 @@
 
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
 
-
                 {{-- Label --}}
                 <div class="md:col-span-7">
 
@@ -83,12 +88,19 @@
                         Amount
                     </label>
 
-                    <input type="number"
-                           step="0.01"
-                           min="0"
-                           class="mt-1 w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                           x-model="o.amount"
-                           :name="'fund_sources['+o._idx+'][amount]'">
+                    <div class="relative mt-1">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">₱</span>
+
+                        <input type="text"
+                            inputmode="decimal"
+                            class="w-full pl-7 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-right"
+                            :value="formatMoney(o.amount)"
+                            @input="
+                                let raw = $event.target.value.replace(/,/g,'');
+                                o.amount = raw === '' ? '' : parseFloat(raw);
+                            "
+                            :name="'fund_sources['+o._idx+'][amount]'">
+                    </div>
 
                 </div>
 
@@ -136,7 +148,7 @@
             </span>
 
             <span class="font-semibold text-slate-900"
-                  x-text="formatMoney(totalFunds())">
+                  x-text="'₱ ' + formatMoney(totalFunds())">
             </span>
 
         </div>
@@ -150,6 +162,5 @@
         </div>
 
     </div>
-
 
 </div>
