@@ -302,11 +302,21 @@ class SacdevB3OfficerSubmissionController extends Controller
                 }
 
 
-                $membership = OrgMembership::query()
-                    ->where('organization_id', $orgId)
+                $role = $item->major_officer_role ?? 'officer';
+
+                OrgMembership::where('organization_id', $orgId)
                     ->where('school_year_id', $syId)
-                    ->where('officer_entry_id', $entry->id)
-                    ->first();
+                    ->where('role', $role)
+                    ->delete();
+
+                $membership = OrgMembership::create([
+                    'organization_id' => $orgId,
+                    'school_year_id' => $syId,
+                    'officer_entry_id' => $entry->id,
+                    'user_id' => null,
+                    'role' => $role,
+                    'is_under_probation' => $isUnderProbation,
+                ]);
 
                 if (!$membership) {
 

@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-//ASSIGN PRESIDENT EMAIL TO ORG, TEMPORARY ORG ONBOARDING
+
 
 class OrganizationPresidentController extends Controller
 {
@@ -33,20 +33,22 @@ class OrganizationPresidentController extends Controller
         $selectedSyId = (int) $request->query('school_year_id', 0);
 
         $organizations = Organization::query()
+            ->whereNull('archived_at') 
             ->orderBy('name')
-            ->get(['id', 'name', 'acronym']);
+            ->get();
 
-        $assignedMap = collect();
-        if ($selectedSyId > 0) {
-            $assignedMap = OfficerEntry::query()
-                ->where('school_year_id', $selectedSyId)
-                ->where('major_officer_role', 'president')
-                ->where('is_major_officer', true)
-                ->get(['organization_id', 'full_name', 'student_id_number', 'user_id'])
-                ->keyBy('organization_id');
-        }
+        $orgIds = $organizations->pluck('id');
 
-        //dd($assignedMap);
+        $assignedMap = \App\Models\OrgMembership::query()
+            ->where('school_year_id', $selectedSyId)
+            ->where('role', 'president')
+            ->whereNull('archived_at')
+            ->whereIn('organization_id', $orgIds) 
+            ->with('officerEntry')
+            ->get()
+            ->keyBy('organization_id');
+
+
 
         return view('admin.president_assignments.index', [
             'schoolYears' => $schoolYears,

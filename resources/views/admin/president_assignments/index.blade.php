@@ -1,246 +1,580 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                President Assignments (Elections)
-            </h2>
+    <div x-data="presidentAssignmentsPage()" class="space-y-6">
+
+        {{-- HEADER --}}
+        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="px-6 py-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
+                        President Assignments
+                    </h1>
+                    <p class="mt-1 text-sm text-slate-500 max-w-2xl">
+                        Assign organization presidents by school year. Select a school year first, then manage which
+                        student is assigned as president for each organization.
+                    </p>
+                </div>
+
+            </div>
         </div>
-    </x-slot>
 
-    <div class="py-8">
-        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
 
-            {{-- Flash --}}
-            @if(session('status'))
-                <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800">
-                    {{ session('status') }}
-                </div>
-            @endif
 
-            @if($errors->any())
-                <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-                
-                    <ul class="list-disc ml-5 text-sm">
-                        @foreach($errors->all() as $e)
-                            <li>{{ $e }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
 
-            <div class="bg-white shadow rounded p-6">
+        {{-- SCHOOL YEAR CONTEXT --}}
+        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="px-6 py-5 border-b border-slate-200">
+                <h2 class="text-sm font-semibold text-slate-900">
+                    School Year Context
+                </h2>
+                <p class="mt-1 text-xs text-slate-500">
+                    Choose the school year you want to manage. All president assignments on this page will use that selected context.
+                </p>
+            </div>
 
-                {{-- SY selector --}}
-                <form method="GET" class="flex flex-col md:flex-row md:items-end gap-3 mb-6">
-                    <div class="w-full md:w-80">
-                        <label class="block text-sm font-medium text-slate-700">Target School Year</label>
-                        <select name="school_year_id" class="mt-1 w-full border rounded p-2" required>
-                            <option value="">-- Select SY --</option>
+            <div class="px-6 py-5">
+                <form method="GET" class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+
+                    <div class="w-full lg:max-w-sm">
+                        <label for="school_year_id" class="block text-xs font-medium uppercase tracking-wide text-slate-500">
+                            Target School Year
+                        </label>
+
+                        <select
+                            id="school_year_id"
+                            name="school_year_id"
+                            class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            required
+                        >
+                            <option value="">Select a school year</option>
                             @foreach($schoolYears as $sy)
                                 <option value="{{ $sy->id }}" @selected($selectedSyId == $sy->id)>
-                                    {{ $sy->name }} {{ $sy->is_active ? '(Active)' : '' }}
+                                    {{ $sy->name }}{{ $sy->is_active ? ' — Active' : '' }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
 
-                    <button class="px-4 py-2 bg-blue-600 text-white rounded">
-                        Load Organizations
-                    </button>
-
-                    <div class="flex-1"></div>
-
-                    <div class="w-full md:w-72">
-                        <label class="block text-sm font-medium text-slate-700">Search Org</label>
-                        <input id="orgSearch" type="text" class="mt-1 w-full border rounded p-2"
-                               placeholder="Type org name or acronym...">
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <button
+                            type="submit"
+                            class="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+                        >
+                            Load Organizations
+                        </button>
                     </div>
+
                 </form>
-
-                @if($selectedSyId <= 0)
-                    <div class="text-sm text-slate-600">
-                        Select a school year to start.
-                    </div>
-                @else
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm text-left">
-                            <thead class="text-xs uppercase text-slate-500 border-b">
-                                <tr>
-                                    <th class="py-2 px-2">Organization</th>
-                                    <th class="py-2 px-2">Status</th>
-                                    <th class="py-2 px-2">Current President</th>
-                                    <th class="py-2 px-2 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="orgTbody" class="divide-y">
-                                @foreach($organizations as $org)
-                                    @php
-                                        $assigned = $assignedMap->get($org->id);
-                                    @endphp
-                                    <tr class="org-row"
-                                        data-org="{{ strtolower($org->name . ' ' . ($org->acronym ?? '')) }}">
-                                        <td class="py-3 px-2">
-                                            <div class="font-semibold text-slate-900">
-                                                {{ $org->name }}
-                                            </div>
-                                            @if($org->acronym)
-                                                <div class="text-xs text-slate-500">{{ $org->acronym }}</div>
-                                            @endif
-                                        </td>
-
-                                        <td class="py-3 px-2">
-                                            @if($assigned)
-                                                <span class="inline-flex rounded-full bg-emerald-50 border border-emerald-200 px-2 py-1 text-xs font-semibold text-emerald-700">
-                                                    Assigned
-                                                </span>
-                                            @else
-                                                <span class="inline-flex rounded-full bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">
-                                                    Not Assigned
-                                                </span>
-                                            @endif
-                                        </td>
-
-                                        <td class="py-3 px-2">
-                                            @if($assigned)
-                                                <div class="text-slate-900 font-medium">
-                                                    {{ $assigned->full_name }}
-                                                </div>
-                                                <div class="text-xs text-slate-500">
-                                                    {{ $assigned->student_id_number }}
-                                                </div>
-                                            @else
-                                                <span class="text-slate-400 text-sm">—</span>
-                                            @endif
-                                        </td>
-
-                                        <td class="py-3 px-2 text-right">
-                                            <button type="button"
-                                                class="openAssignModal px-3 py-2 rounded bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700"
-                                                data-org-id="{{ $org->id }}"
-                                                data-org-name="{{ $org->name }}"
-                                                data-sy-id="{{ $selectedSyId }}">
-                                                {{ $assigned ? 'Replace' : 'Assign' }}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
-
-            </div>
-        </div>
-    </div>
-
-
-    {{-- Modal --}}
-    <div id="assignModal" class="fixed inset-0 hidden items-center justify-center bg-black/40 p-4">
-        <div class="w-full max-w-lg rounded-xl bg-white shadow-lg">
-            <div class="p-5 border-b">
-                <div class="text-lg font-semibold text-slate-900">Assign President</div>
-                <div id="modalOrgName" class="text-sm text-slate-600 mt-1"></div>
             </div>
 
-            <form method="POST" action="{{ route('admin.president_assignments.assign') }}" class="p-5">
-                @csrf
-                <input type="hidden" name="organization_id" id="modalOrgId">
-                <input type="hidden" name="school_year_id" id="modalSyId">
+            @if($selectedSyId > 0)
+                @php
+                    $selectedSchoolYear = $schoolYears->firstWhere('id', $selectedSyId);
+                @endphp
 
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700">President Full Name</label>
-                        <input name="president_name" id="modalPresidentName"
-                               class="mt-1 w-full border rounded p-2"
-                               placeholder="Juan Dela Cruz" required>
+                <div class="border-t border-slate-200 bg-slate-50 px-6 py-4">
+                    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <div class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                Current Context
+                            </div>
+                            <div class="mt-1 text-sm font-semibold text-slate-900">
+                                {{ $selectedSchoolYear?->name ?? 'Selected School Year' }}
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            @if(optional($selectedSchoolYear)->is_active)
+                                <span class="inline-flex items-center rounded-full border border-blue-200 bg-blue-100 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
+                                    Active School Year
+                                </span>
+                            @else
+                                <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+                                    Archived / Inactive Context
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endif
+            {{-- ================= CONTROL BAR ================= --}}
+            @if($selectedSyId > 0)
+
+                @php
+                    $total = $organizations->count();
+                    $assignedCount = $assignedMap->count();
+                    $progressPercent = $total > 0 ? round(($assignedCount / $total) * 100) : 0;
+                @endphp
+
+                <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+
+                    {{-- HEADER --}}
+                    <div class="px-6 py-5 border-b border-slate-200 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
+                        {{-- PROGRESS --}}
+                        <div>
+                            <div class="text-xs uppercase tracking-wide text-slate-500 font-medium">
+                                Progress
+                            </div>
+
+                            <div class="mt-1 text-sm font-semibold text-slate-900">
+                                {{ $assignedCount }} / {{ $total }} organizations assigned
+                            </div>
+                        </div>
+
+                        {{-- SEARCH --}}
+                        <div class="w-full lg:w-80">
+                            <div class="flex items-center gap-3 rounded-xl border border-slate-300 px-3 py-2">
+
+                                {{-- ICON --}}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-4.35-4.35m1.85-5.65a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z"/>
+                                </svg>
+
+                                {{-- INPUT --}}
+                                <input
+                                    type="text"
+                                    x-model="search"
+                                    placeholder="Search organizations..."
+                                    class="w-full text-sm border-0 focus:ring-0 placeholder:text-slate-400"
+                                >
+
+                                {{-- CLEAR --}}
+                                <button
+                                    x-show="search.length > 0"
+                                    @click="search = ''"
+                                    class="text-slate-400 hover:text-slate-600"
+                                >
+                                    ✕
+                                </button>
+
+                            </div>
+                        </div>
+
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700">Student ID Number</label>
-                        <input name="student_id_number" id="modalStudentId"
-                               class="mt-1 w-full border rounded p-2"
-                               placeholder="2018xxxxxxx" required>
 
-                        <div class="mt-2 text-sm text-slate-500">
-                            Email will be generated:
-                            <span id="modalEmailPreview" class="font-semibold text-blue-600">
-                                studentID@my.xu.edu.ph
-                            </span>
+                    {{-- PROGRESS BAR --}}
+                    <div class="px-6 pt-4">
+                        <div class="w-full bg-slate-100 rounded-full h-2">
+                            <div
+                                class="h-2 rounded-full {{ $progressPercent == 100 ? 'bg-emerald-600' : 'bg-blue-600' }} transition-all"
+                                style="width: {{ $progressPercent }}%">
+                            </div>
+                        </div>
+
+                        <div class="mt-1 text-[11px] text-slate-500">
+                            {{ $progressPercent }}% complete
                         </div>
                     </div>
 
-                    <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                        Note: If the current president is already activated, replacement is blocked and must be done via the Major Officer Roles page (Active SY only).
+
+                    {{-- FILTERS --}}
+                    <div class="px-6 py-4 flex flex-wrap items-center gap-2">
+
+                        <button
+                            @click="filter = 'all'"
+                            :class="filter === 'all'
+                                ? 'bg-slate-900 text-white'
+                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+                            class="text-xs px-3 py-1.5 rounded-full font-medium transition"
+                        >
+                            All
+                        </button>
+
+                        <button
+                            @click="filter = 'assigned'"
+                            :class="filter === 'assigned'
+                                ? 'bg-emerald-600 text-white'
+                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+                            class="text-xs px-3 py-1.5 rounded-full font-medium transition"
+                        >
+                            Assigned
+                        </button>
+
+                        <button
+                            @click="filter = 'unassigned'"
+                            :class="filter === 'unassigned'
+                                ? 'bg-amber-500 text-white'
+                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+                            class="text-xs px-3 py-1.5 rounded-full font-medium transition"
+                        >
+                            Not Assigned
+                        </button>
+
                     </div>
+
                 </div>
 
-                <div class="mt-6 flex justify-end gap-2">
-                    <button type="button" id="closeAssignModal"
-                            class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">
-                        Cancel
-                    </button>
-                    <button class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">
-                        Assign
-                    </button>
+            @endif
+
+            {{-- ================= ORGANIZATION GRID ================= --}}
+            @if($selectedSyId > 0)
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+                    @forelse($organizations as $org)
+                        
+                        @php
+                            $assigned = $assignedMap->get($org->id);
+                            $searchText = strtolower($org->name . ' ' . ($org->acronym ?? ''));
+                        @endphp
+
+
+                        <div
+                            x-show="match('{{ $searchText }}') && filterMatch({{ $assigned ? 'true' : 'false' }})"
+                            class="rounded-2xl border 
+                                {{ !$assigned ? 'border-amber-200 bg-amber-50/40' : 'border-slate-200 bg-white' }}
+                                p-5 shadow-sm hover:shadow-md hover:-translate-y-[1px] transition"
+                        >
+
+                            {{-- TOP --}}
+                            <div class="flex items-center justify-between gap-3">
+
+                                {{-- LEFT: LOGO + NAME --}}
+                                <div class="flex items-center gap-3 min-w-0">
+
+                                    {{-- LOGO --}}
+                                    <div class="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center shrink-0">
+
+                                        @if($org->logo_path)
+                                            <img src="{{ asset('storage/' . $org->logo_path) }}"
+                                                class="w-full h-full object-cover">
+
+                                        @else
+                                            {{-- fallback icon --}}
+                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                class="w-5 h-5 text-slate-400"
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M3 7h18M3 12h18M3 17h18"/>
+                                            </svg>
+                                        @endif
+
+                                    </div>
+
+                                    {{-- NAME --}}
+                                    <div class="min-w-0">
+                                        <div class="text-base font-semibold text-slate-900 truncate">
+                                            {{ $org->name }}
+                                        </div>
+
+                                        <div class="text-xs text-slate-500">
+                                            {{ $org->acronym ?? '—' }}
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                {{-- STATUS BADGE --}}
+                                <div class="shrink-0">
+                                    @if($assigned)
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full border bg-emerald-100 text-emerald-700 border-emerald-200">
+                                            Assigned
+                                        </span>
+                                    @else
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full border bg-amber-100 text-amber-700 border-amber-200">
+                                            Missing
+                                        </span>
+                                    @endif
+                                </div>
+
+                            </div>
+
+
+                            {{-- PRESIDENT --}}
+                            <div class="mt-5 space-y-1">
+
+                                <div class="text-[11px] uppercase tracking-wide text-slate-400">
+                                    President
+                                </div>
+
+                                @if($assigned)
+                                    <div class="mt-1 text-sm font-semibold text-slate-900">
+                                        {{ $assigned->officerEntry->full_name ?? '—' }}
+                                    </div>
+
+                                    <div class="text-xs text-slate-500">
+                                        {{ $assigned->officerEntry->student_id_number ?? '' }}
+                                    </div>
+                                @else
+                                    <div class="mt-1 text-sm text-slate-400 italic">
+                                        <span class="text-amber-600 font-medium">
+                                            No president assigned
+                                        </span>
+                                    </div>
+                                @endif
+
+                            </div>
+
+
+                            {{-- ACTION --}}
+                            <div class="mt-5 flex justify-end">
+
+                                <button
+                                    class="openAssignModal text-xs px-3 py-1.5 rounded-lg 
+                                        bg-slate-900 text-white hover:bg-slate-800 font-semibold"
+                                    data-org-id="{{ $org->id }}"
+                                    data-org-name="{{ $org->name }}"
+                                    data-sy-id="{{ $selectedSyId }}"
+                                    data-sy-name="{{ $selectedSchoolYear?->name }}"
+                                    data-current-name="{{ $assigned?->full_name }}"
+                                    data-current-id="{{ $assigned?->student_id_number }}"
+                                >
+                                    {{ $assigned ? 'Replace' : 'Assign' }}
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    @empty
+
+                        <div class="col-span-full text-center text-sm text-slate-500 py-10">
+                            No organizations found for this school year.
+                        </div>
+
+                    @endforelse
+
                 </div>
-            </form>
+
+            @endif
+
+            
         </div>
+
+
+        {{-- EMPTY STATE BEFORE SELECTION --}}
+        @if($selectedSyId <= 0)
+            <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-14 text-center shadow-sm">
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white border border-slate-200 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                            d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                    </svg>
+                </div>
+
+                <h3 class="mt-4 text-base font-semibold text-slate-900">
+                    Select a school year to begin
+                </h3>
+
+                <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+                    President assignments are managed per school year. Once you select a school year,
+                    the organizations under that context will appear here for assignment.
+                </p>
+            </div>
+        @endif
+
     </div>
 
+
+
+{{-- ================= ADVANCED ASSIGN MODAL ================= --}}
+<div id="assignModal" class="fixed inset-0 hidden items-center justify-center bg-black/40 z-50 p-4">
+
+    <div class="w-full max-w-xl rounded-2xl bg-white shadow-xl overflow-hidden">
+
+        {{-- HEADER --}}
+        <div class="px-6 py-5 border-b">
+
+            <div class="flex items-start justify-between">
+                <div>
+                    <h2 class="text-base font-semibold text-slate-900">
+                        Assign President
+                    </h2>
+
+                    <p id="modalOrgName" class="text-sm text-slate-500 mt-1"></p>
+
+                    <p id="modalSyName" class="text-xs text-slate-400 mt-1"></p>
+                </div>
+
+                <button id="closeAssignModal"
+                    class="text-slate-400 hover:text-slate-600 text-sm">
+                    ✕
+                </button>
+            </div>
+
+        </div>
+
+
+        {{-- CURRENT PRESIDENT (NEW) --}}
+        <div id="currentPresidentBox" class="px-6 py-4 bg-slate-50 border-b hidden">
+
+            <div class="text-[11px] uppercase tracking-wide text-slate-400">
+                Current President
+            </div>
+
+            <div id="currentPresidentName" class="mt-1 text-sm font-semibold text-slate-900"></div>
+            <div id="currentPresidentId" class="text-xs text-slate-500"></div>
+
+        </div>
+
+
+        {{-- WARNING --}}
+        <div id="replaceWarning" class="px-6 py-3 bg-amber-50 border-b border-amber-200 hidden">
+            <p class="text-xs text-amber-800">
+                You are about to replace the current president. This action should only be done if the previous assignment is incorrect or outdated.
+            </p>
+        </div>
+
+
+        {{-- FORM --}}
+        <form method="POST" action="{{ route('admin.president_assignments.assign') }}" class="px-6 py-5 space-y-4">
+            @csrf
+
+            <input type="hidden" name="organization_id" id="modalOrgId">
+            <input type="hidden" name="school_year_id" id="modalSyId">
+
+            {{-- NAME --}}
+            <div>
+                <label class="block text-xs font-medium text-slate-600">
+                    President Full Name
+                </label>
+
+                <input
+                    name="president_name"
+                    id="modalPresidentName"
+                    class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20"
+                    placeholder="Juan Dela Cruz"
+                    required
+                >
+            </div>
+
+            {{-- STUDENT ID --}}
+            <div>
+                <label class="block text-xs font-medium text-slate-600">
+                    Student ID Number
+                </label>
+
+                <input
+                    name="student_id_number"
+                    id="modalStudentId"
+                    class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                    placeholder="2018xxxxxxx"
+                    required
+                >
+
+                <div class="mt-2 text-xs text-slate-500">
+                    Email preview:
+                    <span id="modalEmailPreview" class="font-semibold text-blue-600">
+                        studentID@my.xu.edu.ph
+                    </span>
+                </div>
+            </div>
+
+
+            {{-- ACTIONS --}}
+            <div class="flex justify-end gap-2 pt-3">
+
+                <button type="button"
+                    class="px-4 py-2 text-xs rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50"
+                    onclick="closeAssignModal()">
+                    Cancel
+                </button>
+
+                <button
+                    id="submitBtn"
+                    class="px-4 py-2 text-xs rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800">
+                    Assign
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+
     <script>
-        const search = document.getElementById('orgSearch');
-        const rows = document.querySelectorAll('.org-row');
+    function presidentAssignmentsPage() {
+        return {
 
-        if (search) {
-            search.addEventListener('input', () => {
-                const q = search.value.trim().toLowerCase();
-                rows.forEach(r => {
-                    const hay = r.getAttribute('data-org') || '';
-                    r.style.display = hay.includes(q) ? '' : 'none';
-                });
-            });
+            // SEARCH
+            search: '',
+
+            // FILTER
+            filter: 'all', // all | assigned | unassigned
+
+            // MATCH FUNCTION (used by cards later)
+            match(text) {
+                return text.includes(this.search.toLowerCase());
+            },
+
+            filterMatch(isAssigned) {
+                if (this.filter === 'assigned') return isAssigned;
+                if (this.filter === 'unassigned') return !isAssigned;
+                return true;
+            }
         }
+    }
+    </script>
+    <script>
+    const modal = document.getElementById('assignModal');
 
-        const modal = document.getElementById('assignModal');
-        const modalOrgName = document.getElementById('modalOrgName');
-        const modalOrgId = document.getElementById('modalOrgId');
-        const modalSyId = document.getElementById('modalSyId');
+    function closeAssignModal() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
 
-        const modalStudentId = document.getElementById('modalStudentId');
-        const modalEmailPreview = document.getElementById('modalEmailPreview');
+    document.querySelectorAll('.openAssignModal').forEach(btn => {
+        btn.addEventListener('click', () => {
 
-        function openModal(btn) {
-            modalOrgName.textContent = btn.dataset.orgName || '';
-            modalOrgId.value = btn.dataset.orgId || '';
-            modalSyId.value = btn.dataset.syId || '';
+            // BASIC
+            document.getElementById('modalOrgName').textContent = btn.dataset.orgName;
+            document.getElementById('modalSyName').textContent = btn.dataset.syName;
 
+            document.getElementById('modalOrgId').value = btn.dataset.orgId;
+            document.getElementById('modalSyId').value = btn.dataset.syId;
+
+            // RESET
             document.getElementById('modalPresidentName').value = '';
-            modalStudentId.value = '';
-            modalEmailPreview.textContent = 'studentID@my.xu.edu.ph';
+            document.getElementById('modalStudentId').value = '';
+            document.getElementById('modalEmailPreview').textContent = 'studentID@my.xu.edu.ph';
+
+            // CURRENT PRESIDENT LOGIC
+            const currentName = btn.dataset.currentName;
+            const currentId = btn.dataset.currentId;
+
+            const box = document.getElementById('currentPresidentBox');
+            const warning = document.getElementById('replaceWarning');
+
+            if (currentName && currentName !== 'null') {
+
+                box.classList.remove('hidden');
+                warning.classList.remove('hidden');
+
+                document.getElementById('currentPresidentName').textContent = currentName;
+                document.getElementById('currentPresidentId').textContent = currentId;
+
+            } else {
+
+                box.classList.add('hidden');
+                warning.classList.add('hidden');
+            }
 
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-        }
-
-        function closeModal() {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        document.querySelectorAll('.openAssignModal').forEach(btn => {
-            btn.addEventListener('click', () => openModal(btn));
         });
+    });
 
-        document.getElementById('closeAssignModal')?.addEventListener('click', closeModal);
+    // CLOSE
+    document.getElementById('closeAssignModal').addEventListener('click', closeAssignModal);
 
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeAssignModal();
+    });
 
-        modalStudentId.addEventListener('input', () => {
-            const id = modalStudentId.value.trim();
-            modalEmailPreview.textContent = id ? `${id}@my.xu.edu.ph` : 'studentID@my.xu.edu.ph';
-        });
+    // EMAIL PREVIEW
+    document.getElementById('modalStudentId').addEventListener('input', (e) => {
+        const id = e.target.value.trim();
+        document.getElementById('modalEmailPreview').textContent =
+            id ? `${id}@my.xu.edu.ph` : 'studentID@my.xu.edu.ph';
+    });
     </script>
+
+
 
 </x-app-layout>

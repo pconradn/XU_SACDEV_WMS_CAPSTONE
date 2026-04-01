@@ -107,86 +107,50 @@ class AccountProvisioner
     }
 
 
-    public static function ensureMembership(int $userId, int $orgId, int $syId, string $role, ?int $officerEntryId = null): OrgMembership
-    {
-        $membership = OrgMembership::query()
-            ->where('user_id', $userId)
+    public static function ensureMembership(
+        int $userId,
+        int $orgId,
+        int $syId,
+        string $role,
+        ?int $officerEntryId = null
+    ): OrgMembership {
+
+        OrgMembership::where('user_id', $userId)
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
             ->where('role', $role)
-            ->first();
-
-        if ($membership) {
-            $dirty = false;
-
-            if ($membership->archived_at !== null) {
-                $membership->archived_at = null;
-                $dirty = true;
-            }
-
-            
-            if ($officerEntryId && (int) ($membership->officer_entry_id ?? 0) !== (int) $officerEntryId) {
-                $membership->officer_entry_id = $officerEntryId;
-                $dirty = true;
-            }
-
-            if ($dirty) {
-                $membership->save();
-            }
-
-            return $membership;
-        }
+            ->delete();
 
         return OrgMembership::create([
             'user_id' => $userId,
             'organization_id' => $orgId,
             'school_year_id' => $syId,
             'role' => $role,
-            'archived_at' => null,
-            'officer_entry_id' => $officerEntryId, // nullable
+            'officer_entry_id' => $officerEntryId,
         ]);
     }
-
    
-    public static function ensureBasicOrgAccess(int $userId, int $orgId, int $syId, ?int $officerEntryId = null): OrgMembership
-    {
+    public static function ensureBasicOrgAccess(
+        int $userId,
+        int $orgId,
+        int $syId,
+        ?int $officerEntryId = null
+    ): OrgMembership {
+
         $role = 'member';
 
-        $membership = OrgMembership::query()
-            ->where('user_id', $userId)
+        OrgMembership::where('user_id', $userId)
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
             ->where('role', $role)
-            ->first();
-
-        if ($membership) {
-            $dirty = false;
-
-            if ($membership->archived_at !== null) {
-                $membership->archived_at = null;
-                $dirty = true;
-            }
-
-            
-            if ($officerEntryId && (int) ($membership->officer_entry_id ?? 0) !== (int) $officerEntryId) {
-                $membership->officer_entry_id = $officerEntryId;
-                $dirty = true;
-            }
-
-            if ($dirty) {
-                $membership->save();
-            }
-
-            return $membership;
-        }
+            ->delete();
 
         return OrgMembership::create([
             'user_id' => $userId,
             'organization_id' => $orgId,
             'school_year_id' => $syId,
             'role' => $role,
-            'archived_at' => null,
-            'officer_entry_id' => $officerEntryId, // nullable
+            'officer_entry_id' => $officerEntryId,
         ]);
     }
 
