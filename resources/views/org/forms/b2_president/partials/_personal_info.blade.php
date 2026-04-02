@@ -1,138 +1,130 @@
-<div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm mb-4">
+<div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm mb-5">
 
-    <h3 class="text-base font-semibold text-slate-900">
-        Personal Information
-    </h3>
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="text-base font-semibold text-slate-900">
+                Personal Information
+            </h3>
+            <p class="text-xs text-slate-500 mt-1">
+                Required fields must be completed before submission
+            </p>
+        </div>
+    </div>
 
-    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
 
-
-        {{-- Full Name (full width) --}}
         <div class="sm:col-span-2">
-
-            <label class="text-sm font-medium text-slate-700">
-                Full Name
+            <label class="text-xs font-medium text-slate-600">
+                Full Name <span class="text-rose-500">*</span>
             </label>
 
             <input type="text"
                    name="full_name"
                    value="{{ old('full_name', $registration->full_name) }}"
-                   class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900
-                          focus:border-slate-400 focus:ring-2 focus:ring-slate-200
-                          @error('full_name') border-red-300 ring-1 ring-red-200 @enderror"
+                   placeholder="Enter full name"
+                   class="mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900
+                          {{ $errors->has('full_name') ? 'border-rose-400 focus:ring-rose-200' : 'border-slate-300 focus:ring-slate-200' }}
+                          focus:ring-2 focus:outline-none"
                    {{ $isLocked ? 'disabled' : '' }}>
 
             @error('full_name')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
             @enderror
-
         </div>
 
-
-
-        {{-- Course & Year --}}
         <div>
-
-            <label class="text-sm font-medium text-slate-700">
-                Course & Year
+            <label class="text-xs font-medium text-slate-600">
+                Course & Year <span class="text-rose-500">*</span>
             </label>
 
             <input type="text"
                    name="course_and_year"
                    value="{{ old('course_and_year', $registration->course_and_year) }}"
-                   class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900
-                          focus:border-slate-400 focus:ring-2 focus:ring-slate-200
-                          @error('course_and_year') border-red-300 ring-1 ring-red-200 @enderror"
+                   placeholder="Ex: BSIT 3"
+                   class="mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900
+                          {{ $errors->has('course_and_year') ? 'border-rose-400 focus:ring-rose-200' : 'border-slate-300 focus:ring-slate-200' }}
+                          focus:ring-2 focus:outline-none"
                    {{ $isLocked ? 'disabled' : '' }}>
 
             @error('course_and_year')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
             @enderror
-
         </div>
 
-
-
-        {{-- Birthday --}}
         <div>
-
-            <label class="text-sm font-medium text-slate-700">
-                Birthday
+            <label class="text-xs font-medium text-slate-600">
+                Birthday <span class="text-rose-500">*</span>
             </label>
 
             <input type="date"
                    name="birthday"
                    value="{{ old('birthday', optional($registration->birthday)->format('Y-m-d')) }}"
-                   class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900
-                          focus:border-slate-400 focus:ring-2 focus:ring-slate-200
-                          @error('birthday') border-red-300 ring-1 ring-red-200 @enderror"
+                   class="mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900
+                          {{ $errors->has('birthday') ? 'border-rose-400 focus:ring-rose-200' : 'border-slate-300 focus:ring-slate-200' }}
+                          focus:ring-2 focus:outline-none"
                    {{ $isLocked ? 'disabled' : '' }}>
 
             @error('birthday')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
             @enderror
-
         </div>
 
-
-
-        {{-- Age --}}
         <div>
-
-            <label class="text-sm font-medium text-slate-700">
-                Age (optional)
+            <label class="text-xs font-medium text-slate-600">
+                Age <span class="text-rose-500">*</span>
             </label>
 
             <input type="number"
                    name="age"
                    value="{{ old('age', $registration->age) }}"
-                   class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900
-                          focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                   placeholder="Enter age"
+                   class="mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900
+                          {{ $errors->has('age') ? 'border-rose-400 focus:ring-rose-200' : 'border-slate-300 focus:ring-slate-200' }}
+                          focus:ring-2 focus:outline-none"
                    {{ $isLocked ? 'disabled' : '' }}>
 
+            @error('age')
+                <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
+            @enderror
         </div>
 
-
-
-        {{-- Sex --}}
         <div>
-
-            <label class="text-sm font-medium text-slate-700">
-                Sex
+            <label class="text-xs font-medium text-slate-600">
+                Sex <span class="text-rose-500">*</span>
             </label>
 
             <input type="text"
                    name="sex"
                    value="{{ old('sex', $registration->sex) }}"
-                   class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900
-                          focus:border-slate-400 focus:ring-2 focus:ring-slate-200
-                          @error('sex') border-red-300 ring-1 ring-red-200 @enderror"
+                   placeholder="Ex: Male / Female"
+                   class="mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900
+                          {{ $errors->has('sex') ? 'border-rose-400 focus:ring-rose-200' : 'border-slate-300 focus:ring-slate-200' }}
+                          focus:ring-2 focus:outline-none"
                    {{ $isLocked ? 'disabled' : '' }}>
 
             @error('sex')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
             @enderror
-
         </div>
 
-
-
-        {{-- Religion --}}
         <div>
-
-            <label class="text-sm font-medium text-slate-700">
-                Religion
+            <label class="text-xs font-medium text-slate-600">
+                Religion <span class="text-rose-500">*</span>
             </label>
 
             <input type="text"
                    name="religion"
                    value="{{ old('religion', $registration->religion) }}"
-                   class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900
-                          focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                   placeholder="Enter religion"
+                   class="mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900
+                          {{ $errors->has('religion') ? 'border-rose-400 focus:ring-rose-200' : 'border-slate-300 focus:ring-slate-200' }}
+                          focus:ring-2 focus:outline-none"
                    {{ $isLocked ? 'disabled' : '' }}>
 
+            @error('religion')
+                <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
+            @enderror
         </div>
-
 
     </div>
 

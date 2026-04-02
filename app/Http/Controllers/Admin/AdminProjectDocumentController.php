@@ -1223,12 +1223,14 @@ class AdminProjectDocumentController extends Controller
     protected function resolveOrgDocumentRoute(ProjectDocument $document): string
     {
         $map = [
-            'PROJECT_PROPOSAL' => 'org.projects.documents.project-proposal.create',
-            'BUDGET_PROPOSAL' => 'org.projects.documents.budget-proposal.create',
-            'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.travel-form.create',
+            'PROJECT_PROPOSAL' => 'org.projects.documents.combined.create',
+            'BUDGET_PROPOSAL' => 'org.projects.documents.combined.create',
+
+            'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.create',
 
             'SOLICITATION_APPLICATION' => 'org.projects.documents.solicitation.create',
             'SELLING_APPLICATION' => 'org.projects.documents.selling.create',
+
             'REQUEST_TO_PURCHASE' => 'org.projects.documents.request-to-purchase.create',
 
             'FEES_COLLECTION_REPORT' => 'org.projects.documents.fees-collection.create',
@@ -1238,7 +1240,8 @@ class AdminProjectDocumentController extends Controller
 
             'DOCUMENTATION_REPORT' => 'org.projects.documents.documentation-report.create',
             'LIQUIDATION_REPORT' => 'org.projects.documents.liquidation-report.create',
-
+            
+            
             'POSTPONEMENT_NOTICE' => 'org.projects.documents.postponement.create',
             'CANCELLATION_NOTICE' => 'org.projects.documents.cancellation.create',
         ];

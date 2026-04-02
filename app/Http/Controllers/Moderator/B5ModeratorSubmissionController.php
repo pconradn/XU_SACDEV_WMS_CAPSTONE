@@ -216,18 +216,35 @@ class B5ModeratorSubmissionController extends Controller
         $validator = \Validator::make($request->all(), [
             'photo_id' => [$submission->photo_id_path ? 'nullable' : 'required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
 
-            'full_name' => ['required', 'string', 'max:255'],
+            'full_name' => ['required', 'string', 'max:255','regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
             'birthday' => ['required', 'date'],
-            'sex' => ['required', 'string', 'max:20'],
+            'age' => ['required', 'integer', 'min:0', 'max:120','regex:/^\d+$/'],
+            'sex' => ['required', 'string', 'max:20','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'religion' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
-            'university_designation' => ['required', 'string', 'max:255'],
-            'unit_department' => ['required', 'string', 'max:255'],
-            'employment_status' => ['required', 'string', 'max:255'],
-            'years_of_service' => ['required', 'integer', 'min:0', 'max:80'],
+            'university_designation' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'unit_department' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'employment_status' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u',],
+            'years_of_service' => ['required', 'integer', 'min:0', 'max:80','regex:/^\d+$/'],
 
-            'mobile_number' => ['required', 'string', 'max:30'],
+            'mobile_number' => ['required', 'string', 'max:30', 'regex:/^(09|\+639)\d{9}$/'],
             'email' => ['required', 'email', 'max:255'],
-            'city_address' => ['required', 'string'],
+            'landline' => ['nullable', 'string', 'max:30','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'facebook_url' => ['nullable', 'url', 'max:255'],
+            'city_address' => ['required', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+
+            'was_moderator_before' => ['nullable', 'boolean'],
+            'moderated_org_name' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'served_nominating_org_before' => ['nullable', 'boolean'],
+            'served_nominating_org_years' => ['nullable', 'integer', 'min:0', 'max:80'],
+
+            'skills_and_interests' => ['required', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+
+            'leaderships' => ['nullable', 'array'],
+            'leaderships.*.organization_name' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'leaderships.*.position' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'leaderships.*.organization_address' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'leaderships.*.inclusive_years' => ['nullable', 'string', 'max:30'],
         ]);
 
         if ($validator->fails()) {

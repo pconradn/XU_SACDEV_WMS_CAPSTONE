@@ -109,7 +109,7 @@ class PresidentRegistrationController extends Controller
         $validated = $request->validate([
             'photo_id' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
 
-            'full_name' => ['nullable', 'string', 'max:255'],
+            'full_name' => ['nullable', 'string', 'max:255',],
             'course_and_year' => ['nullable', 'string', 'max:255'],
 
             'birthday' => ['nullable', 'date'],
@@ -140,18 +140,18 @@ class PresidentRegistrationController extends Controller
 
             'siblings_count' => ['nullable', 'integer', 'min:0', 'max:30'],
 
-            'high_school_name' => ['required', 'string', 'max:255'],
-            'high_school_address' => ['required', 'string', 'max:255'],
-            'high_school_year_graduated' => ['required', 'string', 'max:10'],
+            'high_school_name' => ['nullable', 'string', 'max:255'],
+            'high_school_address' => ['nullable', 'string', 'max:255'],
+            'high_school_year_graduated' => ['nullable', 'string', 'max:10'],
 
-            'grade_school_name' => ['required', 'string', 'max:255'],
-            'grade_school_address' => ['required', 'string', 'max:255'],
-            'grade_school_year_graduated' => ['required', 'string', 'max:10'],
+            'grade_school_name' => ['nullable', 'string', 'max:255'],
+            'grade_school_address' => ['nullable', 'string', 'max:255'],
+            'grade_school_year_graduated' => ['nullable', 'string', 'max:10'],
 
             'scholarship_name' => ['nullable', 'string', 'max:255'],
             'scholarship_year_granted' => ['nullable', 'string', 'max:10'],
 
-            'skills_and_interests' => ['required', 'string'],
+            'skills_and_interests' => ['nullable', 'string'],
 
             'certified' => ['nullable', 'boolean'],
 
@@ -247,24 +247,75 @@ class PresidentRegistrationController extends Controller
         $validator = \Validator::make($request->all(), [
             'photo_id' => [$registration->photo_id_path ? 'nullable' : 'required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
 
-            'full_name' => ['required', 'string', 'max:255'],
-            'course_and_year' => ['required', 'string', 'max:255'],
+            'full_name' => ['required', 'string', 'max:255','regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
+            'course_and_year' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
             'birthday' => ['required', 'date'],
-            'sex' => ['required', 'string', 'max:20'],
+            'age' => ['required', 'integer', 'min:0', 'max:120','regex:/^\d+$/'],
+            'sex' => ['required', 'string', 'max:20','regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
+            'religion' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
-            'mobile_number' => ['required', 'string', 'max:30'],
+            'mobile_number' => ['required', 'string', 'max:30','regex:/^(09|\+639)\d{9}$/'],
+            'city_landline' => ['required', 'string', 'max:30','regex:/^[A-Za-z0-9\s\-\.\(\)]+$/'],
             'email' => ['required', 'email', 'max:255'],
-            'id_number' => ['required', 'string', 'max:50'],
-            'home_address' => ['required', 'string'],
-            'city_address' => ['required', 'string'],
+            'id_number' => ['required', 'string', 'max:50','regex:/^[A-Za-z0-9\-]+$/'],
+            'provincial_landline' => ['nullable', 'string', 'max:30','regex:/^[A-Za-z0-9\s\-\.\(\)]+$/'],
+            'facebook_url' => ['nullable', 'url', 'max:255'],
+            'home_address' => ['nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'city_address' => ['nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+
+            'father_name' => ['nullable', 'string', 'max:255','regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
+            'father_occupation' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'father_mobile' => ['nullable', 'string', 'max:30','regex:/^(09|\+639)\d{9}$/'],
+
+            'mother_name' => ['nullable', 'string', 'max:255','regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
+            'mother_occupation' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'mother_mobile' => ['nullable', 'string', 'max:30','regex:/^(09|\+639)\d{9}$/'],
+
+            'guardian_name' => ['nullable', 'string', 'max:255','regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
+            'guardian_relationship' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'guardian_mobile' => ['nullable', 'string', 'max:30','regex:/^(09|\+639)\d{9}$/'],
+
+            'siblings_count' => ['nullable', 'integer', 'min:0', 'max:30','regex:/^\d+$/'],
+
+            'high_school_name' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'high_school_address' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'high_school_year_graduated' => ['required', 'string', 'max:10'],
+
+            'grade_school_name' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'grade_school_address' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'grade_school_year_graduated' => ['required', 'string', 'max:10'],
+
+            'scholarship_name' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'scholarship_year_granted' => ['nullable', 'string', 'max:10'],
+
+            'skills_and_interests' => ['required', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+
+            'leaderships' => ['nullable', 'array'],
+            'leaderships.*.organization_name' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'leaderships.*.position' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'leaderships.*.organization_address' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'leaderships.*.inclusive_years' => ['nullable', 'string', 'max:30'],
+
+            'trainings' => ['nullable', 'array'],
+            'trainings.*.seminar_title' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'trainings.*.organizer' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'trainings.*.venue' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'trainings.*.date_from' => ['nullable', 'date'],
+            'trainings.*.date_to' => ['nullable', 'date'],
+
+            'awards' => ['nullable', 'array'],
+            'awards.*.award_name' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'awards.*.award_description' => ['nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'awards.*.conferred_by' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'awards.*.date_received' => ['nullable', 'date'],
 
             'certified' => ['required', Rule::in(['1', 1, true, 'on'])],
         ]);
 
         if ($validator->fails()) {
 
-            // Save as draft instead
+            
             $this->persistDraft($request, $registration, $userId);
 
             return back()

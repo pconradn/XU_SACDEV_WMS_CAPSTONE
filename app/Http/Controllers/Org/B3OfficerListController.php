@@ -267,21 +267,34 @@ class B3OfficerListController extends Controller
             return back()->with('error', 'This form cannot be submitted at its current status.');
         }
 
+        $items = collect($request->input('items', []));
+
+        $hasAnyData = $items->contains(function ($row) {
+            if (!is_array($row)) return false;
+
+            foreach ($row as $v) {
+                if (!is_null($v) && trim((string)$v) !== '') {
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        
         $request->validate([
             'certified' => ['required', Rule::in(['1', 1, true, 'on'])],
 
             'items' => ['nullable', 'array'],
 
-            'items.*.position' => ['required', 'string', 'max:255'],
-            'items.*.position' => ['nullable', 'string', 'max:255'],
-            'items.*.officer_name' => ['nullable', 'string', 'max:255'],
-            'items.*.student_id_number' => ['nullable', 'string', 'max:50'],
-            'items.*.course_and_year' => ['nullable', 'string', 'max:255'],
-            'items.*.mobile_number' => ['nullable', 'string', 'max:30'],
+            'items.*.position' => ['required', 'string', 'max:255', 'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'items.*.officer_name' => ['nullable', 'string', 'max:255', 'regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
+            'items.*.student_id_number' => ['nullable', 'string', 'max:50','regex:/^[A-Za-z0-9\-]+$/'],
+            'items.*.course_and_year' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'items.*.mobile_number' => ['nullable', 'string', 'max:30','regex:/^[0-9+\-\s]+$/'],
 
-            'items.*.first_sem_qpi' => ['nullable', 'numeric', 'min:0', 'max:4'],
-            'items.*.second_sem_qpi' => ['nullable', 'numeric', 'min:0', 'max:4'],
-            'items.*.intersession_qpi' => ['nullable', 'numeric', 'min:0', 'max:4'],
+            'items.*.first_sem_qpi' => ['nullable', 'numeric', 'min:0', 'max:4','regex:/^\d+(\.\d{1,2})?$/'],
+            'items.*.second_sem_qpi' => ['nullable', 'numeric', 'min:0', 'max:4','regex:/^\d+(\.\d{1,2})?$/'],
+            'items.*.intersession_qpi' => ['nullable', 'numeric', 'min:0', 'max:4','regex:/^\d+(\.\d{1,2})?$/'],
 
             'items.*.major_officer_role' => [
                 'nullable',

@@ -333,7 +333,7 @@ abstract class BaseProjectDocumentController extends Controller
             $user = getOsaApprover();
 
             if (!$user) {
-                return User::where('system_role', 'sacdev_admin')
+                return User::where('system_role', 'osa_admin')
                     ->firstOrFail()
                     ->id;
             }
@@ -346,7 +346,12 @@ abstract class BaseProjectDocumentController extends Controller
             ->where('school_year_id', $project->school_year_id)
             ->where('role', $role)
             ->whereNull('archived_at')
-            ->firstOrFail();
+            ->orderByDesc('id') 
+            ->first();
+
+        if (!$member || !$member->user_id) {
+            abort(422, "Approval flow error: No active {$role} assigned for this organization. Please contact SACDEV admin to update organization roles.");
+        }
 
         return $member->user_id;
     }
@@ -679,22 +684,25 @@ abstract class BaseProjectDocumentController extends Controller
     protected function resolveOrgDocumentRoute(ProjectDocument $document): string
     {
         $map = [
-            'PROJECT_PROPOSAL' => 'org.projects.documents.project-proposal.create',
-            'BUDGET_PROPOSAL' => 'org.projects.documents.budget-proposal.create',
-            'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.travel-form.create',
+            'PROJECT_PROPOSAL' => 'org.projects.documents.combined.create',
+            'BUDGET_PROPOSAL' => 'org.projects.documents.combined.create',
+
+            'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.create',
 
             'SOLICITATION_APPLICATION' => 'org.projects.documents.solicitation.create',
             'SELLING_APPLICATION' => 'org.projects.documents.selling.create',
+
             'REQUEST_TO_PURCHASE' => 'org.projects.documents.request-to-purchase.create',
 
             'FEES_COLLECTION_REPORT' => 'org.projects.documents.fees-collection.create',
-            'SELLING_ACTIVITY_REPORT' => 'org.projects.documents.selling-report.create',
-            'SOLICITATION_SPONSORSHIP_REPORT' => 'org.projects.documents.solicitation-report.create',
-            'TICKET_SELLING_REPORT' => 'org.projects.documents.ticket-selling.create',
+            'SELLING_ACTIVITY_REPORT' => 'org.projects.documents.selling-activity-report.create',
+            'SOLICITATION_SPONSORSHIP_REPORT' => 'org.projects.documents.solicitation-sponsorship-report.create',
+            'TICKET_SELLING_REPORT' => 'org.projects.documents.ticket-selling-report.create',
 
-            'DOCUMENTATION_REPORT' => 'org.projects.documents.documentation.create',
-            'LIQUIDATION_REPORT' => 'org.projects.documents.liquidation.create',
-
+            'DOCUMENTATION_REPORT' => 'org.projects.documents.documentation-report.create',
+            'LIQUIDATION_REPORT' => 'org.projects.documents.liquidation-report.create',
+            
+            
             'POSTPONEMENT_NOTICE' => 'org.projects.documents.postponement.create',
             'CANCELLATION_NOTICE' => 'org.projects.documents.cancellation.create',
         ];

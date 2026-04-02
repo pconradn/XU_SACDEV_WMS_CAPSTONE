@@ -1,8 +1,11 @@
 <?php
 
+
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Auth\Access\AuthorizationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -34,6 +37,26 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \App\Http\Middleware\CheckPermission::class,
         ]);
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
-        //
+
+
+    ->withExceptions(function (Exceptions $exceptions) {
+
+        // Handle AuthorizationException (policies, gates, middleware)
+        $exceptions->render(function (AuthorizationException $e, $request) {
+            return response()->view('errors.403', [
+                'exception' => $e
+            ], 403);
+        });
+
+        // Handle abort(403)
+        $exceptions->render(function (HttpException $e, $request) {
+            if ($e->getStatusCode() === 403) {
+                return response()->view('errors.403', [
+                    'exception' => $e
+                ], 403);
+            }
+        });
+
     })->create();
+        //
+

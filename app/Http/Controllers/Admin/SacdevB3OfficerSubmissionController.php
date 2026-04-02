@@ -111,7 +111,13 @@ class SacdevB3OfficerSubmissionController extends Controller
     public function returnToOrg(Request $request, OfficerSubmission $submission)
     {
         $data = $request->validate([
-            'sacdev_remarks' => ['required', 'string', 'min:3'],
+            'sacdev_remarks' => [
+                'required',
+                'string',
+                'min:3',
+                'max:5000',
+                'regex:/^[\pL\pN\s\-\.\,\(\)\'\"\/]+$/u',
+            ],
         ]);
 
         $orgId = (int) $submission->organization_id;
@@ -302,38 +308,44 @@ class SacdevB3OfficerSubmissionController extends Controller
                 }
 
 
-                $role = $item->major_officer_role ?? 'officer';
+                $role = $item->major_officer_role;
 
+               
                 OrgMembership::where('organization_id', $orgId)
                     ->where('school_year_id', $syId)
-                    ->where('role', $role)
-                    ->delete();
+                    ->where('officer_entry_id', $entry->id)
+                    ->whereNull('archived_at')
+                    ->where(function ($q) {
+                        $q->whereNull('role')
+                        ->orWhereNotIn('role', ['president', 'treasurer', 'finance_officer']);
+                    })
+                    ->update([
+                        'archived_at' => now(),
+                    ]);
 
-                $membership = OrgMembership::create([
-                    'organization_id' => $orgId,
-                    'school_year_id' => $syId,
-                    'officer_entry_id' => $entry->id,
-                    'user_id' => null,
-                    'role' => $role,
-                    'is_under_probation' => $isUnderProbation,
-                ]);
 
-                if (!$membership) {
+                
+                $majorRoles = ['president', 'treasurer', 'finance_officer'];
 
-                    $membership = new OrgMembership();
+                if ($role && in_array($role, $majorRoles)) {
 
-                    $membership->organization_id = $orgId;
-                    $membership->school_year_id = $syId;
-                    $membership->officer_entry_id = $entry->id;
+                   
+                    if ($role !== 'president') {
+                        OrgMembership::where('organization_id', $orgId)
+                            ->where('school_year_id', $syId)
+                            ->where('role', $role)
+                            ->delete();
+                    }
 
-                    // user_id intentionally NULL
-                    $membership->user_id = null;
+                    OrgMembership::create([
+                        'organization_id' => $orgId,
+                        'school_year_id' => $syId,
+                        'officer_entry_id' => $entry->id,
+                        'user_id' => null,
+                        'role' => $role,
+                        'is_under_probation' => $isUnderProbation,
+                    ]);
                 }
-
-                $membership->role = $item->major_officer_role ?? 'officer';
-                $membership->is_under_probation = $isUnderProbation;
-
-                $membership->save();
 
 
 
@@ -348,8 +360,13 @@ class SacdevB3OfficerSubmissionController extends Controller
                     $entry->user_id = $user->id;
                     $entry->save();
 
-                    $membership->user_id = $user->id;
-                    $membership->save();
+                    OrgMembership::where('organization_id', $orgId)
+                        ->where('school_year_id', $syId)
+                        ->where('officer_entry_id', $entry->id)
+                        ->whereIn('role', ['treasurer', 'finance_officer'])
+                        ->update([
+                            'user_id' => $user->id,
+                        ]);
 
                     $roleLabel = $item->major_officer_role ?? 'officer';
 

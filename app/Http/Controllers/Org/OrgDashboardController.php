@@ -84,10 +84,12 @@ class OrgDashboardController extends Controller
         $approvalTasks = collect();
 
         if ($currentOrg) {
+
             $approvalTasks = ProjectDocument::with([
                     'project',
                     'signatures',
                     'formType',
+
                 ])
                 ->whereHas('project', function ($q) use ($selectedSyId, $currentOrg) {
                     $q->where('school_year_id', $selectedSyId)
@@ -99,9 +101,11 @@ class OrgDashboardController extends Controller
 
                     return $pending
                         && $pending->user_id === $user->id
-                        && $pending->role !== 'project_head'; // 🔥 THIS LINE FIXES IT
+                        && $pending->role !== 'project_head';
                 })
                 ->values();
+
+
 
             $approvalTasks = $approvalTasks->map(function ($task) {
                 $task->type = 'approval';
@@ -246,23 +250,26 @@ class OrgDashboardController extends Controller
                     'type' => 'rereg_moderator_review',
                     'form_name' => 'Strategic Plan Review',
                     'status' => $sp->status,
-                    'link' => route('org.moderator.strategic_plans.show '), // 🔥 adjust if needed
+                    'link' => route('org.moderator.strategic_plans.show', $sp->id), 
                 ]);
             }
 
 
-            $moderator = ModeratorSubmission::where('organization_id', $orgId)
-                ->where('target_school_year_id', $syId)
-                ->where('moderator_user_id', $user->id)
-                ->first();
+            if ($roles->contains('moderator')) {
 
-            if ($moderator && in_array($moderator->status, ['draft', 'returned'])) {
-                $reregTasks->push((object)[
-                    'type' => 'rereg_moderator',
-                    'form_name' => 'Moderator Registration',
-                    'status' => $moderator->status,
-                    'link' => route('org.moderator.rereg.b5.edit'),
-                ]);
+                $moderator = ModeratorSubmission::where('organization_id', $orgId)
+                    ->where('target_school_year_id', $syId)
+                    ->where('moderator_user_id', $user->id)
+                    ->first();
+
+                if (!$moderator || in_array($moderator->status, ['draft', 'returned'])) {
+                    $reregTasks->push((object)[
+                        'type' => 'rereg_moderator',
+                        'form_name' => 'Moderator Registration',
+                        'status' => $moderator?->status ?? 'not_started',
+                        'link' => route('org.moderator.rereg.b5.edit'),
+                    ]);
+                }
             }
         }       
 
@@ -351,6 +358,19 @@ class OrgDashboardController extends Controller
                 ->count();
         }
 
+        $projectsWithoutHeadCount = 0;
+
+        if ($currentOrg) {
+            $projectsWithoutHeadCount = Project::query()
+                ->where('organization_id', $currentOrg->id)
+                ->where('school_year_id', $selectedSyId)
+                ->whereDoesntHave('assignments', function ($q) {
+                    $q->whereNull('archived_at')
+                    ->where('assignment_role', 'project_head');
+                })
+                ->count();
+        }
+
         return view('portals.org-dashboard', [
             'activeSy' => $activeSy,
             'selectedSy' => $selectedSy,
@@ -368,6 +388,8 @@ class OrgDashboardController extends Controller
 
             'projectCount' => $projectCount,
             'documentCount' => $documentCount,
+
+            'projectsWithoutHeadCount' => $projectsWithoutHeadCount,
         ]);
     }
 

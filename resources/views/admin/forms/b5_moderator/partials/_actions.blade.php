@@ -60,13 +60,25 @@
 
                     @if($submission->status === 'approved_by_sacdev')
 
-                        <button type="button"
-                                @click="openRevert = true"
-                                :disabled="loading"
-                                class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 
-                                       hover:bg-slate-50 transition">
-                            Revert Approval
-                        </button>
+                    {{-- NO ACTION STATE --}}
+                    <div class="fixed bottom-0 left-0 right-0 z-40 
+                                border-t border-slate-200 
+                                bg-slate-50
+                                pb-[env(safe-area-inset-bottom)]">
+
+                        <div class="max-w-7xl mx-auto px-6 py-3 text-center">
+
+                            <div class="text-sm font-medium text-slate-700">
+                                No actions available
+                            </div>
+
+                            <div class="text-xs text-slate-500 mt-1">
+                                This submission is not in a reviewable state.
+                            </div>
+
+                        </div>
+
+                    </div>
 
                     @endif
 

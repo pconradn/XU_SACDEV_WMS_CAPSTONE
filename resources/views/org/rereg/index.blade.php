@@ -36,21 +36,40 @@
         {{-- Already activated --}}
         @if($isActivated)
             <div class="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">
-                <div class="flex items-start justify-between gap-4">
+                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
+                    {{-- LEFT --}}
                     <div>
                         <div class="text-sm font-semibold">
-                            Already Registered for this School Year
+                            Registration Complete
                         </div>
 
                         <div class="mt-1 text-sm text-emerald-800/90">
-                            This organization already has an activation record for the selected school year.
+                            Your organization is now officially registered for this school year.
+                        </div>
+
+                        <div class="mt-2 text-sm text-emerald-800/90">
+                            You may now proceed to assign project heads and begin submitting project forms.
                         </div>
                     </div>
 
-                    <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-800">
-                        Registered
-                    </span>
+                    {{-- RIGHT --}}
+                    <div class="flex items-center gap-2">
+
+                        <a href="{{ route('org.projects.index') }}"
+                        class="inline-flex items-center justify-center gap-2 rounded-lg 
+                                bg-emerald-600 px-4 py-2 text-sm font-semibold text-white 
+                                hover:bg-emerald-700 transition">
+
+                            Go to Projects
+
+                        </a>
+
+                        <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-800">
+                            Registered
+                        </span>
+
+                    </div>
 
                 </div>
             </div>

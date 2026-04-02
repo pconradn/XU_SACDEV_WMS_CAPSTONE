@@ -82,105 +82,106 @@
 
         @include('admin.strategic_plans.partials._project_modal')
 
-        <div x-show="openApprove" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div x-show="openApprove" x-cloak
+            x-transition
+            class="fixed inset-0 z-50 flex items-center justify-center p-4">
 
+            {{-- BACKDROP --}}
             <div class="absolute inset-0 bg-slate-900/50" @click="openApprove=false"></div>
 
+            {{-- MODAL --}}
             <div class="relative w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-xl">
 
-                {{-- Header --}}
+                {{-- HEADER --}}
                 <div class="px-5 py-4 border-b border-slate-200">
                     <h3 class="text-lg font-semibold text-slate-900">
                         Approve Strategic Plan
                     </h3>
 
-                    <p class="text-sm text-slate-600 mt-1">
-                        Please review the effects of approval below.
+                    <p class="text-sm text-slate-500 mt-1">
+                        This action will finalize the strategic plan and generate project records.
                     </p>
                 </div>
 
-                {{-- Effects --}}
-                <div class="p-5 space-y-4">
+                {{-- BODY --}}
+                <div class="p-5 space-y-5">
 
-                    <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+                    {{-- ICON + MESSAGE --}}
+                    <div class="flex items-start gap-3">
 
-                        <div class="font-semibold mb-2">
-                            This approval will automatically:
+                        <div class="mt-1 text-emerald-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-slate-700">
+                                Are you sure you want to approve this Strategic Plan?
+                            </p>
+
+                            <p class="text-sm text-slate-500 mt-2">
+                                This will create official project records and enable workflow tracking in the system.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    {{-- EFFECTS --}}
+                    <div class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+
+                        <div class="font-semibold text-slate-800 mb-2">
+                            What happens after approval
                         </div>
 
                         <ul class="list-disc pl-5 space-y-1">
-
-                            <li>
-                                Create official projects for this organization and school year
-                            </li>
-
-                            <li>
-                                Allow the president to assign project heads immediately
-                            </li>
-
-                            <li>
-                                Enable project tracking and workflow in the system
-                            </li>
-
-                            <li>
-                                Lock the strategic plan as an approved institutional reference
-                            </li>
-
+                            <li>Projects will be created for this organization and school year</li>
+                            <li>The President can assign Project Heads immediately</li>
+                            <li>Project workflows will be enabled</li>
+                            <li>The Strategic Plan becomes a locked reference document</li>
                         </ul>
 
                     </div>
 
-                    <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+
+                    {{-- IMPORTANT --}}
+                    <div class="rounded-lg border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900">
 
                         <div class="font-semibold mb-1">
-                            Important:
+                            Important
                         </div>
 
                         <ul class="list-disc pl-5 space-y-1">
-
-                            <li>
-                                Project heads can be assigned after approval
-                            </li>
-
-                            <li>
-                                Project submissions remain restricted until organization registration is completed
-                            </li>
-
-                            <li>
-                                This action cannot be undone
-                            </li>
-
+                            <li>Project submissions remain restricted until organization registration is completed</li>
+                            <li>This action cannot be undone</li>
                         </ul>
 
                     </div>
 
-                    <form method="POST"
-                        action="{{ route('admin.strategic_plans.approve', $submission) }}"
-                        class="space-y-3">
 
-                        @csrf
+                    {{-- ACTIONS --}}
+                    <div class="flex justify-end gap-2 pt-2">
 
-                        <textarea name="remarks"
-                                rows="3"
-                                class="w-full rounded-lg border-slate-300 text-sm"
-                                placeholder="Optional approval note..."></textarea>
+                        <button type="button"
+                                @click="openApprove=false"
+                                class="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                            Cancel
+                        </button>
 
-                        <div class="flex justify-end gap-2">
-
-                            <button type="button"
-                                    @click="openApprove=false"
-                                    class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">
-                                Cancel
-                            </button>
+                        <form method="POST"
+                            action="{{ route('admin.strategic_plans.approve', $submission) }}">
+                            @csrf
 
                             <button type="submit"
                                     class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
-                                Confirm Approval
+                                Approve Strategic Plan
                             </button>
+                        </form>
 
-                        </div>
-
-                    </form>
+                    </div>
 
                 </div>
 

@@ -95,6 +95,45 @@
                 {{-- ================= RIGHT SIDEBAR ================= --}}
                 <div class="space-y-6">
 
+
+
+                    @if($roles->contains('president') && $projectsWithoutHeadCount > 0)
+
+                    <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+
+                        <div class="flex items-center justify-between gap-4">
+
+                            {{-- LEFT --}}
+                            <div>
+                                <div class="text-sm font-semibold text-amber-900">
+                                    Project Setup Required
+                                </div>
+
+                                <div class="mt-1 text-sm text-amber-800/90">
+                                    {{ $projectsWithoutHeadCount }} project{{ $projectsWithoutHeadCount > 1 ? 's' : '' }} still need a project head assigned.
+                                </div>
+
+                                <div class="mt-1 text-xs text-amber-700">
+                                    Assign project heads so members can begin submitting project forms.
+                                </div>
+                            </div>
+
+                            {{-- RIGHT --}}
+                            <a href="{{ route('org.projects.index') }}"
+                            class="inline-flex items-center justify-center rounded-lg 
+                                    bg-amber-600 px-4 py-2 text-sm font-semibold text-white 
+                                    hover:bg-amber-700 transition">
+
+                                Manage Projects
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                    @endif
+
                     @include('portals.partials._org_dashboard_assigned_projects')
 
                     @php

@@ -1,4 +1,16 @@
 <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+@php
+    $actorLabel = 'Member';
+
+    if ($roles->contains('project_head')) {
+        $actorLabel = 'Project Head';
+    } elseif ($roles->contains('moderator')) {
+        $actorLabel = 'Moderator';
+    } elseif ($roles->contains('president')) {
+        $actorLabel = 'President';
+    }
+@endphp
+
 
     {{-- HEADER --}}
     <div class="px-5 py-4 border-b flex items-center justify-between">
@@ -93,7 +105,7 @@
                             </span>
 
                             <span class="text-xs font-semibold text-amber-700">
-                                • Action needed (Project Head)
+                                • Action needed ({{ $actorLabel }})
                             </span>
 
                         @endif

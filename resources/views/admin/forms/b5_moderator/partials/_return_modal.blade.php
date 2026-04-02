@@ -21,24 +21,31 @@
             <form method="POST"
                   action="{{ route('admin.moderator_submissions.return', $submission) }}"
                   id="b5ReturnForm"
-                  class="px-6 py-5 space-y-4"
-                  x-data="{ quillInstance: null }"
-                  x-init="$nextTick(() => {
-                      quillInstance = initQuillEditor('b5-return-editor');
-                  })">
+                  class="px-6 py-5 space-y-5">
 
                 @csrf
 
-                {{-- LABEL --}}
+                {{-- CONTEXT --}}
+                <p class="text-sm text-slate-600">
+                    The moderator will be able to edit and resubmit after addressing your remarks.
+                </p>
+
+                {{-- WARNING --}}
+                <div class="rounded-lg border border-rose-200 bg-rose-50/70 p-3 text-sm text-rose-900">
+                    This action cannot be undone.
+                </div>
+
+                {{-- TEXTAREA (REPLACED QUILL) --}}
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">
-                        Remarks <span class="text-red-500">*</span>
+                        Remarks <span class="text-rose-500">*</span>
                     </label>
 
-                    <div id="b5-return-editor"
-                         class="bg-white border border-slate-300 rounded-lg min-h-[180px]"></div>
-
-                    <input type="hidden" name="sacdev_remarks" id="b5ReturnRemarks">
+                    <textarea name="sacdev_remarks"
+                              rows="6"
+                              required
+                              class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
+                              placeholder="Enter required changes..."></textarea>
 
                     <p class="mt-1 text-xs text-slate-500">
                         Be specific about what needs to be corrected.
@@ -55,7 +62,7 @@
                     </button>
 
                     <button type="submit"
-                            class="px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition">
+                            class="px-4 py-2 text-sm font-semibold text-white bg-rose-600 rounded-lg hover:bg-rose-700 transition">
                         Return Submission
                     </button>
 
@@ -66,29 +73,3 @@
         </div>
     </div>
 </template>
-
-<script>
-document.addEventListener('submit', function (e) {
-
-    if (e.target.id === 'b5ReturnForm') {
-
-        const editor = document.querySelector('#b5-return-editor .ql-editor');
-        const input = document.getElementById('b5ReturnRemarks');
-
-        if (editor && input) {
-            input.value = editor.innerHTML;
-        }
-
-        const text = input.value
-            .replace(/<(.|\n)*?>/g, '')
-            .replace(/&nbsp;/g, ' ')
-            .trim();
-
-        if (!text) {
-            e.preventDefault();
-            alert('Please enter remarks.');
-        }
-    }
-
-});
-</script>

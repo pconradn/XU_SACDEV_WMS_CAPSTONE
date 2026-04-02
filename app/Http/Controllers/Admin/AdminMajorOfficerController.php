@@ -171,7 +171,7 @@ class AdminMajorOfficerController extends Controller
 
 
            
-            if ($current) {
+            if ($current && $current->id && $current->id !== $newEntry->id) {
                 $current->update([
                     'major_officer_role' => null,
                     'is_major_officer' => false,
@@ -181,7 +181,7 @@ class AdminMajorOfficerController extends Controller
                     ->where('organization_id', $organization->id)
                     ->where('school_year_id', $syId)
                     ->where('role', $role)
-                    ->where('user_id', $current->user_id)
+                    ->where('officer_entry_id', $current->id)
                     ->whereNull('archived_at')
                     ->update(['archived_at' => now()]);
             }
@@ -207,19 +207,26 @@ class AdminMajorOfficerController extends Controller
                 $newEntry->save();
             }
 
+            
             // Transfer pending signatures from old officer to new officer
-            if ($current && $current->user_id) {
-
+            if ($current && $current->id !== $newEntry->id) {
                 DB::table('project_document_signatures')
-                    ->where('user_id', $current->user_id)
                     ->where('role', $role)
                     ->where('status', 'pending')
+                    ->where('user_id', $current->user_id)
                     ->update([
                         'user_id' => $newEntry->user_id,
                         'updated_at' => now(),
                     ]);
             }
             
+            OrgMembership::query()
+                ->where('organization_id', $organization->id)
+                ->where('school_year_id', $syId)
+                ->where('role', $role)
+                ->whereNull('archived_at')
+                ->update(['archived_at' => now()]);
+
             AccountProvisioner::ensureMembership(
                 (int) $newEntry->user_id,
                 (int) $organization->id,
@@ -278,10 +285,17 @@ class AdminMajorOfficerController extends Controller
             // clear all major roles first
             OfficerEntry::where('organization_id', $organization->id)
                 ->where('school_year_id', $syId)
+                ->whereIn('major_officer_role', ['president','vice_president','treasurer','finance_officer'])
                 ->update([
                     'major_officer_role' => null,
                     'is_major_officer' => false,
                 ]);
+
+            OrgMembership::where('organization_id', $organization->id)
+                ->where('school_year_id', $syId)
+                ->whereIn('role', ['president','vice_president','treasurer','finance_officer'])
+                ->whereNull('archived_at')
+                ->update(['archived_at' => now()]);
 
             foreach ($data['roles'] ?? [] as $role => $officerId) {
 
@@ -296,6 +310,17 @@ class AdminMajorOfficerController extends Controller
                     'major_officer_role' => $role,
                     'is_major_officer' => true,
                 ]);
+
+                // sync membership
+                if (!$entry->user_id) {
+                    [$user, $tempPassword] = AccountProvisioner::provisionUser(
+                        $entry->full_name,
+                        $entry->email
+                    );
+
+                    $entry->user_id = $user->id;
+                    $entry->save();
+                }
 
                 // sync membership
                 AccountProvisioner::ensureMembership(
