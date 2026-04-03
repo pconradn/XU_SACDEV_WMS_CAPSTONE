@@ -67,7 +67,7 @@ class SolicitationApplicationController extends BaseProjectDocumentController
             'duration_from' => ['required','date'],
             'duration_to' => ['required','date'],
 
-            'target_amount' => ['nullable','numeric','regex:/^\d+$/'],
+            'target_amount' => ['nullable','numeric',],
             'desired_letter_count' => ['required','integer','regex:/^\d+$/'],
 
             'letter_draft_link' => ['nullable','url','max:500'],
@@ -138,7 +138,7 @@ class SolicitationApplicationController extends BaseProjectDocumentController
             return $this->submit($project);
         }
 
-        return back()->with('success', 'Solicitation application submitted successfully.');
+        return back()->with('success', 'Solicitation application saved as draft.');
     }
 
     public function submit(Project $project)

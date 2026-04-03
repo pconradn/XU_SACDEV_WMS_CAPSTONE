@@ -35,45 +35,7 @@
 @endphp
 
 {{-- ================= STATUS CARD ================= --}}
-<div class="rounded-2xl border {{ $style }} px-5 py-4 shadow-sm">
-
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-
-        <div class="font-semibold tracking-wide">
-            SOLICITATION REPORT STATUS:
-            <span class="ml-1 uppercase">{{ $status }}</span>
-        </div>
-
-        @if($status === 'submitted' && $currentApprover)
-            <div class="text-xs font-medium">
-                Awaiting:
-                <span class="capitalize font-semibold">
-                    {{ str_replace('_',' ', $currentApprover->role) }}
-                </span>
-            </div>
-        @endif
-
-        @if(in_array($status,['approved','approved_by_sacdev']))
-            <div class="text-xs font-medium">
-                Fully approved and finalized.
-            </div>
-        @endif
-
-        @if($status === 'draft')
-            <div class="text-xs">
-                This form is still editable.
-            </div>
-        @endif
-
-        @if($status === 'returned')
-            <div class="text-xs font-medium">
-                Returned for revision. Please update and resubmit.
-            </div>
-        @endif
-
-    </div>
-
-</div>
+@include('components.document.status-bar', ['document' => $document])
 
 
 {{-- ================= HEADER ================= --}}
@@ -101,24 +63,21 @@
     action="{{ route('org.projects.documents.solicitation-sponsorship-report.store', $project) }}"
 >
 @csrf
-
+<input type="hidden" name="action" id="formAction" value="draft">
 @if($isReadOnly)
 <fieldset disabled class="space-y-6">
 @endif
 
 <div class="grid gap-6">
 
-    {{-- ACTIVITY INFO --}}
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
-        @include('org.projects.documents.solicitation-sponsorship-report.partials._activity-info')
-    </div>
 
-    {{-- ITEMS TABLE --}}
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+    @include('org.projects.documents.solicitation-sponsorship-report.partials._activity-info')
 
-        @include('org.projects.documents.solicitation-sponsorship-report.partials._items-table')
 
-    </div>
+
+
+    @include('org.projects.documents.solicitation-sponsorship-report.partials._items-table')
+
 
 </div>
 

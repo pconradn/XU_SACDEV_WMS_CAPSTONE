@@ -710,6 +710,7 @@ class AdminProjectDocumentController extends Controller
         $offcampus = $document->offCampusActivity;
         $participants = $offcampus?->participants ?? collect();
         $solicitation = $document->solicitationData;
+        $purchaseSourceOfFunds = $document->requestToPurchase;
 
         $view = match ($formType) {
             'PROJECT_PROPOSAL' => 'admin.projects.documents.project-proposal.print',
@@ -718,6 +719,10 @@ class AdminProjectDocumentController extends Controller
             'SOLICITATION_APPLICATION' => 'admin.projects.documents.solicitation.print',
             'SELLING_APPLICATION' => 'admin.projects.documents.selling.print',
             'LIQUIDATION_REPORT' => 'admin.projects.documents.liquidation.print',
+            'REQUEST_TO_PURCHASE' => 'admin.projects.documents.request-to-purchase.print',
+            'SOLICITATION_SPONSORSHIP_REPORT' => 'admin.projects.documents.solicitation-report.print',
+            'SELLING_ACTIVITY_REPORT' => 'admin.projects.documents.selling-report.print',
+            'TICKET_SELLING_REPORT' => 'admin.projects.documents.ticket-report.print',
             default => abort(404),
         };
 
@@ -729,6 +734,7 @@ class AdminProjectDocumentController extends Controller
             'offcampus'=> $offcampus,
             'participants'=> $participants,
             'solicitation' => $solicitation,
+            'purchaseSourceOfFunds' => $purchaseSourceOfFunds,
 
         ]);
     }

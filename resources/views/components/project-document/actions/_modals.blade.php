@@ -169,6 +169,57 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
 
     </div>
 
+@elseif($isSelling && $isProjectHead)
+
+<div id="submitModal"
+     class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden">
+
+        {{-- HEADER --}}
+        <div class="border-b px-5 py-3">
+            <h2 class="text-sm font-semibold text-slate-900">
+                Selling Application Agreement
+            </h2>
+        </div>
+
+        {{-- BODY --}}
+        <div class="px-5 py-4 space-y-3 text-sm text-slate-700 leading-relaxed">
+
+            {{-- HIGHLIGHT --}}
+            <div class="mt-2 border border-amber-200 bg-amber-50 rounded-lg p-3 text-xs text-amber-800">
+                We understand that there are rules and regulations which govern selling activities in the University. Failure to abide by them and the approved terms and conditions in this form entails sanctions for the organization and disciplinary measures for the students involved. 
+            </div>
+
+        </div>
+
+        {{-- FOOTER --}}
+        <div class="border-t px-5 py-3 flex justify-end gap-2">
+
+            <button type="button"
+                    onclick="closeModal('submitModal')"
+                    class="px-4 py-2 text-xs border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100">
+                Cancel
+            </button>
+
+            <button type="submit"
+                    form="proposalForm"
+                    name="action"
+                    value="submit"
+                    class="px-4 py-2 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                Agree and Submit
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+
 @elseif($isOffCampus && $isProjectHead)
 
 <div id="submitModal"
@@ -667,10 +718,151 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
 </div>
 
 
+@if($isSolicitation && ($isPresident || $isModerator))
+
+<div id="approveModal" class="modal-overlay">
+    <div class="modal">
+
+        <h3 class="text-sm font-semibold mb-2 text-green-600">
+            Approve Document
+        </h3>
+
+        <p class="text-xs text-slate-600 mb-3">
+            This action will approve the document and move it to the next approver.
+            You can only retract this action if the next approver is still pending.
+        </p>
+
+        {{-- ROLE-BASED AGREEMENT --}}
+        @if($isPresident)
+            <div class="mb-4 border border-blue-200 bg-blue-50 rounded-lg p-3 text-xs text-blue-800 leading-relaxed">
+                We understand that there are rules and regulations which govern solicitation activities using the name of the University. Failure to abide by them and the approved terms and conditions of this form entails sanctions for the organization and disciplinary measures for the students involved. 
+            </div>
+        @elseif($isModerator)
+            <div class="mb-4 border border-indigo-200 bg-indigo-50 rounded-lg p-3 text-xs text-indigo-800 leading-relaxed">
+                We understand that there are rules and regulations which govern solicitation activities using the name of the University. Failure to abide by them and the approved terms and conditions of this form entails sanctions for the organization and disciplinary measures for the students involved. 
+            </div>
+        @endif
+
+        @if($routePrefix || $isAdmin)
+
+            <form method="POST"
+                onsubmit="lockButton(this.querySelector('button[type=submit]'))"
+                action="{{ $isAdmin
+                    ? route('admin.projects.documents.approve', [$project, $formCode])
+                    : route("org.projects.documents.$routePrefix.approve", $project) }}">
+
+                @csrf
+
+                <button class="w-full mb-2 px-4 py-2 bg-green-600 text-white rounded-lg text-xs">
+                    Confirm Approval
+                </button>
+
+            </form>
+
+        @else
+            <div class="text-xs text-red-500">
+                ⚠ Invalid document route configuration.
+            </div>
+        @endif
 
 
 
-@if($isOffCampus && ($isPresident || $isModerator || $isAdmin))
+        <button type="button"
+                onclick="closeModal('approveModal')"
+                class="w-full text-xs text-slate-500 mt-1">
+            Cancel
+        </button>
+
+    </div>
+</div>
+
+
+
+@elseif($isSelling && ($isPresident || $isModerator))
+
+<div id="approveModal" class="modal-overlay">
+    <div class="modal">
+
+        <h3 class="text-sm font-semibold mb-2 text-green-600">
+            Approve Document
+        </h3>
+
+        <p class="text-xs text-slate-600 mb-3">
+            This action will approve the document and move it to the next approver.
+            You can only retract this action if the next approver is still pending.
+        </p>
+
+        {{-- ROLE-BASED AGREEMENT --}}
+        @if($isPresident)
+            <div class="mb-4 border border-blue-200 bg-blue-50 rounded-lg p-3 text-xs text-blue-800 leading-relaxed">
+                We understand that there are rules and regulations which govern selling activities in the University. Failure to abide by them and the approved terms and conditions in this form entails sanctions for the organization and disciplinary measures for the students involved. 
+            </div>
+        @elseif($isModerator)
+            <div class="mb-4 border border-indigo-200 bg-indigo-50 rounded-lg p-3 text-xs text-indigo-800 leading-relaxed">
+                We understand that there are rules and regulations which govern selling activities in the University. Failure to abide by them and the approved terms and conditions in this form entails sanctions for the organization and disciplinary measures for the students involved. 
+            </div>
+
+        @endif
+
+
+        @if(!empty($isCombined))
+
+            <form method="POST"
+                  onsubmit="lockButton(this.querySelector('button[type=submit]'))"
+                  action="{{ $isAdmin
+                        ? route('admin.projects.documents.combined-proposal.approve', $project)
+                        : route('org.projects.documents.combined-proposal.approve', $project) }}">
+
+                @csrf
+
+                <button class="w-full mb-2 px-4 py-2 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700">
+                    Confirm Approval
+                </button>
+
+            </form>
+
+        @elseif($routePrefix || $isAdmin)
+
+            <form method="POST"
+                  onsubmit="lockButton(this.querySelector('button[type=submit]'))"
+                  action="{{ $isAdmin
+                        ? route('admin.projects.documents.approve', [$project, $formCode])
+                        : route("org.projects.documents.$routePrefix.approve", $project) }}">
+
+                @csrf
+
+                <button class="w-full mb-2 px-4 py-2 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700">
+                    Confirm Approval
+                </button>
+
+            </form>
+
+        @else
+            <div class="text-xs text-red-500">
+                Invalid document route configuration.
+            </div>
+        @endif
+
+        <button type="button"
+                onclick="closeModal('approveModal')"
+                class="w-full text-xs text-slate-500 mt-1">
+            Cancel
+        </button>
+
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+@elseif($isOffCampus && ($isPresident || $isModerator || $isAdmin))
 
 <div id="approveModal" class="modal-overlay">
     <div class="modal">
@@ -746,9 +938,6 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
 
     </div>
 </div>
-
-
-
 
 @elseif($isFeesCollection && $isAdmin)
 

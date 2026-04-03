@@ -80,7 +80,7 @@ class SellingApplicationController extends BaseProjectDocumentController
     public function store(Request $request, Project $project)
     {
 
-        $request->validate([
+        $validator = \Validator::make($request->all(), [
 
             'activity_name' => ['required','string','max:255'],
             'purpose' => ['required','string'],
@@ -93,9 +93,18 @@ class SellingApplicationController extends BaseProjectDocumentController
             'items.*.quantity' => ['required','integer'],
             'items.*.particulars' => ['required','string','max:255'],
             'items.*.selling_price' => ['required','numeric'],
-            //'items.*.remarks' => ['nullable','string','max:255'],
 
         ]);
+
+        if ($validator->fails()) {
+
+            $this->getOrCreateDocument($project, 'SELLING_APPLICATION');
+
+            return back()
+                ->with('warning', 'Form has errors. Saved as draft instead.')
+                ->withErrors($validator)
+                ->withInput();
+        }
 
 
         $document = $this->getOrCreateDocument($project, 'SELLING_APPLICATION');
@@ -162,9 +171,7 @@ class SellingApplicationController extends BaseProjectDocumentController
             return $this->submit($project);
         }
 
-        return redirect()
-            ->route('org.projects.documents.hub', $project)
-            ->with('success', 'Selling application saved as draft.');
+        return back()->with('success', 'Selling application saved as draft.');
 
     }
 
@@ -206,9 +213,30 @@ class SellingApplicationController extends BaseProjectDocumentController
             return back()->with('error', 'This form cannot be submitted.');
         }
 
-        $this->handleRequestSubmit($project, $document);
+        $activeSy = \App\Models\SchoolYear::activeYear();
 
-        return back()->with('success', 'Selling application submitted successfully.');
+        if (!$activeSy) {
+            return back()->with('error', 'No active school year is currently set.');
+        }
+
+        $isRegistered = \App\Models\OrganizationSchoolYear::where('organization_id', $project->organization_id)
+            ->where('school_year_id', $activeSy->id)
+            ->exists();
+
+        if (!$isRegistered) {
+
+            $document->update([
+                'status' => 'draft'
+            ]);
+
+            return back()->with('warning', 
+                'Organization is not registered for this school year. Saved as draft instead.'
+            );
+        }
+
+
+     
+        $this->handleRequestSubmit($project, $document);
 
         Audit::log(
             'document.submitted',
@@ -225,6 +253,8 @@ class SellingApplicationController extends BaseProjectDocumentController
         );
 
         return back()->with('success', 'Selling application submitted successfully.');
+
+
     }
 
 

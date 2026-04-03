@@ -10,9 +10,7 @@ class ProjectFormRouteResolver
     {
         $project = $task->project;
 
-        if ($task->type === 'approval') {
-            return route('org.projects.documents.hub', $project);
-        }
+        $formCode = $task->formType->code ?? $task->form_code ?? null;
 
         $formCode = $task->type === 'approval'
             ? $task->formType->code
@@ -29,7 +27,7 @@ class ProjectFormRouteResolver
 
             'SOLICITATION_APPLICATION'
                 => route('org.projects.documents.solicitation.create', $project),
-
+                       
             'SELLING_APPLICATION'
                 => route('org.projects.documents.selling.create', $project),
 

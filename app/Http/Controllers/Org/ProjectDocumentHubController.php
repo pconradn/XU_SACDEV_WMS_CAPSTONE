@@ -285,7 +285,9 @@ class ProjectDocumentHubController extends Controller
 
         $workflowForms = collect();
 
-        if ($sellingApproved) {
+        $forceShowSellingReport = true;
+
+        if ($forceShowSellingReport || $sellingApproved) {
             $sellingReport = FormType::where('code', 'SELLING_ACTIVITY_REPORT')->first();
 
             if ($sellingReport) {

@@ -76,14 +76,24 @@ class TicketSellingReportController extends BaseProjectDocumentController
     public function store(Request $request, Project $project)
     {
 
-        $request->validate([
+        $validator = \Validator::make($request->all(), [
 
-            'items.*.quantity' => ['required','integer'],
+            'items.*.quantity' => ['required','integer','regex:/^\d+$/'],
             'items.*.series_control_numbers' => ['required','string','max:255'],
             'items.*.price_per_ticket' => ['required','numeric'],
-            'items.*.remarks' => ['nullable','string'],
+            'items.*.remarks' => ['nullable','string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
         ]);
+
+        if ($validator->fails()) {
+
+            $this->getOrCreateDocument($project, 'TICKET_SELLING_REPORT');
+
+            return back()
+                ->with('warning', 'Form has errors. Saved as draft instead.')
+                ->withErrors($validator)
+                ->withInput();
+        }
 
 
         $document = $this->getOrCreateDocument($project, 'TICKET_SELLING_REPORT');
@@ -146,7 +156,7 @@ class TicketSellingReportController extends BaseProjectDocumentController
             return $this->submit($project);
         }
 
-        return back()->with('success', 'Ticket Selling Report Saved.');
+        return back()->with('success', 'Ticket Selling Report saved as draft.');
 
     }
 
@@ -184,6 +194,27 @@ class TicketSellingReportController extends BaseProjectDocumentController
 
         if ($document->status !== 'draft' && !$document->edit_mode) {
             return back()->with('error', 'This form cannot be submitted.');
+        }
+
+        $activeSy = \App\Models\SchoolYear::activeYear();
+
+        if (!$activeSy) {
+            return back()->with('error', 'No active school year is currently set.');
+        }
+
+        $isRegistered = \App\Models\OrganizationSchoolYear::where('organization_id', $project->organization_id)
+            ->where('school_year_id', $activeSy->id)
+            ->exists();
+
+        if (!$isRegistered) {
+
+            $document->update([
+                'status' => 'draft'
+            ]);
+
+            return back()->with('warning', 
+                'Organization is not registered for this school year. Saved as draft instead.'
+            );
         }
 
         $this->handleRequestSubmit($project, $document);

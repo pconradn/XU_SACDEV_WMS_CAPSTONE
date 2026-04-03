@@ -1,96 +1,111 @@
-<div>
+<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
 
-    {{-- SECTION HEADER --}}
-    <div class="mb-4">
-        <h3 class="text-sm font-semibold text-slate-900 tracking-wide">
-            Ticket Selling Activity Information
-        </h3>
-        <p class="text-xs text-slate-500 mt-1">
-            Provide details about the ticket selling activity, including duration and total sales generated.
-        </p>
-    </div>
+    <div class="h-1 bg-blue-500"></div>
 
-    @php
-        $activityName = old('activity_name', $data->activity_name ?? $project->title);
-        $sellingFrom = old('selling_from', $data->selling_from ?? '');
-        $sellingTo = old('selling_to', $data->selling_to ?? '');
-    @endphp
+    <div class="p-5 space-y-6">
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-        {{-- ACTIVITY NAME --}}
-        <div class="md:col-span-2">
-            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                Name of Activity
-            </label>
-
-            <input
-                type="text"
-                name="activity_name"
-                value="{{ $activityName }}"
-                placeholder="Enter activity name"
-                class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                @if($isReadOnly) disabled @endif>
-
-            <p class="text-[11px] text-slate-400 mt-1">
-                This will be used as the official name of the ticket selling activity.
-            </p>
-        </div>
-
-
-        {{-- SELLING FROM --}}
         <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                Selling From
-            </label>
-
-            <input
-                type="date"
-                name="selling_from"
-                value="{{ $sellingFrom }}"
-                class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                @if($isReadOnly) disabled @endif>
-
-            <p class="text-[11px] text-slate-400 mt-1">
-                Start date of ticket selling.
+            <h3 class="text-sm font-semibold text-slate-900 tracking-wide">
+                Ticket Selling Activity Information
+            </h3>
+            <p class="text-xs text-blue-700 mt-1">
+                Provide details about the ticket selling activity, including duration and total sales generated.
             </p>
         </div>
 
+        @php
+            $activityName = old('activity_name', $data->activity_name ?? $project->title);
+            $sellingFrom = old('selling_from', $data->selling_from ??  '');
+            $sellingTo = old('selling_to', $data->selling_to ?? '');
+        @endphp
 
-        {{-- SELLING TO --}}
-        <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                Selling To
-            </label>
+        <div class="border border-slate-200 rounded-xl p-4 space-y-5">
 
-            <input
-                type="date"
-                name="selling_to"
-                value="{{ $sellingTo }}"
-                class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                @if($isReadOnly) disabled @endif>
+            <div class="grid grid-cols-1 gap-5">
 
-            <p class="text-[11px] text-slate-400 mt-1">
-                End date of ticket selling.
-            </p>
-        </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">
+                        Name of Activity
+                    </label>
 
+                    <input
+                        type="text"
+                        name="activity_name"
+                        value="{{ $activityName }}"
+                        placeholder="Enter official ticket selling activity name"
+                        class="w-full rounded-lg px-3 py-2 text-sm
+                            {{ $errors->has('activity_name')
+                                ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500'
+                                : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
+                            focus:ring-2 focus:outline-none transition"
+                        @if($isReadOnly) disabled @endif>
 
-        {{-- TOTAL SALES --}}
-        <div class="md:col-span-2">
-            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                Total Ticket Sales (₱)
-            </label>
+                    @error('activity_name')
+                        <p class="text-[11px] text-rose-500 mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
 
-            <div
-                id="totalTicketSalesDisplay"
-                class="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900">
-                ₱ 0.00
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">
+                            Selling From
+                        </label>
+
+                        <input
+                            type="date"
+                            name="selling_from"
+                            value="{{ $sellingFrom }}"
+                            class="w-full rounded-lg px-3 py-2 text-sm
+                                {{ $errors->has('selling_from')
+                                    ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500'
+                                    : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
+                                focus:ring-2 focus:outline-none transition"
+                            @if($isReadOnly) disabled @endif>
+
+                        @error('selling_from')
+                            <p class="text-[11px] text-rose-500 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">
+                            Selling To
+                        </label>
+
+                        <input
+                            type="date"
+                            name="selling_to"
+                            value="{{ $sellingTo }}"
+                            class="w-full rounded-lg px-3 py-2 text-sm
+                                {{ $errors->has('selling_to')
+                                    ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500'
+                                    : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
+                                focus:ring-2 focus:outline-none transition"
+                            @if($isReadOnly) disabled @endif>
+
+                        @error('selling_to')
+                            <p class="text-[11px] text-rose-500 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1" style="text-align:right">
+                            Total Ticket Sales (₱)
+                        </label>
+
+                        <input
+                            type="text"
+                            id="totalTicketSalesDisplay"
+                            readonly
+                            value="0.00"
+                            class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-right">
+                    </div>
+
+                </div>
+
             </div>
 
-            <p class="text-[11px] text-slate-400 mt-1">
-                Automatically calculated based on ticket entries recorded below.
-            </p>
         </div>
 
     </div>

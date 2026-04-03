@@ -199,6 +199,35 @@
             </div>
 
 
+            {{-- WORKFLOW --}}
+            @if($workflow->isNotEmpty())
+            <div class="bg-white border rounded-2xl p-5 shadow-sm">
+
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-semibold text-slate-800">
+                        Workflow Forms
+                    </h2>
+                </div>
+
+                <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+                    @foreach($workflow as $form)
+                        @include('org.projects.documents.v2.partials.form-card', [
+                            'form' => $form,
+                            'type' => 'workflow'
+                        ])
+                    @endforeach
+
+                </div>
+
+            </div>
+            @endif
+
+
+
+
+
+
             {{-- ================= APPROVED ================= --}}
             <div class="bg-white border rounded-2xl p-5 shadow-sm">
 

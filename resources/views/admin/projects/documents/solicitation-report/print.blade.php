@@ -46,7 +46,7 @@
         }
 
         .form-code {
-            background: #2f6fb3;
+            background: #5b8fd9;
             color: #fff;
             font-weight: bold;
             padding: 4px 10px;
@@ -71,13 +71,13 @@
 
         /* ROW SYSTEM */
         .row {
-            border-bottom: 1px solid #2f6fb3;
+            border-bottom: 1px solid #5b8fd9;
             min-height: 35px;
             padding: 6px 8px;
         }
 
         .row:first-child {
-            border-top: 1px solid #2f6fb3;
+            border-top: 1px solid #5b8fd9;
         }
 
         /* PRINT */
@@ -96,13 +96,13 @@
 
 @php
     $activityName = old('activity_name', $document->activity_name ?? $project->title);
-    $purpose = old('purpose', $document->solicitationData->purpose ?? '');
-    $durationFrom = old('duration_from', $document->solicitationData->duration_from ?? '');
-    $durationTo = old('duration_to', $document->solicitationData->duration_to ?? '');
-    $targetAmount = old('target_amount', $document->solicitationData->target_amount ?? '');
-    $letterCount = old('desired_letter_count', $document->solicitationData->desired_letter_count ?? '');
-    $link = old('letter_draft_link', $document->solicitationData->letter_draft_link ?? '');
-    $data = $document->solicitationData
+    $purpose = old('purpose', $document->solicitationSponsorshipReport->purpose ?? '');
+    $durationFrom = old('duration_from', $document->solicitationSponsorshipReport->solicitation_from ?? '');
+    $durationTo = old('duration_to', $document->solicitationSponsorshipReport->solicitation_to ?? '');
+    $targetAmount = old('target_amount', $document->solicitationSponsorshipReport->target_amount ?? '');
+    $letterCount = old('desired_letter_count', $document->solicitationSponsorshipReport->desired_letter_count ?? '');
+    $link = old('letter_draft_link', $document->solicitationSponsorshipReport->letter_draft_link ?? '');
+    $data = $document->solicitationSponsorshipReport
 @endphp
 @php
     $batch = $document->solicitationBatches?->first();
@@ -114,7 +114,7 @@
 {{-- PRINT BUTTON --}}
 <div style="display:flex; justify-content:flex-end; max-width:800px; margin:10px auto;">
     <button onclick="window.print()" class="print-btn"
-        style="padding:8px 16px; background:#2f6fb3; color:white; font-size:12px; border:none; border-radius:6px;">
+        style="padding:8px 16px; background:#5b8fd9; color:white; font-size:12px; border:none; border-radius:6px;">
         Print Document
     </button>
 </div>
@@ -135,14 +135,14 @@
         </div>
 
         <div class="form-code">
-            Form A6 (2016)
+            Form A6-1
         </div>
 
     </div>
 
     {{-- TITLE --}}
     <div class="title">
-        <h2>APPLICATION FOR SOLICITATION / SPONSORSHIP</h2>
+        <h2>SOLICITATION/ SPONSORSHIP REPORT</h2>
         <span>(Please accomplish 2 copies.)</span>
     </div>
 
@@ -161,7 +161,7 @@
 
                 {{-- LABEL --}}
                 <div style="
-                    background:#2f6fb3;
+                    background:#5b8fd9;
                     color:#fff;
                     font-weight:600;
                     font-size:11px;
@@ -210,13 +210,13 @@
 
                 {{-- LABEL --}}
                 <div style="
-                    background:#2f6fb3;
+                    background:#5b8fd9;
                     color:#fff;
                     font-weight:600;
                     font-size:11px;
                     padding:1px 6px;
                 ">
-                    Name of activity where solicitation is needed:
+                    Name of activity where solicitation was conducted:
                 </div>
 
                 {{-- EMPTY (value column space placeholder) --}}
@@ -259,7 +259,7 @@
 
                 {{-- LEFT LABEL --}}
                 <div style="
-                    background:#2f6fb3;
+                    background:#5b8fd9;
                     color:#fff;
                     font-weight:600;
                     font-size:11px;
@@ -271,11 +271,11 @@
                 {{-- RIGHT INSTRUCTION --}}
                 <div style="
                     font-size:11px;
-                    color:#2f6fb3;
+                    color:#5b8fd9;
                     padding:1px 6px;
                     font-style:italic;
                 ">
-                    (Please state the reason/ justification why there is a need for solicitation.)
+                    
                 </div>
 
             </div>
@@ -324,42 +324,47 @@
 
             <div style="
                 display:grid;
-                grid-template-columns: 35% 25% 3% 37%;
+                grid-template-columns: 35% 2% 31% 2% 30%;
                 width:100%;
             ">
 
-                {{-- COL 1 (LABEL) --}}
+                {{-- COL 1 --}}
                 <div style="
-                    background:#2f6fb3;
+                    background:#5b8fd9;
                     color:#fff;
                     font-weight:600;
                     font-size:11px;
                     padding:2px 6px;
                 ">
-                    Duration of Solicitation: (Inclusive Dates)
+                    Duration of Solicitation:
                 </div>
 
-                {{-- COL 2 (EMPTY VALUE SPACE) --}}
-                <div style="
-                    background:#2f6fb3;
-                    color:#fff;
-                    font-weight:600;
-                    font-size:11px;
-                    padding:2px 6px;
-                "></div>
-
-                {{-- COL 3 (GAP / WHITE) --}}
+                {{-- COL 2 (gap/value) --}}
                 <div></div>
 
-                {{-- COL 4 (LABEL) --}}
+                {{-- COL 3 --}}
                 <div style="
-                    background:#2f6fb3;
+                    background:#5b8fd9;
                     color:#fff;
                     font-weight:600;
                     font-size:11px;
                     padding:2px 6px;
                 ">
-                    Target amount to be raised:
+                    Approved number of letters distributed:
+                </div>
+
+                {{-- COL 4 (gap/value) --}}
+                <div></div>
+
+                {{-- COL 5 --}}
+                <div style="
+                    background:#5b8fd9;
+                    color:#fff;
+                    font-weight:600;
+                    font-size:11px;
+                    padding:2px 6px;
+                ">
+                    Total Amount Raised:
                 </div>
 
             </div>
@@ -367,305 +372,240 @@
         </div>
 
        
-        <div class="row" style="padding:0; min-height:unset;">
+        <div class="row" style="padding:0; min-height:unset; border-bottom: transparent">
 
             <div style="
                 display:grid;
-                grid-template-columns: 35% 25% 3% 1fr;
+                grid-template-columns: 35% 2% 31% 2% 30%;
                 width:100%;
             ">
 
                 {{-- COL 1 (FROM) --}}
                 <div style="padding:4px 12px;">
 
-                    {{-- SUBTEXT --}}
-                    <div style="
-                        font-size:10px;
-                        color:#2f6fb3;
-                        margin-bottom:2px;
-                    ">
-                        From (dd/mm/yyyy)
-                    </div>
+                    <div style="font-size:10px; color:#5b8fd9; margin-bottom:2px;"></div>
 
-                    {{-- VALUE --}}
                     <div style="font-size:12px;">
-                        {{ $durationFrom ? \Carbon\Carbon::parse($durationFrom)->format('d/m/Y') : '' }}
+                        From {{ $durationFrom ? \Carbon\Carbon::parse($durationFrom)->format('d/m/Y') : '' }} 
+                        to {{ $durationTo ? \Carbon\Carbon::parse($durationTo)->format('d/m/Y') : '' }}
                     </div>
 
                 </div>
 
-                {{-- COL 2 (TO) --}}
-                <div style="padding:4px 12px;">
-
-                    {{-- SUBTEXT --}}
-                    <div style="
-                        font-size:10px;
-                        color:#2f6fb3;
-                        margin-bottom:2px;
-                    ">
-                        To (dd/mm/yyyy)
-                    </div>
-
-                    {{-- VALUE --}}
-                    <div style="font-size:12px;">
-                        {{ $durationTo ? \Carbon\Carbon::parse($durationTo)->format('d/m/Y') : '' }}
-                    </div>
-
-                </div>
-
-                {{-- GAP --}}
-                <div></div>
-
-
-                
-
-                {{-- COL 4 (TARGET AMOUNT) --}}
-                <div style="padding:6px 12px; font-size:12px;">
-
-                    {{-- SUBTEXT --}}
-                    <div style="
-                        font-size:10px;
-                        color:#2f6fb3;
-                        margin-bottom:2px;
-                    ">
-                     
-                    </div>
-
-                    {{-- VALUE --}}
-                    <div style="font-size:12px; margin-top:10px; margin-left:10px">
-                         ₱ {{ number_format($targetAmount ?? 0, 2) }}
-                    </div>
-
-
-                   
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="row" style="padding:0; min-height:unset; border-bottom:2px transparent;">
-
-            <div style="
-                display:grid;
-                grid-template-columns: 1fr 3% 1fr 3% 1fr;
-                width:100%;
-            ">
-
-                {{-- COL 1 --}}
-                <div style="
-                    background:#2f6fb3;
-                    color:#fff;
-                    font-weight:600;
-                    font-size:11px;
-                    padding:2px 6px;
-                ">
-                    Desired number of letters to be distributed:
-                </div>
-
-                {{-- GAP --}}
+                {{-- COL 2 (gap) --}}
                 <div></div>
 
                 {{-- COL 3 --}}
-                <div style="
-                    background:#2f6fb3;
-                    color:#fff;
-                    font-weight:600;
-                    font-size:11px;
-                    padding:2px 6px;
-                ">
-                    Approved number of letters to be distributed:
+                <div style="padding:4px 12px;">
+
+                    <div style="font-size:10px; color:#5b8fd9; margin-bottom:2px;"></div>
+
+                    <div style="font-size:12px; text-align:center">
+                        {{$document->solicitationSponsorshipReport->approved_letters_distributed}}
+                    </div>
+
                 </div>
 
-                {{-- GAP --}}
+                {{-- COL 4 (gap) --}}
                 <div></div>
 
                 {{-- COL 5 --}}
+                <div style="padding:6px 12px; font-size:12px;">
+
+                    <div style="font-size:10px; color:#5b8fd9; margin-bottom:2px;"></div>
+
+                    <div style="font-size:12px; text-align:center">
+                        {{$document->solicitationSponsorshipReport->approved_letters_distributed}}
+                    </div>
+
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="row" style="padding-bottom: 20px ; min-height:unset; margin-bottom: 30px; border-bottom: 1px solid #5b8fd9"></div>
+
+
+        <div class="row" style="padding:0; border-bottom:2px solid #5b8fd9; margin-top:10px;">
+
+            <div style="width:100%; border-top:px solid #5b8fd9;">
+
+                {{-- HEADER --}}
                 <div style="
-                    background:#2f6fb3;
-                    color:#fff;
+                    display:grid;
+                    grid-template-columns:20% 2% 26% 2% 26% 2% 22%;
+                    text-align:center;
+                    font-size:10.5px;
                     font-weight:600;
-                    font-size:11px;
-                    padding:2px 6px;
                 ">
-                    Series (Control Numbers) Assigned to Released Letters:
+
+                    <div style="background:#5b8fd9; color:#fff; padding:4px 6px;">
+                        Control Number<br>
+                        <span style="font-size:9px; font-weight:400;">
+                            (assigned for individual letters)
+                        </span>
+                    </div>
+
+                    <div></div>
+
+                    <div style="background:#5b8fd9; color:#fff; padding:4px 6px;">
+                        Person In Charge<br>
+                        <span style="font-size:9px; font-weight:400;">
+                            (name of sender)
+                        </span>
+                    </div>
+
+                    <div></div>
+
+                    <div style="background:#5b8fd9; color:#fff; padding:4px 6px;">
+                        Recipient of Letter<br>
+                        <span style="font-size:9px; font-weight:400;">
+                            (company / individual)
+                        </span>
+                    </div>
+
+                    <div></div>
+
+                    <div style="background:#5b8fd9; color:#fff; padding:4px 6px;">
+                        Amount Given / Remarks
+                    </div>
+
                 </div>
+
+
+                {{-- BODY --}}
+                @php
+                    $solicitationItems = $data->items ?? [];
+                @endphp
+
+                @forelse($solicitationItems as $item)
+                <div style="
+                    display:grid;
+                    grid-template-columns:20% 2% 26% 2% 26% 2% 22%;
+                    font-size:12px;
+               
+                ">
+
+                    <div style="padding:3px 6px; border-top: 1px solid #5b8fd9 ; ">
+                        {{ $item->control_number ?? '' }}
+                    </div>
+
+                    <div  ></div>
+
+                     <div style="padding:3px 6px; border-top: 1px solid #5b8fd9 ; ">
+                        {{ $item->person_in_charge ?? '' }}
+                    </div>
+
+                    <div style="border-bottom: transparent"></div>
+
+                     <div style="padding:3px 6px; border-top: 1px solid #5b8fd9 ; ">
+                        {{ $item->recipient ?? '' }}
+                    </div>
+
+                    <div style="border-bottom: transparent"></div>
+
+                     <div style="padding:3px 6px; border-top: 1px solid #5b8fd9 ; text-align:center">
+                        {{ isset($item->amount_given) ? '₱ '.number_format($item->amount_given,2) : '' }}
+                    </div>
+
+                </div>
+                @empty
+
+                {{-- EMPTY LINES (FORM STYLE) --}}
+                @for($i = 0; $i < 8; $i++)
+                <div style="
+                    display:grid;
+                    grid-template-columns:20% 2% 26% 2% 26% 2% 22%;
+                    border-bottom:1px solid #5b8fd9;
+                ">
+
+                    <div style="height:16px;"></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+
+                </div>
+                @endfor
+
+                @endforelse
+
+
+                {{-- TOTAL ROW --}}
+                <div style="
+                    display:grid;
+                    grid-template-columns:78% 22%;
+                    border-top:2px solid #5b8fd9;
+                    margin-top:4px;
+                ">
+
+                    <div style="
+                        padding:4px 6px;
+                        font-weight:600;
+                        font-size:11px;
+                    ">
+                        Total Amount
+                    </div>
+
+                    <div style="
+                        padding:4px 6px;
+                        text-align:center;
+                        font-size:12px;
+                        font-weight:600;
+                    ">
+                        ₱ {{
+                            number_format(
+                                collect($solicitationItems)->sum('amount_given'),
+                                2
+                            )
+                        }}
+                    </div>
+
+                </div>
+
+
+
+
+                
 
             </div>
 
-        </div>
-
-
-        <div class="row" style="padding:0; min-height:unset;">
-
-            <div style="
-                display:grid;
-                grid-template-columns: 1fr 3% 1fr 3% 1fr;
-                width:100%;
-                align-items:center;
-            ">
-
-                <div style="
-                    padding:6px 8px;
-                    font-size:12px; text-align:center
-                ">
-                    {{ $letterCount ?? '' }}
-                </div>
-
-                {{-- GAP --}}
-                <div></div>
-
-                <div style="
-                    padding:6px 8px;
-                    font-size:12px;
-                    align-items:center;
-                    text-align:center
-                ">
-                    {{ $batch->approved_letter_count ?? '' }}
-                </div>
-
-                {{-- GAP --}}
-                <div></div>
-
-                {{-- COL 5 (SERIES RANGE) --}}
-                <div style="
-                    padding:6px 8px;
-                    font-size:12px;
-                    align-items:center;
-                    text-align:center
-                ">
-                    {{ ($batch->control_series_start ?? '') && ($batch->control_series_end ?? '') 
-                        ? $batch->control_series_start.' - '.$batch->control_series_end 
-                        : '' }}
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="row" style="padding:0; min-height:unset; border-bottom:2px transparent;">
-
-            <div style="
-                display:grid;
-                grid-template-columns: 40% 1fr;
-                width:100%;
-                align-items:center;
-            ">
 
             
 
-                {{-- RIGHT (LABEL) --}}
-                <div style="
-                    background:#2f6fb3;
-                    color:#fff;
-                    font-weight:600;
-                    font-size:11px;
-                    padding:2px 8px;
-                ">
-                    Target Benefactors: <span style="font-weight:400;">(You may check more than one.)</span>
-                </div>
-
-                <div></div>
-
-            </div>
-
         </div>
 
 
-        <div class="row" style="padding:10px 8px;  min-height:unset;">
 
-            @php
-                $studentOrgs = $data->target_student_orgs ?? false;
-                $xuOfficers = $data->target_xu_officers ?? false;
-                $privateIndividuals = $data->target_private_individuals ?? false;
-                $alumni = $data->target_alumni ?? false;
-                $companies = $data->target_private_companies ?? false;
-                $others = $data->target_others ?? false;
-                $othersText = $data->target_others_specify ?? '';
-            @endphp
-
-            <div style="
-                display:grid;
-                grid-template-columns: 1fr 1fr;
-                row-gap:6px;
-                column-gap:40px;
-                font-size:11px;
-            ">
-
-                {{-- LEFT COLUMN --}}
-                <div>
-                    <input type="checkbox" {{ $studentOrgs ? 'checked' : '' }}>
-                    Student Organizations within XU
-                </div>
-
-                <div>
-                    <input type="checkbox" {{ $xuOfficers ? 'checked' : '' }}>
-                    Offices inside XU <span style="font-style:italic;">(not encouraged; case to case basis)</span>
-                </div>
-
-                <div>
-                    <input type="checkbox" {{ $privateIndividuals ? 'checked' : '' }}>
-                    Private Individuals / Relatives
-                </div>
-
-                <div>
-                    <input type="checkbox" {{ $alumni ? 'checked' : '' }}>
-                    Alumni
-                </div>
-
-                <div>
-                    <input type="checkbox" {{ $companies ? 'checked' : '' }}>
-                    Private Companies
-                </div>
-
-                {{-- OTHERS --}}
-                <div>
-                    <input type="checkbox" {{ $others ? 'checked' : '' }}>
-                    Others: 
-                    <span style="
-                        display:inline-block;
-                        border-bottom:1px solid #2f6fb3;
-                        min-width:180px;
-                        padding-left:4px;
-                    ">
-                        {{ $othersText }}
-                    </span>
-                </div>
-
-            </div>
-
-        </div>
-                
+        {{-- NOTE / INSTRUCTIONS --}}
         <div class="row" style="
-            padding:6px 8px;
-            border-bottom:2px transparent;
-            page-break-inside: avoid;
-            break-inside: avoid;
-            margin-top: 20px;
+            border-bottom:none;
+            padding:6px 10px;
+            margin-top:8px;
         ">
 
-            <div style="font-size:11px; line-height:1.4;">
+            <div style="
+                font-size:10.5px;
+                line-height:1.4;
+                text-align:justify;
+            ">
 
-                {{-- TITLE --}}
-                <div style="font-weight:700; margin-bottom:4px;">
-                    AGREEMENT:
-                </div>
+                <span style="font-weight:600;">
+                    *If the recipient did not provide anything,
+                </span>
+                the person-in-charge must be able to retrieve the letter from the recipient and return to the organization for submission to SACDEV. In case of lost letters, the person-in-charge must be able to secure a waiver from the recipient stating the fact that there was nothing provided for the particular solicitation letter. This waiver shall then be attached to this solicitation report together with the acknowledgment receipts issued to companies/individuals who gave any amount to the organization.
 
-                {{-- CONTENT --}}
-                <div style="
-                    text-align:justify;
-                    text-indent:20px;
-                ">
-                    We understand that there are rules and regulations which govern solicitation activities using the name of the University. 
-                    Failure to abide by them and the approved terms and conditions of this form entails sanctions for the organization and 
-                    disciplinary measures for the students involved.
-                </div>
+                <br><br>
+
+                Print and submit this report to SACDEV-OSA upon submission of liquidation report of the activity where solicitation was meant for.
 
             </div>
 
         </div>
-
-        
 
         @php
             $sigs = $document->signatures->keyBy('role');
@@ -691,7 +631,7 @@
 
         <div class="row" style="
             padding:14px 8px;
-            border-bottom: 3px solid #000;
+            border-bottom: 1px solid #000;
             page-break-inside: avoid;
             break-inside: avoid;
         ">
@@ -705,6 +645,11 @@
 
                 {{-- PROJECT HEAD --}}
                 <div>
+
+                                {{-- LABEL --}}
+                    <div style="font-size:11px; margin-bottom:6px; text-align:left; border-bottom: 1px transparent #000;">
+                        Prepared by:
+                    </div>
 
                     {!! approvalLine('project_head', $sigs) !!}
 
@@ -732,6 +677,9 @@
 
                 {{-- PRESIDENT --}}
                 <div>
+                    <div style="font-size:11px; margin-bottom:6px; text-align:left; border-bottom: 1px transparent #000;">
+                        Approved by:
+                    </div>
 
                     {!! approvalLine('president', $sigs) !!}
 
@@ -754,6 +702,9 @@
 
                 {{-- MODERATOR --}}
                 <div>
+                    <div style="font-size:11px; margin-bottom:6px; text-align:left; border-bottom: 1px transparent #000;">
+                    .
+                    </div>
 
                     {!! approvalLine('moderator', $sigs) !!}
 
@@ -763,7 +714,7 @@
                         padding-bottom:2px;
                         font-size:12px;
                     ">
-                       <strong>{{ sig('moderator', $sigs)?->user?->name ?? '—' }}</strong>
+                    <strong>{{ sig('moderator', $sigs)?->user?->name ?? '—' }}</strong>
                     </div>
 
                     <div style="font-size:11px; line-height:1.2;">
@@ -778,16 +729,18 @@
         </div>
 
 
+
+
         <div class="row" style="
             padding:12px 8px;
-            border-bottom: 3px solid #000;
+            border-bottom: 1px solid #000;
             page-break-inside: avoid;
             break-inside: avoid;
         ">
 
             <div style="
                 display:grid;
-                grid-template-columns:1fr 1fr;
+                grid-template-columns:1fr 1fr; border-bottom: 1px transparent #000;
                 width:100%;
                 text-align:center;
             ">
@@ -796,8 +749,8 @@
                 <div>
 
                     {{-- LABEL --}}
-                    <div style="font-size:11px; margin-bottom:6px; text-align:left;">
-                        Endorsed by:
+                    <div style="font-size:11px; margin-bottom:6px; text-align:left; border-bottom: 1px transparent #000;">
+                        Approved by:
                     </div>
 
                     {{-- APPROVAL STATUS --}}
@@ -819,79 +772,10 @@
 
                 </div>
 
-
-                {{-- OSA ADMIN --}}
-                <div>
-
-                    {{-- LABEL --}}
-                    <div style="font-size:11px; margin-bottom:6px; text-align:left; margin-left:20px;">
-                        Approved by:
-                    </div>
-
-                    {{-- APPROVAL STATUS --}}
-                    {!! approvalLine('osa_admin', $sigs) !!}
-
-                    {{-- NAME --}}
-                    <div style="
-                        margin-top:10px;
-                        font-weight:600;
-                        text-transform:uppercase;
-                    ">
-                        {{ sig('osa_admin', $sigs)?->user?->name ?? 'Mr Ivanell R Subarabas' }}
-                    </div>
-
-                    {{-- TITLE --}}
-                    <div style="font-size:11px; line-height:1.2;">
-                        Director of Student Affairs
-                    </div>
-
-                </div>
-
             </div>
 
         </div>
 
-        <div class="row" style="padding:0; min-height:unset; border-bottom:2px transparent;">
-
-            <div style="
-                background:#2f6fb3;
-                color:#fff;
-                font-weight:700;
-                font-size:11px;
-                padding:3px 8px;
-                width:100%;
-            ">
-                IMPORTANT:
-            </div>
-
-        </div>
-
-        <div class="row" style="
-            padding:6px 8px;
-            border-bottom:none;
-            page-break-inside: avoid;
-            break-inside: avoid;
-        ">
-
-            <div style="
-                font-size:11px;
-                line-height:1.4;
-                text-align:justify;
-            ">
-
-                Please print and submit this application form with an attached draft of the solicitation letter. 
-                Please refer to the student organization manual for detailed instructions on how to prepare the letter. 
-                Solicitation letters should have the clause 
-                <span style="font-style:italic;">
-                    “This letter is considered invalid unless audited by SACDEV-OSA, Xavier University-Ateneo de Cagayan”
-                </span> 
-                at the bottom. Mass production of letters may be done after approval of this application. 
-                Submit mass produced letters to SACDEV-OSA for assigning of control numbers. 
-                A solicitation report should be submitted to SACDEV-OSA (attached to the liquidation report of the activity where solicitation is meant for).
-
-            </div>
-
-        </div>
 
     </div>
 

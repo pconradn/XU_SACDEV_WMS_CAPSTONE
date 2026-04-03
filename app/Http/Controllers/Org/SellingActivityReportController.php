@@ -76,7 +76,25 @@ class SellingActivityReportController extends BaseProjectDocumentController
     public function store(Request $request, Project $project)
     {
 
-        $request->validate([
+    
+        $input = $request->all();
+
+        if (isset($input['items'])) {
+            foreach ($input['items'] as $i => $item) {
+
+                if (isset($item['price'])) {
+                    $input['items'][$i]['price'] = str_replace(',', '', $item['price']);
+                }
+
+                if (isset($item['amount'])) {
+                    $input['items'][$i]['amount'] = str_replace(',', '', $item['amount']);
+                }
+            }
+        }
+
+
+    
+        $validator = \Validator::make($input, [
 
             'activity_name' => ['required','string','max:255'],
             'selling_from' => ['required','date'],
@@ -91,6 +109,17 @@ class SellingActivityReportController extends BaseProjectDocumentController
         ]);
 
 
+        if ($validator->fails()) {
+
+            $this->getOrCreateDocument($project, 'SELLING_ACTIVITY_REPORT');
+
+            return back()
+                ->with('warning', 'Form has errors. Saved as draft instead.')
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+
         $document = $this->getOrCreateDocument($project, 'SELLING_ACTIVITY_REPORT');
 
         if ($document->isLocked() && !$document->edit_mode) {
@@ -98,26 +127,24 @@ class SellingActivityReportController extends BaseProjectDocumentController
         }
 
 
-        DB::transaction(function () use ($request, $document) {
+    
+        DB::transaction(function () use ($input, $document) {
 
             $data = SellingActivityReportData::updateOrCreate(
-
                 [
                     'project_document_id' => $document->id
                 ],
-
                 [
-                    'activity_name' => $request->activity_name,
-                    'selling_from' => $request->selling_from,
-                    'selling_to' => $request->selling_to,
+                    'activity_name' => $input['activity_name'],
+                    'selling_from' => $input['selling_from'],
+                    'selling_to' => $input['selling_to'],
                 ]
-
             );
 
 
             $data->items()->delete();
 
-            foreach ($request->items as $item) {
+            foreach ($input['items'] as $item) {
 
                 SellingActivityReportItem::create([
 
@@ -126,12 +153,16 @@ class SellingActivityReportController extends BaseProjectDocumentController
                     'quantity' => $item['quantity'],
                     'particulars' => $item['particulars'],
                     'price' => $item['price'],
-                    'amount' => $item['amount'] ?? (($item['quantity'] ?? 0) * ($item['price'] ?? 0)),
+
+                    'amount' => $item['amount']
+                        ?? (($item['quantity'] ?? 0) * ($item['price'] ?? 0)),
+
                     'acknowledgement_receipt_number' => $item['acknowledgement_receipt_number'] ?? null,
 
                 ]);
 
             }
+
 
             if (!$document->edit_mode) {
                 $this->resetApprovalsAfterEdit($document);
@@ -140,6 +171,7 @@ class SellingActivityReportController extends BaseProjectDocumentController
         });
 
 
+    
         $action = $request->input('action');
 
         if ($document && $document->edit_mode) {
@@ -150,9 +182,7 @@ class SellingActivityReportController extends BaseProjectDocumentController
             return $this->submit($project);
         }
 
-        return redirect()
-            ->route('org.projects.documents.hub', $project)
-            ->with('success', 'Selling Activity Report saved as draft.');
+        return back()->with('success', 'Selling Activity Report saved as draft.');
 
     }
 
@@ -193,6 +223,27 @@ class SellingActivityReportController extends BaseProjectDocumentController
         if ($document->status !== 'draft' && !$document->edit_mode) {
             return back()->with('error', 'This form cannot be submitted.');
         }
+
+        $activeSy = \App\Models\SchoolYear::activeYear();
+
+        if (!$activeSy) {
+            return back()->with('error', 'No active school year is currently set.');
+        }
+
+        $isRegistered = \App\Models\OrganizationSchoolYear::where('organization_id', $project->organization_id)
+            ->where('school_year_id', $activeSy->id)
+            ->exists();
+
+        if (!$isRegistered) {
+
+            $document->update([
+                'status' => 'draft'
+            ]);
+
+            return back()->with('warning', 
+                'Organization is not registered for this school year. Saved as draft instead.'
+            );
+        }       
 
         $this->handleRequestSubmit($project, $document);
 
