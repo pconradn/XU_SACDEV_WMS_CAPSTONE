@@ -35,7 +35,7 @@
 
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="audience_type" value="xu_community"
-                            class="border-slate-300 focus:ring-blue-500"
+                            class="border {{ $errors->has('audience_type') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
                             @checked($aud === 'xu_community')>
                         XU Community
                     </label>
@@ -51,7 +51,7 @@
                                 <input type="checkbox"
                                     name="xu_subtypes[]"
                                     value="{{ $s }}"
-                                    class="border-slate-300 focus:ring-blue-500"
+                                    class="border {{ $errors->has('xu_subtypes') || $errors->has('xu_subtypes.*') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
                                     @checked(in_array($s, $xuSubs, true))>
                                 {{ $s }}
                             </label>
@@ -82,8 +82,9 @@
 
                     <textarea name="audience_details"
                         rows="4"
-                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
-                               focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
+class="w-full rounded-lg border px-3 py-2 text-sm 
+       {{ $errors->has('audience_details') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
+       focus:ring-2 focus:outline-none transition"
                         placeholder="If non-XU or beneficiaries...">{{ old('audience_details', $proposal->audience_details ?? '') }}</textarea>
                 </div>
 
@@ -107,8 +108,9 @@
                         min="0"
                         name="expected_xu_participants"
                         value="{{ old('expected_xu_participants', $proposal->expected_xu_participants ?? '') }}"
-                        class="w-28 rounded-lg border border-slate-300 px-2 py-2 text-sm 
-                               focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
+class="w-28 rounded-lg border px-2 py-2 text-sm 
+       {{ $errors->has('expected_xu_participants') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
+       focus:ring-2 focus:outline-none transition">
                 </div>
 
                 <div>
@@ -119,8 +121,9 @@
                         min="0"
                         name="expected_non_xu_participants"
                         value="{{ old('expected_non_xu_participants', $proposal->expected_non_xu_participants ?? '') }}"
-                        class="w-28 rounded-lg border border-slate-300 px-2 py-2 text-sm 
-                               focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
+class="w-28 rounded-lg border px-2 py-2 text-sm 
+       {{ $errors->has('expected_non_xu_participants') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
+       focus:ring-2 focus:outline-none transition">
                 </div>
 
             </div>

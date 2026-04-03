@@ -1223,8 +1223,8 @@ class AdminProjectDocumentController extends Controller
     protected function resolveOrgDocumentRoute(ProjectDocument $document): string
     {
         $map = [
-            'PROJECT_PROPOSAL' => 'org.projects.documents.combined.create',
-            'BUDGET_PROPOSAL' => 'org.projects.documents.combined.create',
+            'PROJECT_PROPOSAL' => 'org.projects.documents.combined-proposal.create',
+            'BUDGET_PROPOSAL' => 'org.projects.documents.combined-proposal.create',
 
             'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.create',
 

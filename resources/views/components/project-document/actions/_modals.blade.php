@@ -9,6 +9,32 @@
     $isSelling = ($document->formType->code ?? null) === 'SELLING_APPLICATION';
     $isAdmin = auth()->user()->system_role === 'sacdev_admin';
     $isSolicitation = $formCode === 'SOLICITATION_APPLICATION';
+    $isOffCampus = $formCode === 'OFF_CAMPUS_APPLICATION';
+   
+
+
+    //dd($user)
+@endphp
+
+
+@php
+
+    
+    $user = auth()->user();
+
+
+    $membership = $user->orgMemberships
+        ->where('organization_id', session('active_org_id'))
+        ->where('school_year_id', session('encode_sy_id'))
+        ->whereNull('archived_at')
+        ->first();
+    $role = $membership->role ?? null;
+    
+    $isPresident = $role === 'president';
+    $isModerator = $role === 'moderator';
+    $isTreasurer = $role === 'treasurer';
+    $isFinance = $role === 'finance_officer';
+
 @endphp
 
 @php
@@ -143,6 +169,90 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
 
     </div>
 
+@elseif($isOffCampus && $isProjectHead)
+
+<div id="submitModal"
+     class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden">
+
+        {{-- HEADER --}}
+        <div class="border-b px-5 py-3">
+            <h2 class="text-sm font-semibold text-slate-900">
+                Off-Campus Activity Submission Guidelines
+            </h2>
+        </div>
+
+        {{-- BODY --}}
+        <div class="px-5 py-4 space-y-3 text-sm text-slate-700 leading-relaxed">
+
+            <p>
+                This form corresponds to the <span class="font-semibold">Off-Campus Activity Form (Form A12)</span>.
+                Please ensure that all required information is accurately encoded before submission.
+            </p>
+
+            <p>
+                This form must be submitted to the <span class="font-semibold">Student Activities and Leadership Development (SACDEV - OSA)</span>
+                at least <span class="font-semibold">3 days before the scheduled activity</span>.
+            </p>
+
+            <p>
+                After submission, you will be able to generate the 
+                <span class="font-semibold">Student Travel Agreement (Form A12.1)</span> 
+                from the <span class="font-semibold">Project Document Hub</span>.
+                This document must be printed, accomplished by all participants, and attached to this form.
+            </p>
+
+            <p>
+                Only students who have completed and submitted the Student Travel Agreement shall be included
+                in the official participant list and allowed to join the activity.
+            </p>
+
+            <p>
+                All off-campus activities must be accompanied by the organization moderator or an officially assigned
+                representative who is a <span class="font-semibold">full-time faculty or staff member</span> of the University.
+            </p>
+
+            <p>
+                Any changes to the approved schedule or itinerary must be immediately communicated to SACDEV.
+            </p>
+
+            {{-- RESPONSIBILITY STATEMENT --}}
+            <div class="mt-3 border border-blue-200 bg-blue-50 rounded-lg p-3 text-xs text-blue-800 leading-relaxed">
+                We, cognizant of the risks and benefits entailed by our activity, take upon ourselves the responsibility of ensuring the welfare and safety of everyone participating in this off-campus activity.
+            </div>
+
+            {{-- HIGHLIGHT --}}
+            <div class="mt-2 border border-amber-200 bg-amber-50 rounded-lg p-3 text-xs text-amber-800">
+                By proceeding, you confirm that all submitted information is accurate, and you agree to comply with
+                university policies and off-campus activity guidelines.
+            </div>
+
+        </div>
+
+        {{-- FOOTER --}}
+        <div class="border-t px-5 py-3 flex justify-end gap-2">
+
+            <button type="button"
+                    onclick="closeModal('submitModal')"
+                    class="px-4 py-2 text-xs border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100">
+                Cancel
+            </button>
+
+            <button type="submit"
+                    form="proposalForm"
+                    name="action"
+                    value="submit"
+                    class="px-4 py-2 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                Agree and Submit
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
 @else
 
     {{-- ================= DEFAULT SUBMIT MODAL ================= --}}
@@ -218,7 +328,7 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
 
                 <p class="text-xs text-slate-600 mb-4">
                     This will send the document into the approval workflow.
-                    You will not be able to edit unless it is returned or edit access is granted.
+                    You will not be able to edit unless it is returned or edit access is granted, once approved by SACDEV.
                 </p>
 
                 <button type="button"
@@ -559,7 +669,88 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
 
 
 
-@if($isFeesCollection && $isAdmin)
+
+@if($isOffCampus && ($isPresident || $isModerator || $isAdmin))
+
+<div id="approveModal" class="modal-overlay">
+    <div class="modal">
+
+        <h3 class="text-sm font-semibold mb-2 text-green-600">
+            Approve Document
+        </h3>
+
+        <p class="text-xs text-slate-600 mb-3">
+            This action will approve the document and move it to the next approver.
+            You can only retract this action if the next approver is still pending.
+        </p>
+
+        {{-- ROLE-BASED AGREEMENT --}}
+        @if($isPresident)
+            <div class="mb-4 border border-blue-200 bg-blue-50 rounded-lg p-3 text-xs text-blue-800 leading-relaxed">
+                We, cognizant of the risks and benefits entailed by our activity, take upon ourselves the responsibility of ensuring the welfare and safety of everyone participating in our off-campus activity.
+            </div>
+        @elseif($isModerator)
+            <div class="mb-4 border border-indigo-200 bg-indigo-50 rounded-lg p-3 text-xs text-indigo-800 leading-relaxed">
+                I hereby agree to accompany the above-mentioned students in their off-campus activity. As moderator / duly designated representative of the University, I acknowledge that I have read and understood the responsibilities of the accompanying Moderator and assume full responsibility for the proceedings of the activity.
+            </div>
+        @elseif($isAdmin)
+            <div class="mb-4 border border-emerald-200 bg-emerald-50 rounded-lg p-3 text-xs text-emerald-800 leading-relaxed">
+                This is to certify that the aforementioned organization has successfully complied with all the requirements set for the aforementioned off-campus activity.
+            </div>
+        @endif
+
+
+        @if(!empty($isCombined))
+
+            <form method="POST"
+                  onsubmit="lockButton(this.querySelector('button[type=submit]'))"
+                  action="{{ $isAdmin
+                        ? route('admin.projects.documents.combined-proposal.approve', $project)
+                        : route('org.projects.documents.combined-proposal.approve', $project) }}">
+
+                @csrf
+
+                <button class="w-full mb-2 px-4 py-2 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700">
+                    Confirm Approval
+                </button>
+
+            </form>
+
+        @elseif($routePrefix || $isAdmin)
+
+            <form method="POST"
+                  onsubmit="lockButton(this.querySelector('button[type=submit]'))"
+                  action="{{ $isAdmin
+                        ? route('admin.projects.documents.approve', [$project, $formCode])
+                        : route("org.projects.documents.$routePrefix.approve", $project) }}">
+
+                @csrf
+
+                <button class="w-full mb-2 px-4 py-2 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700">
+                    Confirm Approval
+                </button>
+
+            </form>
+
+        @else
+            <div class="text-xs text-red-500">
+                Invalid document route configuration.
+            </div>
+        @endif
+
+        <button type="button"
+                onclick="closeModal('approveModal')"
+                class="w-full text-xs text-slate-500 mt-1">
+            Cancel
+        </button>
+
+    </div>
+</div>
+
+
+
+
+@elseif($isFeesCollection && $isAdmin)
 
     {{-- ================= CUSTOM FEES COLLECTION APPROVAL ================= --}}
     <div id="approveModal"
@@ -823,7 +1014,7 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
             <h3 class="text-sm font-semibold mb-2 text-green-600">Approve Document</h3>
 
             <p class="text-xs text-slate-600 mb-4">
-                This action will approve the document and move it to the next approver.
+                This action will approve the document and move it to the next approver. You can only retract this action if the next approver is still pending.
             </p>
 
             @if(!empty($isCombined))

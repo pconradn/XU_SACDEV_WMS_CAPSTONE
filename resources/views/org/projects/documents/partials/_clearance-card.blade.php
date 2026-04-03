@@ -1,131 +1,141 @@
-@if($project->requires_clearance)
+<div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
 
-<div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm mb-6">
-
-    <div class="flex items-start justify-between">
-
+    {{-- HEADER --}}
+    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
         <div>
-
-            <div class="text-xs uppercase tracking-wide text-slate-500">
+            <h2 class="text-sm font-semibold text-slate-900">
                 Off-Campus Clearance
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">
+                Generate, verify, and manage your clearance document for this project
+            </p>
+        </div>
+
+        <div class="text-xs px-2 py-1 rounded-lg
+            @if($project->clearance_status === 'issued') bg-emerald-50 text-emerald-700
+            @elseif($project->clearance_status === 'uploaded') bg-blue-50 text-blue-700
+            @elseif($project->clearance_status === 'replaced') bg-amber-50 text-amber-700
+            @elseif($project->clearance_status === 'revoked') bg-rose-50 text-rose-700
+            @else bg-slate-100 text-slate-600
+            @endif">
+            {{ strtoupper($project->clearance_status ?? 'draft') }}
+        </div>
+    </div>
+
+    <div class="p-5 space-y-5">
+
+        {{-- WARNING --}}
+        @if(!empty($isOutdated))
+        <div class="text-xs border border-amber-200 bg-amber-50 text-amber-700 rounded-xl px-3 py-2">
+            This clearance is based on outdated project data. Reissue to reflect updated details.
+        </div>
+        @endif
+
+        {{-- META --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+
+            <div class="space-y-1">
+                <div class="text-slate-500">Reference</div>
+                <div class="font-semibold text-slate-800">
+                    {{ $project->clearance_reference ?? '—' }}
+                </div>
             </div>
 
-            <div class="mt-1 font-semibold text-slate-900">
-                Reference:
-                <span class="font-mono text-blue-700">
-                    {{ $project->clearance_reference }}
-                </span>
+            <div class="space-y-1">
+                <div class="text-slate-500">Issued At</div>
+                <div class="font-semibold text-slate-800">
+                    {{ $project->clearance_issued_at 
+                        ? \Carbon\Carbon::parse($project->clearance_issued_at)->format('M d, Y h:i A') 
+                        : '—' }}
+                </div>
             </div>
 
         </div>
 
-    </div>
+        {{-- SNAPSHOT SUMMARY --}}
+        @if(!empty($snapshot))
+        <div class="border border-slate-100 rounded-xl p-4 bg-slate-50 text-xs space-y-2">
 
+            <div class="grid grid-cols-2 gap-4">
 
-    <div class="mt-4 text-sm">
+                <div>
+                    <span class="text-slate-500">Activity Dates</span><br>
+                    <span class="font-medium text-slate-800">
+                        {{ $snapshot['start_date'] 
+                            ? \Carbon\Carbon::parse($snapshot['start_date'])->format('M d, Y') 
+                            : '—' }}
+                        —
+                        {{ $snapshot['end_date'] 
+                            ? \Carbon\Carbon::parse($snapshot['end_date'])->format('M d, Y') 
+                            : '—' }}
+                    </span>
+                </div>
 
-        Status:
+                <div>
+                    <span class="text-slate-500">Venue</span><br>
+                    <span class="font-medium text-slate-800">
+                        {{ $snapshot['off_campus_venue'] ?? '—' }}
+                    </span>
+                </div>
 
-        @switch($project->clearance_status)
+                <div>
+                    <span class="text-slate-500">Total Budget</span><br>
+                    <span class="font-medium text-slate-800">
+                        ₱{{ number_format($snapshot['total_budget'] ?? 0, 2) }}
+                    </span>
+                </div>
 
-            @case('required')
-                <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">
-                    Clearance Required
-                </span>
-            @break
+                <div>
+                    <span class="text-slate-500">Participants</span><br>
+                    <span class="font-medium text-slate-800">
+                        {{ $participants->count() ?? 0 }}
+                    </span>
+                </div>
 
+            </div>
 
-            @case('uploaded')
-                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                    Uploaded — Awaiting Verification
-                </span>
-            @break
+        </div>
+        @endif
 
+        {{-- ACTIONS --}}
+        <div class="flex flex-wrap items-center gap-2 pt-2">
 
-            @case('verified')
-                <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs">
-                    Verified
-                </span>
-            @break
-
-
-            @case('rejected')
-                <span class="px-2 py-1 bg-rose-100 text-rose-700 rounded text-xs">
-                    Returned for Revision
-                </span>
-            @break
-
-        @endswitch
-
-    </div>
-
-
-    @if($isProjectHead)
-
-        <div class="mt-4 flex flex-wrap items-center gap-3">
-
+            {{-- PRINT --}}
             <a href="{{ route('org.projects.clearance.print', $project) }}"
-               target="_blank"
-               class="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700">
-                Generate Clearance Form
+               class="px-3 py-2 text-xs rounded-lg bg-slate-900 text-white hover:bg-slate-800">
+                Print Clearance
             </a>
 
-
-            @if(in_array($project->clearance_status, ['required','uploaded','rejected']))
-
-                <form
-                    method="POST"
-                    action="{{ route('org.projects.clearance.upload', $project) }}"
-                    enctype="multipart/form-data"
-                    class="flex items-center gap-3">
-
-                    @csrf
-
-                    <input
-                        type="file"
-                        name="clearance_file"
-                        accept="application/pdf"
-                        required
-                        class="text-xs">
-
-                <button
-                    type="submit"
-                    class="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-slate-800">
-
-                @if($project->clearance_status === 'uploaded')
-                Replace Uploaded Clearance
-                @else
-                Upload Signed Clearance
-                @endif
-
+            {{-- REISSUE --}}
+            @if(!empty($isOutdated))
+            <form method="POST" action="{{ route('org.projects.clearance.reissue', $project) }}">
+                @csrf
+                <button type="submit"
+                        class="px-3 py-2 text-xs rounded-lg bg-rose-600 text-white hover:bg-rose-700">
+                    Reissue
                 </button>
-
-                </form>
-
+            </form>
             @endif
 
+            {{-- UPLOAD --}}
+            <form method="POST"
+                  action="{{ route('org.projects.clearance.upload', $project) }}"
+                  enctype="multipart/form-data"
+                  class="flex items-center gap-2">
+                @csrf
 
-            @if($project->clearance_status === 'uploaded')
+                <input type="file" name="clearance_file"
+                       class="text-xs border border-slate-200 rounded-lg px-2 py-1"
+                       required>
 
-                <div class="text-xs text-slate-500 italic">
-                    Clearance uploaded. You may replace the file until SACDEV verifies it.
-                </div>
-
-            @endif
-
-
-            @if($project->clearance_status === 'verified')
-
-                <div class="text-xs font-medium text-emerald-600">
-                    Clearance verified by SACDEV. Uploads are now locked.
-                </div>
-
-            @endif
+                <button type="submit"
+                        class="px-3 py-2 text-xs rounded-lg border border-slate-300 hover:bg-slate-50">
+                    Upload Signed Copy
+                </button>
+            </form>
 
         </div>
 
-    @endif
+    </div>
 
 </div>
-
-@endif

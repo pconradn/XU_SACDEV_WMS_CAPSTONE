@@ -316,13 +316,21 @@ abstract class BaseProjectDocumentController extends Controller
 
         if ($role === 'sacdev_admin') {
 
-            $user = getSacdevApprover($project);
+            $clusterId = $project->organization->cluster_id ?? null;
+
+            if (!$clusterId) {
+                abort(422, 'Organization has no cluster assigned.');
+            }
+
+            $user = DB::table('cluster_user')
+                ->join('users', 'users.id', '=', 'cluster_user.user_id')
+                ->where('cluster_user.cluster_id', $clusterId)
+                ->where('users.system_role', 'sacdev_admin')
+                ->select('users.id')
+                ->first();
 
             if (!$user) {
-                // fallback to old behavior (VERY SAFE)
-                return User::where('system_role', 'sacdev_admin')
-                    ->firstOrFail()
-                    ->id;
+                abort(422, 'No SACDEV approver assigned for this cluster.');
             }
 
             return $user->id;
@@ -360,9 +368,14 @@ abstract class BaseProjectDocumentController extends Controller
     {
         $flow = $this->approvalFlow($document->formType->code);
 
+        $document->loadMissing('project.organization');
+
+        if ($document->signatures()->exists()) {
+            $document->signatures()->delete();
+        }
         foreach ($flow as $index => $role) {
 
-            $userId = $this->resolveUserByRole($document->project,$role);
+            $userId = $this->resolveUserByRole($document->project, $role);
 
             ProjectDocumentSignature::create([
                 'project_document_id' => $document->id,
@@ -371,7 +384,6 @@ abstract class BaseProjectDocumentController extends Controller
                 'status' => $index === 0 ? 'signed' : 'pending',
                 'signed_at' => $index === 0 ? now() : null
             ]);
-
         }
     }
 
@@ -458,14 +470,7 @@ abstract class BaseProjectDocumentController extends Controller
 
             $oldStatus = $document->status;
 
-            foreach ($document->signatures as $signature) {
-
-                $signature->update([
-                    'status'=>'pending',
-                    'signed_at'=>null
-                ]);
-
-            }
+            $document->signatures()->delete();
 
             $document->update([
                 'status'=>'draft',
@@ -684,8 +689,8 @@ abstract class BaseProjectDocumentController extends Controller
     protected function resolveOrgDocumentRoute(ProjectDocument $document): string
     {
         $map = [
-            'PROJECT_PROPOSAL' => 'org.projects.documents.combined.create',
-            'BUDGET_PROPOSAL' => 'org.projects.documents.combined.create',
+            'PROJECT_PROPOSAL' => 'org.projects.documents.combined-proposal.create',
+            'BUDGET_PROPOSAL' => 'org.projects.documents.combined-proposal.create',
 
             'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.create',
 

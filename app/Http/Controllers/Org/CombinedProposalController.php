@@ -42,16 +42,29 @@ class CombinedProposalController extends Controller
     {
         $action = $request->input('action', 'draft');
 
-        DB::transaction(function () use ($request, $project) {
+        //dd($request);
 
-            //dd($request);
-            $request->merge([
-                'from_combined' => true,
-            ]);
-            $this->proposalController->store($request, $project);
-            $this->budgetController->store($request, $project);
+        //dd($request);
+        $request->merge([
+            'from_combined' => true,
+        ]);
+        $proposalResponse = $this->proposalController->store($request, $project);
 
-        });
+        if ($proposalResponse instanceof \Illuminate\Http\RedirectResponse) {
+            if ($proposalResponse->getSession()->has('errors')) {
+                return $proposalResponse;
+            }
+        }
+
+        $budgetResponse = $this->budgetController->store($request, $project);
+
+        if ($budgetResponse instanceof \Illuminate\Http\RedirectResponse) {
+            if ($budgetResponse->getSession()->has('errors')) {
+                return $budgetResponse;
+            }
+        }
+
+
 
         //dd($action);
 

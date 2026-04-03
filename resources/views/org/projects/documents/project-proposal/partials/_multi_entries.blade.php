@@ -34,8 +34,18 @@
                 </div>
 
                 @php
-                    $objectives = old('objectives')
-                        ?? ($proposal?->objectives?->pluck('objective')->toArray() ?? []);
+                    $objectives = old('objectives');
+
+                    if (is_null($objectives)) {
+                        $objectives = $proposal?->objectives?->pluck('objective')->toArray();
+
+                        if (empty($objectives)) {
+                            $objectives = $project->sourceStrategicPlanProject?->objectives?->pluck('text')->toArray();
+                        }
+                    }
+
+                    $objectives = array_values(array_filter($objectives ?? []));
+
                     if (empty($objectives)) $objectives = [''];
                 @endphp
 
@@ -46,8 +56,9 @@
                             <input type="text"
                                 name="objectives[]"
                                 value="{{ $obj }}"
-                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
-                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
+class="w-full rounded-lg border px-3 py-2 text-sm 
+       {{ $errors->has('objectives') || $errors->has('objectives.*') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
+       focus:ring-2 focus:outline-none transition"
                                 placeholder="Enter objective">
 
                             <button type="button"
@@ -76,11 +87,21 @@
                     </button>
                 </div>
 
-                @php
-                    $indicators = old('success_indicators')
-                        ?? ($proposal?->indicators?->pluck('indicator')->toArray() ?? []);
-                    if (empty($indicators)) $indicators = [''];
-                @endphp
+@php
+    $indicators = old('success_indicators');
+
+    if (is_null($indicators)) {
+        $indicators = $proposal?->indicators?->pluck('indicator')->toArray();
+
+        if (empty($indicators)) {
+            $indicators = $project->sourceStrategicPlanProject?->deliverables?->pluck('text')->toArray();
+        }
+    }
+
+    $indicators = array_values(array_filter($indicators ?? []));
+
+    if (empty($indicators)) $indicators = [''];
+@endphp
 
                 <div id="indicatorsWrap" class="space-y-2">
                     @foreach($indicators as $ind)
@@ -89,8 +110,9 @@
                             <input type="text"
                                 name="success_indicators[]"
                                 value="{{ $ind }}"
-                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
-                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
+class="w-full rounded-lg border px-3 py-2 text-sm 
+       {{ $errors->has('success_indicators') || $errors->has('success_indicators.*') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
+       focus:ring-2 focus:outline-none transition"
                                 placeholder="Enter success indicator">
 
                             <button type="button"
@@ -124,12 +146,21 @@
                     </button>
                 </div>
 
-                @php
-                    $partners = old('partners')
-                        ?? ($proposal?->partners?->pluck('name')->toArray() ?? []);
-                    if (empty($partners)) $partners = [''];
-                @endphp
+@php
+    $partners = old('partners');
 
+    if (is_null($partners)) {
+        $partners = $proposal?->partners?->pluck('name')->toArray();
+
+        if (empty($partners)) {
+            $partners = $project->sourceStrategicPlanProject?->partners?->pluck('text')->toArray();
+        }
+    }
+
+    $partners = array_values(array_filter($partners ?? []));
+
+    if (empty($partners)) $partners = [''];
+@endphp
                 <div id="partnersWrap" class="space-y-2">
                     @foreach($partners as $partner)
                         <div class="flex gap-2 items-center partner-row dynamic-row">
@@ -137,8 +168,9 @@
                             <input type="text"
                                 name="partners[]"
                                 value="{{ $partner }}"
-                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
-                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
+class="w-full rounded-lg border px-3 py-2 text-sm 
+       {{ $errors->has('partners') || $errors->has('partners.*') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
+       focus:ring-2 focus:outline-none transition"
                                 placeholder="Partner name">
 
                             <button type="button"
@@ -167,11 +199,21 @@
                     </button>
                 </div>
 
-                @php
-                    $roles = old('roles')
-                        ?? ($proposal?->roles?->pluck('role_name')->toArray() ?? []);
-                    if (empty($roles)) $roles = [''];
-                @endphp
+@php
+    $roles = old('roles');
+
+    if (is_null($roles)) {
+        $roles = $proposal?->roles?->pluck('role_name')->toArray();
+
+        if (empty($roles)) {
+            $roles = $project->sourceStrategicPlanProject?->roles?->pluck('role_name')->toArray();
+        }
+    }
+
+    $roles = array_values(array_filter($roles ?? []));
+
+    if (empty($roles)) $roles = [''];
+@endphp
 
                 <div id="rolesWrap" class="space-y-2">
                     @foreach($roles as $role)
@@ -180,8 +222,9 @@
                             <input type="text"
                                 name="roles[]"
                                 value="{{ $role }}"
-                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
-                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
+class="w-full rounded-lg border px-3 py-2 text-sm 
+       {{ $errors->has('roles') || $errors->has('roles.*') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
+       focus:ring-2 focus:outline-none transition"
                                 placeholder="Role title">
 
                             <button type="button"

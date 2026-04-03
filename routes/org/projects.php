@@ -59,6 +59,9 @@ Route::prefix('projects/{project}')
         Route::post('clearance/upload', [ClearanceController::class, 'upload'])
             ->name('clearance.upload');
 
+        Route::post('clearance/reissue', [ClearanceController::class, 'reissue'])
+            ->name('clearance.reissue');
+
    
         $standardDocument = function (
             string $prefix,

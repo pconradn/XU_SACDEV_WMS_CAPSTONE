@@ -34,7 +34,7 @@ class ProjectProposalController extends BaseProjectDocumentController
     {
         $document = $this->getDocument($project, 'project_proposal');
 
-        $proposal = $document?->proposalData;
+        $proposal = $document?->proposalData?->load('fundSources');
 
         $user = auth()->user();
 
@@ -53,6 +53,13 @@ class ProjectProposalController extends BaseProjectDocumentController
 
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
         $isAdmin = false;
+
+        $project->load([
+            'sourceStrategicPlanProject.objectives',
+            'sourceStrategicPlanProject.partners',
+            'sourceStrategicPlanProject.deliverables',
+            'sourceStrategicPlanProject.beneficiaries',
+        ]);
 
         return view('org.projects.documents.project-proposal.create', [
             'project'          => $project,
@@ -89,7 +96,14 @@ class ProjectProposalController extends BaseProjectDocumentController
             ->exists();
 
         if (!$isRegistered) {
-            return back()->with('error', 'This organization is not registered for the active school year.');
+
+            $document->update([
+                'status' => 'draft'
+            ]);
+
+            return back()->with('warning', 
+                'Organization is not registered for this school year. Saved as draft instead.'
+            );
         }
 
         $this->handleRequestSubmit($project, $document);
@@ -113,23 +127,237 @@ class ProjectProposalController extends BaseProjectDocumentController
         return back()->with('success', 'Project Proposal submitted successfully.');
     }
 
+    private function draftRules(): array
+    {
+        return [
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+
+            'start_time' => [
+                'nullable',
+                \Illuminate\Validation\Rule::anyOf([
+                    'date_format:H:i',
+                    'date_format:H:i:s',
+                ]),
+            ],
+
+            'end_time' => [
+                'nullable',
+                \Illuminate\Validation\Rule::anyOf([
+                    'date_format:H:i',
+                    'date_format:H:i:s',
+                ]),
+            ],
+
+            'on_campus_venue' => [
+                'nullable',
+                'string',
+                'max:255',
+                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+            ],
+
+            'off_campus_venue' => [
+                'nullable',
+                'string',
+                'max:255',
+                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+            ],
+
+            'engagement_type' => [
+                'nullable',
+                'in:organizer,partner,participant'
+            ],
+
+            'main_organizer' => [
+                'nullable',
+                'string',
+                'max:255',
+                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+            ],
+
+            'project_nature' => ['nullable', 'array'],
+            'project_nature.*' => [
+                'nullable',
+                'string',
+                'max:100',
+                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+            ],
+
+            'sdg' => ['nullable', 'array'],
+            'sdg.*' => [
+                'nullable',
+                'string',
+                'max:255',
+                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+            ],
+
+            'area_focus' => ['nullable', 'array'],
+            'area_focus.*' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'description' => ['nullable', 'string'],
+
+            'org_link' => ['nullable', 'string'],
+            'org_cluster' => ['nullable', 'string', 'max:255'],
+
+            'total_budget' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                'regex:/^\d+(\.\d{1,2})?$/'
+            ],
+
+            'fund_sources' => ['nullable', 'array'],
+            'fund_sources.*' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                'regex:/^\d+(\.\d{1,2})?$/'
+            ],
+
+            'audience_type' => ['nullable', 'string'],
+
+            'xu_subtypes' => ['nullable', 'array'],
+            'xu_subtypes.*' => ['nullable', 'string'],
+
+            'audience_details' => ['nullable', 'string'],
+
+            'expected_xu_participants' => [
+                'nullable',
+                'integer',
+                'regex:/^\d+$/'
+            ],
+
+            'expected_non_xu_participants' => [
+                'nullable',
+                'integer',
+                'regex:/^\d+$/'
+            ],
+
+            'has_guest_speakers' => ['nullable', 'boolean'],
+
+            'objectives' => ['nullable', 'array'],
+            'objectives.*' => [
+                'nullable',
+                'string',
+                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+            ],
+
+            'success_indicators' => ['nullable', 'array'],
+            'success_indicators.*' => [
+                'nullable',
+                'string',
+                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+            ],
+
+            'partners' => ['nullable', 'array'],
+            'partners.*' => [
+                'nullable',
+                'string',
+                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+            ],
+
+            'roles' => ['nullable', 'array'],
+            'roles.*' => [
+                'nullable',
+                'string',
+                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+            ],
+
+            'guests' => ['nullable', 'array'],
+            'guests.*.full_name' => [
+                'nullable',
+                'string',
+                'regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'
+            ],
+            'guests.*.affiliation' => [
+                'nullable',
+                'string',
+                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+            ],
+            'guests.*.designation' => [
+                'nullable',
+                'string',
+                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+            ],
+
+            'plan_of_actions' => ['nullable', 'array'],
+            'plan_of_actions.*.date' => ['nullable', 'date'],
+            'plan_of_actions.*.time' => ['nullable'],
+            'plan_of_actions.*.activity' => [
+                'nullable',
+                'string',
+                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+            ],
+            'plan_of_actions.*.venue' => [
+                'nullable',
+                'string',
+                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+            ],
+        ];
+    }
+
     public function store(Request $request, Project $project)
     {
         $formType = FormType::query()
             ->where('code', 'project_proposal')
             ->firstOrFail();
 
-        $data = $this->validateRequest($request);
+        $action = $request->input('action', 'draft');
 
-        if (
-            empty($data['on_campus_venue']) &&
-            empty($data['off_campus_venue'])
-        ) {
+        $rules = $action === 'submit'
+            ? $this->rules()        
+            : $this->draftRules();  
+
+        $validator = \Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+
+            
+            $data = $request->all();
+
+            [$data, $clean] = $this->normalizeData($data);
+
+            $document = $this->getOrCreateDocument($project, 'PROJECT_PROPOSAL');
+
+            DB::transaction(function () use ($project, $formType, $data, $clean, &$document) {
+
+                $document = $this->saveDocument($project, $formType);
+
+                if ($document->isLocked() && !$document->edit_mode) {
+                    abort(403, 'This proposal is locked and cannot be edited.');
+                }
+
+                $proposal = $this->saveMainProposal($document->id, $data);
+
+                $this->saveFundSources($proposal, $data['fund_sources'] ?? []);
+
+                $this->saveMultiEntries($document->id, $clean, $data);
+                
+            });
+
             return back()
-                ->withErrors([
-                    'venue' => 'At least one venue must be specified.'
-                ])
+                ->withErrors($validator)
+                ->with('warning', 'Some required fields are missing. Saved as draft instead.')
                 ->withInput();
+        }
+
+        $data = $validator->validated();
+
+        if ($action === 'submit') {
+            if (
+                empty($data['on_campus_venue']) &&
+                empty($data['off_campus_venue'])
+            ) {
+                return back()
+                    ->withErrors([
+                        'venue' => 'At least one venue must be specified.'
+                    ])
+                    ->withInput();
+            }
         }
 
         [$data, $clean] = $this->normalizeData($data);
@@ -149,6 +377,8 @@ class ProjectProposalController extends BaseProjectDocumentController
             $this->saveFundSources($proposal, $data['fund_sources'] ?? []);
 
             $this->saveMultiEntries($document->id, $clean, $data);
+
+            //dd($proposal->fresh());
 
             if (!$document->edit_mode) {
                 $this->resetApprovalsAfterEdit($document);
@@ -222,13 +452,11 @@ class ProjectProposalController extends BaseProjectDocumentController
             ->delete();
     }
 
-    private function validateRequest(Request $request): array
+    private function rules(): array
     {
-        $startTime = $request->start_time . ':00';
-        return $request->validate([
+        return [
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
-           
 
             'start_time' => [
                 'nullable',
@@ -238,7 +466,6 @@ class ProjectProposalController extends BaseProjectDocumentController
                 ]),
             ],
 
-
             'end_time' => [
                 'nullable',
                 Rule::anyOf([
@@ -247,17 +474,17 @@ class ProjectProposalController extends BaseProjectDocumentController
                 ]),
             ],
 
-            'on_campus_venue' => ['nullable', 'string', 'max:255'],
-            'off_campus_venue' => ['nullable', 'string', 'max:255'],
+            'on_campus_venue' => ['nullable','required_without:off_campus_venue', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'off_campus_venue' => ['nullable', 'required_without:on_campus_venue', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
-            'engagement_type' => ['required', 'in:organizer,partner,participant'],
-            'main_organizer' => ['nullable', 'string', 'max:255'],
+            'engagement_type' => ['required', 'in:organizer,partner,participant','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'main_organizer' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
-            'project_nature' => ['nullable', 'array'],
-            'project_nature.*' => ['string', 'max:100'],
+            'project_nature' => ['required', 'array'],
+            'project_nature.*' => ['string', 'max:100','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
-            'sdg' => ['nullable', 'array'],
-            'sdg.*' => ['string', 'max:255'],
+            'sdg' => ['required', 'array'],
+            'sdg.*' => ['string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
             'area_focus' => ['nullable', 'array'],
             'area_focus.*' => ['string', 'max:100'],
@@ -268,41 +495,40 @@ class ProjectProposalController extends BaseProjectDocumentController
 
             'total_budget' => ['nullable', 'numeric', 'min:0'],
             'fund_sources' => ['nullable', 'array'],
-            'fund_sources.*' => ['nullable', 'numeric', 'min:0'],
+            'fund_sources.*' => ['nullable', 'numeric', 'min:0','regex:/^\d+(\.\d{1,2})?$/'],
 
             'audience_type' => ['required', 'string'],
             'xu_subtypes' => ['nullable', 'array'],
             'xu_subtypes.*' => ['string'],
-            'audience_details' => ['nullable', 'string'],
+            'audience_details' => ['nullable' , 'string'],
 
-            'expected_xu_participants' => ['nullable', 'integer'],
-            'expected_non_xu_participants' => ['nullable', 'integer'],
+            'expected_xu_participants' => ['nullable', 'integer','regex:/^\d+$/'],
+            'expected_non_xu_participants' => ['nullable', 'integer','regex:/^\d+$/'],
             'has_guest_speakers' => ['nullable', 'boolean'],
 
-            'objectives' => ['nullable', 'array'],
-            'objectives.*' => ['nullable', 'string'],
+            'objectives' => ['required', 'array'],
+            'objectives.*' => ['required', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
-            'success_indicators' => ['nullable', 'array'],
-            'success_indicators.*' => ['nullable', 'string'],
+            'success_indicators' => ['required', 'array'],
+            'success_indicators.*' => ['required', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
             'partners' => ['nullable', 'array'],
-            'partners.*' => ['nullable', 'string'],
-            'roles.*' => ['nullable', 'string'],
+            'partners.*' => ['nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'roles.*' => ['nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
             'guests' => ['nullable', 'array'],
-            'guests.*.full_name' => ['nullable', 'string'],
-            'guests.*.affiliation' => ['nullable', 'string'],
-            'guests.*.designation' => ['nullable', 'string'],
+            'guests.*.full_name' => ['nullable', 'string','regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
+            'guests.*.affiliation' => ['nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'guests.*.designation' => ['nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
-            'plan_of_actions' => ['nullable', 'array'],
-            'plan_of_actions.*.date' => ['nullable', 'date'],
-            'plan_of_actions.*.time' => ['nullable'],
-            'plan_of_actions.*.activity' => ['nullable', 'string'],
-            'plan_of_actions.*.venue' => ['nullable', 'string'],
+            'plan_of_actions' => ['required', 'array'],
+            'plan_of_actions.*.date' => ['required', 'date'],
+            'plan_of_actions.*.time' => ['required'],
+            'plan_of_actions.*.activity' => ['nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'plan_of_actions.*.venue' => ['nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+
             'roles' => ['nullable', 'array'],
-        ]);
-
-        
+        ];
     }
     
     private function saveDocument(Project $project, $formType)
@@ -332,13 +558,13 @@ class ProjectProposalController extends BaseProjectDocumentController
                 'end_time' => $data['end_time'] ?? null,
                 'on_campus_venue' => $data['on_campus_venue'] ?? null,
                 'off_campus_venue' => $data['off_campus_venue'] ?? null,
-                'engagement_type' => $data['engagement_type'],
+                'engagement_type' => $data['engagement_type'] ?? null,
                 'main_organizer' => $data['main_organizer'] ?? null,
                 'project_nature' => implode(', ', $data['project_nature'] ?? []),
                 'sdg' => implode(', ', $data['sdg'] ?? []),
                 'area_focus' => implode(', ', $data['area_focus'] ?? []),
-                'description' => $data['description'],
-                'org_link' => $data['org_link'],
+                'description' => $data['description'] ?? null,
+                'org_link' => $data['org_link'] ?? null,
 
                 'xu_subtypes' => isset($data['xu_subtypes'])
                     ? implode(', ', $data['xu_subtypes'])
@@ -347,7 +573,7 @@ class ProjectProposalController extends BaseProjectDocumentController
 
                 'org_cluster' => $data['org_cluster'] ?? null,
                 'total_budget' => $data['total_budget'] ?? null,
-                'audience_type' => $data['audience_type'],
+                'audience_type' => $data['audience_type'] ?? null,
                 'audience_details' => $data['audience_details'] ?? null,
                 'expected_xu_participants' => $data['expected_xu_participants'] ?? null,
                 'expected_non_xu_participants' => $data['expected_non_xu_participants'] ?? null,

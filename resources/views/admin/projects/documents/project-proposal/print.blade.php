@@ -960,7 +960,7 @@
                         @endphp
 
                         <div style="font-size:12px;">
-                            {{ $counterpartAmount ? 'Php ' . number_format($counterpartAmount, 2) : '—' }}
+                           Php {{$proposal->budgetDocument->budgetproposalData->counterpart_amount_per_pax}} 
                         </div>
 
                     </div>

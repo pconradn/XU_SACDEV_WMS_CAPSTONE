@@ -147,6 +147,10 @@ class OrgDashboardController extends Controller
                 $requiredForms = $resolver->resolve($project);
 
                 foreach ($requiredForms as $req) {
+
+                    if (($req->code ?? null) === 'BUDGET_PROPOSAL') {
+                        continue;
+                    }
                     $doc = null;
 
                     if (!empty($req->id)) {
@@ -328,9 +332,27 @@ class OrgDashboardController extends Controller
 
         
         $pendingTasks = $pendingTasks->map(function ($task) {
+
+
+
             if (!isset($task->link)) {
-                $task->link = ProjectFormRouteResolver::resolve($task);
+
+              
+                $code = $task->formType->code ?? $task->form_code ?? null;
+
+                if ($code === 'PROJECT_PROPOSAL') {
+
+                    $task->link = route('org.projects.documents.combined-proposal.create', [
+                        'project' => $task->project->id,
+                    ]);
+
+                } else {
+
+                    // fallback to resolver
+                    $task->link = ProjectFormRouteResolver::resolve($task);
+                }
             }
+
             return $task;
         });
         

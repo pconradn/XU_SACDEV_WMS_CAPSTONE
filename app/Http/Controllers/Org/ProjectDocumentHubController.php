@@ -315,16 +315,39 @@ class ProjectDocumentHubController extends Controller
             })->count();
         }
 
+
+
+
+        $participants = $project->documents()
+            ->whereHas('formType', fn($q) => $q->where('code','OFF_CAMPUS_APPLICATION'))
+            ->first()?->offCampus?->participants ?? collect();
+
         $clearance = [
             'required' => $project->requires_clearance,
 
             'reference' => $project->clearance_reference,
             'status' => $project->clearance_status,
+            'issued_at' => $project->clearance_issued_at,
+
+            'snapshot' => $project->clearance_snapshot,
+
+            'participants_count' => $project->documents()
+                ->where('form_type_id', 3)
+                ->with('offCampusActivity.participants')
+                ->get()
+                ->pluck('offCampusActivity')
+                ->filter()
+                ->flatMap->participants
+                ->count(),
 
             'is_project_head' => $isProjectHead,
 
+            'is_outdated' => app(\App\Http\Controllers\Org\ClearanceController::class)
+                ->isSnapshotOutdated($project),
+
             'print_url' => route('org.projects.clearance.print', $project),
             'upload_url' => route('org.projects.clearance.upload', $project),
+            'reissue_url' => route('org.projects.clearance.reissue', $project),
         ];
 
         $today = Carbon::today();

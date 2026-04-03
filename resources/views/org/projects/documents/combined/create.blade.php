@@ -111,6 +111,9 @@ $budgetDoc   = $budgetData['document'] ?? null;
 
 </form>
 
+
+@include('org.projects.documents.project-proposal.partials._student_agreement')
+
 {{-- SIGNATURES (proposal only drives) --}}
 @include('org.projects.documents.project-proposal.partials._signatures')
 

@@ -1,11 +1,14 @@
 <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
 @php
-    $actorLabel = 'Member';
+    $actorLabel = 'Project Head';
 
-    if ($roles->contains('project_head')) {
-        $actorLabel = 'Project Head';
+    if ($roles->contains('treasurer')) {
+        $actorLabel = 'Treasurer';
     } elseif ($roles->contains('moderator')) {
+    
         $actorLabel = 'Moderator';
+    } elseif ($roles->contains('finance_officer')) {
+        $actorLabel = 'Budget and Finance Officer';
     } elseif ($roles->contains('president')) {
         $actorLabel = 'President';
     }

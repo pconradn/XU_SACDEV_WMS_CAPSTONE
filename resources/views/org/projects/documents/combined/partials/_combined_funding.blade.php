@@ -41,8 +41,9 @@
 
                 <input type="text"
                     inputmode="decimal"
+                    data-name="pta_amount"
                     id="pta_input"
-                    value="0.00"
+                    value="{{ old('pta_amount', $budget?->pta_amount ?? 0) }}"
                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
             </div>
@@ -58,22 +59,36 @@
 
                 <div class="grid grid-cols-2 gap-2">
 
-                    <input type="text"
-                        inputmode="decimal"
-                        id="counterpart_amount"
-                        name="counterpart_amount_per_pax"
-                        value="0.00"
-                        placeholder="Amount per pax"
-                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
-                               focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
+                    {{-- AMOUNT PER PAX --}}
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-500 mb-1">
+                            Amount (₱)
+                        </label>
 
-                    <input type="number"
-                        id="counterpart_pax"
-                        name="counterpart_pax"
-                        value="0"
-                        placeholder="Pax"
-                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-center 
-                               focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
+                        <input type="text"
+                            inputmode="decimal"
+                            id="counterpart_amount"
+                            name="counterpart_amount_per_pax"
+                            value="{{ old('counterpart_amount_per_pax', $budget?->counterpart_amount_per_pax ?? 0) }}"
+                            placeholder="0.00"
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
+                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
+                    </div>
+
+                    {{-- NUMBER OF PEOPLE --}}
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-500 mb-1">
+                            No. of Participants
+                        </label>
+
+                        <input type="number"
+                            id="counterpart_pax"
+                            name="counterpart_pax"
+                            value="{{ old('counterpart_pax', $budget?->counterpart_pax ?? 0) }}"
+                            placeholder="0"
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-center 
+                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
+                    </div>
 
                 </div>
             </div>
@@ -94,6 +109,14 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
+@php
+    $proposalData = $project->proposalDocument?->proposalData;
+
+    $fundSources = $proposalData?->fundSources
+        ? $proposalData->fundSources->pluck('amount', 'source_name')->toArray()
+        : [];
+@endphp
+
                 @foreach(['Solicitation','Ticket-Selling','Others'] as $src)
                     <div>
                         <label class="block text-xs font-medium text-slate-700 mb-1">
@@ -102,7 +125,7 @@
 
                         <input type="text"
                             inputmode="decimal"
-                            value="0.00"
+                            value="{{ old('fund_sources.'.$src, $fundSources[$src] ?? 0) }}"
                             data-raised="{{ $src }}"
                             class="raised-input w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
                                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
@@ -155,7 +178,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     function parseNumber(value) {
-        return parseFloat((value || '').toString().replace(/,/g, '')) || 0;
+        return Number((value || '').toString().replace(/,/g, '')) || 0;
     }
 
     function formatNumber(value) {
@@ -204,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('hidden_budget_total').value = total;
 
     }
+    
 
     function attachFormatting(input) {
 
@@ -227,6 +251,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.value = formatNumber(parseNumber(input.value));
             }
         });
+    document.querySelector('form').addEventListener('submit', () => {
+
+        // clean ALL numeric inputs
+        document.querySelectorAll('#pta_input, #counterpart_amount, .raised-input')
+            .forEach(input => {
+                input.value = parseNumber(input.value);
+            });
+
+        // ensure pax is clean integer
+        const cpAmountInput = document.getElementById('counterpart_amount');
+        cpAmountInput.value = formatNumber(parseNumber(cpAmountInput.value));
+
+        const cpPaxInput = document.getElementById('counterpart_pax');
+        cpPaxInput.value = parseInt(cpPaxInput.value) || 0;
+
+        computeAll();
+    });
 
     document.addEventListener('input', () => {
         computeAll();

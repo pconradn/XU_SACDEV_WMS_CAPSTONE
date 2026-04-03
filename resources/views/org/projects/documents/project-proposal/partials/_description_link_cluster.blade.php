@@ -31,9 +31,9 @@
             <textarea name="description"
                 rows="3"
                 required
-                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
-                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none 
-                       resize-none transition"
+class="w-full rounded-lg border px-3 py-2 text-sm 
+       {{ $errors->has('description') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
+       focus:ring-2 focus:outline-none resize-none transition"
             >{{ old('description', $proposal->description ?? '') }}</textarea>
 
         </div>
@@ -54,9 +54,9 @@
             <textarea name="org_link"
                 rows="3"
                 required
-                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
-                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none 
-                       resize-none transition"
+                class="w-full rounded-lg border px-3 py-2 text-sm 
+                    {{ $errors->has('org_link') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
+       focus:ring-2 focus:outline-none resize-none transition"
             >{{ old('org_link', $proposal->org_link ?? '') }}</textarea>
 
         </div>
@@ -65,7 +65,7 @@
             $clusterName = $project->organization?->cluster?->name ?? '—';
         @endphp
 
-        {{-- ⚠️ DO NOT TOUCH (LOGIC PRESERVED) --}}
+        {{-- DO NOT TOUCH (LOGIC PRESERVED) --}}
         <input type="hidden" name="org_cluster" value="{{ $clusterName }}">
 
     </div>

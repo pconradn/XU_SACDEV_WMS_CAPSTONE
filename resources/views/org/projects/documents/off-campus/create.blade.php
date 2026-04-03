@@ -38,81 +38,10 @@ $currentApprover = $document?->signatures
 
 
 {{-- ================= STATUS CARD ================= --}}
-<div class="rounded-2xl border {{ $style }} px-5 py-4 shadow-sm">
-
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-
-        <div class="font-semibold tracking-wide">
-            OFF CAMPUS FORM STATUS:
-            <span class="ml-1 uppercase">{{ $status }}</span>
-        </div>
-
-        @if($status === 'submitted' && $currentApprover)
-            <div class="text-xs font-medium">
-                Awaiting:
-                <span class="capitalize font-semibold">
-                    {{ str_replace('_',' ', $currentApprover->role) }}
-                </span>
-            </div>
-        @endif
-
-        @if(in_array($status, ['approved','approved_by_sacdev']))
-            <div class="text-xs font-medium">
-                Fully approved and finalized.
-            </div>
-        @endif
-
-        @if($status === 'draft')
-            <div class="text-xs">
-                This form is still editable.
-            </div>
-        @endif
-
-        @if($status === 'returned')
-            <div class="text-xs font-medium">
-                Returned for revision. Please update and resubmit.
-            </div>
-        @endif
-
-    </div>
-
-</div>
+@include('components.document.status-bar', ['document' => $document])
 
 
-{{-- ================= RETURN REMARKS ================= --}}
-@if(isset($document) && $document->remarks && $isProjectHead)
 
-<div class="rounded-2xl border border-amber-200 bg-amber-50 shadow-sm p-5 relative">
-
-    <button
-        onclick="this.closest('div').remove()"
-        class="absolute top-3 right-4 text-amber-500 hover:text-amber-700 text-sm">
-        ✕
-    </button>
-
-    <div class="font-semibold text-amber-800 mb-2">
-        Returned for Revision
-    </div>
-
-    <div class="text-sm text-amber-700 mb-2">
-        {{ $document->remarks }}
-    </div>
-
-    @if($document->returnedBy)
-    <div class="text-xs text-amber-600 italic">
-        Returned by {{ $document->returnedBy->name }}
-        @if($document->returned_at)
-            on {{ \Carbon\Carbon::parse($document->returned_at)->format('F d, Y h:i A') }}
-        @endif
-    </div>
-    @endif
-
-</div>
-
-@endif
-
-
-{{-- ================= HEADER ================= --}}
 @include('org.projects.documents.off-campus.partials._header')
 
 
@@ -131,14 +60,30 @@ $currentApprover = $document?->signatures
 
 <div class="grid gap-6">
 
-    {{-- ACTIVITY INFO --}}
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+
+    {{-- ACCENT LINE --}}
+    
+    <div class="h-1 bg-blue-500"></div>
+    
+    <div class=" border border-slate-200 bg-white shadow-sm p-5">
+        
+        
         @include('org.projects.documents.off-campus.partials._activity-info')
     </div>
 
-    {{-- PARTICIPANTS --}}
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+
+    {{-- ACCENT LINE --}}
+    
+    <div class="h-1 bg-blue-500"></div>
+    
+    <div class=" border border-slate-200 bg-white shadow-sm p-5">
         @include('org.projects.documents.off-campus.partials._participants')
+    </div>
+
     </div>
 
 </div>
@@ -152,7 +97,7 @@ $currentApprover = $document?->signatures
 
 
 {{-- ================= SIGNATURES ================= --}}
-@include('org.projects.documents.documentation-report.partials._signatures')
+@include('org.projects.documents.project-proposal.partials._signatures')
 
 
 {{-- ================= ACTIONS ================= --}}

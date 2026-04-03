@@ -32,10 +32,20 @@
                     </label>
                     <input type="date"
                         name="start_date"
-                        value="{{ old('start_date', $proposal->start_date ?? '') }}"
-                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
+                        value="{{ old(
+                            'start_date',
+                            optional($proposal)->start_date
+                                ? \Carbon\Carbon::parse($proposal->start_date)->format('Y-m-d')
+                                : (optional($project->sourceStrategicPlanProject)->target_date
+                                    ? \Carbon\Carbon::parse($project->sourceStrategicPlanProject->target_date)->format('Y-m-d')
+                                    : ''
+                                )
+                        ) }}"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
+                                border {{ $errors->has('start_date') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
                         required>
+                        
                 </div>
 
                 {{-- End Date --}}
@@ -45,8 +55,17 @@
                     </label>
                     <input type="date"
                         name="end_date"
-                        value="{{ old('end_date', $proposal->end_date ?? '') }}"
-                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
+                        value="{{ old(
+                            'end_date',
+                            optional($proposal)->end_date
+                                ? \Carbon\Carbon::parse($proposal->end_date)->format('Y-m-d')
+                                : (optional($project->sourceStrategicPlanProject)->target_date
+                                    ? \Carbon\Carbon::parse($project->sourceStrategicPlanProject->target_date)->format('Y-m-d')
+                                    : ''
+                                )
+                        ) }}"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
+                                border {{ $errors->has('end_date') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
                         required>
                 </div>
@@ -60,6 +79,7 @@
                         name="start_time"
                         value="{{ old('start_time', $proposal->start_time ?? '') }}"
                         class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
+                                border {{ $errors->has('start_time') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
                 </div>
 
@@ -72,6 +92,7 @@
                         name="end_time"
                         value="{{ old('end_time', $proposal->end_time ?? '') }}"
                         class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
+                                border {{ $errors->has('end_time') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
                 </div>
 
@@ -104,6 +125,7 @@
                         name="on_campus_venue"
                         value="{{ old('on_campus_venue', $proposal->on_campus_venue ?? '') }}"
                         class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
+                                border {{ $errors->has('on_campus_venue') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
                         placeholder="e.g., XU Gym, AVR 1">
                 </div>
@@ -117,6 +139,7 @@
                         name="off_campus_venue"
                         value="{{ old('off_campus_venue', $proposal->off_campus_venue ?? '') }}"
                         class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
+                                border {{ $errors->has('off_campus_venue') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
                         placeholder="Barangay Hall, Community Center">
                 </div>

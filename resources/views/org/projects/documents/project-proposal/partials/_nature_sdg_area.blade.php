@@ -38,7 +38,7 @@
                                 <input type="radio"
                                        name="engagement_type"
                                        value="{{ $val }}"
-                                       class="border-slate-300 focus:ring-blue-500"
+                                       class="border {{ $errors->has('engagement_type') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
                                        @checked($eng === $val)>
                                 <span>{{ $label }}</span>
                             </label>
@@ -56,8 +56,9 @@
                     <input type="text"
                         name="main_organizer"
                         value="{{ old('main_organizer', $proposal->main_organizer ?? '') }}"
-                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
-                               focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
+                        class="w-full rounded-lg border px-3 py-2 text-sm 
+                            {{ $errors->has('main_organizer') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
+                            focus:ring-2 focus:outline-none transition"
                         placeholder="Name of main organizer">
                 </div>
 
@@ -106,7 +107,7 @@
                                 <input type="checkbox"
                                     name="project_nature[]"
                                     value="{{ $val }}"
-                                    class="border-slate-300 focus:ring-blue-500"
+                                    class="border {{ $errors->has('project_nature') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
                                     @checked(in_array($val, $nature, true))>
                                 <span>{{ $label }}</span>
                             </label>
@@ -114,8 +115,9 @@
                             <input type="text"
                                 name="project_nature_other"
                                 value="{{ old('project_nature_other', $proposal->project_nature_other ?? '') }}"
-                                class="rounded-lg border border-slate-300 px-2 py-1 text-sm w-32 
-                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
+                                class="rounded-lg border px-2 py-1 text-sm w-32 
+                                    {{ $errors->has('project_nature_other') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
+                                    focus:ring-2 focus:outline-none transition"
                                 placeholder="Specify">
                         </div>
                     @else
@@ -123,7 +125,7 @@
                             <input type="checkbox"
                                 name="project_nature[]"
                                 value="{{ $val }}"
-                                class="border-slate-300 focus:ring-blue-500"
+                                class="border {{ $errors->has('project_nature') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
                                 @checked(in_array($val, $nature, true))>
                             <span>{{ $label }}</span>
                         </label>
@@ -182,7 +184,7 @@
                                 <input type="checkbox"
                                        name="sdg[]"
                                        value="{{ $s }}"
-                                       class="border-slate-300 focus:ring-blue-500"
+                                       class="border {{ $errors->has('area_focus') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
                                        @checked(in_array($s, $sdg, true))>
                                 <span>{{ $s }}</span>
                             </label>
@@ -215,7 +217,7 @@
                             <input type="checkbox"
                                    name="area_focus[]"
                                    value="organizational_development"
-                                   class="border-slate-300 focus:ring-blue-500"
+                                   class="border {{ $errors->has('area_focus') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
                                    @checked(in_array('organizational_development', $af, true))>
                             <span>Organizational Development</span>
                         </label>
@@ -224,7 +226,7 @@
                             <input type="checkbox"
                                    name="area_focus[]"
                                    value="student_services"
-                                   class="border-slate-300 focus:ring-blue-500"
+                                   class="border {{ $errors->has('area_focus') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
                                    @checked(in_array('student_services', $af, true))>
                             <span>Student Services and Formation</span>
                         </label>
@@ -233,7 +235,7 @@
                             <input type="checkbox"
                                    name="area_focus[]"
                                    value="community_involvement"
-                                   class="border-slate-300 focus:ring-blue-500"
+                                   class="border {{ $errors->has('area_focus') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
                                    @checked(in_array('community_involvement', $af, true))>
                             <span>Community Involvement</span>
                         </label>

@@ -59,20 +59,30 @@ class SolicitationApplicationController extends BaseProjectDocumentController
     public function store(Request $request, Project $project)
     {
 
-        $request->validate([
+        $validator = \Validator::make($request->all(), [
 
-            'activity_name' => ['required','string','max:255'],
-            'purpose' => ['required','string'],
+            'activity_name' => ['required','string','max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'purpose' => ['required','string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
             'duration_from' => ['required','date'],
             'duration_to' => ['required','date'],
 
-            'target_amount' => ['nullable','numeric'],
-            'desired_letter_count' => ['required','integer'],
+            'target_amount' => ['nullable','numeric','regex:/^\d+$/'],
+            'desired_letter_count' => ['required','integer','regex:/^\d+$/'],
 
             'letter_draft_link' => ['nullable','url','max:500'],
 
         ]);
+
+        if ($validator->fails()) {
+
+            $this->getOrCreateDocument($project, 'SOLICITATION_APPLICATION');
+
+            return back()
+                ->with('warning', 'Form has errors. Saved as draft instead.')
+                ->withErrors($validator)
+                ->withInput();
+        }
 
 
         $document = $this->getOrCreateDocument($project, 'SOLICITATION_APPLICATION');
@@ -141,6 +151,27 @@ class SolicitationApplicationController extends BaseProjectDocumentController
 
         if ($document->status !== 'draft' && !$document->edit_mode) {
             return back()->with('error', 'This form cannot be submitted.');
+        }
+
+        $activeSy = \App\Models\SchoolYear::activeYear();
+
+        if (!$activeSy) {
+            return back()->with('error', 'No active school year is currently set.');
+        }
+
+        $isRegistered = \App\Models\OrganizationSchoolYear::where('organization_id', $project->organization_id)
+            ->where('school_year_id', $activeSy->id)
+            ->exists();
+
+        if (!$isRegistered) {
+
+            $document->update([
+                'status' => 'draft'
+            ]);
+
+            return back()->with('warning', 
+                'Organization is not registered for this school year. Saved as draft instead.'
+            );
         }
 
         $this->handleRequestSubmit($project, $document);
@@ -231,22 +262,5 @@ class SolicitationApplicationController extends BaseProjectDocumentController
         return back()->with('success','Solicitation form returned for revision.');
     }
 
-
-    private function createSignature(
-        int $documentId,
-        int $userId,
-        string $role,
-        string $status = 'pending'
-    ): void {
-
-        ProjectDocumentSignature::create([
-            'project_document_id' => $documentId,
-            'user_id' => $userId,
-            'role' => $role,
-            'status' => $status,
-            'signed_at' => $status === 'signed' ? now() : null,
-        ]);
-
-    }
 
 }

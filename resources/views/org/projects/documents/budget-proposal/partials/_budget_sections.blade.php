@@ -163,7 +163,7 @@ $sections = [
 document.addEventListener('DOMContentLoaded', () => {
 
     function parse(val) {
-        return parseFloat((val || '').replace(/,/g, '')) || 0;
+        return Number((val || '').replace(/,/g, '')) || 0;
     }
 
     function format(val) {
@@ -183,6 +183,19 @@ document.addEventListener('DOMContentLoaded', () => {
             input.value = format(input.value);
         });
 
+    });
+
+
+
+
+});
+
+
+
+document.querySelector('form').addEventListener('submit', () => {
+
+    document.querySelectorAll('.money-input').forEach(input => {
+        input.value = Number((input.value || '').replace(/,/g, '')) || 0;
     });
 
 });
