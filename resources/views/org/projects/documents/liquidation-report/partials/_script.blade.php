@@ -9,16 +9,45 @@ const addSectionBtn = document.getElementById('addSectionBtn');
 const addExpenseBtn = document.getElementById('addExpenseBtn');
 
 
-/*
-|--------------------------------------------------------------------------
-| ADD SECTION
-|--------------------------------------------------------------------------
-*/
+function cleanNumber(value) {
+    if (!value) return 0;
+    return parseFloat(
+        String(value)
+            .replace(/,/g, '')
+            .replace(/[^\d.]/g, '')
+    ) || 0;
+}
+
+function formatMoney(value) {
+    return Number(value || 0).toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function formatMoneyInput(input) {
+    if (!input) return;
+
+    const raw = String(input.value || '')
+        .replace(/,/g, '')
+        .replace(/[^\d.]/g, '');
+
+    if (raw === '') {
+        input.value = '';
+        return;
+    }
+
+    const parsed = parseFloat(raw);
+    if (isNaN(parsed)) return;
+
+    input.value = formatMoney(parsed);
+}
+
 
 if (addSectionBtn) {
     addSectionBtn.addEventListener('click', () => {
 
-        const sectionName = prompt('Enter section name (e.g. Food, Materials)');
+        const sectionName = prompt('Enter section name');
         if (!sectionName) return;
 
         currentSection = sectionName.trim();
@@ -31,8 +60,7 @@ if (addSectionBtn) {
         row.innerHTML = `
             <td colspan="7" class="px-3 py-2 flex justify-between items-center">
                 <span class="font-semibold text-slate-700">${currentSection}</span>
-                <button type="button"
-                    class="text-xs text-red-500 hover:text-red-700 remove-section-btn">
+                <button type="button" class="text-xs text-red-500 remove-section-btn">
                     Remove Section
                 </button>
             </td>
@@ -42,12 +70,6 @@ if (addSectionBtn) {
     });
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| ADD EXPENSE
-|--------------------------------------------------------------------------
-*/
 
 if (addExpenseBtn) {
     addExpenseBtn.addEventListener('click', () => {
@@ -71,9 +93,10 @@ if (addExpenseBtn) {
 </td>
 
 <td class="px-2 py-1">
-<input type="number" step="0.01"
+<input type="text"
 name="items[${itemIndex}][amount]"
-class="w-full border rounded-lg px-2 py-1 text-xs text-right amount-input">
+data-money
+class="w-full border rounded-lg px-2 py-1 text-xs text-right">
 </td>
 
 <td class="px-2 py-1">
@@ -114,12 +137,6 @@ class="w-full border rounded-lg px-2 py-1 text-xs">
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| REMOVE
-|--------------------------------------------------------------------------
-*/
-
 document.addEventListener('click', (e) => {
 
     if (e.target.classList.contains('remove-row-btn')) {
@@ -143,37 +160,19 @@ document.addEventListener('click', (e) => {
 });
 
 
-/*
-|--------------------------------------------------------------------------
-| CALCULATIONS
-|--------------------------------------------------------------------------
-*/
-
-function calculateAll() {
-
-    calculateExpenses();
-    calculateAdvanced();
-    calculateBalance();
-
-}
-
-
-/* TOTAL EXPENSES */
 function calculateExpenses() {
 
     let total = 0;
 
-    document.querySelectorAll('.amount-input').forEach(input => {
-        const val = parseFloat(input.value);
-        if (!isNaN(val)) total += val;
+    document.querySelectorAll('#expensesTable input[name*="[amount]"]').forEach(input => {
+        total += cleanNumber(input.value);
     });
 
-    const el = document.querySelector('input[name="total_expenses"]');
-    if (el) el.value = total.toFixed(2);
+    const el = document.getElementById('totalExpenses');
+    if (el) el.value = formatMoney(total);
 }
 
 
-/* TOTAL ADVANCED (FROM CASH RECEIVED) */
 function calculateAdvanced() {
 
     const fields = [
@@ -189,53 +188,148 @@ function calculateAdvanced() {
         const input = document.querySelector(`input[name="${name}"]`);
         if (!input) return;
 
-        const val = parseFloat(input.value);
-        if (!isNaN(val)) total += val;
+        total += cleanNumber(input.value);
     });
 
-    const el = document.querySelector('input[name="total_advanced"]');
-    if (el) el.value = total.toFixed(2);
+    const el = document.getElementById('totalAdvanced');
+    if (el) el.value = formatMoney(total);
 }
 
 
-/* BALANCE */
 function calculateBalance() {
 
-    const expenses = parseFloat(document.querySelector('input[name="total_expenses"]')?.value) || 0;
-    const advanced = parseFloat(document.querySelector('input[name="total_advanced"]')?.value) || 0;
+    const expenses = cleanNumber(document.getElementById('totalExpenses')?.value);
+    const advanced = cleanNumber(document.getElementById('totalAdvanced')?.value);
 
     const balance = advanced - expenses;
 
-    const el = document.querySelector('input[name="balance"]');
-    if (el) el.value = balance.toFixed(2);
+    const el = document.getElementById('balance');
+    if (el) el.value = formatMoney(balance);
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| LIVE EVENTS
-|--------------------------------------------------------------------------
-*/
+function calculateAll() {
+    calculateExpenses();
+    calculateAdvanced();
+    calculateBalance();
+}
+
 
 document.addEventListener('input', (e) => {
 
     if (
-        e.target.classList.contains('amount-input') ||
+        e.target.matches('#expensesTable input[name*="[amount]"]') ||
         ['finance_amount','fund_raising_amount','sacdev_amount','pta_amount'].includes(e.target.name)
     ) {
         calculateAll();
     }
 
+    if (e.target.matches('[data-money]:not([readonly])')) {
+        const raw = String(e.target.value || '')
+            .replace(/,/g, '')
+            .replace(/[^\d.]/g, '');
+
+        e.target.value = raw;
+    }
+
+});
+
+
+document.addEventListener('blur', (e) => {
+
+    if (e.target.matches('[data-money]')) {
+        formatMoneyInput(e.target);
+        setTimeout(calculateAll, 50);
+    }
+
+}, true);
+
+
+document.addEventListener('submit', function (e) {
+
+    const form = e.target;
+    if (!(form instanceof HTMLFormElement)) return;
+
+    form.querySelectorAll('[data-money]').forEach((input) => {
+        input.value = String(input.value || '').replace(/,/g, '');
+    });
+
 });
 
 
-/*
-|--------------------------------------------------------------------------
-| INIT
-|--------------------------------------------------------------------------
-*/
+window.addEventListener('load', () => {
+    setTimeout(calculateAll, 200);
+});
 
-calculateAll();
+
+
+
+
+
+
+
 
 });
+</script>
+
+<script>
+(function () {
+
+    function cleanNumber(value) {
+        if (!value) return 0;
+        return parseFloat(
+            String(value).replace(/,/g, '').replace(/[^\d.]/g, '')
+        ) || 0;
+    }
+
+    function validateReturns() {
+
+        const a = cleanNumber(document.getElementById('clusterAReturn')?.value);
+        const b = cleanNumber(document.getElementById('clusterBReturn')?.value);
+        const balance = cleanNumber(document.getElementById('balance')?.value);
+
+        const warning = document.getElementById('returnWarning');
+
+        const totalReturn = a + b;
+
+        if (Math.abs(totalReturn - balance) > 0.01) {
+            warning.classList.remove('hidden');
+            return false;
+        } else {
+            warning.classList.add('hidden');
+            return true;
+        }
+    }
+
+    document.addEventListener('input', function (e) {
+        if (
+            e.target.matches('#clusterAReturn') ||
+            e.target.matches('#clusterBReturn')
+        ) {
+            validateReturns();
+        }
+    });
+
+    document.addEventListener('blur', function (e) {
+        if (
+            e.target.matches('#clusterAReturn') ||
+            e.target.matches('#clusterBReturn')
+        ) {
+            setTimeout(validateReturns, 50);
+        }
+    }, true);
+
+    document.addEventListener('submit', function (e) {
+
+        const form = e.target;
+        if (!(form instanceof HTMLFormElement)) return;
+
+        if (!validateReturns()) {
+            e.preventDefault();
+            alert('Cluster A + Cluster B must equal the Balance.');
+        }
+
+    });
+
+})();
 </script>

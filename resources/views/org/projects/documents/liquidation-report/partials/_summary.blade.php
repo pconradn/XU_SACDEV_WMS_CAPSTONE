@@ -6,7 +6,6 @@
 
 <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
 
-    {{-- HEADER --}}
     <div class="px-6 py-5 border-b border-slate-200">
         <h2 class="text-base font-semibold text-slate-900">
             Financial Summary
@@ -16,117 +15,113 @@
         </p>
     </div>
 
-
-    {{-- CONTENT --}}
     <div class="px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
 
         {{-- TOTAL EXPENSES --}}
         <div>
             <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                Total Expenses
+                Total Expenses (PHP)
             </label>
 
             <input
-                type="number"
+                type="text"
                 name="total_expenses"
-                step="0.01"
+                id="totalExpenses"
+                data-money
+                readonly
                 value="{{ $totalExpenses }}"
                 placeholder="0.00"
-                class="mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                class="mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-slate-50 font-semibold"
             >
 
             <p class="text-[11px] text-slate-400 mt-1">
-                Total amount spent based on all listed expenses.
+                Automatically calculated from all expense entries.
             </p>
         </div>
-
 
         {{-- TOTAL ADVANCED --}}
         <div>
             <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                Total Amount Advanced
+                Total Amount Advanced (PHP)
             </label>
 
             <input
-                type="number"
+                type="text"
                 name="total_advanced"
-                step="0.01"
+                id="totalAdvanced"
+                data-money
                 value="{{ $totalAdvanced }}"
                 placeholder="0.00"
-                class="mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                class="mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
             >
-
-            <p class="text-[11px] text-slate-400 mt-1">
-                Total funds received before or during project implementation.
-            </p>
         </div>
-
 
         {{-- BALANCE --}}
         <div>
             <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                Balance
+                Balance (PHP)
             </label>
 
             <input
-                type="number"
+                type="text"
                 name="balance"
-                step="0.01"
+                id="balance"
+                data-money
+                readonly
                 value="{{ $balance }}"
                 placeholder="0.00"
-                class="mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-slate-50"
+                class="mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-slate-50 font-semibold"
             >
 
             <p class="text-[11px] text-slate-400 mt-1">
-                Difference between total advanced funds and total expenses.
+                Automatically calculated (Advanced - Expenses).
             </p>
         </div>
 
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
+            {{-- CLUSTER A --}}
+            <div>
+                <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                    Amount to be Returned (Cluster A)
+                </label>
 
-        {{-- CLUSTER A --}}
-        <div>
-            <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                Amount to be Returned (Cluster A)
-            </label>
+                <input
+                    type="text"
+                    name="cluster_a_return"
+                    id="clusterAReturn"
+                    data-money
+                    value="{{ old('cluster_a_return', $report->cluster_a_return ?? '') }}"
+                    placeholder="0.00"
+                    class="mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                >
+            </div>
 
-            <input
-                type="number"
-                name="cluster_a_return"
-                step="0.01"
-                value="{{ old('cluster_a_return', $report->cluster_a_return ?? '') }}"
-                placeholder="0.00"
-                class="mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-            >
+            {{-- CLUSTER B --}}
+            <div>
+                <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                    Amount to be Returned (Cluster B)
+                </label>
 
-            <p class="text-[11px] text-slate-400 mt-1">
-                Return amount for internal sources.
-            </p>
+                <input
+                    type="text"
+                    name="cluster_b_return"
+                    id="clusterBReturn"
+                    data-money
+                    value="{{ old('cluster_b_return', $report->cluster_b_return ?? '') }}"
+                    placeholder="0.00"
+                    class="mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                >
+            </div>
+
         </div>
 
-
-        {{-- CLUSTER B --}}
-        <div>
-            <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                Amount to be Returned (Cluster B)
-            </label>
-
-            <input
-                type="number"
-                name="cluster_b_return"
-                step="0.01"
-                value="{{ old('cluster_b_return', $report->cluster_b_return ?? '') }}"
-                placeholder="0.00"
-                class="mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-            >
-
-            <p class="text-[11px] text-slate-400 mt-1">
-                Return amount for external sources.
+        {{-- VALIDATION MESSAGE --}}
+        <div class="md:col-span-2">
+            <p id="returnWarning" class="text-xs text-rose-600 hidden">
+                Cluster A + Cluster B must equal the Balance.
             </p>
         </div>
-
-    </div>
 
     </div>
 
