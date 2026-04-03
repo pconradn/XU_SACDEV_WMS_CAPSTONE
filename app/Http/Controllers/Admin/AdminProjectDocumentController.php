@@ -723,6 +723,8 @@ class AdminProjectDocumentController extends Controller
             'SOLICITATION_SPONSORSHIP_REPORT' => 'admin.projects.documents.solicitation-report.print',
             'SELLING_ACTIVITY_REPORT' => 'admin.projects.documents.selling-report.print',
             'TICKET_SELLING_REPORT' => 'admin.projects.documents.ticket-report.print',
+            'FEES_COLLECTION_REPORT' => 'admin.projects.documents.fees-report.print',
+            'DOCUMENTATION_REPORT' => 'admin.projects.documents.docu.print',
             default => abort(404),
         };
 

@@ -132,7 +132,24 @@ class DocumentationReportController extends BaseProjectDocumentController
             ->where('code', 'DOCUMENTATION_REPORT')
             ->firstOrFail();
 
-        $data = $this->validateRequest($request);
+        $request->merge([
+            'proposed_budget' => str_replace(',', '', $request->proposed_budget),
+            'actual_budget' => str_replace(',', '', $request->actual_budget),
+            'balance' => str_replace(',', '', $request->balance),
+        ]);
+        try {
+            $data = $this->validateRequest($request);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+
+            $this->getOrCreateDocument($project, 'DOCUMENTATION_REPORT');
+
+            return back()
+                ->with('warning', 'Form has errors. Saved as draft instead.')
+                ->withErrors($e->validator)
+                ->withInput();
+        }
+
+        $data = $this->sanitizeNumericInputs($data);
 
         [$data, $clean] = $this->normalizeData($data);
 
@@ -185,8 +202,32 @@ class DocumentationReportController extends BaseProjectDocumentController
             return $this->submit($project);
         }
 
-        return back()->with('success', 'Documentation Report Saved.');
+        return back()->with('success', 'Documentation Report saved as draft.');
     }
+
+
+    private function sanitizeNumericInputs(array $data): array
+    {
+        $fields = [
+            'proposed_budget',
+            'actual_budget',
+            'balance',
+            'expected_participants',
+            'actual_participants',
+        ];
+
+        foreach ($fields as $field) {
+            if (isset($data[$field])) {
+                $data[$field] = is_string($data[$field])
+                    ? str_replace(',', '', $data[$field])
+                    : $data[$field];
+            }
+        }
+
+        return $data;
+    }
+
+
 
     public function submit(Project $project)
     {
@@ -211,7 +252,14 @@ class DocumentationReportController extends BaseProjectDocumentController
             ->exists();
 
         if (!$isRegistered) {
-            return back()->with('error', 'This organization is not registered for the active school year.');
+
+            $document->update([
+                'status' => 'draft'
+            ]);
+
+            return back()->with('warning', 
+                'Organization is not registered for this school year. Saved as draft instead.'
+            );
         }
 
         $this->handleRequestSubmit($project, $document);
@@ -306,7 +354,7 @@ class DocumentationReportController extends BaseProjectDocumentController
         $isSubmit = $request->input('action') === 'submit';
 
         $data = $request->validate([
-            'description' => [$isSubmit ? 'required' : 'nullable', 'string'],
+            'description' => [$isSubmit ? 'required' : 'nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
             'implementation_start_date' => [$isSubmit ? 'required' : 'nullable', 'date'],
             'implementation_end_date' => [$isSubmit ? 'required' : 'nullable', 'date', 'after_or_equal:implementation_start_date'],
@@ -314,8 +362,8 @@ class DocumentationReportController extends BaseProjectDocumentController
             'implementation_start_time' => [$isSubmit ? 'required' : 'nullable', 'date_format:H:i'],
             'implementation_end_time' => [$isSubmit ? 'required' : 'nullable', 'date_format:H:i'],
 
-            'on_campus_venue' => ['nullable', 'string', 'max:255'],
-            'off_campus_venue' => ['nullable', 'string', 'max:255'],
+            'on_campus_venue' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'off_campus_venue' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
             'objectives_met' => [$isSubmit ? 'required' : 'nullable', 'in:yes,no'],
             'contributing_factors' => [$isSubmit ? 'required' : 'nullable', 'string'],
@@ -325,16 +373,38 @@ class DocumentationReportController extends BaseProjectDocumentController
 
             'implementation_rating' => [$isSubmit ? 'required' : 'nullable', 'integer', 'min:1', 'max:5'],
 
-            'pre_implementation_stage' => [$isSubmit ? 'required' : 'nullable', 'string'],
-            'implementation_stage' => [$isSubmit ? 'required' : 'nullable', 'string'],
-            'post_implementation_stage' => [$isSubmit ? 'required' : 'nullable', 'string'],
-            'recommendations' => ['nullable', 'string'],
+            'pre_implementation_stage' => [$isSubmit ? 'required' : 'nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'implementation_stage' => [$isSubmit ? 'required' : 'nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'post_implementation_stage' => [$isSubmit ? 'required' : 'nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'recommendations' => ['nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
             'proposed_budget' => ['nullable', 'numeric', 'min:0'],
             'actual_budget' => ['nullable', 'numeric', 'min:0'],
             'balance' => ['nullable', 'numeric'],
 
-            'photo_document' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
+            'photo_document' => [
+                function ($attribute, $value, $fail) use ($request) {
+
+                    $isSubmit = $request->input('action') === 'submit';
+
+                    if (!$isSubmit) return;
+
+                    $document = $this->getDocument(
+                        $request->route('project'),
+                        'DOCUMENTATION_REPORT'
+                    );
+
+                    $existing = $document?->documentationReport?->photo_document_path;
+
+                    if (!$value && !$existing) {
+                        $fail('The photo document is required.');
+                    }
+                },
+                'nullable',
+                'file',
+                'mimes:pdf',
+                'max:10240',
+            ],
 
             'objectives' => [$isSubmit ? 'required' : 'nullable', 'array', 'min:1'],
             'objectives.*' => ['nullable', 'string'],

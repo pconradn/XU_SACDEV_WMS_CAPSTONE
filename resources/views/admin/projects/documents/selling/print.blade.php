@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Application for Selling</title>
+    <title>Fees Collection Report</title>
 
     <style>
         body {

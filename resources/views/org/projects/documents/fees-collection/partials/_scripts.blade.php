@@ -6,6 +6,19 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+function formatCurrency(value) {
+    return new Intl.NumberFormat('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value);
+}
+
+function parseNumber(value) {
+    if (!value) return 0;
+    return parseFloat(value.toString().replace(/,/g, '')) || 0;
+}
+
+
 /* ================= ADD ROW ================= */
 function addCollectionRow() {
 
@@ -16,50 +29,37 @@ function addCollectionRow() {
 
     const row = document.createElement('tr');
 
+    row.classList.add('hover:bg-slate-50');
+
     row.innerHTML = `
-        <td class="px-4 py-2">
-            <input
-                type="number"
+        <td class="px-3 py-2 border-r">
+            <input type="number"
                 name="items[${index}][number_of_payers]"
-                placeholder="e.g. 50"
-                class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
-            >
+                class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm">
         </td>
 
-        <td class="px-4 py-2">
-            <input
-                type="number"
-                step="0.01"
+        <td class="px-3 py-2 border-r">
+            <input type="text"
                 name="items[${index}][amount_paid]"
-                placeholder="e.g. 1500.00"
-                class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 amount-input"
-            >
+                class="w-full text-right rounded-md border border-slate-300 px-2 py-1.5 text-sm amount-input">
         </td>
 
-        <td class="px-4 py-2">
-            <input
-                type="text"
+        <td class="px-3 py-2 border-r">
+            <input type="text"
                 name="items[${index}][receipt_series]"
-                placeholder="OR # / Control No."
-                class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
-            >
+                class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm">
         </td>
 
-        <td class="px-4 py-2">
-            <input
-                type="text"
+        <td class="px-3 py-2 border-r">
+            <input type="text"
                 name="items[${index}][remarks]"
-                placeholder="For SACDEV use"
-                class="w-full rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-sm"
-            >
+                class="w-full rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-sm">
         </td>
 
-        <td class="px-4 py-2 text-center">
-            <button
-                type="button"
+        <td class="px-3 py-2 text-center">
+            <button type="button"
                 onclick="removeCollectionRow(this)"
-                class="text-rose-600 hover:text-rose-800 text-xs font-semibold"
-            >
+                class="text-rose-600 text-xs font-semibold">
                 Remove
             </button>
         </td>
@@ -78,30 +78,36 @@ function removeCollectionRow(button) {
     if (!row) return;
 
     row.remove();
-
     updateCollectionTotal();
 }
 
 
-/* ================= TOTAL CALCULATION ================= */
+/* ================= TOTAL ================= */
 function updateCollectionTotal() {
 
-    const inputs = document.querySelectorAll('.amount-input');
+    const table = document.getElementById('collectionTable');
+    if (!table) return;
+
     let total = 0;
 
-    inputs.forEach(input => {
-        const value = parseFloat(input.value);
-        if (!isNaN(value)) {
-            total += value;
-        }
+    const rows = table.querySelectorAll('tr');
+
+    rows.forEach(row => {
+
+        const payersInput = row.querySelector('input[name*="[number_of_payers]"]');
+        const amountInput = row.querySelector('input[name*="[amount_paid]"]');
+
+        const payers = parseFloat(payersInput?.value) || 0;
+        const amount = parseNumber(amountInput?.value);
+
+        total += payers * amount;
+
     });
 
     const display = document.getElementById('totalCollectionDisplay');
+
     if (display) {
-        display.textContent = '₱ ' + total.toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
+        display.textContent = '₱ ' + formatCurrency(total);
     }
 }
 
@@ -109,15 +115,43 @@ function updateCollectionTotal() {
 /* ================= LISTENERS ================= */
 function attachAmountListeners() {
 
-    const inputs = document.querySelectorAll('.amount-input');
+    const inputs = document.querySelectorAll(
+        'input[name*="[amount_paid]"], input[name*="[number_of_payers]"]'
+    );
 
     inputs.forEach(input => {
 
-        input.removeEventListener('input', updateCollectionTotal);
-        input.addEventListener('input', updateCollectionTotal);
+        input.removeEventListener('input', handleInput);
+        input.removeEventListener('blur', handleBlur);
+
+        input.addEventListener('input', handleInput);
+        input.addEventListener('blur', handleBlur);
 
     });
+}
 
+
+function handleInput(e) {
+
+    const input = e.target;
+
+    if (input.name.includes('amount_paid')) {
+        const raw = input.value.replace(/[^0-9.]/g, '');
+        input.value = raw;
+    }
+
+    updateCollectionTotal();
+}
+
+function handleBlur(e) {
+
+    const input = e.target;
+
+    const value = parseNumber(input.value);
+
+    input.value = value ? formatCurrency(value) : '';
+
+    updateCollectionTotal();
 }
 
 </script>
