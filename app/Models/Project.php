@@ -68,6 +68,11 @@ class Project extends Model
 
     ];
 
+    public function externalPackets()
+    {
+        return $this->hasMany(\App\Models\ExternalPacket::class);
+    }
+
     public function sourceStrategicPlanProject()
     {
         return $this->belongsTo(StrategicPlanProject::class, 'source_strategic_plan_project_id');

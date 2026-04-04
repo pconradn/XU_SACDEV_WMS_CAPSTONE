@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\SacdevB5ModeratorSubmissionController;
 use App\Http\Controllers\Admin\SacdevStrategicPlanController;
 use App\Http\Controllers\Admin\SchoolYearController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\AdminExternalPacketController;
 use App\Http\Controllers\OrgConstitutionSubmissionController;
 use App\Http\Controllers\SACDEV\SacdevB2PresidentRegistrationController;
 use App\Http\Controllers\SearchController;
@@ -46,6 +47,57 @@ Route::middleware(['auth', 'sacdev_admin', 'must_change_password'])
         });
 
     });
+
+Route::middleware(['auth','sacdev_admin','must_change_password'])
+    ->group(function () {
+
+
+    Route::prefix('/admin/projects/{project}/external-packets')
+        ->middleware(['permission:projects.view'])
+        ->group(function () {
+
+        Route::get('/', [AdminExternalPacketController::class, 'index'])
+            ->name('admin.external-packets.index');
+
+        Route::get('/create', [AdminExternalPacketController::class, 'create'])
+            ->name('admin.external-packets.create');
+
+        Route::post('/', [AdminExternalPacketController::class, 'store'])
+            ->name('admin.external-packets.store');
+
+        Route::get('/{packet}', [AdminExternalPacketController::class, 'show'])
+            ->name('admin.external-packets.show');
+
+        Route::get('/{packet}/print', [AdminExternalPacketController::class, 'print'])
+            ->name('admin.external-packets.print');
+
+        Route::post('/{packet}/submit', [AdminExternalPacketController::class, 'submit'])
+            ->name('admin.external-packets.submit');
+
+        Route::delete('/{packet}', [AdminExternalPacketController::class, 'archive'])
+            ->name('admin.external-packets.archive');
+    });
+
+
+
+    Route::prefix('/admin/external-packets')
+        ->middleware(['permission:projects.view'])
+        ->group(function () {
+
+        // QR + manual search page
+        Route::get('/receive', [AdminExternalPacketController::class, 'receivePage'])
+            ->name('admin.external-packets.receive');
+
+        // search form submit (optional helper)
+        Route::post('/receive/lookup', [AdminExternalPacketController::class, 'lookup'])
+            ->name('admin.external-packets.lookup');
+
+        // process packet (approve/return items)
+        Route::post('/{packet}/process', [AdminExternalPacketController::class, 'processReceive'])
+            ->name('admin.external-packets.process');
+    });
+
+});
 
 Route::get('/admin/organizations/{organization}/open', [OrganizationController::class, 'open'])
     ->middleware(['auth', 'sacdev_admin', 'must_change_password', 'permission:projects.view'])

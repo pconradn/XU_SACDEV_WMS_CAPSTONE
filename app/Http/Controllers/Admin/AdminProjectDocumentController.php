@@ -28,6 +28,16 @@ class AdminProjectDocumentController extends Controller
             ->get()
             ->keyBy(fn($d) => $d->formType->code);
 
+        $project->load([
+            'externalPackets.items',
+            'submissionPackets'
+        ]);
+
+        $externalPackets = $project->externalPackets;
+        $submissionPackets = $project->submissionPackets
+            ->sortByDesc('created_at')
+            ->take(3); 
+
 
         $projectHead = ProjectAssignment::with('user')
             ->where('project_id', $project->id)
@@ -180,6 +190,64 @@ class AdminProjectDocumentController extends Controller
 
         $groupedForms = $forms->groupBy('phase');
 
+        /*
+        |--------------------------------------------------------------------------
+        | NEW: DOCUMENT GROUPING FOR DASHBOARD
+        |--------------------------------------------------------------------------
+        */
+
+        $documentsGrouped = [
+            'action_required' => collect(),
+            'required' => collect(),
+            'submitted_optional' => collect(),
+            'approved' => collect(),
+            'others' => collect(),
+        ];
+        $requiredFormTypes = $resolver->resolve($project);
+
+
+        $requiredFormCodes = collect($requiredFormTypes)->pluck('code')->toArray();
+
+        foreach ($forms as $form) {
+
+            $doc = $form['document'];
+
+            $isRequired = in_array($form['code'], $requiredFormCodes);
+            $isSubmitted = $doc !== null;
+            $isApproved = $doc && $doc->status === 'approved_by_sacdev';
+
+            $isActionRequired =
+                $form['is_pending'] &&
+                $form['waiting_for'] === 'sacdev_admin';
+
+            // 🔴 ACTION REQUIRED
+            if ($isActionRequired || ($doc && $doc->status === 'returned')) {
+                $documentsGrouped['action_required']->push($form);
+                continue;
+            }
+
+            // 🟢 APPROVED
+            if ($isApproved) {
+                $documentsGrouped['approved']->push($form);
+                continue;
+            }
+
+            // 🟡 REQUIRED
+            if ($isRequired && !$isSubmitted) {
+                $documentsGrouped['required']->push($form);
+                continue;
+            }
+
+            // 🔵 SUBMITTED OPTIONAL
+            if (!$isRequired && $isSubmitted) {
+                $documentsGrouped['submitted_optional']->push($form);
+                continue;
+            }
+
+            // ⚪ OTHERS
+            $documentsGrouped['others']->push($form);
+        }
+
 
         $totalForms = $forms->count();
 
@@ -187,33 +255,33 @@ class AdminProjectDocumentController extends Controller
             return $doc->status === 'approved_by_sacdev';
         })->count();
 
-        $requiredFormTypes = $resolver->resolve($project);
+        
 
-        // map required docs
+        
         $requiredDocs = collect($requiredFormTypes)->map(function (FormType $formType) use ($documents) {
             return $documents[$formType->code] ?? null;
         });
 
-        // total required
+
         $totalRequired = $requiredDocs->count();
 
-        // approved required only
+    
         $approvedRequired = $requiredDocs
-            ->filter()
-            ->where('status', 'approved_by_sacdev')
+            ->filter(fn($doc) => $doc && $doc->status === 'approved_by_sacdev')
             ->count();
 
-        // percentage
+     
         $percentage = $totalRequired > 0
-            ? round(($approvedRequired / $totalRequired) * 100)
+            ? (int) round(($approvedRequired / $totalRequired) * 100)
             : 0;
 
+    
+
         $progress = [
-            'total' => $totalRequired,
+            'required' => $totalRequired,
             'approved' => $approvedRequired,
             'percentage' => $percentage,
         ];
-
 
         $postponementType = FormType::where('code','POSTPONEMENT_NOTICE')->first();
 
@@ -255,11 +323,7 @@ class AdminProjectDocumentController extends Controller
             : collect();
 
 
-        $requiredFormTypes = $resolver->resolve($project);
 
-        $requiredDocs = collect($requiredFormTypes)->map(function (\App\Models\FormType $formType) use ($documents) {
-            return $documents[$formType->code] ?? null;
-        });
 
         $allRequiredApproved = $requiredDocs
             ->filter() // remove nulls
@@ -300,6 +364,10 @@ class AdminProjectDocumentController extends Controller
             'budgetDoc' => $budgetDoc,
 
             'pendingForAdmin' => $pendingForAdmin,
+            
+            'externalPackets' => $externalPackets,
+            'submissionPackets' => $submissionPackets,
+            'documentsGrouped' => $documentsGrouped,
         ]);
     }
 

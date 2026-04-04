@@ -6,6 +6,7 @@ use App\Models\Timeline;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class ProjectDocument extends Model
 {
@@ -323,5 +324,18 @@ class ProjectDocument extends Model
             ->first();
     }
 
+    protected static function booted()
+    {
+        static::creating(function ($doc) {
+            if (!$doc->verification_token) {
+                $doc->verification_token = (string) Str::uuid();
+            }
+        });
+    }
+
+    public function getVerificationUrlAttribute(): string
+    {
+        return route('verification.show', $this->verification_token);
+    }
 
 }

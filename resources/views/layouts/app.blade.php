@@ -232,5 +232,9 @@ document.addEventListener('submit', function () {
 });
 </script>
 
+<script>
+    lucide.createIcons();
+</script>
+
 </body>
 </html>
