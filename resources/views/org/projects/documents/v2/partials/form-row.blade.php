@@ -1,35 +1,33 @@
 @php
-    $approvalOrder = [
-        'project_head',
-        'treasurer',
-        'finance_officer',
-        'president',
-        'moderator',
-        'sacdev_admin',
-    ];
+    $orderedSignatures = collect();
 
-    $signatures = collect($form['document']->signatures ?? [])
-        ->sortBy(fn($sig) => array_search($sig->role, $approvalOrder));
-
-    $status = strtolower($form['status_label'] ?? '');
-
-    $isCompleted = $status === 'approved by sacdev' || $status === 'approved_by_sacdev';
-    $isReturned = str_contains($status, 'returned');
-    $isPending = str_contains($status, 'pending') || str_contains($status, 'submitted');
-
-    $rowStateClass = match (true) {
-        $isCompleted => 'border-l-emerald-500 bg-emerald-50/30',
-        $isReturned => 'border-l-rose-500 bg-rose-50/40',
-        $isPending => 'border-l-indigo-500 bg-indigo-50/30',
-        default => '',
-    };
+    if (!empty($form['document']) && $form['document']->signatures) {
+        $orderedSignatures = collect($form['document']->signatures)->sortBy(function ($sig) {
+            return match($sig->role) {
+                'project_head' => 1,
+                'treasurer' => 2,
+                'president' => 3,
+                'moderator' => 4,
+                'sacdev_admin' => 5,
+                default => 99,
+            };
+        });
+    }
 @endphp
+
+
 
 <div 
     x-data="{ open: false }"
-    class="border bg-white overflow-hidden rounded-xl border-slate-200
-        {{ ($form['is_required'] ?? false) ? 'border-l-4 border-l-blue-500 bg-blue-50/20' : '' }}
-        {{ $rowStateClass }}
+    class="border border-slate-200 bg-white overflow-hidden rounded-xl
+        {{ ($form['is_required'] ?? false) ? 'border-l-4 border-l-emerald-500' : '' }}
+        {{ 
+            str_contains(strtolower($form['status_label']), 'returned') ||
+            str_contains(strtolower($form['status_label']), 'pending') ||
+            str_contains(strtolower($form['status_label']), 'action')
+            ? 'ring-1 ring-rose-300 bg-rose-50/40'
+            : ''
+        }}
 ">
 
     {{-- MAIN ROW --}}
@@ -42,11 +40,11 @@
         <div class="flex items-start gap-2 min-w-0">
 
             {{-- STATUS DOT --}}
-            <div class="w-2 h-2 mt-1 rounded-full
-                {{ $isCompleted ? 'bg-emerald-500' : '' }}
-                {{ $isPending ? 'bg-indigo-500' : '' }}
-                {{ $isReturned ? 'bg-rose-500' : '' }}
-                {{ (!$isCompleted && !$isPending && !$isReturned) ? 'bg-slate-400' : '' }}
+            <div class="w-2 h-2 mt-1 rounded-full shrink-0
+                {{ str_contains($form['status_class'], 'emerald') ? 'bg-emerald-500' : '' }}
+                {{ str_contains($form['status_class'], 'blue') ? 'bg-blue-500' : '' }}
+                {{ str_contains($form['status_class'], 'rose') ? 'bg-rose-500' : '' }}
+                {{ str_contains($form['status_class'], 'slate') ? 'bg-slate-400' : '' }}
             "></div>
 
             <div class="min-w-0">
@@ -56,6 +54,12 @@
 
                     {{ $form['name'] }}
 
+                    {{-- REQUIRED BADGE --}}
+                    @if($form['is_required'] ?? false)
+                        <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 text-[10px] font-medium">
+                            Required
+                        </span>
+                    @endif
 
                 </div>
 
@@ -80,8 +84,11 @@
                     @endif
 
                     {{-- ACTION --}}
-                    @if($isReturned || ($form['is_action_required'] ?? false))
-                        <span class="text-amber-600 font-semibold">
+                    @if(
+                        str_contains(strtolower($form['status_label']), 'returned') ||
+                        str_contains(strtolower($form['status_label']), 'pending')
+                    )
+                        <span class="text-rose-600 font-medium">
                             • Action required
                         </span>
                     @endif
@@ -95,10 +102,10 @@
         {{-- RIGHT --}}
         <div class="flex items-center gap-2 shrink-0">
 
-            {{-- APPROVAL DOTS --}}
-            @if($signatures->isNotEmpty())
+            {{-- MINI APPROVAL PROGRESS --}}
+            @if($form['document'] && $form['document']->signatures)
                 <div class="hidden md:flex gap-1">
-                    @foreach($signatures as $sig)
+                    @foreach($orderedSignatures as $sig)
                         <div class="w-2 h-2 rounded-full
                             {{ $sig->status === 'signed'
                                 ? 'bg-emerald-500'
@@ -143,15 +150,32 @@
 
             @if($form['is_required'] ?? false)
                 <span>•</span>
-                <span class="text-blue-700 font-semibold">
-                    Required for workflow progress
+                <span class="text-emerald-700 font-medium">
+                    Required for workflow completion
                 </span>
             @endif
 
         </div>
 
         {{-- ACTIONS --}}
-  
+        <div class="flex flex-wrap gap-2">
+
+            @if($form['can_create'])
+                <a href="{{ $form['create_url'] }}"
+                   class="px-2.5 py-1 text-[10px] rounded bg-blue-600 text-white hover:bg-blue-700">
+                    Create
+                </a>
+            @endif
+
+
+            @if($form['can_review'])
+                <a href="{{ $form['view_url'] }}"
+                   class="px-2.5 py-1 text-[10px] rounded bg-emerald-600 text-white hover:bg-emerald-700">
+                    Review
+                </a>
+            @endif
+
+        </div>
 
         {{-- REMARKS --}}
         @if(optional($form['document'])->remarks)
@@ -160,16 +184,16 @@
             </div>
         @endif
 
-        {{-- APPROVAL FLOW --}}
-        @if($signatures->isNotEmpty())
+        {{-- SIGNATURE PROGRESS --}}
+        @if($orderedSignatures->isNotEmpty())
             <div class="text-[11px] text-slate-500">
 
                 <div class="mb-1 font-medium text-slate-600">
-                    Approval Flow
+                    Approval Progress
                 </div>
 
                 <div class="flex flex-wrap gap-1">
-                    @foreach($signatures as $sig)
+                    @foreach($orderedSignatures as $sig)
                         <span class="px-2 py-0.5 rounded-full text-[10px]
                             {{ $sig->status === 'signed'
                                 ? 'bg-emerald-100 text-emerald-700'

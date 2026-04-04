@@ -54,10 +54,10 @@
 
 
                 {{-- TITLE --}}
-                <div class="text-base font-semibold text-slate-900">
+                <div class="text-base font-semibold text-slate-900"
+                    contenteditable="false">
                     {{ $sy->name }}
                 </div>
-
 
                 {{-- DATES --}}
                 <div class="mt-3 text-xs text-slate-500 space-y-1">
@@ -160,6 +160,7 @@
                     type="text"
                     name="name"
                     x-model="form.name"
+                    readonly
                     class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     required
                 >

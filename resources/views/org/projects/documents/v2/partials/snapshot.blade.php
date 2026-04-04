@@ -1,32 +1,37 @@
-<div class="bg-white border rounded-xl p-4 shadow-sm space-y-3">
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-5 space-y-4">
 
     {{-- HEADER --}}
-    <div class="flex items-center justify-between">
+    <div class="flex items-start justify-between gap-3">
 
-        <h2 class="text-xs font-semibold text-slate-700">
-            Project Snapshot
-        </h2>
+        <div class="flex items-center gap-2">
+            <i data-lucide="layout-dashboard" class="w-4 h-4 text-slate-500"></i>
 
-        <div class="flex items-center gap-1">
+            <h2 class="text-xs font-semibold text-slate-700">
+                Project Snapshot
+            </h2>
+        </div>
 
-            {{-- STATUS BADGE --}}
+        {{-- BADGES --}}
+        <div class="flex flex-wrap items-center gap-1.5">
+
+            {{-- STATUS --}}
             @if($snapshot['status'] === 'submitted')
-                <span class="px-2 py-0.5 text-[10px] rounded-md bg-blue-100 text-blue-700">
+                <span class="px-2 py-0.5 text-[10px] rounded-md bg-blue-100 text-blue-700 font-semibold">
                     Proposed
                 </span>
             @elseif($snapshot['status'] === 'approved_by_sacdev')
-                <span class="px-2 py-0.5 text-[10px] rounded-md bg-emerald-100 text-emerald-700">
-                    Proposal Approved
+                <span class="px-2 py-0.5 text-[10px] rounded-md bg-emerald-100 text-emerald-700 font-semibold">
+                    Approved
                 </span>
             @elseif($snapshot['status'] === 'draft')
-                <span class="px-2 py-0.5 text-[10px] rounded-md bg-amber-100 text-amber-700">
+                <span class="px-2 py-0.5 text-[10px] rounded-md bg-amber-100 text-amber-700 font-semibold">
                     Draft
                 </span>
             @endif
 
             {{-- OFF-CAMPUS --}}
             @if($snapshot['is_off_campus'])
-                <span class="px-2 py-0.5 text-[10px] rounded-md bg-purple-100 text-purple-700">
+                <span class="px-2 py-0.5 text-[10px] rounded-md bg-purple-100 text-purple-700 font-semibold">
                     Off-Campus
                 </span>
             @endif
@@ -38,45 +43,57 @@
 
     {{-- DESCRIPTION --}}
     @if(!empty($snapshot['description']))
-        <p class="text-[11px] text-slate-600 leading-snug">
+        <div class="text-[11px] text-slate-600 leading-relaxed border border-slate-200 rounded-lg px-3 py-2 bg-white">
             {{ $snapshot['description'] }}
-        </p>
+        </div>
     @endif
 
 
     {{-- DETAILS --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px]">
 
         {{-- DATE --}}
-        <div>
-            <p class="text-slate-400">Date</p>
-            <p class="font-medium text-slate-800">
+        <div class="space-y-0.5">
+            <div class="flex items-center gap-1 text-slate-400">
+                <i data-lucide="calendar" class="w-3 h-3"></i>
+                <span>Date</span>
+            </div>
+            <div class="font-medium text-slate-800">
                 {{ $snapshot['date'] ?? '—' }}
-            </p>
+            </div>
         </div>
 
         {{-- TIME --}}
-        <div>
-            <p class="text-slate-400">Time</p>
-            <p class="font-medium text-slate-800">
+        <div class="space-y-0.5">
+            <div class="flex items-center gap-1 text-slate-400">
+                <i data-lucide="clock" class="w-3 h-3"></i>
+                <span>Time</span>
+            </div>
+            <div class="font-medium text-slate-800">
                 {{ $snapshot['time'] ?? '—' }}
-            </p>
+            </div>
         </div>
 
         {{-- VENUE --}}
-        <div>
-            <p class="text-slate-400">Venue</p>
-            <p class="font-medium text-slate-800">
+        <div class="space-y-0.5">
+            <div class="flex items-center gap-1 text-slate-400">
+                <i data-lucide="map-pin" class="w-3 h-3"></i>
+                <span>Venue</span>
+            </div>
+            <div class="font-medium text-slate-800 truncate">
                 {{ $snapshot['venue'] ?? '—' }}
-            </p>
+            </div>
         </div>
 
-        {{-- BUDGET (NEW) --}}
-        <div>
-            <p class="text-slate-400">Budget</p>
-            <p class="font-medium text-slate-800">
+        {{-- BUDGET --}}
+        <div class="space-y-0.5">
+            <div class="flex items-center gap-1 text-slate-400">
+                <i data-lucide="wallet" class="w-3 h-3"></i>
+                <span>Budget</span>
+            </div>
+            <div class="font-semibold text-slate-900">
                 ₱ {{ number_format($snapshot['total_budget'] ?? 0, 2) }}
-            </p>
+            </div>
         </div>
 
     </div>

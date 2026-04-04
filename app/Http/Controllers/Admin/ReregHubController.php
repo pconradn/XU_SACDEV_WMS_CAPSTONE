@@ -408,7 +408,10 @@ class ReregHubController extends Controller
 
                 $orgBadges[(int) $orgId] = $pendingCount;
 
-                $allApproved = collect($statuses)->every(fn ($s) => $s === 'approved_by_sacdev');
+                $nonNullStatuses = collect($statuses)->filter();
+
+                $allApproved = $nonNullStatuses->isNotEmpty() &&
+                            $nonNullStatuses->every(fn ($s) => $s === 'approved_by_sacdev');
                 if ($allApproved) {
                     $readyOrgIds[] = (int) $orgId;
                 }

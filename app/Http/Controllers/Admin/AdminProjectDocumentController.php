@@ -326,8 +326,9 @@ class AdminProjectDocumentController extends Controller
 
 
         $allRequiredApproved = $requiredDocs
-            ->filter() // remove nulls
-            ->every(fn($doc) => $doc->status === 'approved_by_sacdev');
+            ->every(fn($doc) => $doc && $doc->status === 'approved_by_sacdev');
+
+
 
         $canMarkComplete =
             $project->workflow_status !== 'completed' &&

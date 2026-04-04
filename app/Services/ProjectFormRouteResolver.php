@@ -12,13 +12,15 @@ class ProjectFormRouteResolver
 
         $formCode = $task->formType->code ?? $task->form_code ?? null;
 
-        $formCode = $task->type === 'approval'
-            ? $task->formType->code
-            : $task->form_code;
+        $type = $task->type ?? null;
+
+        $formCode = $type === 'approval'
+            ? ($task->formType->code ?? null)
+            : ($task->form_code ?? $task->formType->code ?? null);
 
         return match ($formCode) {
 
-            'PROJECT_PROPOSAL',
+            'PROJECT_PROPOSAL' => route('org.projects.documents.combined-proposal.create', $project),
             'BUDGET_PROPOSAL'
                 => route('org.projects.documents.combined-proposal.create', $project),
 

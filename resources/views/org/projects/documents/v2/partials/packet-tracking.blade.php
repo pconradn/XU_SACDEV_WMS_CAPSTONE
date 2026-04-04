@@ -1,7 +1,7 @@
 <div class="bg-white border rounded-2xl p-5 space-y-4">
 
     <h2 class="text-sm font-semibold text-slate-800">
-        Packet Submissions
+        Packet Submissionss
     </h2>
 
     {{-- OSA --}}
@@ -29,7 +29,7 @@
                 Finance Packet
             </div>
             <div class="text-xs text-slate-500">
-                Liquidation & budget validation
+                Liquidation & budget validationss
             </div>
         </div>
 

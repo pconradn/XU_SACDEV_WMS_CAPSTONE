@@ -1,10 +1,9 @@
-<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 shadow-sm overflow-hidden transition hover:shadow-md">
 
     @php
         $badge = $form['badge'] ?? null;
         $rawStatus = strtolower($badge['text'] ?? 'no submission');
-        //dd($rawStatus);
-        
+
         if (in_array($rawStatus, ['submitted to sacdev', 'forwarded to sacdev'])) {
             $status = 'Ready for Approval';
             $statusType = 'ready';
@@ -22,7 +21,7 @@
             $statusType = 'none';
         }
 
-        // 🔹 Status colors
+        // Minimal, subtle status colors (badge only)
         $statusClasses = match($statusType) {
             'ready' => 'bg-amber-50 text-amber-700 border-amber-200',
             'approved' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -30,41 +29,40 @@
             'submitted' => 'bg-blue-50 text-blue-700 border-blue-200',
             default => 'bg-slate-50 text-slate-600 border-slate-200',
         };
-
-        // 🔹 Form color identity (based on key)
-        $formColor = match($key ?? null) {
-            'b1' => 'bg-emerald-50',   // Strategic Plan
-            'b2' => 'bg-violet-50',    // President
-            'b3' => 'bg-orange-50',    // Officers
-            'b4' => 'bg-blue-50',      // Moderator
-            default => 'bg-slate-50',
-        };
     @endphp
 
 
-    {{-- Top Accent --}}
-    <div class="h-1 w-full {{ $formColor }}"></div>
+    <div class="p-5 space-y-4">
 
-
-    <div class="p-5">
-
-        {{-- Header --}}
+        {{-- ================= HEADER ================= --}}
         <div class="flex items-start justify-between gap-4">
 
+            {{-- LEFT --}}
             <div class="space-y-2">
 
-                {{-- Title --}}
-                <div class="font-semibold text-slate-900 text-sm">
+                {{-- TITLE --}}
+                <div class="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-4 h-4 text-slate-400"></i>
                     {{ $form['label'] ?? 'Form' }}
                 </div>
 
-                {{-- Status Badge --}}
-                <div class="inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-medium {{ $statusClasses }}">
+                {{-- STATUS BADGE --}}
+                <div class="inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-[11px] font-semibold {{ $statusClasses }}">
+                    
+                    <span class="w-1.5 h-1.5 rounded-full
+                        @if($statusType === 'approved') bg-emerald-500
+                        @elseif($statusType === 'returned') bg-rose-500
+                        @elseif($statusType === 'ready') bg-amber-400
+                        @elseif($statusType === 'submitted') bg-blue-500
+                        @else bg-slate-400
+                        @endif
+                    "></span>
+
                     {{ $status }}
                 </div>
 
-                {{-- Meta --}}
-                <div class="text-xs text-slate-500 space-y-0.5">
+                {{-- META --}}
+                <div class="text-[11px] text-slate-500 space-y-0.5">
 
                     @if(!empty($form['meta']['submitted_at']))
                         <div>
@@ -83,21 +81,23 @@
             </div>
 
 
-            {{-- Actions --}}
+            {{-- ================= ACTIONS ================= --}}
             <div class="flex flex-col items-end gap-2">
 
-                {{-- View --}}
+                {{-- VIEW --}}
                 @if(!empty($form['viewRoute']))
                     <a href="{{ route($form['viewRoute'], $form['routeParams'] ?? []) }}"
-                       class="inline-flex items-center rounded-md border border-slate-200
-                              px-3 py-1.5 text-xs font-medium text-slate-700
-                              hover:bg-slate-50">
+                       class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white
+                              px-3 py-1.5 text-xs font-semibold text-slate-700
+                              hover:bg-slate-50 transition">
+
+                        <i data-lucide="arrow-right" class="w-3 h-3"></i>
                         View
                     </a>
                 @endif
 
 
-                {{-- Approve (B6 only) --}}
+                {{-- APPROVE --}}
                 @if(
                     isset($key) &&
                     $key === 'b6' &&
@@ -109,16 +109,11 @@
                         @csrf
 
                         <button type="submit"
-                            class="inline-flex items-center gap-1 rounded-md
-                                   bg-emerald-600 px-3 py-1.5 text-xs font-semibold
-                                   text-white hover:bg-emerald-700">
+                            class="inline-flex items-center gap-1 rounded-lg
+                                   bg-slate-900 px-3 py-1.5 text-xs font-semibold
+                                   text-white hover:bg-slate-800 transition">
 
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2"
-                                 viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="M5 13l4 4L19 7"/>
-                            </svg>
-
+                            <i data-lucide="check" class="w-3 h-3"></i>
                             Approve
                         </button>
                     </form>
@@ -129,15 +124,19 @@
         </div>
 
 
-        {{-- Remarks --}}
+        {{-- ================= REMARKS ================= --}}
         @if(!empty($form['remarksPreview']))
-            <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div class="text-xs font-semibold text-slate-700">
+            <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+
+                <div class="text-[11px] font-semibold text-slate-600 flex items-center gap-1">
+                    <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
                     Latest remarks
                 </div>
+
                 <div class="text-sm text-slate-700 mt-1 line-clamp-2">
                     {{ $form['remarksPreview'] }}
                 </div>
+
             </div>
         @endif
 

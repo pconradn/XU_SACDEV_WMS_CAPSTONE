@@ -73,7 +73,7 @@
             </div>
         </div>
 
-
+{{--
         @auth
         @if($isAdmin)
         <div class="hidden xl:flex flex-1 max-w-xl mx-8">
@@ -97,9 +97,9 @@
         </div>
         @endif
         @endauth
-
+        --}}
         <div class="flex items-center gap-3">
-
+            {{--
             @auth
             @if($isAdmin)
             <button

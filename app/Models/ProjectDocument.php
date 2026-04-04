@@ -348,5 +348,16 @@ class ProjectDocument extends Model
         return $this->hasMany(\App\Models\ExternalPacketItem::class, 'document_id');
     } 
 
+    public function isApprovedBySacdev(): bool
+    {
+        
+        $sacdevSignature = $this->signatures()
+            ->where('role', 'sacdev_admin')
+            ->first();
+
+      
+        return $sacdevSignature && $sacdevSignature->status === 'signed';
+    }
+
 
 }

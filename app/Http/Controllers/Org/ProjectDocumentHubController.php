@@ -29,6 +29,7 @@ class ProjectDocumentHubController extends Controller
         $project->loadMissing([
             'organization',
             'schoolYear',
+            'externalPackets.items',
         ]);
 
         $assignment = ProjectAssignment::with('user')
@@ -659,6 +660,38 @@ class ProjectDocumentHubController extends Controller
             ?->offCampusActivity
             ?->participants ?? collect();
 
+        // ================= PACKETS (ORG VIEW ONLY) =================
+
+        $externalPackets = $project->externalPackets->map(function ($packet) {
+
+            $total = $packet->items->count();
+            $approved = $packet->items->where('status', 'approved')->count();
+            $returned = $packet->items->where('status', 'returned')->count();
+
+            // match admin logic (status comes from packet itself)
+            if ($packet->status === 'approved') {
+                $status = 'approved';
+            } elseif ($packet->status === 'returned') {
+                $status = 'returned';
+            } elseif ($packet->status === 'submitted') {
+                $status = 'submitted';
+            } else {
+                $status = 'prepared';
+            }
+
+            return (object)[
+                'id' => $packet->id,
+                'destination' => $packet->destination,
+                'reference_no' => $packet->reference_no,
+
+                'status' => $status,
+
+                'total' => $total,
+                'approved' => $approved,
+                'returned' => $returned,
+            ];
+        });
+
         $clearance = [
             'required' => $project->requires_clearance,
 
@@ -746,6 +779,7 @@ class ProjectDocumentHubController extends Controller
             'completedRequired',
             'progressPercent',
             'tips',
+            'externalPackets',
             
             'documentsActionRequired',
             'documentsInProgress',

@@ -200,210 +200,200 @@ class AdminDashboardController extends Controller
             ->values()
             ->filter(fn ($r) => $r->organization !== null);
 
-        $projectApprovals = ProjectDocument::with([
-                'project.organization',
-                'formType',
-                'signatures',
-            ])
-            ->whereHas('project', function ($q) use ($activeSyId) {
-                if ($activeSyId) {
-                    $q->where('school_year_id', $activeSyId);
-                }
-
-            
-                $q->where('workflow_status', '!=', 'cancelled');
-            })
-            ->get()
-            ->filter(function ($doc) {
-                $pending = $doc->currentPendingSignature();
-                return $pending && $pending->role === 'sacdev_admin';
-            })
-            ->map(function ($doc) {
-                return (object) [
-                    'project' => $doc->project,
-                    'organization' => $doc->project->organization ?? null,
-                    'form_name' => $doc->formType->name ?? 'Form',
-                    'form_code' => $doc->formType->code ?? null,
-                    'status' => $doc->status,
-
-                    // main click → admin hub
-                    'route' => route('admin.projects.documents.hub', $doc->project_id),
-
-                    // secondary action → exact form
-                    'form_route' => $this->resolveOrgDocumentRoute($doc),
-                ];
-            })
-            ->values();
-
-        $projectApprovals = $projectApprovals
-            ->groupBy(fn ($task) => $task->project->id)
-            ->map(function ($tasks) {
-                return (object)[
-                    'project' => $tasks->first()->project,
-                    'organization' => $tasks->first()->organization,
-                    'forms' => $tasks->map(fn ($t) => [
-                        'name' => $t->form_name,
-                        'code' => $t->form_code,
-                        'phase' => $t->formType->phase ?? 'other',
-                    ])->values(),
-                    'route' => $tasks->first()->route,
-                    'count' => $tasks->count(),
-                ];
-            })
-            ->values();
-
-        $debug = [];
-
-        $resolver = app(ProjectFormRequirementResolver::class);
-
-        $projectsReadyForCompletion = Project::with([
-                'documents.formType'
-            ])
-            ->where('school_year_id', $activeSyId)
-            ->where('workflow_status', '!=', 'completed')
-            ->where('workflow_status', '!=', 'cancelled') 
-            ->get()
-            ->filter(function ($project) use ($resolver, &$debug) {
-
-                $requiredFormTypes = $resolver->resolve($project);
-
-                $documents = $project->documents
-                    ->whereNull('archived_at')
-                    ->keyBy(fn($d) => $d->formType->code);
-
-                $requiredDocs = collect($requiredFormTypes)->map(function (\App\Models\FormType $formType) use ($documents) {
-                    return $documents[$formType->code] ?? null;
-                });
-
-                if ($requiredDocs->isEmpty()) {
-                    return false;
-                }
-
-                $allApproved = $requiredDocs
-                    ->every(fn($doc) => $doc && $doc->status === 'approved_by_sacdev');
 
 
 
-                $debug[] = [
-                    'project' => $project->title,
-                    'required_forms' => collect($requiredFormTypes)->pluck('code'),
-                    'existing_documents' => $documents->keys(),
-                    'required_docs_status' => $requiredDocs->map(fn($doc) => $doc?->status),
-                    'allApproved' => $allApproved,
-                ];
+            $projectApprovals = ProjectDocument::with([
+                    'project.organization',
+                    'formType',
+                    'signatures',
+                ])
+                ->whereHas('project', function ($q) use ($activeSyId, $user) {
+                    if ($activeSyId) {
+                        $q->where('school_year_id', $activeSyId);
+                    }
 
-                return $allApproved;
-            })
-            ->map(function ($project) {
-                return (object)[
-                    'type' => 'Project Ready for Completion',
+                    $q->where('workflow_status', '!=', 'cancelled');
 
-                
-                    'organization_id' => $project->organization_id,
-                    'school_year_id' => $project->school_year_id,
+                    $q->whereHas('organization', function ($org) use ($user) {
+                        $org->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    });
+                })
+                ->get()
+                ->filter(function ($doc) {
+                    $pending = $doc->currentPendingSignature();
+                    return $pending && $pending->role === 'sacdev_admin';
+                })
+                ->map(function ($doc) {
+                    return (object) [
+                        'project' => $doc->project,
+                        'organization' => $doc->project->organization ?? null,
 
-                    'project' => $project,
-                    'organization' => $project->organization ?? null,
-                    'created_at' => $project->updated_at,
-                    'route' => route('admin.projects.documents.hub', $project->id),
-                ];
-            })
-            ->values();
+                        'forms' => collect([
+                            [
+                                'name' => $doc->formType->name ?? 'Form',
+                                'code' => $doc->formType->code ?? null,
+                                'phase' => $doc->formType->phase ?? 'default',
+                            ]
+                        ]),
+
+                        'status' => $doc->status,
+                        'route' => route('admin.projects.documents.hub', $doc->project_id),
+                        'form_route' => $this->resolveOrgDocumentRoute($doc),
+
+                        'count' => 1, // required
+                        'is_completion' => false, // required
+                    ];
+                })
+                ->values();
+
+            $debug = [];
+
+            $resolver = app(ProjectFormRequirementResolver::class);
+
+$projectsReadyForCompletion = Project::with([
+        'documents.formType'
+    ])
+    ->where('school_year_id', $activeSyId)
+    ->where('workflow_status', '!=', 'completed')
+    ->where('workflow_status', '!=', 'cancelled')
+    ->whereHas('organization', function ($q) use ($user) {
+        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+    })
+    ->get()
+    ->filter(function ($project) use ($resolver, &$debug) {
+
+        $requiredFormTypes = $resolver->resolve($project);
+
+        $documents = $project->documents
+            ->whereNull('archived_at')
+            ->keyBy(fn($d) => $d->formType->code);
+
+        $requiredDocs = collect($requiredFormTypes)->map(function (\App\Models\FormType $formType) use ($documents) {
+            return $documents[$formType->code] ?? null;
+        });
+
+        if ($requiredDocs->isEmpty()) {
+            return false;
+        }
+
+        return $requiredDocs
+            ->every(fn($doc) => $doc && $doc->status === 'approved_by_sacdev');
+    })
+    ->map(function ($project) {
+        return (object)[
+            'project' => $project,
+            'organization' => $project->organization ?? null,
+            'forms' => collect([
+                [
+                    'name' => 'Ready for Completion',
+                    'code' => 'READY_FOR_COMPLETION',
+                    'phase' => 'completion',
+                ]
+            ]),
+            'route' => route('admin.projects.documents.hub', $project->id),
+            'count' => 1,
+            'is_completion' => true,
+        ];
+    })
+    ->values();
+
+            $projectApprovals = collect($projectApprovals)
+                ->merge(collect($projectsReadyForCompletion))
+                ->sortByDesc(fn ($item) => $item->project->updated_at ?? now())
+                ->values();
 
 
+            $calendarProjects = Project::query()
+                ->with('organization')
+                ->when($activeSyId, fn ($q) => $q->where('school_year_id', $activeSyId))
+                ->whereNotNull('implementation_start_date')
+                ->orderBy('implementation_start_date')
+                ->get()
+                ->map(function ($project) {
+                    return [
+                        'title' => $project->title,
+                        'start' => $project->implementation_start_date,
+                        'url' => route('admin.projects.documents.hub', $project->id),
+                    ];
+                })
+                ->values();
 
 
-
-        $calendarProjects = Project::query()
-            ->with('organization')
-            ->when($activeSyId, fn ($q) => $q->where('school_year_id', $activeSyId))
-            ->whereNotNull('implementation_start_date')
-            ->orderBy('implementation_start_date')
-            ->get()
-            ->map(function ($project) {
-                return [
-                    'title' => $project->title,
-                    'start' => $project->implementation_start_date,
-                    'url' => route('admin.projects.documents.hub', $project->id),
-                ];
-            })
-            ->values();
+            $preImplementationCompleteCount = Project::query()
+                ->where('school_year_id', $activeSyId)
+                ->whereHas('documents', function ($q) {
+                    $q->whereHas('formType', fn ($f) =>
+                        $f->whereIn('code', ['PROJECT_PROPOSAL', 'BUDGET_PROPOSAL'])
+                    )->where('status', 'approved_by_sacdev');
+                }, '=', 2)
+                ->count();
 
 
-        $preImplementationCompleteCount = Project::query()
-            ->where('school_year_id', $activeSyId)
-            ->whereHas('documents', function ($q) {
-                $q->whereHas('formType', fn ($f) =>
-                    $f->whereIn('code', ['PROJECT_PROPOSAL', 'BUDGET_PROPOSAL'])
-                )->where('status', 'approved_by_sacdev');
-            }, '=', 2)
-            ->count();
+            $upcomingProjectsCount = Project::query()
+                ->where('school_year_id', $activeSyId)
+                ->whereNotNull('implementation_start_date')
+                ->whereBetween('implementation_start_date', [now(), now()->addDays(30)])
+                ->whereDoesntHave('documents', function ($q) {
+                    $q->whereHas('formType', fn ($f) =>
+                        $f->whereIn('code', ['PROJECT_PROPOSAL', 'BUDGET_PROPOSAL'])
+                    )->where('status', 'approved_by_sacdev');
+                })
+                ->count();
 
 
-        $upcomingProjectsCount = Project::query()
-            ->where('school_year_id', $activeSyId)
-            ->whereNotNull('implementation_start_date')
-            ->whereBetween('implementation_start_date', [now(), now()->addDays(30)])
-            ->whereDoesntHave('documents', function ($q) {
-                $q->whereHas('formType', fn ($f) =>
-                    $f->whereIn('code', ['PROJECT_PROPOSAL', 'BUDGET_PROPOSAL'])
-                )->where('status', 'approved_by_sacdev');
-            })
-            ->count();
+            $offCampusProjectsCount = Project::query()
+                ->where('school_year_id', $activeSyId)
+                ->whereHas('documents', function ($q) {
+                    $q->whereHas('formType', fn ($f) =>
+                        $f->where('code', 'OFF_CAMPUS_APPLICATION')
+                    );
+                })
+                ->count();
 
 
-        $offCampusProjectsCount = Project::query()
-            ->where('school_year_id', $activeSyId)
-            ->whereHas('documents', function ($q) {
-                $q->whereHas('formType', fn ($f) =>
-                    $f->where('code', 'OFF_CAMPUS_APPLICATION')
-                );
-            })
-            ->count();
+            $activatedOrgCount = DB::table('organization_school_years')
+                ->where('school_year_id', $activeSyId)
+                ->count();
 
 
-        $activatedOrgCount = DB::table('organization_school_years')
-            ->where('school_year_id', $activeSyId)
-            ->count();
+            $completedProjectsCount = Project::query()
+                ->where('school_year_id', $activeSyId)
+                ->where('status', 'completed') // future-ready
+                ->count();
+
+            $pendingCases = $pendingCases
+
+                ->sortByDesc('created_at')
+                ->values();
 
 
-        $completedProjectsCount = Project::query()
-            ->where('school_year_id', $activeSyId)
-            ->where('status', 'completed') // future-ready
-            ->count();
+            return view('admin.dashboard', [
+                'activeSy' => $activeSy,
+                'orgCount' => Organization::count(),
+                'syCount' => SchoolYear::count(),
+                'pendingCaseCount' => $pendingCases->count(),
+                'readyForActivationCount' => $readyForActivation->count(),
+                'pendingCases' => $pendingCases,
 
-        $pendingCases = $pendingCases
-            ->merge($projectsReadyForCompletion)
-            ->sortByDesc('created_at')
-            ->values();
+                'projectsReadyForCompletion' => $projectsReadyForCompletion,
+                'projectsReadyForCompletionCount' => $projectsReadyForCompletion->count(),
 
+                'readyForActivation' => $readyForActivation,
+                'projectApprovals' => $projectApprovals,
+                'calendarProjects' => $calendarProjects,
 
-        return view('admin.dashboard', [
-            'activeSy' => $activeSy,
-            'orgCount' => Organization::count(),
-            'syCount' => SchoolYear::count(),
-            'pendingCaseCount' => $pendingCases->count(),
-            'readyForActivationCount' => $readyForActivation->count(),
-            'pendingCases' => $pendingCases,
-
-            'projectsReadyForCompletion' => $projectsReadyForCompletion,
-            'projectsReadyForCompletionCount' => $projectsReadyForCompletion->count(),
-
-            'readyForActivation' => $readyForActivation,
-            'projectApprovals' => $projectApprovals,
-            'calendarProjects' => $calendarProjects,
-
-            'preImplementationCompleteCount' => $preImplementationCompleteCount,
-            'upcomingProjectsCount' => $upcomingProjectsCount,
-            'offCampusProjectsCount' => $offCampusProjectsCount,
-            'activatedOrgCount' => $activatedOrgCount,
-            'completedProjectsCount' => $completedProjectsCount,
+                'preImplementationCompleteCount' => $preImplementationCompleteCount,
+                'upcomingProjectsCount' => $upcomingProjectsCount,
+                'offCampusProjectsCount' => $offCampusProjectsCount,
+                'activatedOrgCount' => $activatedOrgCount,
+                'completedProjectsCount' => $completedProjectsCount,
 
 
 
 
-        ]);
-    }
+            ]);
+        }
 
 
     protected function resolveOrgDocumentRoute(ProjectDocument $document): string
