@@ -84,11 +84,20 @@ if ($user && $isAdmin) {
     //admin.organizations.assign-president
 
     if (Route::has('admin.packets.receive') && $can('documents.manage')) {
-        $orgTools[] = $item('Packet Receiving', route('admin.packets.receive'), ['admin.packets.*']);
+        $orgTools[] = $item('Org Packet Receiving', route('admin.packets.receive'), ['admin.packets.*']);
+    }
+
+    if (Route::has('admin.external-packets.receive') && $can('documents.manage')) {
+        $orgTools[] = $item('External Packet Receiving', route('admin.external-packets.receive'), ['admin.external-packets.*']);
     }
 
     if (Route::has('admin.orgs_by_sy.index') && $can('projects.view')) {
-        $orgTools[] = $item('Manage Projects', route('admin.orgs_by_sy.index'), ['admin.orgs_by_sy.*']);
+        $orgTools[] = $item('Manage Organizations', route('admin.orgs_by_sy.index'), ['admin.orgs_by_sy.*']);
+    }
+
+
+    if (Route::has('student-clearance.index')) {
+        $orgTools[] = $item('Check Student Clearance', route('student-clearance.index'), ['student-clearance.*']);
     }
 
 

@@ -3,6 +3,7 @@
 use App\Http\Controllers\ContextController;
 use App\Http\Controllers\ForcedPasswordController;
 use App\Http\Controllers\Org\ClearanceController;
+use App\Http\Controllers\ClearanceController as Clearance;
 use App\Models\OrgMembership;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +16,24 @@ Route::get('/verify/{token}', [\App\Http\Controllers\VerificationController::cla
 Route::get('/ui-test/documents', function () {
     return view('dev.ui.documents-hub-test');
 });
+
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/clearance-check', [Clearance::class, 'index'])
+        ->name('student-clearance.index');
+
+    Route::post('/clearance-check/search', [Clearance::class, 'search'])
+        ->name('clearance.search');
+
+});
+
+Route::get('/verify-clearance', [Clearance::class, 'publicIndex'])
+    ->name('clearance.public.index');
+
+Route::post('/verify-clearance', [Clearance::class, 'publicVerify'])
+    ->name('clearance.public.verify');
+
+
 
 Route::get('/admin/logs', function () {
 
