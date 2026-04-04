@@ -8,6 +8,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\File;
 
+
+
+
+Route::get('/ui-test/documents', function () {
+    return view('dev.ui.documents-hub-test');
+});
+
 Route::get('/admin/logs', function () {
 
     $logPath = storage_path('logs/laravel.log');

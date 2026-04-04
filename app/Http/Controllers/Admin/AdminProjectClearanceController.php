@@ -28,21 +28,20 @@ class AdminProjectClearanceController extends Controller
 
     public function return(Request $request, Project $project)
     {
-
         $request->validate([
-            'remarks' => ['required','string']
+            'remarks' => ['required', 'string']
         ]);
 
         if ($project->clearance_status !== 'uploaded') {
-            return back()->with('error','Clearance cannot be returned.');
+            return back()->with('error', 'Clearance cannot be returned.');
         }
 
         $project->update([
-            'clearance_status' => 'rejected'
+            'clearance_status'   => 'rejected',
+            'clearance_remarks'  => trim($request->remarks),
         ]);
 
-        return back()->with('success','Clearance returned for revision.');
-
+        return back()->with('success', 'Clearance returned for revision.');
     }
 
 }

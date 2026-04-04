@@ -153,6 +153,21 @@ abstract class BaseProjectDocumentController extends Controller
         ]);
     }
 
+    protected function ensureProjectEditable(Project $project): void
+    {
+        $status = strtolower((string) ($project->status ?? ''));
+        $workflow = strtolower((string) ($project->workflow_status ?? ''));
+
+        if (
+            in_array($status, ['cancelled', 'canceled', 'completed'], true) ||
+            in_array($workflow, ['cancelled', 'canceled', 'completed'], true)
+        ) {
+            abort(403, 'This project is locked. No further submissions are allowed.');
+        }
+    }
+
+
+
     protected function notifyProjectHead(Project $project, ProjectDocument $document, string $message){
         
         $assignment = ProjectAssignment::where('project_id', $project->id)
@@ -390,6 +405,7 @@ abstract class BaseProjectDocumentController extends Controller
 
     protected function handleApproval(Project $project, ProjectDocument $document): void
     {
+        $this->ensureProjectEditable($project);
         $userId = auth()->id();
 
         $signature = $document->signatures()
@@ -466,6 +482,7 @@ abstract class BaseProjectDocumentController extends Controller
 
     protected function handleReturn(Project $project, ProjectDocument $document, string $remarks): void
     {
+        $this->ensureProjectEditable($project);
         DB::transaction(function () use ($document,$remarks){
 
             $oldStatus = $document->status;
@@ -516,6 +533,7 @@ abstract class BaseProjectDocumentController extends Controller
 
     public function retract(Project $project, $formCode)
     {
+        $this->ensureProjectEditable($project);
         $formType = FormType::where('code', $formCode)->firstOrFail();
 
         $document = ProjectDocument::with('signatures')
@@ -576,6 +594,9 @@ abstract class BaseProjectDocumentController extends Controller
 
     protected function handleRequestEdit(Project $project, ProjectDocument $document, string $remarks): void
     {
+
+        $this->ensureProjectEditable($project);
+
         if ($document->status !== 'approved_by_sacdev') {
             abort(403, 'Only SACDEV-approved documents can request edit.');
         }
@@ -602,6 +623,7 @@ abstract class BaseProjectDocumentController extends Controller
     {
         $oldStatus = $document->status;
         //dd($document);
+        $this->ensureProjectEditable($project);
 
         DB::transaction(function () use ($document, $project, $oldStatus) {
 
@@ -645,6 +667,8 @@ abstract class BaseProjectDocumentController extends Controller
 
     protected function handleRevertApproval(Project $project, ProjectDocument $document, string $remarks): void
     {
+        $this->ensureProjectEditable($project);
+
         if ($document->status !== 'approved') {
             abort(403, 'Only approved documents can be reverted.');
         }

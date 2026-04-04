@@ -912,6 +912,58 @@ class AdminProjectDocumentController extends Controller
                     'status' => 'approved_by_sacdev',
                 ]);
 
+                $document->timelines()->create([
+                    'user_id' => auth()->id(),
+                    'action' => 'approved_by_sacdev',
+                    'remarks' => null,
+                    'old_status' => 'submitted',
+                    'new_status' => 'approved_by_sacdev',
+                ]);
+
+                /*
+                |----------------------------------------------------------
+                | APPLY POSTPONEMENT TO PROJECT
+                |----------------------------------------------------------
+                */
+                if ($formCode === 'POSTPONEMENT_NOTICE') {
+
+                    $postponement = \App\Models\PostponementNoticeData::where(
+                        'project_document_id',
+                        $document->id
+                    )->first();
+
+                    if ($postponement) {
+
+                        $project = $document->project;
+
+                        $project->update([
+                            'implementation_start_date' => $postponement->new_date,
+                            'implementation_end_date'   => $postponement->new_date,
+
+                            'implementation_start_time' => $postponement->new_start_time,
+                            'implementation_end_time'   => $postponement->new_end_time,
+
+                            'implementation_venue' => $postponement->venue,
+
+                            'workflow_status' => 'postponed',
+
+                            'approved_postponement_id' => $document->id,
+                        ]);
+
+                    }
+                }
+
+                if ($formCode === 'CANCELLATION_NOTICE') {
+
+                    $project = $document->project;
+
+                    $project->update([
+                        'workflow_status' => 'cancelled',
+                        'approved_cancellation_id' => $document->id,
+                        'status' => 'cancelled',
+                    ]);
+                }
+
             }
 
         });
@@ -1005,7 +1057,16 @@ class AdminProjectDocumentController extends Controller
                 'returned_at' => now(),
             ]);
 
+
+
         });
+        $document->timelines()->create([
+            'user_id' => auth()->id(),
+            'action' => 'returned_by_sacdev',
+            'remarks' => $request->remarks,
+            'old_status' => 'submitted',
+            'new_status' => 'draft',
+        ]);
 
         $this->notifyProjectHead(
             $project,
@@ -1148,6 +1209,14 @@ class AdminProjectDocumentController extends Controller
 
             $document->update([
                 'status' => 'submitted'
+            ]);
+
+            $document->timelines()->create([
+                'user_id' => auth()->id(),
+                'action' => 'sacdev_retract',
+                'remarks' => null,
+                'old_status' => 'approved_by_sacdev',
+                'new_status' => 'submitted',
             ]);
 
             if ($document->formType->code === 'SOLICITATION_APPLICATION') {

@@ -52,6 +52,8 @@ $formRouteMap = [
     'DOCUMENTATION_REPORT' => 'documentation-report',
     'LIQUIDATION_REPORT' => 'liquidation-report',
     'OFF_CAMPUS_APPLICATION' => 'off-campus',
+    'POSTPONEMENT_NOTICE' => 'postponement',
+    'CANCELLATION_NOTICE' => 'cancellation',
 ];
 
 $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
@@ -503,7 +505,11 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
         <form method="POST"
             action="{{ $isAdmin
                 ? route('admin.projects.documents.return', [$project, $formCode])
-                : route("org.projects.documents.$routePrefix.return", $project) }}"
+                : route("org.projects.documents.$routePrefix.return",
+                    in_array($formCode, ['POSTPONEMENT_NOTICE', 'CANCELLATION_NOTICE'])
+                        ? ['project' => $project->id, 'document' => $document->id]
+                        : $project->id
+                ) }}"
             onsubmit="lockButton(this.querySelector('button[type=submit]'))">
 
             @csrf
@@ -750,7 +756,11 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
                 onsubmit="lockButton(this.querySelector('button[type=submit]'))"
                 action="{{ $isAdmin
                     ? route('admin.projects.documents.approve', [$project, $formCode])
-                    : route("org.projects.documents.$routePrefix.approve", $project) }}">
+                    : route("org.projects.documents.$routePrefix.approve",
+                        in_array($formCode, ['POSTPONEMENT_NOTICE', 'CANCELLATION_NOTICE'])
+                            ? ['project' => $project->id, 'document' => $document->id]
+                            : $project->id
+                    ) }}">
 
                 @csrf
 
@@ -831,7 +841,11 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
                   onsubmit="lockButton(this.querySelector('button[type=submit]'))"
                   action="{{ $isAdmin
                         ? route('admin.projects.documents.approve', [$project, $formCode])
-                        : route("org.projects.documents.$routePrefix.approve", $project) }}">
+                        : route("org.projects.documents.$routePrefix.approve",
+                            in_array($formCode, ['POSTPONEMENT_NOTICE', 'CANCELLATION_NOTICE'])
+                                ? ['project' => $project->id, 'document' => $document->id]
+                                : $project->id
+                        ) }}">
 
                 @csrf
 
@@ -907,7 +921,11 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
                   onsubmit="lockButton(this.querySelector('button[type=submit]'))"
                   action="{{ $isAdmin
                         ? route('admin.projects.documents.approve', [$project, $formCode])
-                        : route("org.projects.documents.$routePrefix.approve", $project) }}">
+                        : route("org.projects.documents.$routePrefix.approve",
+    in_array($formCode, ['POSTPONEMENT_NOTICE', 'CANCELLATION_NOTICE'])
+        ? ['project' => $project->id, 'document' => $document->id]
+        : $project->id
+)}}">
 
                 @csrf
 
@@ -985,7 +1003,11 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
                   onsubmit="lockButton(this.querySelector('button[type=submit]'))"
                   action="{{ $isAdmin
                         ? route('admin.projects.documents.approve', [$project, $formCode])
-                        : route("org.projects.documents.$routePrefix.approve", $project) }}">
+                        : route("org.projects.documents.$routePrefix.approve",
+    in_array($formCode, ['POSTPONEMENT_NOTICE', 'CANCELLATION_NOTICE'])
+        ? ['project' => $project->id, 'document' => $document->id]
+        : $project->id
+) }}">
 
                 @csrf
 
@@ -1299,7 +1321,11 @@ $routePrefix = $formRouteMap[$document?->formType?->code] ?? null;
                     onsubmit="lockButton(this.querySelector('button[type=submit]'))"
                     action="{{ $isAdmin
                         ? route('admin.projects.documents.approve', [$project, $formCode])
-                        : route("org.projects.documents.$routePrefix.approve", $project) }}">
+                        : route("org.projects.documents.$routePrefix.approve",
+    in_array($formCode, ['POSTPONEMENT_NOTICE', 'CANCELLATION_NOTICE'])
+        ? ['project' => $project->id, 'document' => $document->id]
+        : $project->id
+)}}">
 
                     @csrf
 

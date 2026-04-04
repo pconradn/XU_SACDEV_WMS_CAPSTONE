@@ -221,7 +221,12 @@ class AdminDashboardController extends Controller
                     'form_name' => $doc->formType->name ?? 'Form',
                     'form_code' => $doc->formType->code ?? null,
                     'status' => $doc->status,
+
+                    // main click → admin hub
                     'route' => route('admin.projects.documents.hub', $doc->project_id),
+
+                    // secondary action → exact form
+                    'form_route' => $this->resolveOrgDocumentRoute($doc),
                 ];
             })
             ->values();
@@ -325,5 +330,36 @@ class AdminDashboardController extends Controller
 
 
         ]);
+    }
+
+
+    protected function resolveOrgDocumentRoute(ProjectDocument $document): string
+    {
+        $map = [
+            'PROJECT_PROPOSAL' => 'org.projects.documents.combined-proposal.create',
+            'BUDGET_PROPOSAL' => 'org.projects.documents.combined-proposal.create',
+
+            'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.create',
+
+            'SOLICITATION_APPLICATION' => 'org.projects.documents.solicitation.create',
+            'SELLING_APPLICATION' => 'org.projects.documents.selling.create',
+
+            'REQUEST_TO_PURCHASE' => 'org.projects.documents.request-to-purchase.create',
+
+            'FEES_COLLECTION_REPORT' => 'org.projects.documents.fees-collection.create',
+            'SELLING_ACTIVITY_REPORT' => 'org.projects.documents.selling-activity-report.create',
+            'SOLICITATION_SPONSORSHIP_REPORT' => 'org.projects.documents.solicitation-sponsorship-report.create',
+            'TICKET_SELLING_REPORT' => 'org.projects.documents.ticket-selling-report.create',
+
+            'DOCUMENTATION_REPORT' => 'org.projects.documents.documentation-report.create',
+            'LIQUIDATION_REPORT' => 'org.projects.documents.liquidation-report.create',
+
+            'POSTPONEMENT_NOTICE' => 'org.projects.documents.postponement.create',
+            'CANCELLATION_NOTICE' => 'org.projects.documents.cancellation.create',
+        ];
+
+        $routeName = $map[$document->formType->code] ?? 'org.projects.documents.hub';
+
+        return route($routeName, $document->project);
     }
 }

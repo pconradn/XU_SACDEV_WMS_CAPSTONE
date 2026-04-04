@@ -26,6 +26,21 @@ class OrgDashboardController extends Controller
         return $encodeSyId > 0 ? $encodeSyId : SchoolYear::activeId();
     }
 
+    private function findDocument($project, $req)
+    {
+        if (!empty($req->id)) {
+            return $project->documents
+                ->first(fn ($d) => (int) $d->form_type_id === (int) $req->id);
+        }
+
+        if (!empty($req->code)) {
+            return $project->documents
+                ->first(fn ($d) => $d->formType?->code === $req->code);
+        }
+
+        return null;
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -85,10 +100,10 @@ class OrgDashboardController extends Controller
 
         if ($currentOrg) {
 
-            $approvalTasks = ProjectDocument::with([
+                $approvalTasks = ProjectDocument::with([
                     'project',
-                    'signatures',
                     'formType',
+                    'signatures.user',
 
                 ])
                 ->whereHas('project', function ($q) use ($selectedSyId, $currentOrg) {
@@ -108,7 +123,7 @@ class OrgDashboardController extends Controller
 
 
             $approvalTasks = $approvalTasks->map(function ($task) {
-                $task->type = 'approval';
+                $task->category = 'approval';
                 return $task;
             });
         }
@@ -122,7 +137,7 @@ class OrgDashboardController extends Controller
                     'project' => function ($q) {
                         $q->with([
                             'documents.formType',
-                            'documents.signatures',
+                            'documents.signatures.user',
                         ]);
                     },
                 ])
@@ -146,20 +161,14 @@ class OrgDashboardController extends Controller
             foreach ($assignedProjects as $project) {
                 $requiredForms = $resolver->resolve($project);
 
+
+                $project->resolved_forms = $requiredForms;
+
                 foreach ($requiredForms as $req) {
 
-                    if (($req->code ?? null) === 'BUDGET_PROPOSAL') {
-                        continue;
-                    }
                     $doc = null;
 
-                    if (!empty($req->id)) {
-                        $doc = $project->documents
-                            ->first(fn ($d) => (int) $d->form_type_id === (int) $req->id);
-                    } elseif (!empty($req->code)) {
-                        $doc = $project->documents
-                            ->first(fn ($d) => $d->formType?->code === $req->code);
-                    }
+                    $doc = $this->findDocument($project, $req);
 
                     if (!$doc || $doc->status !== 'approved_by_sacdev') {
 
@@ -172,7 +181,8 @@ class OrgDashboardController extends Controller
                         }
 
                         $projectHeadTasks->push((object) [
-                            'type' => $type,
+                            'category' => 'project_head',
+                            'state' => $type,
                             'phase' => $req->phase ?? 'other',
                             'form_name' => $req->name ?? $req->code,
                             'project' => $project,
@@ -199,7 +209,8 @@ class OrgDashboardController extends Controller
 
             if (!$sp || $sp->status === 'draft') {
                 $reregTasks->push((object)[
-                    'type' => 'rereg_required',
+                    'category' => 'rereg',
+                    'state' => 'required',
                     'form_name' => 'Strategic Plan',
                     'status' => $sp->status ?? 'not_started',
                     'link' => route('org.rereg.b1.edit'),
@@ -213,7 +224,8 @@ class OrgDashboardController extends Controller
 
             if (!$officers || $officers->status === 'draft') {
                 $reregTasks->push((object)[
-                    'type' => 'rereg_required',
+                    'category' => 'rereg',
+                    'state' => 'required',
                     'form_name' => 'Officers List',
                     'status' => $officers->status ?? 'not_started',
                     'link' => route('org.rereg.b3.officers-list.edit'),
@@ -227,7 +239,8 @@ class OrgDashboardController extends Controller
 
             if (!$pres || $pres->status === 'draft') {
                 $reregTasks->push((object)[
-                    'type' => 'rereg_required',
+                    'category' => 'rereg',
+                    'state' => 'required',
                     'form_name' => 'President Registration',
                     'status' => $pres->status ?? 'not_started',
                     'link' => route('org.rereg.b2.president.edit'),
@@ -241,7 +254,8 @@ class OrgDashboardController extends Controller
 
             if (!$consti || $consti->status === 'draft') {
                 $reregTasks->push((object)[
-                    'type' => 'rereg_required',
+                    'category' => 'rereg',
+                    'state' => 'required',
                     'form_name' => 'Organization Constitution',
                     'status' => $consti->status ?? 'not_started',
                     'link' => route('org.rereg.index'),
@@ -251,7 +265,8 @@ class OrgDashboardController extends Controller
 
             if ($sp && $sp->status === 'submitted_to_moderator') {
                 $reregTasks->push((object)[
-                    'type' => 'rereg_moderator_review',
+                    'category' => 'rereg',
+                    'state' => 'moderator_review',
                     'form_name' => 'Strategic Plan Review',
                     'status' => $sp->status,
                     'link' => route('org.moderator.strategic_plans.show', $sp->id), 
@@ -268,7 +283,8 @@ class OrgDashboardController extends Controller
 
                 if (!$moderator || in_array($moderator->status, ['draft', 'returned'])) {
                     $reregTasks->push((object)[
-                        'type' => 'rereg_moderator',
+                        'category' => 'rereg',
+                        'state' => 'moderator',
                         'form_name' => 'Moderator Registration',
                         'status' => $moderator?->status ?? 'not_started',
                         'link' => route('org.moderator.rereg.b5.edit'),
@@ -279,20 +295,14 @@ class OrgDashboardController extends Controller
 
  
         $assignedProjects = $assignedProjects->map(function ($project) use ($resolver) {
-            $requiredForms = $resolver->resolve($project);
+            $requiredForms = $project->resolved_forms;
 
             $pendingRequiredCount = 0;
 
             foreach ($requiredForms as $req) {
                 $doc = null;
 
-                if (!empty($req->id)) {
-                    $doc = $project->documents
-                        ->first(fn ($d) => (int) $d->form_type_id === (int) $req->id);
-                } elseif (!empty($req->code)) {
-                    $doc = $project->documents
-                        ->first(fn ($d) => $d->formType?->code === $req->code);
-                }
+                $doc = $this->findDocument($project, $req);
 
                 if (!$doc || $doc->status !== 'approved_by_sacdev') {
                     $pendingRequiredCount++;
@@ -319,9 +329,9 @@ class OrgDashboardController extends Controller
                     'notice',
                 ];
 
-                $phase = $task->type === 'approval'
-                    ? ($task->formType->phase ?? 'other')
-                    : ($task->phase ?? 'other');
+                $phase = $task->phase
+                    ?? $task->formType->phase
+                    ?? 'other';
 
                 return array_search($phase, $order) !== false
                     ? array_search($phase, $order)
@@ -340,6 +350,10 @@ class OrgDashboardController extends Controller
               
                 $code = $task->formType->code ?? $task->form_code ?? null;
 
+                if (!$code) {
+                    return $task;
+                }
+
                 if ($code === 'PROJECT_PROPOSAL') {
 
                     $task->link = route('org.projects.documents.combined-proposal.create', [
@@ -351,6 +365,7 @@ class OrgDashboardController extends Controller
                     // fallback to resolver
                     $task->link = ProjectFormRouteResolver::resolve($task);
                 }
+            
             }
 
             return $task;
