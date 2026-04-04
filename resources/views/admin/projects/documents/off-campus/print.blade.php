@@ -127,7 +127,7 @@
 <div class="page">
 
     {{-- HEADER --}}
-    <div class="header">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:6px 10px; font-size:11px;">
 
         {{-- LEFT --}}
         <div class="header-left">
@@ -140,15 +140,31 @@
             </div>
         </div>
 
-        {{-- RIGHT --}}
-        <div class="form-code">
-            Form A12 (2023)
+        {{-- RIGHT (STACKED) --}}
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+
+            {{-- FORM A1 --}}
+            <div style="background:#2f6fb3; color:#fff; padding:4px 10px; font-weight:bold;">
+                Form A12 <span style="font-weight:normal;">(2026 Edition)</span>
+            </div>
+
+            {{-- QR --}}
+            @if($document->verification_url)
+                <div style="text-align:center;">
+                    {!! QrCode::size(70)->generate($document->verification_url) !!}
+
+                    <div style="font-size:9px; margin-top:2px; color:#555;">
+                        Scan to verify
+                    </div>
+                </div>
+            @endif
+
         </div>
 
     </div>
 
     {{-- TITLE --}}
-    <div class="title" style="padding-bottom: 15px;">
+    <div class="title" style="padding-bottom: 15px; margin-top:-20px">
         <h2>OFF-CAMPUS ACTIVITY FORM</h2>
         <span>(Please accomplish 2 copies.)</span>
     </div>

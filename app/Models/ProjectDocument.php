@@ -333,9 +333,20 @@ class ProjectDocument extends Model
         });
     }
 
-    public function getVerificationUrlAttribute(): string
+    public function getVerificationUrlAttribute(): ?string
     {
+        if (!$this->verification_token) {
+            return null;
+        }
+
         return route('verification.show', $this->verification_token);
     }
+
+
+   public function packetItems()
+    {
+        return $this->hasMany(\App\Models\ExternalPacketItem::class, 'document_id');
+    } 
+
 
 }

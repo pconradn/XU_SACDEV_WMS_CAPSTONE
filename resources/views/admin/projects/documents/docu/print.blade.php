@@ -137,23 +137,38 @@
 
 <div class="page">
 
-        
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; font-size:11px; ">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:6px 10px; font-size:11px;">
 
-        
+        {{-- LEFT --}}
         <div style="font-style:italic;">
             Your org letterhead here. Please use A4 paper.
         </div>
 
-        
-        <div style="background:#2f6fb3; color:#fff; padding:4px 10px; font-weight:bold;">
-            Form A2 <span style="font-weight:normal;">(2023 Edition)</span>
+        {{-- RIGHT (STACKED) --}}
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+
+            {{-- FORM A2 --}}
+            <div style="background:#2f6fb3; color:#fff; padding:4px 10px; font-weight:bold;">
+                Form A2 <span style="font-weight:normal;">(2023 Edition)</span>
+            </div>
+
+            {{-- QR --}}
+            @if($document->verification_url)
+                <div style="text-align:center;">
+                    {!! QrCode::size(70)->generate($document->verification_url) !!}
+
+                    <div style="font-size:9px; margin-top:2px; color:#555;">
+                        Scan to verify
+                    </div>
+                </div>
+            @endif
+
         </div>
 
     </div>
 
     
-    <div style="text-align:center; padding:10px 0; margin-top:50px;">
+    <div style="text-align:center; padding:10px 0; margin-top:-50px;">
         <div style="font-size:18px; font-weight:bold; letter-spacing:0.5px;">
             DOCUMENTATION REPORT
         </div>

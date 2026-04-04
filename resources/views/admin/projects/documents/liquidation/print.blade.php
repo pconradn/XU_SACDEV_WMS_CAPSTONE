@@ -99,32 +99,48 @@ $report = $document->liquidationData
                 Form A3 (2016 Edition)
             </div>
 
-            {{-- CHECKBOX BOX --}}
-            <div style="
-                border:1px solid #5b8fd9;
-                padding:0px 5px;
-                font-size:8px;
-                margin-left: 50px
-            ">
+            {{-- QR + CHECKBOX ROW --}}
+            <div style="display:flex; gap:6px; align-items:flex-start;">
 
-                <div style="margin-bottom:4px; ">
-                    ☐ Accomplish 3 copies of this form
-                </div>
+                {{-- QR --}}
+                @if($document->verification_url)
+                    <div style="text-align:center;">
+                        {!! QrCode::size(65)->generate($document->verification_url) !!}
 
-                <div style="margin-bottom:4px; ">
-                    ☐ Attach Cash Advance Form / Inflow Reports
-                </div>
+                        <div style="font-size:9px; margin-top:2px; color:#555;">
+                            Scan
+                        </div>
+                    </div>
+                @endif
 
-                <div style="margin-bottom:8px; ">
-                    ☐ Attach original official receipts
-                </div>
+                {{-- CHECKBOX BOX --}}
+                <div style="
+                    border:1px solid #5b8fd9;
+                    padding:0px 5px;
+                    font-size:8px;
+                    flex:1;
+                ">
 
-                <div style="border-top:1px solid #5b8fd9; padding-top:6px; ">
-                    ☐ Advanced (Disbursed before implementation)
-                </div>
+                    <div style="margin-bottom:4px;">
+                        ☐ Accomplish 3 copies of this form
+                    </div>
 
-                <div style="margin-bottom:4px; margin-top:4px ">
-                    ☐ For Reimbursement
+                    <div style="margin-bottom:4px;">
+                        ☐ Attach Cash Advance Form / Inflow Reports
+                    </div>
+
+                    <div style="margin-bottom:8px;">
+                        ☐ Attach original official receipts
+                    </div>
+
+                    <div style="border-top:1px solid #5b8fd9; padding-top:6px;">
+                        ☐ Advanced (Disbursed before implementation)
+                    </div>
+
+                    <div style="margin-bottom:4px; margin-top:4px;">
+                        ☐ For Reimbursement
+                    </div>
+
                 </div>
 
             </div>

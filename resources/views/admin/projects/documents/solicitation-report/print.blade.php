@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Application for Solicitation</title>
+    <title>Solicitation Report</title>
 
     <style>
         body {
@@ -122,26 +122,46 @@
 <div class="page">
 
     {{-- HEADER --}}
-    <div class="header">
+<div class="header" style="display:flex; justify-content:space-between; align-items:flex-start;">
 
-        <div class="header-left">
-            <div class="logo-box"></div>
+    {{-- LEFT --}}
+    <div class="header-left" style="display:flex; align-items:center; gap:10px;">
 
-            <div class="header-text">
-                <strong>STUDENT ACTIVITIES AND LEADERSHIP DEVELOPMENT</strong><br>
-                Office of Student Affairs, Xavier University – Ateneo de Cagayan<br>
-                Rm 204, 2F Magis Student Complex (Tel) 853-9800 local 9245
-            </div>
-        </div>
+        <div class="logo-box"></div>
 
-        <div class="form-code">
-            Form A6-1
+        <div class="header-text">
+            <strong>STUDENT ACTIVITIES AND LEADERSHIP DEVELOPMENT</strong><br>
+            Office of Student Affairs, Xavier University – Ateneo de Cagayan<br>
+            Rm 204, 2F Magis Student Complex (Tel) 853-9800 local 9245
         </div>
 
     </div>
 
+    {{-- RIGHT (STACKED) --}}
+    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+
+        {{-- FORM CODE --}}
+        <div class="form-code">
+            Form A6-1
+        </div>
+
+        {{-- QR --}}
+        @if($document->verification_url)
+            <div style="text-align:center;">
+                {!! QrCode::size(70)->generate($document->verification_url) !!}
+
+                <div style="font-size:9px; margin-top:2px; color:#555;">
+                    Scan to verify
+                </div>
+            </div>
+        @endif
+
+    </div>
+
+</div>
+
     {{-- TITLE --}}
-    <div class="title">
+    <div class="title" style="margin-top: -20px">
         <h2>SOLICITATION/ SPONSORSHIP REPORT</h2>
         <span>(Please accomplish 2 copies.)</span>
     </div>

@@ -747,6 +747,9 @@ class AdminProjectDocumentController extends Controller
     }
 
 
+
+
+
     public function showPrint(Project $project, $formType, $documentId = null)
     {
         $query = ProjectDocument::query()
@@ -757,10 +760,12 @@ class AdminProjectDocumentController extends Controller
                 'proposalData.planOfActions',
                 'budgetProposal.items',
                 'offCampusActivity.participants',
+                'packetItems.packet',
             ])
             ->where('project_id', $project->id)
             ->whereHas('formType', fn($q) => $q->where('code', $formType));
 
+            
         $document = $documentId
             ? $query->where('id', $documentId)->firstOrFail()
             : $query->firstOrFail();
@@ -779,6 +784,14 @@ class AdminProjectDocumentController extends Controller
         $participants = $offcampus?->participants ?? collect();
         $solicitation = $document->solicitationData;
         $purchaseSourceOfFunds = $document->requestToPurchase;
+
+
+        $packetItem = $document->packetItems
+            ->sortByDesc('created_at')
+            ->first();
+
+        $packet = $packetItem?->packet;
+
 
         $view = match ($formType) {
             'PROJECT_PROPOSAL' => 'admin.projects.documents.project-proposal.print',
@@ -805,6 +818,7 @@ class AdminProjectDocumentController extends Controller
             'participants'=> $participants,
             'solicitation' => $solicitation,
             'purchaseSourceOfFunds' => $purchaseSourceOfFunds,
+            'packet' => $packet,
 
         ]);
     }

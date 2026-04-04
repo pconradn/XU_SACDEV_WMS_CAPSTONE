@@ -130,10 +130,12 @@
 
 <div class="page">
 
-    {{-- HEADER --}}
-    <div class="header">
 
-        <div class="header-left">
+    <div class="header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+
+        {{-- LEFT --}}
+        <div class="header-left" style="display:flex; align-items:center; gap:10px;">
+
             <div class="logo-box"></div>
 
             <div class="header-text">
@@ -141,16 +143,34 @@
                 Office of Student Affairs, Xavier University – Ateneo de Cagayan<br>
                 Rm 204, 2F Magis Student Complex (Tel) 853-9800 local 9245
             </div>
+
         </div>
 
-        <div class="form-code">
-            Form A9 (2023)
+        {{-- RIGHT (STACKED) --}}
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+
+            {{-- FORM CODE --}}
+            <div class="form-code">
+                Form A9 (2023)
+            </div>
+
+            {{-- QR --}}
+            @if($document->verification_url)
+                <div style="text-align:center;">
+                    {!! QrCode::size(70)->generate($document->verification_url) !!}
+
+                    <div style="font-size:9px; margin-top:2px; color:#555;">
+                        Scan to verify
+                    </div>
+                </div>
+            @endif
+
         </div>
 
     </div>
 
     {{-- TITLE --}}
-    <div class="title">
+    <div class="title" style="margin-top:-30px">
         <h2>FEES COLLECTION REPORT</h2>
         <span>(Please accomplish 2 copies.)</span>
     </div>

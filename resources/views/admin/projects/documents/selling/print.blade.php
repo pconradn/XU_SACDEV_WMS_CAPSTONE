@@ -131,26 +131,50 @@
 
 
         {{-- HEADER --}}
-        <div class="header">
+<div class="header" style="display:flex; justify-content:space-between; align-items:flex-start;">
 
-            <div class="header-left">
-                <div class="logo-box"></div>
+    {{-- LEFT --}}
+    <div class="header-left" style="display:flex; align-items:center; gap:10px;">
 
-                <div class="header-text">
-                    <strong>STUDENT ACTIVITIES AND LEADERSHIP DEVELOPMENT</strong>
-                    Office of Student Affairs, Xavier University - Ateneo de Cagayan<br>
-                    Rm 204, 2/F Magis Student Complex (Tel) 858-3116 local 9245
-                </div>
-            </div>
+        {{-- LOGO BOX --}}
+        <div class="logo-box"></div>
 
-            <div class="form-code">
-                Form A8 (2023)
-            </div>
-
+        {{-- TEXT --}}
+        <div class="header-text">
+            <strong>
+                STUDENT ACTIVITIES AND LEADERSHIP DEVELOPMENT
+            </strong>
+            Office of Student Affairs, Xavier University - Ateneo de Cagayan<br>
+            Rm 204, 2/F Magis Student Complex (Tel) 858-3116 local 9245
         </div>
 
+    </div>
+
+    {{-- RIGHT (STACKED) --}}
+    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+
+        {{-- FORM CODE --}}
+        <div class="form-code">
+            Form A10 (2026)
+        </div>
+
+        {{-- QR --}}
+        @if($document->verification_url)
+            <div style="text-align:center;">
+                {!! QrCode::size(70)->generate($document->verification_url) !!}
+
+                <div style="font-size:9px; margin-top:2px; color:#555;">
+                    Scan to verify
+                </div>
+            </div>
+        @endif
+
+    </div>
+
+</div>
+
         {{-- TITLE --}}
-        <div class="title">
+        <div class="title" style="margin-top: -40px">
             <h2>APPLICATION FOR SELLING</h2>
             <span>(Please accomplish 2 copies.)</span>
         </div>

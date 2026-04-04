@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\File;
 
 
-
+Route::get('/verify/{token}', [\App\Http\Controllers\VerificationController::class, 'show'])
+    ->name('verification.show');
 
 Route::get('/ui-test/documents', function () {
     return view('dev.ui.documents-hub-test');
