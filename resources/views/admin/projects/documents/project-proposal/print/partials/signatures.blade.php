@@ -88,13 +88,6 @@
             ">
 
                 {{-- ROW 1 --}}
-                <div style="padding:8px; border-right:1px solid #2f6fb3; border-bottom:1px solid #2f6fb3;">
-                    {!! approvalLine('finance_officer', $sigs) !!}
-                    <div style="margin-top:6px; font-weight:600;">
-                        {{ sig('finance_officer', $sigs)?->user?->name ?? '—' }}
-                    </div>
-                    <div style="font-size:11px;">Budget and Finance Officer</div>
-                </div>
 
                 <div style="padding:8px; border-bottom:1px solid #2f6fb3;">
                     {!! approvalLine('treasurer', $sigs) !!}
@@ -102,6 +95,10 @@
                         {{ sig('treasurer', $sigs)?->user?->name ?? '—' }}
                     </div>
                     <div style="font-size:11px;">Treasurer</div>
+                </div>
+
+                <div style="padding:8px; border-bottom:1px solid #2f6fb3;">
+
                 </div>
 
                 {{-- ROW 2 --}}
@@ -277,9 +274,6 @@
             {{-- SIGNATURE BLOCK --}}
             <div style="margin-top:40px;">
 
-                <div style="font-weight:600;">
-                    SIGNATURE OVER FULL NAME
-                </div>
 
                 <div style="margin-top:30px; font-weight:700; font-size:13px;">
                     {{ sig('project_head', $sigs)?->user?->name ?? '—' }}
@@ -305,6 +299,71 @@
                     Mobile Number: {{ $officer->mobile_number ?? '—' }}<br>
                     Email Address: {{ $officer->email ?? '—' }}
                 </div>
+
+            </div>
+
+                        {{-- SIGNATURE BLOCK --}}
+            <div style="margin-top:20px;">
+
+                <div style="font-weight:100;">
+                    Witnesses:
+                </div>
+
+                <div style="margin-top:30px; font-weight:700; font-size:13px;">
+                    {{ sig('president', $sigs)?->user?->name ?? '—' }}
+                </div>
+
+                <div style="font-size:11px;">
+                    President
+                </div>
+
+                <div style="margin-top:6px; font-size:11px;">
+                    Date Signed:
+                    {{ sig('president', $sigs)?->signed_at?->format('M d, Y') ?? '—' }}
+                </div>
+
+
+
+            </div>
+
+                        {{-- SIGNATURE BLOCK --}}
+            <div style="margin-top:10px;">
+
+
+                <div style="margin-top:30px; font-weight:700; font-size:13px;">
+                    {{ sig('treasurer', $sigs)?->user?->name ?? '—' }}
+                </div>
+
+                <div style="font-size:11px;">
+                    Treasurer
+                </div>
+
+                <div style="margin-top:6px; font-size:11px;">
+                    Date Signed:
+                    {{ sig('treasurer', $sigs)?->signed_at?->format('M d, Y') ?? '—' }}
+                </div>
+
+
+
+            </div>
+
+                        {{-- SIGNATURE BLOCK --}}
+            <div style="margin-top:10px;">
+
+
+                <div style="margin-top:30px; font-weight:700; font-size:13px;">
+                    {{ sig('sacdev_admin', $sigs)?->user?->name ?? '—' }}
+                </div>
+
+                <div style="font-size:11px;">
+                    SACDEV Head
+                </div>
+
+                <div style="margin-top:6px; font-size:11px;">
+                    Date Signed:
+                    {{ sig('sacdev_admin', $sigs)?->signed_at?->format('M d, Y') ?? '—' }}
+                </div>
+
 
             </div>
 

@@ -741,7 +741,7 @@ $report = $document->liquidationData
     ">
 
         {{-- LEFT --}}
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr ; gap:14px;">
 
             {{-- PREPARED --}}
             <div>
@@ -779,20 +779,6 @@ $report = $document->liquidationData
             </div>
 
 
-            {{-- AUDITED --}}
-            <div>
-                <div style="margin-bottom:2px; font-size:9px;">Audited by:</div>
-
-                {!! approvalLine('finance_officer', $sigs) !!}
-
-                <div style="margin-top:10px; border-bottom:1px solid #000;">
-                    {{ sig('finance_officer', $sigs)?->user?->name ?? '—' }}
-                </div>
-
-                <div style="font-size:9px;">
-                    Budget and Finance Officer
-                </div>
-            </div>
 
         </div>
 

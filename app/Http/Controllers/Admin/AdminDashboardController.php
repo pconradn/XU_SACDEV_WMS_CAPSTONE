@@ -11,6 +11,7 @@ use App\Models\Project;
 use App\Models\ProjectDocument;
 use App\Models\SchoolYear;
 use App\Models\StrategicPlanSubmission;
+use App\Services\ProjectFormRequirementResolver;
 use Illuminate\Support\Facades\DB;
 
 class AdminDashboardController extends Controller
@@ -208,6 +209,9 @@ class AdminDashboardController extends Controller
                 if ($activeSyId) {
                     $q->where('school_year_id', $activeSyId);
                 }
+
+            
+                $q->where('workflow_status', '!=', 'cancelled');
             })
             ->get()
             ->filter(function ($doc) {
@@ -247,6 +251,68 @@ class AdminDashboardController extends Controller
                 ];
             })
             ->values();
+
+        $debug = [];
+
+        $resolver = app(ProjectFormRequirementResolver::class);
+
+        $projectsReadyForCompletion = Project::with([
+                'documents.formType'
+            ])
+            ->where('school_year_id', $activeSyId)
+            ->where('workflow_status', '!=', 'completed')
+            ->where('workflow_status', '!=', 'cancelled') 
+            ->get()
+            ->filter(function ($project) use ($resolver, &$debug) {
+
+                $requiredFormTypes = $resolver->resolve($project);
+
+                $documents = $project->documents
+                    ->whereNull('archived_at')
+                    ->keyBy(fn($d) => $d->formType->code);
+
+                $requiredDocs = collect($requiredFormTypes)->map(function (\App\Models\FormType $formType) use ($documents) {
+                    return $documents[$formType->code] ?? null;
+                });
+
+                if ($requiredDocs->isEmpty()) {
+                    return false;
+                }
+
+                $allApproved = $requiredDocs
+                    ->every(fn($doc) => $doc && $doc->status === 'approved_by_sacdev');
+
+
+
+                $debug[] = [
+                    'project' => $project->title,
+                    'required_forms' => collect($requiredFormTypes)->pluck('code'),
+                    'existing_documents' => $documents->keys(),
+                    'required_docs_status' => $requiredDocs->map(fn($doc) => $doc?->status),
+                    'allApproved' => $allApproved,
+                ];
+
+                return $allApproved;
+            })
+            ->map(function ($project) {
+                return (object)[
+                    'type' => 'Project Ready for Completion',
+
+                
+                    'organization_id' => $project->organization_id,
+                    'school_year_id' => $project->school_year_id,
+
+                    'project' => $project,
+                    'organization' => $project->organization ?? null,
+                    'created_at' => $project->updated_at,
+                    'route' => route('admin.projects.documents.hub', $project->id),
+                ];
+            })
+            ->values();
+
+
+
+
 
         $calendarProjects = Project::query()
             ->with('organization')
@@ -306,7 +372,10 @@ class AdminDashboardController extends Controller
             ->where('status', 'completed') // future-ready
             ->count();
 
-
+        $pendingCases = $pendingCases
+            ->merge($projectsReadyForCompletion)
+            ->sortByDesc('created_at')
+            ->values();
 
 
         return view('admin.dashboard', [
@@ -316,6 +385,10 @@ class AdminDashboardController extends Controller
             'pendingCaseCount' => $pendingCases->count(),
             'readyForActivationCount' => $readyForActivation->count(),
             'pendingCases' => $pendingCases,
+
+            'projectsReadyForCompletion' => $projectsReadyForCompletion,
+            'projectsReadyForCompletionCount' => $projectsReadyForCompletion->count(),
+
             'readyForActivation' => $readyForActivation,
             'projectApprovals' => $projectApprovals,
             'calendarProjects' => $calendarProjects,

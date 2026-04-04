@@ -123,7 +123,7 @@
     </div>
 
     
-    <div style="text-align:center; padding:10px 0; margin-top:-20px;">
+    <div style="text-align:center; padding:10px 0; margin-top:-40px;">
         <div style="font-size:18px; font-weight:bold; letter-spacing:0.5px;">
             PROJECT PROPOSAL
         </div>

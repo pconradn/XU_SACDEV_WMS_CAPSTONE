@@ -166,7 +166,7 @@
                     <div class="max-h-76 overflow-y-auto">
                         @forelse($recentNotifications as $notification)
                             <a
-                                href="{{ route('notifications.index') }}"
+                                href="{{ route('notifications.show', $notification->id) }}"
                                 class="block border-b border-slate-800 px-4 py-3 hover:bg-slate-800/70 transition"
                             >
                                 <div class="flex items-start gap-3">

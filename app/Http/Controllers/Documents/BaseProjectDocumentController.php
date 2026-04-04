@@ -205,7 +205,6 @@ abstract class BaseProjectDocumentController extends Controller
             'PROJECT_PROPOSAL' => [
                 'project_head',
                 'treasurer',
-                'finance_officer',
                 'president',
                 'moderator',
                 'sacdev_admin'
@@ -214,7 +213,6 @@ abstract class BaseProjectDocumentController extends Controller
             'BUDGET_PROPOSAL' => [
                 'project_head',
                 'treasurer',
-                'finance_officer',
                 'president',
                 'moderator',
                 'sacdev_admin'
@@ -285,7 +283,6 @@ abstract class BaseProjectDocumentController extends Controller
             'LIQUIDATION_REPORT' => [
                 'project_head',
                 'treasurer',
-                'finance_officer',
                 'president',
                 'moderator',
                 'sacdev_admin'
@@ -732,8 +729,8 @@ abstract class BaseProjectDocumentController extends Controller
             'LIQUIDATION_REPORT' => 'org.projects.documents.liquidation-report.create',
             
             
-            'POSTPONEMENT_NOTICE' => 'org.projects.documents.postponement.create',
-            'CANCELLATION_NOTICE' => 'org.projects.documents.cancellation.create',
+            'POSTPONEMENT_NOTICE' => 'org.projects.documents.postponement.edit',
+            'CANCELLATION_NOTICE' => 'org.projects.documents.cancellation.edit',
         ];
 
         $routeName = $map[$document->formType->code] ?? 'org.projects.documents.hub';
