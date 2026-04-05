@@ -55,7 +55,7 @@
         <div class="flex items-center justify-between text-xs">
             <span class="text-slate-400">SACDEV System</span>
             <span class="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 font-medium text-blue-300">
-                v1.0
+                BETA version
             </span>
         </div>
     </div>

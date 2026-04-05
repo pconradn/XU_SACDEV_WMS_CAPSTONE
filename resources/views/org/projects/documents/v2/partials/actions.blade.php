@@ -72,20 +72,22 @@
         </button>
 
 
-        {{-- ✅ PACKET (ALWAYS VISIBLE NOW) --}}
+        
         <a href="{{ route('org.projects.packets.index', $project) }}"
-           class="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition">
+        class="flex items-center justify-between px-4 py-3 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white hover:from-amber-100 hover:to-white transition shadow-sm">
 
             <div class="flex items-center gap-2">
-                <i data-lucide="package" class="w-4 h-4 text-slate-600"></i>
-                <span class="text-xs font-semibold text-slate-700">
-                    Packet Submissions
+                <i data-lucide="package" class="w-4 h-4 text-amber-600"></i>
+
+                <span class="text-xs font-semibold text-slate-800">
+                    Org Packet Submissions
                 </span>
             </div>
 
-            <span class="text-[10px] text-slate-400">
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
                 Open
             </span>
+
         </a>
 
     </div>

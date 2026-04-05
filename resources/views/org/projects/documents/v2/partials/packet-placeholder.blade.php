@@ -8,11 +8,11 @@
     <div class="flex items-center gap-2">
         <i data-lucide="package" class="w-4 h-4 text-slate-500"></i>
         <h2 class="text-sm font-semibold text-slate-800">
-            Packet Submissions
+            External Packet Submissions
         </h2>
     </div>
 
-    {{-- LIST --}}
+   
     <div class="space-y-3">
 
         @forelse($externalPackets->sortByDesc('id')->take(3) as $packet)
@@ -40,7 +40,7 @@
                 };
             @endphp
 
-            {{-- CARD --}}
+            
             <div 
                 @click="packet = {{ json_encode($packet) }}; open = true"
                 class="cursor-pointer rounded-xl border {{ $border }} {{ $bg }} p-4 transition hover:shadow-md hover:scale-[1.01]"
@@ -48,7 +48,7 @@
 
                 <div class="flex items-start justify-between gap-3">
 
-                    {{-- LEFT --}}
+                   
                     <div class="min-w-0">
 
                         <div class="text-sm font-semibold text-slate-800">
@@ -65,7 +65,7 @@
 
                     </div>
 
-                    {{-- STATUS --}}
+                 
                     <span class="text-xs px-2 py-1 rounded-full
                         bg-{{ $color }}-100 text-{{ $color }}-700 border border-{{ $color }}-200">
                         {{ ucfirst($packet->status) }}
@@ -73,7 +73,7 @@
 
                 </div>
 
-                {{-- HINT --}}
+             
                 <div class="mt-2 text-[10px] text-slate-500">
                     Click to view details
                 </div>
@@ -91,7 +91,7 @@
 
     </div>
 
-    {{-- FOOTER --}}
+  
     @if($externalPackets->count() > 3)
         <div class="pt-2 border-t border-slate-100 text-center">
             <span class="text-[11px] text-slate-400">
@@ -112,7 +112,7 @@
             class="bg-white rounded-2xl shadow-lg w-full max-w-md p-5 space-y-4"
         >
 
-            {{-- HEADER --}}
+           
             <div class="flex items-center justify-between">
                 <div>
                     <div class="text-sm font-semibold text-slate-900">
@@ -128,7 +128,7 @@
                 </button>
             </div>
 
-            {{-- CONTENT --}}
+          
             <template x-if="packet">
 
                 <div class="space-y-3 text-sm">

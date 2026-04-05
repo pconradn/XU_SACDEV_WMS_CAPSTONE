@@ -2,36 +2,31 @@
     $rows = $awards ?? collect();
 @endphp
 
-<div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm mb-4">
+@if($rows->count())
 
-    <div class="flex items-start justify-between gap-3">
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm overflow-hidden">
+
+    {{-- HEADER --}}
+    <div class="px-5 py-3 border-b border-slate-200 flex items-start justify-between gap-4">
 
         <div>
-
-            <h3 class="text-base font-semibold text-slate-900">
+            <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
                 Awards and Recognitions
             </h3>
 
-            <p class="mt-1 text-sm text-slate-600">
+            <p class="mt-1 text-xs text-slate-500 max-w-md">
                 Awards received by the student.
             </p>
-
         </div>
 
+        <div class="flex items-center gap-2 text-[11px] font-medium">
 
-        {{-- Status --}}
-        <div class="flex items-center gap-2 text-sm font-medium text-slate-800">
-
-            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100">
-
-                <span class="h-2.5 w-2.5 rounded-full
-                    {{ $rows->count() ? 'bg-emerald-500' : 'bg-slate-400' }}">
-                </span>
-
+            <span class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100">
+                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
             </span>
 
-            <span>
-                {{ $rows->count() ? $rows->count().' record(s)' : 'No records' }}
+            <span class="text-emerald-700">
+                {{ $rows->count().' record'.($rows->count() > 1 ? 's' : '') }}
             </span>
 
         </div>
@@ -39,65 +34,51 @@
     </div>
 
 
+    {{-- TABLE --}}
+    <div class="overflow-x-auto">
 
-    @if($rows->count())
+        <table class="min-w-full text-xs">
 
-        <div class="mt-4 overflow-x-auto">
+            <thead class="text-[11px] uppercase text-slate-500 border-b border-slate-200 bg-white">
+                <tr>
+                    <th class="py-2.5 px-4 font-medium">Award</th>
+                    <th class="py-2.5 px-4 font-medium">Organization</th>
+                    <th class="py-2.5 px-4 font-medium text-right">Date</th>
+                </tr>
+            </thead>
 
-            <table class="min-w-full text-left text-sm">
+            <tbody class="divide-y divide-slate-100 bg-white">
 
-                <thead class="text-xs uppercase text-slate-500 border-b border-slate-200">
+                @foreach($rows as $award)
 
-                    <tr>
-                        <th class="py-2 pr-3">Award</th>
-                        <th class="py-2 pr-3">Organization</th>
-                        <th class="py-2 pr-3">Date Received</th>
+                    <tr class="hover:bg-slate-50 transition">
+
+                        <td class="py-2.5 px-4 text-slate-900 font-medium">
+                            {{ $award->award_name ?? '—' }}
+                        </td>
+
+                        <td class="py-2.5 px-4 text-slate-700">
+                            {{ $award->organization ?? '—' }}
+                        </td>
+
+                        <td class="py-2.5 px-4 text-right text-slate-700">
+                            @if(!empty($award->date_received))
+                                {{ \Carbon\Carbon::parse($award->date_received)->format('M d, Y') }}
+                            @else
+                                —
+                            @endif
+                        </td>
+
                     </tr>
 
-                </thead>
+                @endforeach
 
-                <tbody class="divide-y divide-slate-100">
+            </tbody>
 
-                    @foreach($rows as $award)
+        </table>
 
-                        <tr>
-
-                            <td class="py-2 pr-3 text-slate-900">
-                                {{ $award->award_name ?? '—' }}
-                            </td>
-
-                            <td class="py-2 pr-3 text-slate-700">
-                                {{ $award->organization ?? '—' }}
-                            </td>
-
-                            <td class="py-2 pr-3 text-slate-700">
-
-                                @if(!empty($award->date_received))
-                                    {{ \Carbon\Carbon::parse($award->date_received)->format('M d, Y') }}
-                                @else
-                                    —
-                                @endif
-
-                            </td>
-
-                        </tr>
-
-                    @endforeach
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    @else
-
-        <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-
-            No awards were submitted.
-
-        </div>
-
-    @endif
+    </div>
 
 </div>
+
+@endif
