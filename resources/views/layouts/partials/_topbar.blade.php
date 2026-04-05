@@ -21,51 +21,56 @@
 @endphp
 
 <header class="sticky top-0 z-40 border-b border-slate-800 bg-slate-900/85 backdrop-blur">
-    <div class="flex h-12 items-center justify-between px-4">
+    <div class="flex min-h-12 items-center justify-between gap-2 px-3 sm:px-4">
 
         {{-- LEFT SIDE --}}
-        <div class="flex items-center gap-4 min-w-0">
+        <div class="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
 
             {{-- MOBILE SIDEBAR BUTTON --}}
             <button
                 @click="sidebarOpen = true"
-                class="lg:hidden inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition"
+                class="lg:hidden inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-white"
+                type="button"
             >
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
             </button>
 
             {{-- CONTEXT --}}
-            <div class="min-w-0">
-                <div class="flex flex-wrap items-center gap-1.5">
-                    <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold
+            <div class="min-w-0 flex-1 overflow-hidden">
+                <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <span
+                        class="inline-flex max-w-full items-center rounded-full border px-2 py-1 text-[10px] font-semibold leading-none sm:px-2.5
                         {{ $isAdmin
                             ? 'border-blue-500/30 bg-blue-500/10 text-blue-300'
-                            : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' }}">
+                            : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' }}"
+                    >
                         {{ $isAdmin ? 'ADMIN PORTAL' : 'ORG PORTAL' }}
                     </span>
 
                     @if($isAdmin)
-                        <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-800/80 px-2.5 py-1 text-[10px] font-medium text-slate-300">
-                           Active SY {{ $sy->name }}
+                        <span class="inline-flex max-w-full items-center rounded-full border border-slate-700 bg-slate-800/80 px-2 py-1 text-[10px] font-medium leading-none text-slate-300 sm:px-2.5">
+                            <span class="truncate">Active SY {{ $sy->name }}</span>
                         </span>
-                    
+
                     @elseif($activeSyId && !$isAdmin)
-                        <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-800/80 px-2.5 py-1 text-[10px] font-medium text-slate-300">
-                            {{$activeSy->name }}
+                        <span class="inline-flex max-w-full items-center rounded-full border border-slate-700 bg-slate-800/80 px-2 py-1 text-[10px] font-medium leading-none text-slate-300 sm:px-2.5">
+                            <span class="truncate">{{ $activeSy->name }}</span>
                         </span>
                     @endif
 
                     @if($activeOrg && !$isAdmin)
-                        <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-800/80 px-2.5 py-1 text-[10px] font-medium text-slate-300">
-                            {{ $activeOrg->name }}
+                        <span class="inline-flex max-w-full items-center rounded-full border border-slate-700 bg-slate-800/80 px-2 py-1 text-[10px] font-medium leading-none text-slate-300 sm:px-2.5">
+                            <span class="truncate max-w-[160px] sm:max-w-[220px] md:max-w-none">
+                                {{ $activeOrg->name }}
+                            </span>
                         </span>
                     @endif
-
                 </div>
 
-                <div class="mt-1 text-xs text-slate-400 truncate">
+                {{-- helper text --}}
+                <div class="mt-1 hidden text-xs text-slate-400 truncate sm:block">
                     {{ $isAdmin
                         ? 'Manage workflows, organizations, approvals, and system administration'
                         : ($activeOrg ? 'Working inside your organization workspace' : 'Select a school year and organization to continue') }}
@@ -73,78 +78,35 @@
             </div>
         </div>
 
-{{--
-        @auth
-        @if($isAdmin)
-        <div class="hidden xl:flex flex-1 max-w-xl mx-8">
-            <form method="GET" action="{{ route('search.index') }}" class="w-full">
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                    </span>
+        {{-- RIGHT SIDE --}}
+        <div class="flex shrink-0 items-center gap-2 sm:gap-3">
 
-                    <input
-                        type="text"
-                        name="q"
-                        placeholder="Search modules, projects, forms..."
-                        class="w-full rounded-xl border border-slate-700 bg-slate-800/80 py-1.5 pl-10 pr-4 text-xs text-slate-200 placeholder:text-slate-500 focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                    >
-                </div>
-            </form>
-        </div>
-        @endif
-        @endauth
-        --}}
-        <div class="flex items-center gap-3">
-            {{--
             @auth
-            @if($isAdmin)
-            <button
-                type="button"
-                class="xl:hidden inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-800/80 p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition"
-                title="Search"
-            >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-            </button>
-            @endif
-            @endauth
+                @if(!$isAdmin)
+                    <div x-data="{ open: false }" class="relative shrink-0">
+                        <button
+                            @click="open = !open"
+                            type="button"
+                            class="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-800/80 text-slate-300 transition hover:bg-slate-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                        >
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0m6 0H9"/>
+                            </svg>
 
-
-
-
-
-            {{-- NOTIFICATIONS --}}
-            @auth
-            @if(!$isAdmin)
-            <div x-data="{ open: false }" class="relative">
-                <button
-                    @click="open = !open"
-                    class="relative inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-800/80 p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white transition focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                >
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0m6 0H9"/>
-                    </svg>
-
-                    @if($unreadCount > 0)
-                        <span class="absolute -top-1 -right-1 flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                            {{ $unreadCount > 99 ? '99+' : $unreadCount }}
-                        </span>
-                    @endif
-                </button>
+                            @if($unreadCount > 0)
+                                <span class="absolute -top-1 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                                    {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+                                </span>
+                            @endif
+                        </button>
 
                 {{-- NOTIFICATION DROPDOWN --}}
                 <div
                     x-show="open"
                     x-transition.origin.top.right
                     @click.outside="open = false"
-                    class="absolute right-0 mt-3 w-[360px] overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/40 z-50"
+                    class="absolute right-0 mt-3 w-[90vw] max-w-sm min-w-[260px] overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/40 z-50"
                     style="display: none;"
                 >
                     <div class="flex items-center justify-between border-b border-slate-800 px-4 py-3">
@@ -261,12 +223,12 @@
 
             {{-- LOGIN (guest) --}}
             @guest
-            <a
-                href="{{ route('login') }}"
-                class="text-xs font-semibold text-slate-300 hover:text-white"
-            >
-                Login
-            </a>
+                <a
+                    href="{{ route('login') }}"
+                    class="text-xs font-semibold text-slate-300 hover:text-white"
+                >
+                    Login
+                </a>
             @endguest
 
         </div>

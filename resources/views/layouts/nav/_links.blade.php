@@ -42,7 +42,7 @@ if (Route::has('dashboard')) {
 
 if (Route::has('context.show') && !$isAdmin) {
     $contextLinks[] = $item(
-        'Select SY / Organization',
+        'Switch Organization',
         route('context.show'),
         ['context.*', 'org.encode-sy.*'],
         null,
@@ -223,6 +223,17 @@ if ($user && $activeOrgId && $syId) {
         if (Route::has('org.activation-status.index')) {
             $ops[] = $item('Activation Status', route('org.activation-status.index'), ['org.activation-status.*']);
         }
+
+
+        if (Route::has('org.assign-project-heads.index')) {
+            $ops[] = $item('Assign Project Head', route('org.assign-project-heads.index'), ['org.assign-project-heads.*']);
+        }
+
+
+
+
+
+
 
         if ($rereg) {
             $groups[] = [

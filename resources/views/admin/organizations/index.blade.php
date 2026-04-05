@@ -235,48 +235,70 @@ $clusterColors = [
 
 
     {{-- ================= OPEN MODAL ================= --}}
-    <div
-        x-show="showOpen"
-        x-transition
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-        style="display: none;"
-    >
-        <div @click.outside="closeOpen()" class="w-full max-w-md bg-white rounded-2xl shadow-xl">
+<div
+    x-show="showOpen"
+    x-transition
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+    style="display: none;"
+>
+    <div @click.outside="closeOpen()" class="w-full max-w-md bg-white rounded-2xl shadow-xl">
 
-            <div class="px-5 py-4 border-b">
-                <h2 class="text-sm font-semibold text-slate-900">
-                    Select School Year
-                </h2>
-                <p class="text-xs text-slate-500" x-text="selectedOrgName"></p>
-            </div>
+        {{-- HEADER --}}
+        <div class="px-5 py-4 border-b">
+            <h2 class="text-sm font-semibold text-slate-900">
+                Select School Year
+            </h2>
+            <p class="text-xs text-slate-500" x-text="selectedOrgName"></p>
+        </div>
 
-            <div class="p-4 space-y-2 max-h-[300px] overflow-y-auto">
+        {{-- BODY --}}
+        <div class="p-4 space-y-2 max-h-[300px] overflow-y-auto">
 
-                <template x-for="sy in orgSchoolYears" :key="sy.id">
-                    <button
-                        @click="submitOpen(sy.school_year_id)"
-                        class="w-full flex justify-between px-3 py-2 border rounded-lg hover:bg-slate-50"
-                    >
-                        <span x-text="sy.name"></span>
+            {{-- EMPTY STATE --}}
+            <template x-if="orgSchoolYears.length === 0">
+                <div class="flex flex-col items-center justify-center text-center py-10 px-4">
+                    
+                    <div class="w-12 h-12 flex items-center justify-center rounded-full bg-amber-50 border border-amber-200 mb-3">
+                        <i data-lucide="alert-circle" class="w-5 h-5 text-amber-600"></i>
+                    </div>
 
-                        <template x-if="sy.is_active">
-                            <span class="text-[10px] bg-blue-100 text-blue-700 px-2 rounded">
-                                Active
-                            </span>
-                        </template>
-                    </button>
-                </template>
+                    <p class="text-sm font-semibold text-slate-700">
+                        No School Year Registration Found
+                    </p>
 
-            </div>
+                    <p class="text-xs text-slate-500 mt-1 max-w-xs">
+                        This organization has not been registered for any school year yet.
+                    </p>
+                </div>
+            </template>
 
-            <div class="px-4 py-3 border-t text-right">
-                <button @click="closeOpen()" class="text-xs px-3 py-1 border rounded">
-                    Cancel
+            {{-- LIST --}}
+            <template x-for="sy in orgSchoolYears" :key="sy.id">
+                <button
+                    @click="submitOpen(sy.school_year_id)"
+                    class="w-full flex justify-between px-3 py-2 border rounded-lg hover:bg-slate-50"
+                >
+                    <span x-text="sy.name"></span>
+
+                    <template x-if="sy.is_active">
+                        <span class="text-[10px] bg-blue-100 text-blue-700 px-2 rounded">
+                            Active
+                        </span>
+                    </template>
                 </button>
-            </div>
+            </template>
 
         </div>
+
+        {{-- FOOTER --}}
+        <div class="px-4 py-3 border-t text-right">
+            <button @click="closeOpen()" class="text-xs px-3 py-1 border rounded">
+                Cancel
+            </button>
+        </div>
+
     </div>
+</div>
 
 </div>
 

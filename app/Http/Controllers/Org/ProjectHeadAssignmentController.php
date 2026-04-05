@@ -31,7 +31,15 @@ class ProjectHeadAssignmentController extends Controller
             ->get()
             ->keyBy('project_id');
 
-        return view('org.assignments.project-heads-index', compact('projects', 'heads', 'syId'));
+        $officers = OfficerEntry::query()
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->where('is_major_officer', 0)
+            ->orderBy('full_name')
+            ->get();
+
+
+        return view('org.assignments.project-heads-index', compact('projects', 'heads', 'syId','officers'));
     }
 
     public function edit(Request $request, Project $project)
@@ -168,7 +176,7 @@ class ProjectHeadAssignmentController extends Controller
 
         return redirect()
             ->route('org.projects.index')
-            ->with('status', 'Project head updated.');
+            ->with('success', 'Project head updated.');
     }
 
 

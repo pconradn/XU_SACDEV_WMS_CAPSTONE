@@ -106,13 +106,16 @@ $activeSy = \App\Models\SchoolYear::activeYear();
 
 
 
-        {{-- PAGE CONTENT --}}
-        <main class="flex-1 overflow-y-auto p-5" >
+        <main class="flex-1 overflow-y-auto p-0 sm:p-1 md:p-2">
 
-            <div class="max-w-7xl mx-auto" >
+            <div class="min-w-[1100px]">
 
-                <div class="content-frame" >
-                    @include('layouts.partials._content-wrapper')
+                <div class="max-w-7xl mx-auto">
+
+                    <div class="content-frame">
+                        @include('layouts.partials._content-wrapper')
+                    </div>
+
                 </div>
 
             </div>
