@@ -17,7 +17,7 @@ class UserController extends Controller
         $users = User::with(['role', 'clusters'])
             ->where('system_role', 'sacdev_admin')
             ->latest()
-            ->paginate(10);
+            ->get();
 
         return view('admin.users.index', compact('users'));
     }
@@ -35,19 +35,38 @@ class UserController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
+            'password' => 'required|string|min:6',
             'role_id' => 'required|exists:roles,id',
             'clusters' => 'nullable|array',
             'clusters.*' => 'exists:clusters,id',
+            'is_coa_officer' => 'nullable|boolean',
+            'is_default_coa' => 'nullable|boolean',
         ]);
+
+        if ($request->boolean('is_default_coa') && !$request->boolean('is_coa_officer')) {
+            return back()->withErrors([
+                'is_default_coa' => 'Default COA must also be a COA officer.'
+            ])->withInput();
+        }
 
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'role_id' => $data['role_id'],
-            'system_role' => 'sacdev_admin', // IMPORTANT
+            'system_role' => 'sacdev_admin',
+
+            'is_coa_officer' => $request->boolean('is_coa_officer'),
+            'is_default_coa' => $request->boolean('is_default_coa'),
         ]);
+
+
+        if ($user->is_default_coa) {
+            User::where('id', '!=', $user->id)
+                ->where('is_default_coa', true)
+                ->update(['is_default_coa' => false]);
+        }
+
 
         if (!empty($data['clusters'])) {
             $user->clusters()->sync($data['clusters']);
@@ -74,20 +93,42 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => "required|email|unique:users,email,{$user->id}",
+            'password' => !empty($data['password'])
+                ? Hash::make($data['password'])
+                : $user->password,
             'role_id' => 'required|exists:roles,id',
             'clusters' => 'nullable|array',
             'clusters.*' => 'exists:clusters,id',
+
+            'is_coa_officer' => 'nullable|boolean',
+            'is_default_coa' => 'nullable|boolean',
         ]);
+
+        if ($request->boolean('is_default_coa') && !$request->boolean('is_coa_officer')) {
+            return back()->withErrors([
+                'is_default_coa' => 'Default COA must also be a COA officer.'
+            ])->withInput();
+        }
 
         $user->update([
             'name' => $data['name'],
             'email' => $data['email'],
             'role_id' => $data['role_id'],
             'system_role' => 'sacdev_admin',
+
+            'is_coa_officer' => $request->boolean('is_coa_officer'),
+            'is_default_coa' => $request->boolean('is_default_coa'),
         ]);
+
+        if ($user->is_default_coa) {
+            User::where('id', '!=', $user->id)
+                ->where('is_default_coa', true)
+                ->update(['is_default_coa' => false]);
+        }
 
         $user->clusters()->sync($data['clusters'] ?? []);
 

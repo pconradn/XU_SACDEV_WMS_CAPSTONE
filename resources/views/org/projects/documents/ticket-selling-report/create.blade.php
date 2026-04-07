@@ -73,63 +73,10 @@
 </form>
 
 
-{{-- ================= SIGNATURES ================= --}}
-<div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
-
-    <h3 class="text-sm font-semibold text-slate-800 mb-4">
-        Approval Trail
-    </h3>
-
-    @if($document && $document->signatures && $document->signatures->count())
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-            @foreach($document->signatures->sortBy('id') as $sig)
-
-                <div class="border border-slate-200 rounded-xl p-4 flex justify-between items-center">
-
-                    <div>
-                        <div class="text-sm font-medium capitalize">
-                            {{ str_replace('_', ' ', $sig->role) }}
-                        </div>
-
-                        <div class="text-xs text-slate-500">
-                            {{ $sig->user?->name ?? 'Unknown User' }}
-                        </div>
-                    </div>
-
-                    <div class="text-right">
-
-                        @if($sig->status === 'signed')
-                            <div class="text-emerald-700 text-xs font-semibold">
-                                Approved
-                            </div>
-                            <div class="text-xs text-slate-500">
-                                {{ $sig->signed_at?->format('M d, Y h:i A') }}
-                            </div>
-                        @else
-                            <div class="text-amber-600 text-xs font-semibold">
-                                Pending
-                            </div>
-                        @endif
-
-                    </div>
-
-                </div>
-
-            @endforeach
-
-        </div>
-
-    @else
-
-        <div class="text-xs text-slate-400">
-            No approval records yet.
-        </div>
-
-    @endif
-
+<div class="rounded-2xl border bg-white p-5 shadow-sm">
+    @include('org.projects.documents.project-proposal.partials._signatures')
 </div>
+
 
 
 {{-- ================= ACTIONS ================= --}}

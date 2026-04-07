@@ -12,7 +12,7 @@
     @if($document->status === 'submitted')
 
         {{-- CURRENT TURN --}}
-        @if($isSignatory && $isCurrentTurn)
+        @if(($isSignatory && $isCurrentTurn) || ($isCoaAssigned && $isCoaForm && $document->status === 'submitted'))
 
             <button type="button"
                 onclick="openApproveModal()"

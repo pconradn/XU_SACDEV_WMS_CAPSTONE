@@ -253,10 +253,10 @@ class PresidentRegistrationController extends Controller
             'birthday' => ['required', 'date'],
             'age' => ['required', 'integer', 'min:0', 'max:120','regex:/^\d+$/'],
             'sex' => ['required', 'string', 'max:20','regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
-            'religion' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'religion' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
-            'mobile_number' => ['required', 'string', 'max:30','regex:/^(09|\+639)\d{9}$/'],
-            'city_landline' => ['required', 'string', 'max:30','regex:/^[A-Za-z0-9\s\-\.\(\)]+$/'],
+            'mobile_number' => ['nullable', 'string', 'max:30','regex:/^(09|\+639)\d{9}$/'],
+            'city_landline' => ['nullable', 'string', 'max:30','regex:/^[A-Za-z0-9\s\-\.\(\)]+$/'],
             'email' => ['required', 'email', 'max:255'],
             'id_number' => ['required', 'string', 'max:50','regex:/^[A-Za-z0-9\-]+$/'],
             'provincial_landline' => ['nullable', 'string', 'max:30','regex:/^[A-Za-z0-9\s\-\.\(\)]+$/'],

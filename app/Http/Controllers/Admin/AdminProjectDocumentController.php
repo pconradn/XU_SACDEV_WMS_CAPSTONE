@@ -20,6 +20,7 @@ class AdminProjectDocumentController extends Controller
 
     public function hub(Project $project, \App\Services\ProjectFormRequirementResolver $resolver)
     {
+        $focusDocId = request('focus');
 
         $documents = ProjectDocument::query()
             ->with(['formType', 'signatures.user', 'proposalData'])
@@ -111,6 +112,7 @@ class AdminProjectDocumentController extends Controller
         ];
 
 
+   
         $buildForm = function ($formType) use ($documents, $project) {
 
             $doc = $documents[$formType->code] ?? null;
@@ -128,6 +130,18 @@ class AdminProjectDocumentController extends Controller
             $isMine = $pendingSignature && $pendingSignature->user_id === auth()->id();
 
             $isSacdevStep = $nextRole === 'sacdev_admin';
+
+            $remainingRoles = $doc?->signatures
+                ?->where('status', 'pending')
+                ->pluck('role')
+                ->unique()
+                ->toArray() ?? [];
+
+            $allowedRemainingRoles = ['sacdev_admin', 'coa_officer'];
+
+            $isFinalStage =
+                empty($remainingRoles) ||
+                count(array_diff($remainingRoles, $allowedRemainingRoles)) === 0;
 
             return [
                 'name' => $formType->name,
@@ -148,7 +162,7 @@ class AdminProjectDocumentController extends Controller
                     ? route('admin.projects.documents.open', [$project, $formType->code])
                     : null,
 
-                'print_url' => ($doc && $doc->status === 'approved_by_sacdev')
+                'print_url' => ($doc && $isFinalStage)
                     ? route('admin.projects.documents.print', [$project, $formType->code, $doc->id])
                     : null,
 
@@ -159,6 +173,7 @@ class AdminProjectDocumentController extends Controller
                 'pending_user_id' => $pendingUser?->id,
             ];
         };
+
 
         $formTypes = FormType::whereIn('code', [
             'PROJECT_PROPOSAL',
@@ -329,14 +344,22 @@ class AdminProjectDocumentController extends Controller
             ->every(fn($doc) => $doc && $doc->status === 'approved_by_sacdev');
 
 
+        $isCoa = auth()->user()?->is_coa_officer;
 
         $canMarkComplete =
+            !$isCoa &&
+            $project->workflow_status !== 'completed' &&
+            $requiredDocs->isNotEmpty() &&
+            $allRequiredApproved;
+
+        $isReadyForCompletion =
             $project->workflow_status !== 'completed' &&
             $requiredDocs->isNotEmpty() &&
             $allRequiredApproved;
 
         $actions = [
             'can_mark_complete' => $canMarkComplete,
+            'is_ready' => $isReadyForCompletion,
             'mark_complete_url' => $canMarkComplete
                 ? route('admin.projects.mark-complete', $project)
                 : null,
@@ -369,8 +392,53 @@ class AdminProjectDocumentController extends Controller
             'externalPackets' => $externalPackets,
             'submissionPackets' => $submissionPackets,
             'documentsGrouped' => $documentsGrouped,
+            'focusDocId' => $focusDocId,
         ]);
     }
+
+
+
+    public function retractComplete(Project $project)
+    {
+        if (auth()->user()?->is_coa_officer) {
+            abort(403, 'COA officers cannot modify project completion.');
+        }
+
+        if ($project->workflow_status !== 'completed') {
+            return back()->with('error', 'Only completed projects can be reverted.');
+        }
+
+        DB::transaction(function () use ($project) {
+
+            $project->update([
+                'workflow_status' => 'post_implementation',
+                'status' => 'active',
+                'completed_at' => null,
+            ]);
+
+            Audit::log(
+                'project.completion_retracted',
+                'Project completion was reverted',
+                [
+                    'actor_user_id' => auth()->id(),
+                    'organization_id' => $project->organization_id,
+                    'school_year_id' => $project->school_year_id,
+                    'meta' => [
+                        'project_id' => $project->id,
+                        'title' => $project->title,
+                    ]
+                ]
+            );
+
+        });
+
+        return back()->with('success', 'Project completion has been reverted.');
+    }
+
+
+
+
+
 
 
 
@@ -392,6 +460,10 @@ class AdminProjectDocumentController extends Controller
         $allApproved = $requiredDocs
             ->filter()
             ->every(fn($doc) => $doc->status === 'approved_by_sacdev');
+        
+        if (auth()->user()?->is_coa_officer) {
+            abort(403, 'COA officers cannot mark projects as complete.');
+        }
 
         if (!$allApproved) {
             return back()->with('error', 'Project cannot be marked as completed. Some required documents are not yet approved.');
@@ -771,8 +843,23 @@ class AdminProjectDocumentController extends Controller
             ? $query->where('id', $documentId)->firstOrFail()
             : $query->firstOrFail();
 
-        if ($document->status !== 'approved_by_sacdev') {
-            abort(403, 'Document not approved for printing.');
+        $remainingSignatures = $document->signatures
+            ->where('status', 'pending');
+
+        $remainingRoles = $remainingSignatures
+            ->pluck('role')
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $allowedRemainingRoles = ['sacdev_admin', 'coa_officer'];
+
+        $isFinalStage =
+            empty($remainingRoles) || // fully approved
+            count(array_diff($remainingRoles, $allowedRemainingRoles)) === 0;
+
+        if (!$isFinalStage) {
+            abort(403, 'Document not ready for printing.');
         }
 
         if (auth()->user()->system_role !== 'sacdev_admin') {
@@ -823,6 +910,7 @@ class AdminProjectDocumentController extends Controller
 
         ]);
     }
+    
 
     public function approve(Request $request, Project $project, $formCode, $documentId = null)
     {
@@ -1100,25 +1188,29 @@ class AdminProjectDocumentController extends Controller
 
         $userId = auth()->id();
 
-        $userSignature = $document->signatures
-            ->where('user_id', $userId)
-            ->first();
+        if (!$project->isAssignedCoa($project)) {
 
-        if (!$userSignature) {
-            return back()->with('error', 'You are not part of the approval workflow.');
-        }
+            $userSignature = $document->signatures
+                ->where('user_id', $userId)
+                ->first();
 
-        $currentPending = $document->signatures
-            ->where('status', 'pending')
-            ->sortBy('id')
-            ->first();
+            if (!$userSignature) {
+                return back()->with('error', 'You are not part of the approval workflow.');
+            }
 
-        if (!$currentPending) {
-            return back()->with('error', 'No pending approvals remain.');
-        }
+            $currentPending = $document->signatures
+                ->where('status', 'pending')
+                ->sortBy('id')
+                ->first();
 
-        if ($currentPending->user_id !== $userId) {
-            return back()->with('error', 'It is not your turn to return this document yet.');
+            if (!$currentPending) {
+                return back()->with('error', 'No pending approvals remain.');
+            }
+
+            if ($currentPending->user_id !== $userId) {
+                return back()->with('error', 'It is not your turn to return this document yet.');
+            }
+
         }
 
 
@@ -1279,6 +1371,20 @@ class AdminProjectDocumentController extends Controller
 
         if ($document->status !== 'approved_by_sacdev') {
             return back()->with('error', 'Only approved documents can be retracted.');
+        }
+
+        $userId = auth()->id();
+
+        if (!$project->isAssignedCoa($project)) {
+
+            $userSignature = $document->signatures
+                ->where('user_id', $userId)
+                ->first();
+
+            if (!$userSignature) {
+                return back()->with('error', 'You are not part of the approval workflow.');
+            }
+
         }
 
         DB::transaction(function () use ($document) {

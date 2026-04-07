@@ -38,6 +38,9 @@
 
                         if (str_contains($role, 'sacdev')) {
                             $roleLabel = strtoupper(str_replace('_', ' ', $role));
+                        }
+                        elseif (str_contains($role, 'coa_officer')) {
+                        $roleLabel = strtoupper(str_replace('_', ' ', $role));
                         } else {
                             $roleLabel = ucwords(str_replace('_', ' ', $role));
                         }

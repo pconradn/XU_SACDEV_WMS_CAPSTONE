@@ -20,13 +20,47 @@
         ? $signatures->slice($currentIndex + 1)->contains(fn($s) => $s->status === 'signed')
         : false;
 
-    $canRetract = $isSigned && !$hasLaterApproval;
+    $isCoaAssigned = auth()->user()?->is_coa_officer
+        && $project->coaAssignment
+        && $project->coaAssignment->user_id === auth()->id();
+
+    $coaAllowedForms = [
+        'SOLICITATION_SPONSORSHIP_REPORT',
+        'TICKET_SELLING_REPORT',
+        'SELLING_ACTIVITY_REPORT',
+        'FEES_COLLECTION_REPORT',
+        'LIQUIDATION_REPORT',
+    ];
+
+    $isCoaForm = in_array($document->formType->code ?? null, $coaAllowedForms);
+
+    $canRetract =
+        ($isSigned && !$hasLaterApproval)
+        || ($isCoaAssigned && $isCoaForm);
 
     $nextPending = $signatures->firstWhere('status', 'pending');
 
-    $isCurrentTurn = $isPendingApproval
-        && $nextPending
-        && $nextPending->id === $currentSignature?->id;
+    $isCoaAssigned = auth()->user()?->is_coa_officer
+        && $project->coaAssignment
+        && $project->coaAssignment->user_id === auth()->id();
+
+    $coaAllowedForms = [
+        'SOLICITATION_SPONSORSHIP_REPORT',
+        'TICKET_SELLING_REPORT',
+        'SELLING_ACTIVITY_REPORT',
+        'FEES_COLLECTION_REPORT',
+        'LIQUIDATION_REPORT',
+    ];
+
+    $isCoaForm = in_array($document->formType->code ?? null, $coaAllowedForms);
+
+    $isCurrentTurn =
+        (
+            $isPendingApproval
+            && $nextPending
+            && $nextPending->id === $currentSignature?->id
+        )
+        || ($isCoaAssigned && $isCoaForm && $document->status === 'submitted');
 
     $onlySacdevLeft = $signatures->where('status', 'pending')->count() === 1
         && optional($signatures->firstWhere('status', 'pending'))->role === 'sacdev_admin';
@@ -69,6 +103,8 @@
         {{-- ================= RIGHT ACTIONS ================= --}}
         <div class="flex flex-wrap gap-2 justify-end">
 
+            @include('components.project-document.help._trigger')
+
             {{-- PROJECT HEAD --}}
             @include('components.project-document.actions._project_head')
 
@@ -84,6 +120,19 @@
 
 </div>
 
+@php
+    $helpTitle = match($document->formType->code ?? null) {
+        'LIQUIDATION_REPORT' => 'Liquidation Report Guide',
+        'SELLING_ACTIVITY_REPORT' => 'Selling Activity Report Guide',
+        'FEES_COLLECTION_REPORT' => 'Fees Collection Report Guide',
+        default => 'Help Guide',
+    };
+@endphp
+
+@include('components.project-document.help._modal')
+@include('components.project-document.help._script')
+
 
 {{-- ================= MODALS ================= --}}
 @include('components.project-document.actions._modals')
+

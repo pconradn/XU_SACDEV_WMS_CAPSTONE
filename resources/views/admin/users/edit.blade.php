@@ -108,6 +108,64 @@
                 @enderror
             </div>
 
+
+            {{-- COA SETTINGS --}}
+            <div class="space-y-3">
+
+                <label class="text-sm font-semibold text-slate-700">
+                    COA Configuration
+                </label>
+
+                <p class="text-xs text-slate-400">
+                    Assign this admin as a COA officer and optionally set as default fallback.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+                    {{-- COA OFFICER --}}
+                    <label class="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 hover:bg-slate-50">
+                        <div>
+                            <div class="text-sm font-medium text-slate-800">
+                                COA Officer
+                            </div>
+                            <div class="text-xs text-slate-500">
+                                Can approve financial-related documents
+                            </div>
+                        </div>
+
+                        <input type="checkbox"
+                            name="is_coa_officer"
+                            value="1"
+                            {{ old('is_coa_officer', $user->is_coa_officer) ? 'checked' : '' }}
+                            class="rounded border-slate-300 text-purple-600 focus:ring-purple-500">
+                    </label>
+
+                    {{-- DEFAULT COA --}}
+                    <label class="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 hover:bg-slate-50">
+                        <div>
+                            <div class="text-sm font-medium text-slate-800">
+                                Default COA
+                            </div>
+                            <div class="text-xs text-slate-500">
+                                Used when no COA is assigned to a project
+                            </div>
+                        </div>
+
+                        <input type="checkbox"
+                            name="is_default_coa"
+                            value="1"
+                            {{ old('is_default_coa', $user->is_default_coa) ? 'checked' : '' }}
+                            class="rounded border-slate-300 text-amber-600 focus:ring-amber-500">
+                    </label>
+
+                </div>
+
+                @error('is_default_coa')
+                    <p class="text-xs text-rose-600">{{ $message }}</p>
+                @enderror
+
+            </div>
+
         </div>
 
         {{-- ACTION BAR --}}
@@ -128,4 +186,27 @@
     </form>
 
 </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const coa = document.querySelector('input[name="is_coa_officer"]');
+    const def = document.querySelector('input[name="is_default_coa"]');
+
+    function sync() {
+        if (!coa.checked) {
+            def.checked = false;
+            def.disabled = true;
+        } else {
+            def.disabled = false;
+        }
+    }
+
+    coa.addEventListener('change', sync);
+    sync();
+});
+</script>
+
+
+
 </x-app-layout>

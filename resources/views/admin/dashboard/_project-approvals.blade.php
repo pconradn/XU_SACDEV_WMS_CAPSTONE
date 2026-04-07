@@ -46,7 +46,7 @@
                 $isCompletion = $task->is_completion ?? false;
             @endphp
 
-            <a href="{{ $task->route }}"
+            <a href="{{ $task->form_route   }}"
                class="block px-4 py-3 transition
                       {{ $isCompletion ? 'bg-emerald-50 hover:bg-emerald-100/50' : 'hover:bg-slate-50' }}">
 

@@ -1,5 +1,15 @@
 <x-app-layout>
 
+    @php
+\Log::info('ORG BLOCK HIT', [
+    'path' => request()->path(),
+    'full_url' => request()->fullUrl(),
+    'route_name' => request()->route()?->getName(),
+    'route_uri' => request()->route()?->uri(),
+    'action' => request()->route()?->getActionName(),
+]);
+    @endphp
+
     <div class="min-h-[60vh] flex items-center justify-center px-6">
         <div class="text-center max-w-md">
 

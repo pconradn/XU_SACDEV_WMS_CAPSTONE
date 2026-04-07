@@ -774,7 +774,7 @@
                     </div>
 
                     {{-- APPROVAL STATUS --}}
-                    {!! approvalLine('sacdev_admin', $sigs) !!}
+                    {!! approvalLine('coa_officer', $sigs) !!}
 
                     {{-- NAME --}}
                     <div style="
@@ -782,7 +782,7 @@
                         font-weight:600;
                         text-transform:uppercase;
                     ">
-                        {{ sig('sacdev_admin', $sigs)?->user?->name ?? '—' }}
+                        {{ sig('coa_officer', $sigs)?->user?->name ?? '—' }}
                     </div>
 
                     {{-- TITLE --}}

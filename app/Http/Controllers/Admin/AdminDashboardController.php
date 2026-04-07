@@ -267,7 +267,12 @@ class AdminDashboardController extends Controller
 
                         'status' => $doc->status,
                         'route' => route('admin.projects.documents.hub', $doc->project_id),
-                        'form_route' => $this->resolveOrgDocumentRoute($doc),
+                        'form_route' => in_array($doc->formType->code, ['PROJECT_PROPOSAL', 'BUDGET_PROPOSAL'])
+                            ? route('admin.projects.documents.combined-proposal.open', $doc->project_id)
+                            : route('admin.projects.documents.open', [
+                                $doc->project_id,
+                                $doc->formType->code
+                            ]),
 
                         'count' => 1, // required
                         'is_completion' => false, // required
@@ -312,6 +317,7 @@ $projectsReadyForCompletion = Project::with([
         return (object)[
             'project' => $project,
             'organization' => $project->organization ?? null,
+
             'forms' => collect([
                 [
                     'name' => 'Ready for Completion',
@@ -319,7 +325,11 @@ $projectsReadyForCompletion = Project::with([
                     'phase' => 'completion',
                 ]
             ]),
+
             'route' => route('admin.projects.documents.hub', $project->id),
+
+            'form_route' => route('admin.projects.documents.hub', $project->id),
+
             'count' => 1,
             'is_completion' => true,
         ];
@@ -453,4 +463,19 @@ $projectsReadyForCompletion = Project::with([
 
         return route($routeName, $document->project);
     }
+
+
+    protected function resolveAdminDocumentRoute(ProjectDocument $document): string
+    {
+        return route('admin.projects.documents.hub', [
+            'project' => $document->project_id,
+            'focus' => $document->id,
+        ]);
+    }
+ 
+
+
+
+
+
 }

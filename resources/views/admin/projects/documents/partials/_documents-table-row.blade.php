@@ -1,6 +1,17 @@
-<div class="px-5 py-3 flex items-center justify-between hover:bg-slate-50 transition">
+@php
+    $docId = optional($form['document'])->id;
+@endphp
 
-    {{-- LEFT --}}
+<div 
+    class="px-5 py-3 flex items-center justify-between hover:bg-slate-50 transition
+    {{ $docId && $docId == $focusDocId ? 'ring-2 ring-blue-500 rounded-xl bg-blue-50' : '' }}"
+    
+    @if($docId && $docId == $focusDocId)
+        data-doc-focus="true"
+    @endif
+>
+
+  
     <div class="min-w-0">
 
         <div class="text-sm font-medium text-slate-800">
@@ -9,12 +20,12 @@
 
         <div class="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2">
 
-            {{-- STATUS --}}
+      
             <span class="px-2 py-0.5 rounded-full text-[10px] {{ $form['status_class'] }}">
                 {{ $form['status_label'] }}
             </span>
 
-            {{-- WAITING --}}
+     
             @if($form['waiting_for'])
                 <span class="text-slate-400">
                     → {{ str_replace('_',' ', $form['waiting_for']) }}

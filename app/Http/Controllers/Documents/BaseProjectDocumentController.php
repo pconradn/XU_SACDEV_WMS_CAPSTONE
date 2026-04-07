@@ -251,26 +251,26 @@ abstract class BaseProjectDocumentController extends Controller
                 'project_head',
                 'president',
                 'moderator',
-                'sacdev_admin'
+                'coa_officer'
             ],
 
             'SELLING_ACTIVITY_REPORT' => [
                 'project_head',
                 'president',
                 'moderator',
-                'sacdev_admin'
+                'coa_officer'
             ],
 
             'SOLICITATION_SPONSORSHIP_REPORT' => [
                 'project_head',
                 'president',
                 'moderator',
-                'sacdev_admin'
+                'coa_officer'
             ],
             
             'TICKET_SELLING_REPORT' => [
                 'project_head',
-                'sacdev_admin',
+                'coa_officer',
             ],
 
             'DOCUMENTATION_REPORT' => [
@@ -285,7 +285,7 @@ abstract class BaseProjectDocumentController extends Controller
                 'treasurer',
                 'president',
                 'moderator',
-                'sacdev_admin'
+                'coa_officer'
             ],
 
             'POSTPONEMENT_NOTICE' => [
@@ -313,6 +313,10 @@ abstract class BaseProjectDocumentController extends Controller
 
     protected function resolveUserByRole(Project $project, string $role): int
     {
+
+        if ($role === 'coa_officer') {
+            return $project->resolveCoaUserId();
+        }
 
 
         if ($role === 'project_head') {

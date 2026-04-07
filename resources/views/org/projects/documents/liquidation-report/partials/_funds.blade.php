@@ -56,7 +56,7 @@
 
         <div class="rounded-xl border border-blue-100 bg-white/70 px-3 py-3">
             <div class="text-xs text-slate-500">Selling</div>
-            <div class="text-sm font-semibold text-slate-900">₱ {{ peso($sellingTotal) }}</div>
+            <div class="text-sm font-semibold text-slate-900">₱ {{ peso($sellingTotal) }}</div>Balance
         </div>
 
         <div class="rounded-xl border border-blue-200 bg-white px-3 py-3">

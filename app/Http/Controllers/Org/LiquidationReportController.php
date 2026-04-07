@@ -112,6 +112,19 @@ class LiquidationReportController extends BaseProjectDocumentController
 
         $action = request()->input('action');
 
+        if ($action === 'submit') {
+
+            $a = floatval($request->cluster_a_return);
+            $b = floatval($request->cluster_b_return);
+            $balance = floatval($request->balance);
+
+            if (abs(($a + $b) - $balance) > 0.01) {
+                return back()
+                    ->withErrors(['returns' => 'Cluster A + Cluster B must equal Balance.'])
+                    ->withInput();
+            }
+        }
+
         if ($document && $document->edit_mode) {
             $action = 'submit';
         }

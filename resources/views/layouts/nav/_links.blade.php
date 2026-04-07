@@ -92,7 +92,7 @@ if ($user && $isAdmin) {
     }
 
     if (Route::has('admin.orgs_by_sy.index') && $can('projects.view')) {
-        $orgTools[] = $item('Manage Organizations', route('admin.orgs_by_sy.index'), ['admin.orgs_by_sy.*']);
+        $orgTools[] = $item('Organizations', route('admin.orgs_by_sy.index'), ['admin.orgs_by_sy.*']);
     }
 
 
@@ -111,12 +111,16 @@ if ($user && $isAdmin) {
         $system[] = $item('Admin Users', route('admin.users.index'), ['admin.users.*']);
     }
 
+    if (Route::has('admin.coa.index') && $can('users.manage')) {
+        $system[] = $item('Manage COA Officers', route('admin.coa.index'), ['admin.coa.*']);
+    }
+
     if (Route::has('admin.roles.index') && $can('roles.manage')) {
         $system[] = $item('Manage Roles', route('admin.roles.index'), ['admin.roles.*']);
     }
 
     if (Route::has('admin.organizations.index') && $can('context.manage')) {
-        $system[] = $item('Organizations', route('admin.organizations.index'), ['admin.organizations.*']);
+        $system[] = $item('Organization Settings', route('admin.organizations.index'), ['admin.organizations.*']);
     }
 
     if (Route::has('admin.president_assignments.index') && $can('context.manage')) {

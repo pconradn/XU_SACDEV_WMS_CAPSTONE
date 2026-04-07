@@ -148,7 +148,7 @@
                         <form method="POST"
                               action="{{ route('admin.external-packets.submit', [$packet->project, $packet]) }}">
                             @csrf
-                            <button class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-md hover:bg-emerald-50">
+                            <button type="submit" class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-md hover:bg-emerald-50">
                                 <i data-lucide="check" class="w-3.5 h-3.5"></i>
                                 Submit
                             </button>

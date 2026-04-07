@@ -15,7 +15,7 @@ class AdminMemberController extends Controller
         $search = trim((string) $request->query('search', ''));
 
         $membersQuery = OrganizationMemberRecord::with('organization')
-
+            ->whereNull('archived_at')
             ->when($orgId, fn($q) => 
                 $q->where('organization_id', $orgId)
             )
@@ -24,7 +24,7 @@ class AdminMemberController extends Controller
                 $q->where('school_year_id', $syId)
             )
 
-            // 🔍 SEARCH
+           
             ->when($search !== '', function ($q) use ($search) {
                 $q->where(function ($sub) use ($search) {
                     $sub->where('first_name', 'like', "%{$search}%")

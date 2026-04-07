@@ -20,6 +20,14 @@ class AdminExternalPacketController extends Controller
             ->latest()
             ->get();
 
+
+
+        //dd([
+        //    'route_name' => request()->route()->getName(),
+        //    'middleware' => request()->route()->gatherMiddleware(),
+        //    'path' => request()->path(),
+        //]);
+
         return view('admin.projects.external-packets.index', [
             'project' => $project,
             'packets' => $packets,
@@ -41,7 +49,22 @@ class AdminExternalPacketController extends Controller
 
     public function store(Request $request, Project $project)
     {
-        $this->ensureProjectAllowedForExternalPacket($project);
+        //$this->ensureProjectAllowedForExternalPacket($project);
+        \Log::info('STORE HIT', [
+            'data' => $request->all(),
+            'method' => $request->method(),
+        ]);
+        if (
+            $request->input('intent') !== 'create_packet_form' ||
+            !$request->filled('destination')
+        ) {
+            \Log::warning('BLOCKED AUTO STORE', [
+                'data' => $request->all(),
+                'user_id' => auth()->id(),
+            ]);
+
+            return redirect()->route('admin.external-packets.create', $project);
+        }
 
         $request->validate([
             'destination' => 'required|string|max:255',
@@ -132,8 +155,8 @@ class AdminExternalPacketController extends Controller
         });
 
         return redirect()
-            ->route('admin.external-packets.print', [$project, $packet])
-            ->with('success', 'External packet created successfully.');
+            ->route('admin.external-packets.index', [$project, $packet])
+            ->with('success', 'External packet created successfully. Ready for printing.');
     }
 
     public function show(Project $project, ExternalPacket $packet)
@@ -339,14 +362,16 @@ class AdminExternalPacketController extends Controller
     protected function ensureProjectAllowedForExternalPacket(Project $project): void
     {
         if (!in_array($project->workflow_status, ['approved_by_sacdev', 'completed'])) {
-            abort(403);
+
+            abort(403, 'BLOCKED: Project not allowed for external packets. Status: ' . $project->workflow_status);
         }
     }
 
     protected function ensurePacketBelongsToProject(Project $project, ExternalPacket $packet): void
     {
         if ((int) $packet->project_id !== (int) $project->id) {
-            abort(404);
+
+            abort(403, 'BLOCKED: Packet does not belong to this project.');
         }
     }
 

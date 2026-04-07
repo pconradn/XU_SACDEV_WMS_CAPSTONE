@@ -73,6 +73,7 @@
         @endif
 
         @php
+
             $documentsByPhase = $documents->groupBy(function ($doc) {
                 return $doc->formType->phase ?? 'other';
             });
@@ -95,7 +96,7 @@
               x-data="{
                     search: '',
                     manualItems: @js($oldManualItems),
-                    selectedDocs: @js(collect(old('documents', []))->map(fn($id) => (string) $id)->values()),
+                    selectedDocs: [],
                     addManualItem() {
                         this.manualItems.push({ type: 'other', label: '', notes: '' });
                     },
@@ -109,6 +110,7 @@
               }"
               class="space-y-6">
             @csrf
+            <input type="hidden" name="intent" value="create_packet_form">
 
             <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
 
@@ -571,7 +573,13 @@
                                 Cancel
                             </a>
 
-                            <button type="submit"
+                            <button type="button"
+                                    @click="
+                                        if (!window.__packetClicked) {
+                                            window.__packetClicked = true;
+                                            $el.closest('form').submit();
+                                        }
+                                    "
                                     class="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-600 bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow">
                                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                                     <path d="M12 5v14"/>

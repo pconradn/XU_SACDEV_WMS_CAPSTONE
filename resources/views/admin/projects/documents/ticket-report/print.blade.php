@@ -634,7 +634,7 @@
                     </div>
 
                     {{-- APPROVAL STATUS --}}
-                    {!! approvalLine('sacdev_admin', $sigs) !!}
+                    {!! approvalLine('coa_officer', $sigs) !!}
 
                     {{-- NAME --}}
                     <div style="
@@ -643,12 +643,12 @@
                         text-transform:uppercase;
                         border-bottom:1px solid #000;
                     ">
-                        {{ sig('sacdev_admin', $sigs)?->user?->name ?? '—' }}
+                        {{ sig('coa_officer', $sigs)?->user?->name ?? '—' }}
                     </div>
 
                     {{-- TITLE --}}
                     <div style="font-size:11px; line-height:1.2;">
-                        Student Activities and Leadership Development Head
+                        COA Officer
                     </div>
 
 

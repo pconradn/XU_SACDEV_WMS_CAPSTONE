@@ -16,7 +16,7 @@
         </div>
 
         @php
-        $proposalData = optional($data->document?->project?->proposalDocument?->proposalData);
+        $proposalData = optional($project?->proposalDocument?->proposalData);
 
         $solicitationAmount = optional(
             $proposalData?->fundSources

@@ -236,8 +236,14 @@ document.addEventListener('submit', function () {
 </script>
 
 <script>
-    lucide.createIcons();
+document.addEventListener('DOMContentLoaded', function () {
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+});
 </script>
 
+
+@stack('scripts')
 </body>
 </html>

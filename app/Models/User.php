@@ -15,12 +15,27 @@ class User extends Authenticatable
         'system_role','role_id',
         'must_change_password',
         'password_changed_at',
+        'is_default_coa',
+        'is_coa_officer',
+
     ];
+
+
 
     protected $casts = [
         'must_change_password' => 'boolean',
         'password_changed_at' => 'datetime',
     ];
+
+    public function isCoaOfficer(): bool
+    {
+        return (bool) $this->is_coa_officer;
+    }
+
+    public function coaProjects()
+    {
+        return $this->hasMany(\App\Models\CoaAssignment::class, 'user_id');
+    }
 
     public function orgMemberships(): HasMany
     {

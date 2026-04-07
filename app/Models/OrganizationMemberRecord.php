@@ -40,6 +40,12 @@ class OrganizationMemberRecord extends Model
     {
         return $this->belongsTo(SchoolYear::class, 'school_year_id');
     }
+    protected static function booted()
+    {
+        static::addGlobalScope('not_archived', function ($q) {
+            $q->whereNull('archived_at');
+        });
+    }
 
     public function user()
     {

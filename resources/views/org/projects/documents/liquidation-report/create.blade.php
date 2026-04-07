@@ -1,6 +1,8 @@
 <x-app-layout>
 
-<div class="max-w-6xl mx-auto space-y-6">
+<div class="max-w-6xl mx-auto space-y-6 relative">
+
+
 
 @php
     $status = $document->status ?? 'draft';
@@ -35,6 +37,7 @@
 @include('components.document.status-bar', ['document' => $document])
 
 
+
 {{-- ================= FORM ================= --}}
 <form method="POST"
       action="{{ route('org.projects.documents.liquidation-report.store', $project) }}"
@@ -42,6 +45,10 @@
 
 @csrf
 <input type="hidden" name="action" id="formAction" value="draft">
+
+
+
+@include('org.projects.documents.liquidation-report.partials._header')
 
 @if($isReadOnly)
 <fieldset disabled class="space-y-6">
@@ -51,7 +58,7 @@
 <div class="grid gap-6">
 
 
-        @include('org.projects.documents.liquidation-report.partials._header')
+        
 
 
 
@@ -88,62 +95,93 @@
 
 
 {{-- ================= SIGNATURE TRAIL ================= --}}
-@if($document && $document->signatures && $document->signatures->count())
-
-<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-
-    <div class="bg-slate-50 border-b border-slate-200 px-5 py-3 text-xs font-semibold tracking-wide">
-        Approval Trail
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x">
-
-        @foreach($document->signatures->sortBy('id') as $sig)
-
-        @php $sigStatus = $sig->status; @endphp
-
-        <div class="px-5 py-4 flex justify-between items-center text-sm">
-
-            <div class="flex flex-col">
-                <div class="font-medium capitalize">
-                    {{ str_replace('_',' ', $sig->role) }}
-                </div>
-                <div class="text-slate-500 text-xs">
-                    {{ $sig->user?->name ?? 'Unknown User' }}
-                </div>
-            </div>
-
-            <div class="text-right">
-
-                @if($sigStatus === 'signed')
-                    <div class="text-emerald-600 font-semibold">
-                        Approved
-                    </div>
-                    <div class="text-xs text-slate-500">
-                        {{ $sig->signed_at?->format('M d, Y h:i A') }}
-                    </div>
-
-                @elseif($sigStatus === 'pending')
-                    <div class="text-amber-500 font-semibold">
-                        Pending
-                    </div>
-                @endif
-
-            </div>
-
-        </div>
-
-        @endforeach
-
-    </div>
-
+<div class="rounded-2xl border bg-white p-5 shadow-sm">
+    @include('org.projects.documents.project-proposal.partials._signatures')
 </div>
 
-@endif
 
 
 @include('org.projects.documents.liquidation-report.partials._script')
 
+
+
+
+{{-- RECEIPT MODAL --}}
+<div id="receiptModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-lg p-6 space-y-4">
+
+        <h3 class="text-sm font-semibold text-slate-900">
+            Add Receipt
+        </h3>
+
+        {{-- HEADER --}}
+        <div class="grid grid-cols-3 gap-3">
+
+            <select id="receiptType" class="border rounded-lg px-3 py-2 text-xs">
+                <option value="">Type</option>
+                <option>OR</option>
+                <option>SR</option>
+                <option>CI</option>
+                <option>SI</option>
+                <option>AR</option>
+                <option>PV</option>
+            </select>
+
+            <input type="text" id="receiptRef"
+                placeholder="Reference No."
+                class="border rounded-lg px-3 py-2 text-xs">
+
+            <input type="date" id="receiptDate"
+                class="border rounded-lg px-3 py-2 text-xs">
+
+        </div>
+
+        <input type="text" id="receiptDesc"
+            placeholder="Description"
+            class="w-full border rounded-lg px-3 py-2 text-xs">
+
+
+
+        {{-- ITEMS --}}
+        <div class="space-y-2">
+            <div class="text-xs font-medium text-slate-600">
+                Items
+            </div>
+
+            <div id="receiptItems" class="space-y-2"></div>
+
+            <button type="button"
+                id="addReceiptItem"
+                class="text-xs px-3 py-1 border rounded-lg">
+                + Add Item
+            </button>
+        </div>
+
+        {{-- ACTIONS --}}
+        <div class="flex justify-end gap-2 pt-2">
+
+            <button type="button"
+                id="closeReceiptModal"
+                class="text-xs px-3 py-2 border rounded-lg">
+                Cancel
+            </button>
+
+            <button type="button"
+                id="saveReceipt"
+                class="text-xs px-3 py-2 bg-blue-600 text-white rounded-lg">
+                Save
+            </button>
+
+        </div>
+
+    </div>
+
 </div>
+
+<div id="receiptTooltip"
+class="fixed hidden z-50 bg-white border border-slate-200 rounded-lg shadow-lg px-3 py-2 text-xs pointer-events-none">
+</div>
+
 
 </x-app-layout>

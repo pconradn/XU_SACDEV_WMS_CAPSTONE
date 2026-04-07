@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminExternalPacketController;
 use App\Http\Controllers\Admin\AdminMajorOfficerController;
 use App\Http\Controllers\Admin\AdminMemberController;
 use App\Http\Controllers\Admin\AdminOfficerController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Admin\AdminProjectClearanceController;
 use App\Http\Controllers\Admin\AdminProjectController;
 use App\Http\Controllers\Admin\AdminProjectDocumentController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\CoaAssignmentController;
 use App\Http\Controllers\Admin\OrgActivationController;
 use App\Http\Controllers\Admin\OrganizationController;
 use App\Http\Controllers\Admin\OrganizationPresidentController;
@@ -21,7 +23,6 @@ use App\Http\Controllers\Admin\SacdevB5ModeratorSubmissionController;
 use App\Http\Controllers\Admin\SacdevStrategicPlanController;
 use App\Http\Controllers\Admin\SchoolYearController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\AdminExternalPacketController;
 use App\Http\Controllers\OrgConstitutionSubmissionController;
 use App\Http\Controllers\SACDEV\SacdevB2PresidentRegistrationController;
 use App\Http\Controllers\SearchController;
@@ -48,56 +49,53 @@ Route::middleware(['auth', 'sacdev_admin', 'must_change_password'])
 
     });
 
-Route::middleware(['auth','sacdev_admin','must_change_password'])
+Route::prefix('admin')
+    ->middleware(['auth','sacdev_admin','must_change_password'])
     ->group(function () {
 
+        Route::prefix('projects/{project}/external-packets')
+            ->middleware(['permission:projects.view'])
+            ->group(function () {
 
-    Route::prefix('/admin/projects/{project}/external-packets')
-        ->middleware(['permission:projects.view'])
-        ->group(function () {
+                Route::get('/', [AdminExternalPacketController::class, 'index'])
+                    ->name('admin.external-packets.index');
 
-        Route::get('/', [AdminExternalPacketController::class, 'index'])
-            ->name('admin.external-packets.index');
+                Route::get('/create', [AdminExternalPacketController::class, 'create'])
+                    ->name('admin.external-packets.create');
 
-        Route::get('/create', [AdminExternalPacketController::class, 'create'])
-            ->name('admin.external-packets.create');
+                Route::post('/', [AdminExternalPacketController::class, 'store'])
+                    ->name('admin.external-packets.store');
 
-        Route::post('/', [AdminExternalPacketController::class, 'store'])
-            ->name('admin.external-packets.store');
+                Route::get('/{packet}', [AdminExternalPacketController::class, 'show'])
+                    ->name('admin.external-packets.show');
 
-        Route::get('/{packet}', [AdminExternalPacketController::class, 'show'])
-            ->name('admin.external-packets.show');
+                Route::get('/{packet}/print', [AdminExternalPacketController::class, 'print'])
+                    ->name('admin.external-packets.print');
 
-        Route::get('/{packet}/print', [AdminExternalPacketController::class, 'print'])
-            ->name('admin.external-packets.print');
+                Route::post('/{packet}/submit', [AdminExternalPacketController::class, 'submit'])
+                    ->name('admin.external-packets.submit');
 
-        Route::post('/{packet}/submit', [AdminExternalPacketController::class, 'submit'])
-            ->name('admin.external-packets.submit');
+                Route::delete('/{packet}', [AdminExternalPacketController::class, 'archive'])
+                    ->name('admin.external-packets.archive');
+            });
 
-        Route::delete('/{packet}', [AdminExternalPacketController::class, 'archive'])
-            ->name('admin.external-packets.archive');
+        Route::prefix('external-packets')
+            ->middleware(['permission:projects.view'])
+            ->group(function () {
+
+                Route::get('/receive', [AdminExternalPacketController::class, 'receivePage'])
+                    ->name('admin.external-packets.receive');
+
+                Route::post('/receive/lookup', [AdminExternalPacketController::class, 'lookup'])
+                    ->name('admin.external-packets.lookup');
+
+                Route::post('/{packet}/process', [AdminExternalPacketController::class, 'processReceive'])
+                    ->name('admin.external-packets.process');
+            });
+
     });
 
 
-
-    Route::prefix('/admin/external-packets')
-        ->middleware(['permission:projects.view'])
-        ->group(function () {
-
-        // QR + manual search page
-        Route::get('/receive', [AdminExternalPacketController::class, 'receivePage'])
-            ->name('admin.external-packets.receive');
-
-        // search form submit (optional helper)
-        Route::post('/receive/lookup', [AdminExternalPacketController::class, 'lookup'])
-            ->name('admin.external-packets.lookup');
-
-        // process packet (approve/return items)
-        Route::post('/{packet}/process', [AdminExternalPacketController::class, 'processReceive'])
-            ->name('admin.external-packets.process');
-    });
-
-});
 
 Route::get('/admin/organizations/{organization}/open', [OrganizationController::class, 'open'])
     ->middleware(['auth', 'sacdev_admin', 'must_change_password', 'permission:projects.view'])
@@ -159,6 +157,18 @@ Route::prefix('admin')
 
             Route::post('/admin/rereg/{organization}/activate', [OrgActivationController::class, 'activate'])
                 ->name('admin.rereg.activate');
+
+
+
+            Route::get('/coa', [CoaAssignmentController::class, 'index'])
+                ->middleware('permission:users.manage')
+                ->name('admin.coa.index');
+
+            Route::post('/coa/bulk-update', [CoaAssignmentController::class, 'bulkUpdate'])
+                ->middleware('permission:users.manage')
+                ->name('admin.coa.bulk-update');;
+
+    });
 
             
 
@@ -432,6 +442,13 @@ Route::prefix('admin')
                 '/projects/{project}/clearance/verify',
                 [AdminProjectClearanceController::class, 'verify']
             )->name('admin.projects.clearance.verify');
+
+            Route::post('/projects/{project}/retract-complete', [AdminProjectDocumentController::class, 'retractComplete'])
+                ->name('admin.projects.retract-complete');
+
+            Route::post('/projects/{project}/retract-clearance', [AdminProjectController::class, 'retractClearance'])
+                ->name('admin.projects.retract-clearance');
+
         });
 
         Route::middleware('permission:projects.return')->group(function () {
@@ -485,4 +502,3 @@ Route::prefix('admin')
                 ->name('admin.packets.revert_finance');
         });
 
-    });

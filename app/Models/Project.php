@@ -68,6 +68,41 @@ class Project extends Model
 
     ];
 
+    public function isAssignedCoa(Project $project)
+    {
+        return auth()->user()?->is_coa_officer
+            && $project->coaAssignment
+            && $project->coaAssignment->user_id === auth()->id();
+    }
+
+
+    public function coaAssignment()
+    {
+        return $this->hasOne(\App\Models\CoaAssignment::class);
+    }
+
+    public function getAssignedCoaUserId(): ?int
+    {
+        return $this->coaAssignment?->user_id;
+    }
+
+    public function resolveCoaUserId(): int
+    {
+        if ($this->coaAssignment && $this->coaAssignment->user_id) {
+            return $this->coaAssignment->user_id;
+        }
+
+        $default = \App\Models\User::where('is_coa_officer', true)
+            ->where('is_default_coa', true)
+            ->first();
+
+        if (!$default) {
+            abort(422, 'No COA assigned or default COA configured.');
+        }
+
+        return $default->id;
+    }
+
     public function externalPackets()
     {
         return $this->hasMany(\App\Models\ExternalPacket::class);

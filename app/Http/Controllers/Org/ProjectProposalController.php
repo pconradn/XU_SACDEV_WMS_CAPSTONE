@@ -180,7 +180,7 @@ class ProjectProposalController extends BaseProjectDocumentController
                 'nullable',
                 'string',
                 'max:100',
-                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+                
             ],
 
             'sdg' => ['nullable', 'array'],
@@ -188,7 +188,7 @@ class ProjectProposalController extends BaseProjectDocumentController
                 'nullable',
                 'string',
                 'max:255',
-                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+               
             ],
 
             'area_focus' => ['nullable', 'array'],
@@ -250,28 +250,28 @@ class ProjectProposalController extends BaseProjectDocumentController
             'success_indicators.*' => [
                 'nullable',
                 'string',
-                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+               
             ],
 
             'partners' => ['nullable', 'array'],
             'partners.*' => [
                 'nullable',
                 'string',
-                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+                
             ],
 
             'roles' => ['nullable', 'array'],
             'roles.*' => [
                 'nullable',
                 'string',
-                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+               
             ],
 
             'guests' => ['nullable', 'array'],
             'guests.*.full_name' => [
                 'nullable',
                 'string',
-                'regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'
+               
             ],
             'guests.*.affiliation' => [
                 'nullable',
@@ -290,7 +290,7 @@ class ProjectProposalController extends BaseProjectDocumentController
             'plan_of_actions.*.activity' => [
                 'nullable',
                 'string',
-                'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'
+               
             ],
             'plan_of_actions.*.venue' => [
                 'nullable',
@@ -481,10 +481,10 @@ class ProjectProposalController extends BaseProjectDocumentController
             'main_organizer' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
             'project_nature' => ['required', 'array'],
-            'project_nature.*' => ['string', 'max:100','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'project_nature.*' => ['string', 'max:100',],
 
             'sdg' => ['required', 'array'],
-            'sdg.*' => ['string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'sdg.*' => ['string', 'max:255',],
 
             'area_focus' => ['nullable', 'array'],
             'area_focus.*' => ['string', 'max:100'],
@@ -495,7 +495,7 @@ class ProjectProposalController extends BaseProjectDocumentController
 
             'total_budget' => ['nullable', 'numeric', 'min:0'],
             'fund_sources' => ['nullable', 'array'],
-            'fund_sources.*' => ['nullable', 'numeric', 'min:0','regex:/^\d+(\.\d{1,2})?$/'],
+            'fund_sources.*' => ['nullable', 'numeric', 'min:0'],
 
             'audience_type' => ['required', 'string'],
             'xu_subtypes' => ['nullable', 'array'],
