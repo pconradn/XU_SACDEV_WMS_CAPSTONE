@@ -35,39 +35,7 @@
 
 
 {{-- ================= STATUS ================= --}}
-<div class="border {{ $style }} px-4 py-3 text-sm">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-
-        <div class="font-semibold tracking-wide">
-            SOLICITATION APPLICATION STATUS:
-            <span class="ml-1 uppercase">{{ $status }}</span>
-        </div>
-
-        @if($status === 'submitted' && $currentApprover)
-        <div class="text-[12px] font-medium">
-            Awaiting:
-            <span class="capitalize font-semibold">
-                {{ str_replace('_',' ', $currentApprover->role) }}
-            </span>
-        </div>
-        @endif
-
-    </div>
-</div>
-
-
-{{-- ================= REMARKS ================= --}}
-@if(isset($document) && $document->remarks && $isProjectHead)
-<div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-    <div class="text-sm font-semibold text-amber-800 mb-1">
-        Returned for Revision
-    </div>
-
-    <div class="text-sm text-amber-700">
-        {{ $document->remarks }}
-    </div>
-</div>
-@endif
+@include('components.document.status-bar', ['document' => $document])
 
 
 {{-- ================= HEADER ================= --}}
@@ -89,15 +57,13 @@
 
 <div class="grid gap-6">
 
-    {{-- ACTIVITY INFO --}}
-    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        @include('org.projects.documents.solicitation.partials._activity-info')
-    </div>
 
-    {{-- BENEFACTORS --}}
-    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        @include('org.projects.documents.solicitation.partials._activity-info')
+    
+
+
         @include('org.projects.documents.solicitation.partials._benefactors')
-    </div>
+  
 
 </div>
 

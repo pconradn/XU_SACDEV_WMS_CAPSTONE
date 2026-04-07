@@ -61,9 +61,25 @@ class BudgetProposalController extends BaseProjectDocumentController
         ]);
     }
 
+    private function cleanNumber($value)
+    {
+        return $value !== null
+            ? (float) str_replace(',', '', $value)
+            : null;
+    }
+
     public function store(Request $request, Project $project)
     {
         $document = $this->getOrCreateDocument($project, 'budget_proposal');
+
+        $request->merge([
+            'counterpart_amount_per_pax' => $this->cleanNumber($request->counterpart_amount_per_pax),
+            'counterpart_pax' => $this->cleanNumber($request->counterpart_pax),
+            'pta_amount' => $this->cleanNumber($request->pta_amount),
+            'raised_funds' => $this->cleanNumber($request->raised_funds),
+            'counterpart_total' => $this->cleanNumber($request->counterpart_total),
+            'amount_charged_to_org' => $this->cleanNumber($request->amount_charged_to_org),
+        ]);
 
         $action = $request->input('action', 'draft');
         //dd($request);
@@ -92,7 +108,7 @@ class BudgetProposalController extends BaseProjectDocumentController
             $this->storeBudgetItems($request, $budget);
 
             $this->recalculateBudgetTotals($budget);
-
+             //dd($budget->fresh());
     
 
             if (!$document->edit_mode) {
@@ -109,6 +125,8 @@ class BudgetProposalController extends BaseProjectDocumentController
             return $this->submit($project);
         }
 
+       
+
         return redirect()
             ->route('org.projects.documents.hub', $project)
             ->with('success', 'Budget proposal saved as draft.');
@@ -123,7 +141,7 @@ class BudgetProposalController extends BaseProjectDocumentController
             ->firstOrFail();
 
         if ($document->status !== 'draft' && !$document->edit_mode) {
-            return back()->with('error', 'This budget proposal cannot be submitted.');
+            return back()->with('');
         }
 
         $activeSy = SchoolYear::activeYear();
@@ -236,8 +254,8 @@ class BudgetProposalController extends BaseProjectDocumentController
                     continue;
                 }
 
-                $qty   = (float) ($qtys[$i] ?? 0);
-                $price = (float) ($prices[$i] ?? 0);
+                $qty   = $this->cleanNumber($qtys[$i] ?? 0);
+                $price = $this->cleanNumber($prices[$i] ?? 0);
 
             
                 $amount = $qty * $price;
@@ -311,7 +329,7 @@ class BudgetProposalController extends BaseProjectDocumentController
         $document = $this->getDocument($project,'budget_proposal');
 
         if ($document->status !== 'submitted') {
-            return back()->with('error','This budget proposal cannot be returned.');
+            return back()->with();
         }
 
         $this->handleReturn(

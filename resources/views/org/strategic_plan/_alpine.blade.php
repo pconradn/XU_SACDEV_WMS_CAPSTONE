@@ -272,8 +272,7 @@
                 return (
                     hasText(p.target_date) &&
                     hasText(p.title) &&
-                    // budget can be empty if you want optional, but you said "complete"
-                    // so we treat empty as incomplete
+      
                     hasText(p.budget) &&
                     num(p.budget) >= 0 &&
                     hasList(p.objectives) &&
@@ -304,7 +303,6 @@
                 this.closeDetails();
             },
 
-            // ===== text list helpers (work for draft + real project)
             addTextItem(project, key) {
                 if (!project) return;
                 if (!Array.isArray(project[key])) project[key] = [];

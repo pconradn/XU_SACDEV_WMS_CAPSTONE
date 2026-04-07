@@ -48,6 +48,12 @@
         @media print {
             .print-btn { display: none; }
         }
+        @media print {
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+}
     </style>
 </head>
 

@@ -53,5 +53,29 @@ class ProjectAssignment extends Model
         return !is_null($this->agreement_accepted_at);
     }
 
+    public function memberRecord()
+    {
+        return $this->hasOneThrough(
+            \App\Models\OrganizationMemberRecord::class,
+            \App\Models\OrgMembership::class,
+            'user_id',
+            'id',
+            'user_id',
+            'source_id'
+        )->where('org_memberships.source_type', 'member');
+    }
+
+    public function getDisplayNameAttribute()
+    {
+        if ($this->memberRecord) {
+            return $this->memberRecord->getFullNameAttribute();
+        }
+
+        if ($this->officerEntry) {
+            return $this->officerEntry->full_name;
+        }
+
+        return $this->user?->name;
+    }
 
 }

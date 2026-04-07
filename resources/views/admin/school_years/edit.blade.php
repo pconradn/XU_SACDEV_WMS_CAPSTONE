@@ -12,11 +12,6 @@
                     @csrf
                     @method('PUT')
 
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium">Name</label>
-                        <input name="name" value="{{ old('name', $schoolYear->name) }}" class="mt-1 w-full border rounded p-2" required>
-                        @error('name') <div class="text-red-600 text-sm">{{ $message }}</div> @enderror
-                    </div>
 
                     <div class="mb-4">
                         <label class="block text-sm font-medium">Start Date</label>

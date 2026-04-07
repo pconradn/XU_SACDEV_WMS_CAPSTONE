@@ -87,42 +87,78 @@
 
         const tr = document.createElement('tr');
 
-        tr.className = 'officer-row hover:bg-slate-50';
-
+        tr.className = 'officer-row cursor-pointer hover:bg-slate-50';
         tr.dataset.index = idx;
 
         tr.innerHTML = `
 
-            <td class="py-3 px-2 officer-position">${data.position}</td>
+            <td class="py-3 px-2 font-medium text-slate-800 officer-position">
+                ${data.position ?? ''}
+            </td>
 
-            <td class="py-3 px-2 officer-name">${data.name}</td>
+            <td class="py-3 px-2 text-slate-700 officer-name">
+                ${data.name ?? ''}
+            </td>
 
-            <td class="py-3 px-2 officer-student-id">${data.studentId}</td>
+            <td class="py-3 px-2 text-slate-700 officer-student-id">
+                ${data.studentId ?? ''}
+            </td>
 
             <td class="py-3 px-2 text-right space-x-2">
 
-            <button type="button"
-            class="editOfficerBtn text-blue-600 text-xs font-semibold">
-            Edit
-            </button>
+                <button type="button"
+                    class="editOfficerBtn inline-flex rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100">
+                    Edit
+                </button>
 
-            <button type="button"
-            class="removeOfficerBtn text-red-600 text-xs font-semibold">
-            Remove
-            </button>
+                <button type="button"
+                    class="removeOfficerBtn inline-flex rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100">
+                    Remove
+                </button>
 
             </td>
 
-            <input type="hidden" name="items[${idx}][position]" value="${data.position}">
-            <input type="hidden" name="items[${idx}][officer_name]" value="${data.name}">
-            <input type="hidden" name="items[${idx}][student_id_number]" value="${data.studentId}">
-            <input type="hidden" name="items[${idx}][course_and_year]" value="${data.course}">
-            <input type="hidden" name="items[${idx}][first_sem_qpi]" value="${data.firstQpi}">
-            <input type="hidden" name="items[${idx}][second_sem_qpi]" value="${data.secondQpi}">
-            <input type="hidden" name="items[${idx}][intersession_qpi]" value="${data.interQpi}">
-            <input type="hidden" name="items[${idx}][mobile_number]" value="${data.mobile}">
+            <input type="hidden"
+                name="items[${idx}][position]"
+                value="${data.position ?? ''}"
+                class="input-position">
 
-            `;
+            <input type="hidden"
+                name="items[${idx}][officer_name]"
+                value="${data.name ?? ''}"
+                class="input-name">
+
+            <input type="hidden"
+                name="items[${idx}][student_id_number]"
+                value="${data.studentId ?? ''}"
+                class="input-student-id">
+
+            <input type="hidden"
+                name="items[${idx}][course_and_year]"
+                value="${data.course ?? ''}"
+                class="input-course">
+
+            <input type="hidden"
+                name="items[${idx}][first_sem_qpi]"
+                value="${data.firstQpi ?? ''}"
+                class="input-first-qpi">
+
+            <input type="hidden"
+                name="items[${idx}][second_sem_qpi]"
+                value="${data.secondQpi ?? ''}"
+                class="input-second-qpi">
+
+            <input type="hidden"
+                name="items[${idx}][intersession_qpi]"
+                value="${data.interQpi ?? ''}"
+                class="input-intersession-qpi">
+
+            <input type="hidden"
+                name="items[${idx}][mobile_number]"
+                value="${data.mobile ?? ''}"
+                class="input-mobile">
+
+        `;
 
         tbody.appendChild(tr);
 

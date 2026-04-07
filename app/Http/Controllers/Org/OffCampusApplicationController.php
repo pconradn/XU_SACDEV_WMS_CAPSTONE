@@ -73,19 +73,29 @@ class OffCampusApplicationController extends BaseProjectDocumentController
     public function store(Request $request, Project $project)
     {
 
-        $request->validate([
-
-            'activity_name' => ['required','string','max:255'],
-            'inclusive_dates' => ['nullable','string','max:255'],
-            'venue_destination' => ['required','string','max:255'],
+        $validator = \Validator::make($request->all(), [
+            'activity_name' => ['required','string','max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'inclusive_dates' => ['required','string','max:255'],
+            'venue_destination' => ['required','string','max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
             'remarks' => ['nullable','string'],
-            'participants.*.student_name' => ['nullable','string','max:255'],
-            'participants.*.course_year' => ['nullable','string','max:255'],
+            'participants.*.student_name' => ['nullable','string','max:255',],
+            'participants.*.course_year' => ['nullable','string','max:255',],
             'participants.*.student_mobile' => ['nullable','string','max:30'],
-            'participants.*.parent_name' => ['nullable','string','max:255'],
-            'participants.*.parent_mobile' => ['nullable','string','max:30'],
-
+            'participants.*.parent_name' => ['nullable','string','max:255',],
+            'participants.*.parent_mobile' => ['nullable','string','max:30',],
         ]);
+
+        if ($validator->fails()) {
+
+            $this->getOrCreateDocument($project, 'OFF_CAMPUS_APPLICATION');
+
+            return back()
+                ->with('warning', 'Form has errors. Saved as draft instead.')
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        
 
 
         $document = $this->getOrCreateDocument($project, 'OFF_CAMPUS_APPLICATION');
@@ -125,12 +135,10 @@ class OffCampusApplicationController extends BaseProjectDocumentController
             return $this->submit($project);
         }
 
-        return redirect()
-            ->route('org.projects.documents.hub', $project)
-            ->with('success', 'Off-campus form saved as draft.');
+        return back()->with('success', 'Off-campus form submitted successfully.');
     }
 
-        public function submit(Project $project)
+    public function submit(Project $project)
     {
         $formType = FormType::where('code', 'OFF_CAMPUS_APPLICATION')->firstOrFail();
 
@@ -141,6 +149,8 @@ class OffCampusApplicationController extends BaseProjectDocumentController
         if ($document->status !== 'draft' && !$document->edit_mode) {
             return back()->with('error', 'This form cannot be submitted.');
         }
+
+        
 
         $this->handleRequestSubmit($project, $document);
 

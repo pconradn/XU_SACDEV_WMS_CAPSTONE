@@ -41,7 +41,7 @@ class SubmissionPacketController extends Controller
         ]);
 
         return redirect()
-            ->route('org.projects.packet.show', [$project,$packet])
+            ->route('org.projects.packets.show', [$project,$packet])
             ->with('success','Submission packet created.');
     }
 
@@ -78,6 +78,51 @@ class SubmissionPacketController extends Controller
             'has_receipts' => $request->boolean('has_receipts'),
             'other_items' => $request->other_items
         ]);
+
+
+        if ($request->has('add_letter')) {
+
+            $request->validate([
+                'control_number' => 'required|string|max:255',
+                'organization_name' => 'nullable|string|max:255'
+            ]);
+
+            SubmissionPacketLetter::create([
+                'packet_id' => $packet->id,
+                'control_number' => $request->control_number,
+                'organization_name' => $request->organization_name
+            ]);
+        }
+
+
+        if ($request->has('add_dv')) {
+
+            $request->validate([
+                'dv_reference' => 'nullable|string|max:255',
+                'dv_label' => 'nullable|string|max:255',
+                'amount' => 'nullable|numeric'
+            ]);
+
+            SubmissionPacketDv::create([
+                'packet_id' => $packet->id,
+                'dv_reference' => $request->dv_reference,
+                'dv_label' => $request->dv_label,
+                'amount' => $request->amount
+            ]);
+        }
+
+
+        if ($request->has('add_receipt')) {
+
+            $request->validate([
+                'or_number' => 'required|string|max:255'
+            ]);
+
+            SubmissionPacketReceipt::create([
+                'packet_id' => $packet->id,
+                'or_number' => $request->or_number
+            ]);
+        }
 
         return back()->with('success','Packet updated.');
     }

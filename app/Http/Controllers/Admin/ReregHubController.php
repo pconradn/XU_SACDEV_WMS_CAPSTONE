@@ -121,6 +121,25 @@ class ReregHubController extends Controller
 
         ];
 
+        foreach ($forms as $key => &$form) {
+
+            $model = match ($key) {
+                'b1' => $b1,
+                'b2' => $b2,
+                'b3' => $b3,
+                'b5' => $b5,
+                'b6' => $b6,
+                default => null,
+            };
+
+            if ($model && isset($model->edit_requested)) {
+                $form['edit_requested'] = (bool) $model->edit_requested;
+                $form['edit_request_reason'] = $model->edit_request_reason ?? null;
+            } else {
+                $form['edit_requested'] = false;
+            }
+        }
+
         $allApproved = collect($forms)->every(function ($form) {
 
             return isset($form['status'])
@@ -408,7 +427,10 @@ class ReregHubController extends Controller
 
                 $orgBadges[(int) $orgId] = $pendingCount;
 
-                $allApproved = collect($statuses)->every(fn ($s) => $s === 'approved_by_sacdev');
+                $nonNullStatuses = collect($statuses)->filter();
+
+                $allApproved = $nonNullStatuses->isNotEmpty() &&
+                            $nonNullStatuses->every(fn ($s) => $s === 'approved_by_sacdev');
                 if ($allApproved) {
                     $readyOrgIds[] = (int) $orgId;
                 }
@@ -425,6 +447,30 @@ class ReregHubController extends Controller
                 ->all();
         }
 
+        // ================= NEW UNIFIED ORG DATA =================
+        $orgData = [];
+
+        foreach ($organizations as $org) {
+
+            $pending = (int)($orgBadges[$org->id] ?? 0);
+            $isReady = in_array((int)$org->id, $readyOrgIds ?? [], true);
+            $isRegistered = in_array((int)$org->id, $activatedOrgIds ?? [], true);
+
+            $orgData[$org->id] = [
+                'pending' => $pending,
+                'is_ready' => $isReady,
+                'is_registered' => $isRegistered,
+            ];
+        }
+
+        // ================= SUMMARY =================
+        $summary = [
+            'total' => $organizations->count(),
+            'pending' => collect($orgData)->filter(fn($o) => $o['pending'] > 0)->count(),
+            'ready' => collect($orgData)->filter(fn($o) => $o['is_ready'])->count(),
+            'registered' => collect($orgData)->filter(fn($o) => $o['is_registered'])->count(),
+        ];
+
         return view('admin.rereg.index', compact(
             'encodeSyId',
             'activeSy',
@@ -436,6 +482,8 @@ class ReregHubController extends Controller
             'orgBadges',
             'readyOrgIds',
             'activatedOrgIds',
+            'orgData',
+            'summary',
         ));
     }
 

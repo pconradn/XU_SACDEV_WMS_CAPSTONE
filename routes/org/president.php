@@ -7,11 +7,20 @@ use App\Http\Controllers\Org\OrgRoleAssignmentController;
 use App\Http\Controllers\Org\ProjectHeadAssignmentController;
 use App\Http\Controllers\Org\ActivationStatusController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Org\OrganizationMemberRecordController;
 
 
 Route::resource('officers', OfficerEntryController::class)
-    ->except(['show'])
+    ->only(['index'])
     ->names('org.officers');
+
+Route::put(
+    'officers/{officer}/qpi',
+    [OfficerEntryController::class, 'updateQpi']
+    )->name('org.officers.update-qpi');
+
+
+
 Route::post(
     'officers/{officer}/resend-invite',
     [OfficerInviteController::class, 'resend']
@@ -36,6 +45,18 @@ Route::post(
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 Route::get(
     'assign-project-heads',
     [ProjectHeadAssignmentController::class, 'index']
@@ -52,6 +73,41 @@ Route::post(
     [ProjectHeadAssignmentController::class, 'update']
 )->middleware('project.access')
  ->name('org.assign-project-heads.update');
+
+
+Route::post(
+    'departments',
+    [OrganizationMemberRecordController::class, 'storeDepartment']
+)->name('org.departments.store');
+
+Route::put(
+    'departments/{department}',
+    [OrganizationMemberRecordController::class, 'updateDepartment']
+)->name('org.departments.update');
+
+Route::delete(
+    'departments/{department}',
+    [OrganizationMemberRecordController::class, 'destroyDepartment']
+)->name('org.departments.destroy');
+
+Route::put(
+    'members/{member}/assign-department',
+    [OrganizationMemberRecordController::class, 'assignDepartment']
+)->name('org.members.assign-department');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 Route::get(

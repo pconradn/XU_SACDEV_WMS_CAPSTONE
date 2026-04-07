@@ -82,4 +82,17 @@ class ProjectProposalData extends Model
     {
         return $this->hasMany(ProjectProposalFundSource::class);
     }
+
+    public function budgetDocument()
+    {
+        return $this->hasOne(ProjectDocument::class, 'project_id', 'project_id')
+            ->whereHas('formType', function ($q) {
+                $q->where('code', 'BUDGET_PROPOSAL');
+            });
+    }
+
+    public function getProjectIdAttribute()
+    {
+        return $this->document?->project_id;
+    }
 }

@@ -55,29 +55,7 @@ $budgetDoc   = $budgetData['document'] ?? null;
         ->first();
 @endphp
 
-{{-- STATUS --}}
-<div class="border {{ $style }} px-4 py-3 text-sm">
-    <div class="flex justify-between">
-        <div>
-            PROJECT PROPOSAL + BUDGET STATUS:
-            <span class="ml-1 uppercase">{{ $status }}</span>
-        </div>
-
-        @if($status === 'submitted' && $currentApprover)
-            <div class="text-xs">
-                Awaiting:
-                {{ str_replace('_', ' ', $currentApprover->role) }}
-            </div>
-        @endif
-    </div>
-</div>
-
-{{-- REMARKS --}}
-@if(isset($document) && $document->remarks && $isProjectHead)
-<div class="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-    {{ $document->remarks }}
-</div>
-@endif
+@include('components.document.status-bar', ['document' => $document])
 
 {{-- HEADER --}}
 @include('org.projects.documents.project-proposal.partials._header', [
@@ -109,31 +87,32 @@ $budgetDoc   = $budgetData['document'] ?? null;
 
     @include('org.projects.documents.combined.partials._combined_funding')
 
+    <div class="mt-10 border-t pt-6 space-y-6">
 
+        <div id="budgetSectionsWrapper">
+
+
+        
+            @include('org.projects.documents.budget-proposal.partials._budget_sections')
+        </div>
+
+
+
+    </div>
 
     @include('org.projects.documents.project-proposal.partials._guests_plan_of_action')
 </div>
 
-{{-- ================= BUDGET SECTION ================= --}}
-<div class="mt-10 border-t pt-6 space-y-6">
 
-    <div class="text-lg font-semibold">
-        Budget Proposal Section
-    </div>
-
-    <div id="budgetSectionsWrapper">
-        @include('org.projects.documents.budget-proposal.partials._budget_sections')
-    </div>
-
-
-
-</div>
 
 @if($isReadOnly)
 </fieldset>
 @endif
 
 </form>
+
+
+@include('org.projects.documents.project-proposal.partials._student_agreement')
 
 {{-- SIGNATURES (proposal only drives) --}}
 @include('org.projects.documents.project-proposal.partials._signatures')

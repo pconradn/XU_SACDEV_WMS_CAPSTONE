@@ -1,33 +1,28 @@
-<div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm mb-4">
+@if(!empty($registration->skills_and_interests))
 
-    <div class="flex items-start justify-between gap-3">
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm overflow-hidden">
+
+    {{-- HEADER --}}
+    <div class="px-5 py-3 border-b border-slate-200 flex items-start justify-between gap-4">
 
         <div>
-
-            <h3 class="text-base font-semibold text-slate-900">
+            <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
                 Skills and Interests
             </h3>
 
-            <p class="mt-1 text-sm text-slate-600">
+            <p class="mt-1 text-xs text-slate-500 max-w-md">
                 Declared skills, hobbies, and personal interests.
             </p>
-
         </div>
 
+        <div class="flex items-center gap-2 text-[11px] font-medium">
 
-        {{-- Status indicator --}}
-        <div class="flex items-center gap-2 text-sm font-medium text-slate-800">
-
-            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100">
-
-                <span class="h-2.5 w-2.5 rounded-full
-                    {{ !empty($registration->skills_and_interests) ? 'bg-emerald-500' : 'bg-slate-400' }}">
-                </span>
-
+            <span class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100">
+                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
             </span>
 
-            <span>
-                {{ !empty($registration->skills_and_interests) ? 'Provided' : 'No entry' }}
+            <span class="text-emerald-700">
+                Provided
             </span>
 
         </div>
@@ -35,28 +30,15 @@
     </div>
 
 
+    {{-- CONTENT --}}
+    <div class="p-5">
 
-    {{-- Content --}}
-    <div class="mt-4">
-
-        @if(!empty($registration->skills_and_interests))
-
-            <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 whitespace-pre-line">
-
-                {{ $registration->skills_and_interests }}
-
-            </div>
-
-        @else
-
-            <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-
-                No skills or interests were submitted.
-
-            </div>
-
-        @endif
+        <div class="text-xs text-slate-800 whitespace-pre-line leading-relaxed">
+            {{ $registration->skills_and_interests }}
+        </div>
 
     </div>
 
 </div>
+
+@endif

@@ -49,7 +49,44 @@ class LiquidationReportController extends BaseProjectDocumentController
             ->where('code', 'LIQUIDATION_REPORT')
             ->firstOrFail();
 
-        $data = $this->validateRequest($request);
+        $request->merge([
+            'finance_amount' => $request->finance_amount ? str_replace(',', '', $request->finance_amount) : null,
+            'fund_raising_amount' => $request->fund_raising_amount ? str_replace(',', '', $request->fund_raising_amount) : null,
+            'sacdev_amount' => $request->sacdev_amount ? str_replace(',', '', $request->sacdev_amount) : null,
+            'pta_amount' => $request->pta_amount ? str_replace(',', '', $request->pta_amount) : null,
+
+            'total_expenses' => $request->total_expenses ? str_replace(',', '', $request->total_expenses) : null,
+            'total_advanced' => $request->total_advanced ? str_replace(',', '', $request->total_advanced) : null,
+            'balance' => $request->balance ? str_replace(',', '', $request->balance) : null,
+            'cluster_a_return' => $request->cluster_a_return ? str_replace(',', '', $request->cluster_a_return) : null,
+            'cluster_b_return' => $request->cluster_b_return ? str_replace(',', '', $request->cluster_b_return) : null,
+        ]);
+
+        if ($request->has('items')) {
+            $items = $request->items;
+
+            foreach ($items as $i => $row) {
+                if (isset($row['amount'])) {
+                    $items[$i]['amount'] = str_replace(',', '', $row['amount']);
+                }
+            }
+
+            $request->merge(['items' => $items]);
+        }
+
+        $validator = \Validator::make($request->all(), $this->rules());
+
+        if ($validator->fails()) {
+
+            $this->getOrCreateDocument($project, 'LIQUIDATION_REPORT');
+
+            return back()
+                ->with('warning', 'Form has errors. Saved as draft instead.')
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $data = $validator->validated();
 
         [$data, $clean] = $this->normalizeData($data);
 
@@ -83,9 +120,7 @@ class LiquidationReportController extends BaseProjectDocumentController
             return $this->submit($project);
         }
 
-        return redirect()
-            ->route('org.projects.documents.hub', $project)
-            ->with('success', 'Liquidation report saved as draft.');
+        return back()->with('success','Liquidation report saved as draft.');
     }
 
     public function submit(Project $project)
@@ -98,6 +133,27 @@ class LiquidationReportController extends BaseProjectDocumentController
 
         if ($document->status !== 'draft' && !$document->edit_mode) {
             return back()->with('error', 'This form cannot be submitted.');
+        }
+
+        $activeSy = \App\Models\SchoolYear::activeYear();
+
+        if (!$activeSy) {
+            return back()->with('error', 'No active school year is currently set.');
+        }
+
+        $isRegistered = \App\Models\OrganizationSchoolYear::where('organization_id', $project->organization_id)
+            ->where('school_year_id', $activeSy->id)
+            ->exists();
+
+        if (!$isRegistered) {
+
+            $document->update([
+                'status' => 'draft'
+            ]);
+
+            return back()->with('warning', 
+                'Organization is not registered for this school year. Saved as draft instead.'
+            );
         }
 
         $this->handleRequestSubmit($project, $document);
@@ -123,9 +179,9 @@ class LiquidationReportController extends BaseProjectDocumentController
         return back()->with('success','Liquidation report submitted successfully.');
     }
 
-    private function validateRequest(Request $request): array
+    private function rules(): array
     {
-        return $request->validate([
+        return [
 
             'contact_number' => ['nullable','string'],
 
@@ -143,8 +199,6 @@ class LiquidationReportController extends BaseProjectDocumentController
             'cluster_a_return' => ['nullable','numeric'],
             'cluster_b_return' => ['nullable','numeric'],
 
-
-
             'items' => ['nullable','array'],
 
             'items.*.section_label' => ['nullable','string'],
@@ -155,8 +209,7 @@ class LiquidationReportController extends BaseProjectDocumentController
             'items.*.source_document_type' => ['nullable','in:OR,SR,CI,SI,AR,PV'],
             'items.*.source_document_description' => ['nullable','string'],
             'items.*.or_number' => ['nullable','string'],
-
-        ]);
+        ];
     }
 
     private function saveDocument(Project $project, $formType)

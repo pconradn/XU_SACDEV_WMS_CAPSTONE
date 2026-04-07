@@ -11,12 +11,16 @@ use App\Models\Project;
 use App\Models\ProjectDocument;
 use App\Models\SchoolYear;
 use App\Models\StrategicPlanSubmission;
+use App\Services\ProjectFormRequirementResolver;
 use Illuminate\Support\Facades\DB;
 
 class AdminDashboardController extends Controller
 {
     public function index()
     {
+        $user = auth()->user();
+        $user->load('clusters');
+        
         $activeSy = SchoolYear::activeYear();
         $activeSyId = $activeSy?->id;
 
@@ -33,18 +37,24 @@ class AdminDashboardController extends Controller
         $actionable = ['submitted_to_sacdev', 'forwarded_to_sacdev'];
         $approved = 'approved_by_sacdev';
 
+        
+
         $pendingCases = collect()
             ->merge(
                 StrategicPlanSubmission::query()
+                    ->with('organization')
                     ->whereIn('target_school_year_id', $targetSyIds)
                     ->whereIn('status', $actionable)
+                    ->whereHas('organization', function ($q) use ($user) {
+                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    })
                     ->get()
                     ->map(function ($r) {
                         return (object) [
                             'type' => 'Strategic Plan',
                             'organization_id' => $r->organization_id,
                             'school_year_id' => $r->target_school_year_id,
-                            'organization' => Organization::find($r->organization_id),
+                            'organization' => $r->organization,
                             'school_year' => SchoolYear::find($r->target_school_year_id),
                             'status' => $r->status,
                             'created_at' => $r->created_at,
@@ -53,16 +63,24 @@ class AdminDashboardController extends Controller
                     })
             )
             ->merge(
+
+
+
+            
                 PresidentRegistration::query()
+                    ->with('organization')
                     ->whereIn('target_school_year_id', $targetSyIds)
                     ->whereIn('status', $actionable)
+                    ->whereHas('organization', function ($q) use ($user) {
+                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    })
                     ->get()
                     ->map(function ($r) {
                         return (object) [
                             'type' => 'President Registration',
                             'organization_id' => $r->organization_id,
                             'school_year_id' => $r->target_school_year_id,
-                            'organization' => Organization::find($r->organization_id),
+                            'organization' => $r->organization,
                             'school_year' => SchoolYear::find($r->target_school_year_id),
                             'status' => $r->status,
                             'created_at' => $r->created_at,
@@ -72,15 +90,19 @@ class AdminDashboardController extends Controller
             )
             ->merge(
                 OfficerSubmission::query()
+                    ->with('organization')
                     ->whereIn('target_school_year_id', $targetSyIds)
                     ->whereIn('status', $actionable)
+                    ->whereHas('organization', function ($q) use ($user) {
+                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    })
                     ->get()
                     ->map(function ($r) {
                         return (object) [
                             'type' => 'Officer Submission',
                             'organization_id' => $r->organization_id,
                             'school_year_id' => $r->target_school_year_id,
-                            'organization' => Organization::find($r->organization_id),
+                            'organization' => $r->organization,
                             'school_year' => SchoolYear::find($r->target_school_year_id),
                             'status' => $r->status,
                             'created_at' => $r->created_at,
@@ -89,16 +111,48 @@ class AdminDashboardController extends Controller
                     })
             )
             ->merge(
+                OfficerSubmission::query()
+                    ->with('organization')
+                    ->whereIn('target_school_year_id', $targetSyIds)
+                    ->where('edit_requested', true)
+                    ->whereHas('organization', function ($q) use ($user) {
+                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    })
+                    ->get()
+                    ->map(function ($r) {
+                        return (object) [
+                            'type' => 'Officer Submission (Edit Request)',
+                            'organization_id' => $r->organization_id,
+                            'school_year_id' => $r->target_school_year_id,
+                            'organization' => $r->organization,
+                            'school_year' => \App\Models\SchoolYear::find($r->target_school_year_id),
+
+                            'status' => 'edit_requested',
+
+                            'created_at' => $r->edit_requested_at ?? $r->updated_at,
+
+                            'route' => route('admin.officer_submissions.show', $r->id),
+
+                  
+                            'edit_request_reason' => $r->edit_request_reason,
+                        ];
+                    })
+            )
+            ->merge(
                 ModeratorSubmission::query()
+                    ->with('organization')
                     ->whereIn('target_school_year_id', $targetSyIds)
                     ->whereIn('status', $actionable)
+                    ->whereHas('organization', function ($q) use ($user) {
+                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    })
                     ->get()
                     ->map(function ($r) {
                         return (object) [
                             'type' => 'Moderator Submission',
                             'organization_id' => $r->organization_id,
                             'school_year_id' => $r->target_school_year_id,
-                            'organization' => Organization::find($r->organization_id),
+                            'organization' => $r->organization,
                             'school_year' => SchoolYear::find($r->target_school_year_id),
                             'status' => $r->status,
                             'created_at' => $r->created_at,
@@ -155,146 +209,248 @@ class AdminDashboardController extends Controller
                 ->toArray()
         )));
 
-        $readyForActivation = $readyKeys
-            ->diff($activatedKeys)
-            ->map(function ($key) {
+            $readyForActivation = $readyKeys
+                ->diff($activatedKeys)
+                ->map(function ($key) use ($user) {
+                
                 [$orgId, $syId] = explode('|', $key);
 
                 return (object) [
                     'organization_id' => (int) $orgId,
                     'school_year_id' => (int) $syId,
-                    'organization' => Organization::find($orgId),
+                    'organization' => Organization::where('id', $orgId)
+                        ->whereIn('cluster_id', $user->clusters->pluck('id'))
+                        ->first(),
                     'school_year' => SchoolYear::find($syId),
-                    'route' => route('admin.orgs_by_sy.show', $orgId),
+                    'route' => route('rereg.hub', $orgId),
                 ];
             })
-            ->values();
-
-        $projectApprovals = ProjectDocument::with([
-                'project.organization',
-                'formType',
-                'signatures',
-            ])
-            ->whereHas('project', function ($q) use ($activeSyId) {
-                if ($activeSyId) {
-                    $q->where('school_year_id', $activeSyId);
-                }
-            })
-            ->get()
-            ->filter(function ($doc) {
-                $pending = $doc->currentPendingSignature();
-                return $pending && $pending->role === 'sacdev_admin';
-            })
-            ->map(function ($doc) {
-                return (object) [
-                    'project' => $doc->project,
-                    'organization' => $doc->project->organization ?? null,
-                    'form_name' => $doc->formType->name ?? 'Form',
-                    'form_code' => $doc->formType->code ?? null,
-                    'status' => $doc->status,
-                    'route' => route('admin.projects.documents.hub', $doc->project_id),
-                ];
-            })
-            ->values();
-
-        $projectApprovals = $projectApprovals
-            ->groupBy(fn ($task) => $task->project->id)
-            ->map(function ($tasks) {
-                return (object)[
-                    'project' => $tasks->first()->project,
-                    'organization' => $tasks->first()->organization,
-                    'forms' => $tasks->map(fn ($t) => [
-                        'name' => $t->form_name,
-                        'code' => $t->form_code,
-                        'phase' => $t->formType->phase ?? 'other',
-                    ])->values(),
-                    'route' => $tasks->first()->route,
-                    'count' => $tasks->count(),
-                ];
-            })
-            ->values();
-
-        $calendarProjects = Project::query()
-            ->with('organization')
-            ->when($activeSyId, fn ($q) => $q->where('school_year_id', $activeSyId))
-            ->whereNotNull('implementation_start_date')
-            ->orderBy('implementation_start_date')
-            ->get()
-            ->map(function ($project) {
-                return [
-                    'title' => $project->title,
-                    'start' => $project->implementation_start_date,
-                    'url' => route('admin.projects.documents.hub', $project->id),
-                ];
-            })
-            ->values();
-
-
-        $preImplementationCompleteCount = Project::query()
-            ->where('school_year_id', $activeSyId)
-            ->whereHas('documents', function ($q) {
-                $q->whereHas('formType', fn ($f) =>
-                    $f->whereIn('code', ['PROJECT_PROPOSAL', 'BUDGET_PROPOSAL'])
-                )->where('status', 'approved_by_sacdev');
-            }, '=', 2)
-            ->count();
-
-
-        $upcomingProjectsCount = Project::query()
-            ->where('school_year_id', $activeSyId)
-            ->whereNotNull('implementation_start_date')
-            ->whereBetween('implementation_start_date', [now(), now()->addDays(30)])
-            ->whereDoesntHave('documents', function ($q) {
-                $q->whereHas('formType', fn ($f) =>
-                    $f->whereIn('code', ['PROJECT_PROPOSAL', 'BUDGET_PROPOSAL'])
-                )->where('status', 'approved_by_sacdev');
-            })
-            ->count();
-
-
-        $offCampusProjectsCount = Project::query()
-            ->where('school_year_id', $activeSyId)
-            ->whereHas('documents', function ($q) {
-                $q->whereHas('formType', fn ($f) =>
-                    $f->where('code', 'OFF_CAMPUS_APPLICATION')
-                );
-            })
-            ->count();
-
-
-        $activatedOrgCount = DB::table('organization_school_years')
-            ->where('school_year_id', $activeSyId)
-            ->count();
-
-
-        $completedProjectsCount = Project::query()
-            ->where('school_year_id', $activeSyId)
-            ->where('status', 'completed') // future-ready
-            ->count();
+            ->values()
+            ->filter(fn ($r) => $r->organization !== null);
 
 
 
 
-        return view('admin.dashboard', [
-            'activeSy' => $activeSy,
-            'orgCount' => Organization::count(),
-            'syCount' => SchoolYear::count(),
-            'pendingCaseCount' => $pendingCases->count(),
-            'readyForActivationCount' => $readyForActivation->count(),
-            'pendingCases' => $pendingCases,
-            'readyForActivation' => $readyForActivation,
-            'projectApprovals' => $projectApprovals,
-            'calendarProjects' => $calendarProjects,
+            $projectApprovals = ProjectDocument::with([
+                    'project.organization',
+                    'formType',
+                    'signatures',
+                ])
+                ->whereHas('project', function ($q) use ($activeSyId, $user) {
+                    if ($activeSyId) {
+                        $q->where('school_year_id', $activeSyId);
+                    }
 
-            'preImplementationCompleteCount' => $preImplementationCompleteCount,
-            'upcomingProjectsCount' => $upcomingProjectsCount,
-            'offCampusProjectsCount' => $offCampusProjectsCount,
-            'activatedOrgCount' => $activatedOrgCount,
-            'completedProjectsCount' => $completedProjectsCount,
+                    $q->where('workflow_status', '!=', 'cancelled');
+
+                    $q->whereHas('organization', function ($org) use ($user) {
+                        $org->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    });
+                })
+                ->get()
+                ->filter(function ($doc) {
+                    $pending = $doc->currentPendingSignature();
+                    return $pending && $pending->role === 'sacdev_admin';
+                })
+                ->map(function ($doc) {
+                    return (object) [
+                        'project' => $doc->project,
+                        'organization' => $doc->project->organization ?? null,
+
+                        'forms' => collect([
+                            [
+                                'name' => $doc->formType->name ?? 'Form',
+                                'code' => $doc->formType->code ?? null,
+                                'phase' => $doc->formType->phase ?? 'default',
+                            ]
+                        ]),
+
+                        'status' => $doc->status,
+                        'route' => route('admin.projects.documents.hub', $doc->project_id),
+                        'form_route' => $this->resolveOrgDocumentRoute($doc),
+
+                        'count' => 1, // required
+                        'is_completion' => false, // required
+                    ];
+                })
+                ->values();
+
+            $debug = [];
+
+            $resolver = app(ProjectFormRequirementResolver::class);
+
+$projectsReadyForCompletion = Project::with([
+        'documents.formType'
+    ])
+    ->where('school_year_id', $activeSyId)
+    ->where('workflow_status', '!=', 'completed')
+    ->where('workflow_status', '!=', 'cancelled')
+    ->whereHas('organization', function ($q) use ($user) {
+        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+    })
+    ->get()
+    ->filter(function ($project) use ($resolver, &$debug) {
+
+        $requiredFormTypes = $resolver->resolve($project);
+
+        $documents = $project->documents
+            ->whereNull('archived_at')
+            ->keyBy(fn($d) => $d->formType->code);
+
+        $requiredDocs = collect($requiredFormTypes)->map(function (\App\Models\FormType $formType) use ($documents) {
+            return $documents[$formType->code] ?? null;
+        });
+
+        if ($requiredDocs->isEmpty()) {
+            return false;
+        }
+
+        return $requiredDocs
+            ->every(fn($doc) => $doc && $doc->status === 'approved_by_sacdev');
+    })
+    ->map(function ($project) {
+        return (object)[
+            'project' => $project,
+            'organization' => $project->organization ?? null,
+            'forms' => collect([
+                [
+                    'name' => 'Ready for Completion',
+                    'code' => 'READY_FOR_COMPLETION',
+                    'phase' => 'completion',
+                ]
+            ]),
+            'route' => route('admin.projects.documents.hub', $project->id),
+            'count' => 1,
+            'is_completion' => true,
+        ];
+    })
+    ->values();
+
+            $projectApprovals = collect($projectApprovals)
+                ->merge(collect($projectsReadyForCompletion))
+                ->sortByDesc(fn ($item) => $item->project->updated_at ?? now())
+                ->values();
+
+
+            $calendarProjects = Project::query()
+                ->with('organization')
+                ->when($activeSyId, fn ($q) => $q->where('school_year_id', $activeSyId))
+                ->whereNotNull('implementation_start_date')
+                ->orderBy('implementation_start_date')
+                ->get()
+                ->map(function ($project) {
+                    return [
+                        'title' => $project->title,
+                        'start' => $project->implementation_start_date,
+                        'url' => route('admin.projects.documents.hub', $project->id),
+                    ];
+                })
+                ->values();
+
+
+            $preImplementationCompleteCount = Project::query()
+                ->where('school_year_id', $activeSyId)
+                ->whereHas('documents', function ($q) {
+                    $q->whereHas('formType', fn ($f) =>
+                        $f->whereIn('code', ['PROJECT_PROPOSAL', 'BUDGET_PROPOSAL'])
+                    )->where('status', 'approved_by_sacdev');
+                }, '=', 2)
+                ->count();
+
+
+            $upcomingProjectsCount = Project::query()
+                ->where('school_year_id', $activeSyId)
+                ->whereNotNull('implementation_start_date')
+                ->whereBetween('implementation_start_date', [now(), now()->addDays(30)])
+                ->whereDoesntHave('documents', function ($q) {
+                    $q->whereHas('formType', fn ($f) =>
+                        $f->whereIn('code', ['PROJECT_PROPOSAL', 'BUDGET_PROPOSAL'])
+                    )->where('status', 'approved_by_sacdev');
+                })
+                ->count();
+
+
+            $offCampusProjectsCount = Project::query()
+                ->where('school_year_id', $activeSyId)
+                ->whereHas('documents', function ($q) {
+                    $q->whereHas('formType', fn ($f) =>
+                        $f->where('code', 'OFF_CAMPUS_APPLICATION')
+                    );
+                })
+                ->count();
+
+
+            $activatedOrgCount = DB::table('organization_school_years')
+                ->where('school_year_id', $activeSyId)
+                ->count();
+
+
+            $completedProjectsCount = Project::query()
+                ->where('school_year_id', $activeSyId)
+                ->where('status', 'completed') // future-ready
+                ->count();
+
+            $pendingCases = $pendingCases
+
+                ->sortByDesc('created_at')
+                ->values();
+
+
+            return view('admin.dashboard', [
+                'activeSy' => $activeSy,
+                'orgCount' => Organization::count(),
+                'syCount' => SchoolYear::count(),
+                'pendingCaseCount' => $pendingCases->count(),
+                'readyForActivationCount' => $readyForActivation->count(),
+                'pendingCases' => $pendingCases,
+
+                'projectsReadyForCompletion' => $projectsReadyForCompletion,
+                'projectsReadyForCompletionCount' => $projectsReadyForCompletion->count(),
+
+                'readyForActivation' => $readyForActivation,
+                'projectApprovals' => $projectApprovals,
+                'calendarProjects' => $calendarProjects,
+
+                'preImplementationCompleteCount' => $preImplementationCompleteCount,
+                'upcomingProjectsCount' => $upcomingProjectsCount,
+                'offCampusProjectsCount' => $offCampusProjectsCount,
+                'activatedOrgCount' => $activatedOrgCount,
+                'completedProjectsCount' => $completedProjectsCount,
 
 
 
 
-        ]);
+            ]);
+        }
+
+
+    protected function resolveOrgDocumentRoute(ProjectDocument $document): string
+    {
+        $map = [
+            'PROJECT_PROPOSAL' => 'org.projects.documents.combined-proposal.create',
+            'BUDGET_PROPOSAL' => 'org.projects.documents.combined-proposal.create',
+
+            'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.create',
+
+            'SOLICITATION_APPLICATION' => 'org.projects.documents.solicitation.create',
+            'SELLING_APPLICATION' => 'org.projects.documents.selling.create',
+
+            'REQUEST_TO_PURCHASE' => 'org.projects.documents.request-to-purchase.create',
+
+            'FEES_COLLECTION_REPORT' => 'org.projects.documents.fees-collection.create',
+            'SELLING_ACTIVITY_REPORT' => 'org.projects.documents.selling-activity-report.create',
+            'SOLICITATION_SPONSORSHIP_REPORT' => 'org.projects.documents.solicitation-sponsorship-report.create',
+            'TICKET_SELLING_REPORT' => 'org.projects.documents.ticket-selling-report.create',
+
+            'DOCUMENTATION_REPORT' => 'org.projects.documents.documentation-report.create',
+            'LIQUIDATION_REPORT' => 'org.projects.documents.liquidation-report.create',
+
+            'POSTPONEMENT_NOTICE' => 'org.projects.documents.postponement.create',
+            'CANCELLATION_NOTICE' => 'org.projects.documents.cancellation.create',
+        ];
+
+        $routeName = $map[$document->formType->code] ?? 'org.projects.documents.hub';
+
+        return route($routeName, $document->project);
     }
 }

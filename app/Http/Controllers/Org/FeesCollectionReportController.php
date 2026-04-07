@@ -74,7 +74,26 @@ class FeesCollectionReportController extends BaseProjectDocumentController
     public function store(Request $request, Project $project)
     {
 
-        $request->validate([
+
+        $request->merge([
+
+            'items' => collect($request->items)->map(function ($item) {
+
+                $item['number_of_payers'] = !empty($item['number_of_payers'])
+                    ? (int) str_replace([',', ' '], '', $item['number_of_payers'])
+                    : null;
+
+                $item['amount_paid'] = !empty($item['amount_paid'])
+                    ? (float) str_replace([',', ' '], '', $item['amount_paid'])
+                    : null;
+
+                return $item;
+
+            })->toArray(),
+
+        ]);
+
+        $validator = \Validator::make($request->all(), [
 
             'activity_name' => ['required','string','max:255'],
             'purpose' => ['required','string'],
@@ -87,6 +106,16 @@ class FeesCollectionReportController extends BaseProjectDocumentController
             'items.*.receipt_series' => ['nullable','string','max:255'],
 
         ]);
+
+        if ($validator->fails()) {
+
+            $this->getOrCreateDocument($project, 'FEES_COLLECTION_REPORT');
+
+            return back()
+                ->with('warning', 'Form has errors. Saved as draft instead.')
+                ->withErrors($validator)
+                ->withInput();
+        }
 
 
         $document = $this->getOrCreateDocument($project, 'FEES_COLLECTION_REPORT');
@@ -190,6 +219,27 @@ class FeesCollectionReportController extends BaseProjectDocumentController
 
         if ($document->status !== 'draft' && !$document->edit_mode) {
             return back()->with('error', 'This form cannot be submitted.');
+        }
+
+        $activeSy = \App\Models\SchoolYear::activeYear();
+
+        if (!$activeSy) {
+            return back()->with('error', 'No active school year is currently set.');
+        }
+
+        $isRegistered = \App\Models\OrganizationSchoolYear::where('organization_id', $project->organization_id)
+            ->where('school_year_id', $activeSy->id)
+            ->exists();
+
+        if (!$isRegistered) {
+
+            $document->update([
+                'status' => 'draft'
+            ]);
+
+            return back()->with('warning', 
+                'Organization is not registered for this school year. Saved as draft instead.'
+            );
         }
 
         $this->handleRequestSubmit($project, $document);

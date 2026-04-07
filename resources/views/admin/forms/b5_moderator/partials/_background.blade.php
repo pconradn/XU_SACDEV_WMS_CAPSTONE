@@ -1,85 +1,91 @@
-<div class="mt-4 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+<div class="mt-4 rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm overflow-hidden">
 
-    <div class="p-5 border-b">
-        <h3 class="text-xs font-semibold text-slate-500 uppercase">
+    {{-- HEADER --}}
+    <div class="px-5 py-3 border-b border-slate-200 flex items-center gap-2">
+        <i data-lucide="shield" class="w-4 h-4 text-slate-400"></i>
+        <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
             Moderator Background
         </h3>
     </div>
 
-    <div class="grid md:grid-cols-2">
 
-        <div class="p-5 md:border-r">
-            <div class="divide-y">
+    {{-- CONTENT --}}
+    <div class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
 
-                <div class="flex justify-between items-center py-2">
-                    <span class="text-slate-400">Was moderator before</span>
-                    <span class="text-sm font-medium">
-                        @if($submission->was_moderator_before)
-                            <span class="px-2 py-0.5 text-xs rounded-full 
-                                bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                Yes
-                            </span>
-                        @else
-                            <span class="px-2 py-0.5 text-xs rounded-full 
-                                bg-slate-100 text-slate-600 border">
-                                No
-                            </span>
-                        @endif
+        {{-- LEFT --}}
+        <div class="px-5 py-4 space-y-3 text-xs">
+
+            <div class="flex justify-between items-center">
+                <span class="text-slate-400">Was moderator before</span>
+
+                @if($submission->was_moderator_before)
+                    <span class="px-2 py-0.5 text-[10px] rounded-full 
+                        bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Yes
                     </span>
-                </div>
-
-                <div class="flex justify-between py-2">
-                    <span class="text-slate-400">Organization</span>
-                    <span class="text-slate-900 font-medium">
-                        {{ $submission->moderated_org_name ?? '—' }}
+                @else
+                    <span class="px-2 py-0.5 text-[10px] rounded-full 
+                        bg-slate-100 text-slate-600 border border-slate-200">
+                        No
                     </span>
-                </div>
-
+                @endif
             </div>
+
+            <div class="flex justify-between items-center">
+                <span class="text-slate-400">Organization</span>
+                <span class="text-slate-900 font-medium text-right">
+                    {{ $submission->moderated_org_name ?? '—' }}
+                </span>
+            </div>
+
         </div>
 
 
-        <div class="p-5">
-            <div class="divide-y">
+        {{-- RIGHT --}}
+        <div class="px-5 py-4 space-y-3 text-xs">
 
-                <div class="flex justify-between items-center py-2">
-                    <span class="text-slate-400">Served nominating org</span>
-                    <span class="text-sm font-medium">
-                        @if($submission->served_nominating_org_before)
-                            <span class="px-2 py-0.5 text-xs rounded-full 
-                                bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                Yes
-                            </span>
-                        @else
-                            <span class="px-2 py-0.5 text-xs rounded-full 
-                                bg-slate-100 text-slate-600 border">
-                                No
-                            </span>
-                        @endif
+            <div class="flex justify-between items-center">
+                <span class="text-slate-400">Served nominating org</span>
+
+                @if($submission->served_nominating_org_before)
+                    <span class="px-2 py-0.5 text-[10px] rounded-full 
+                        bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Yes
                     </span>
-                </div>
-
-                <div class="flex justify-between py-2">
-                    <span class="text-slate-400">Years</span>
-                    <span class="text-slate-900 font-medium">
-                        {{ $submission->served_nominating_org_years ?? '—' }}
+                @else
+                    <span class="px-2 py-0.5 text-[10px] rounded-full 
+                        bg-slate-100 text-slate-600 border border-slate-200">
+                        No
                     </span>
-                </div>
-
+                @endif
             </div>
+
+            <div class="flex justify-between items-center">
+                <span class="text-slate-400">Years</span>
+                <span class="text-slate-900 font-medium">
+                    {{ $submission->served_nominating_org_years ?? '—' }}
+                </span>
+            </div>
+
         </div>
 
     </div>
 
 
-    <div class="border-t p-5">
-        <h3 class="text-xs font-semibold text-slate-500 uppercase mb-3">
-            Special Skills / Interests
-        </h3>
+    {{-- SKILLS --}}
+    <div class="border-t border-slate-200 px-5 py-4">
 
-        <div class="text-sm text-slate-900 whitespace-pre-line leading-relaxed">
+        <div class="flex items-center gap-2 mb-2">
+            <i data-lucide="sparkles" class="w-4 h-4 text-slate-400"></i>
+            <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                Special Skills / Interests
+            </h3>
+        </div>
+
+        <div class="text-xs text-slate-800 whitespace-pre-line leading-relaxed bg-white rounded-lg border border-slate-200 px-3 py-2">
             {{ $submission->skills_and_interests ?? '—' }}
         </div>
+
     </div>
 
 </div>

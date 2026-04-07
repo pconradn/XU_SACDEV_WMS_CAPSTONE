@@ -1,13 +1,29 @@
-<div class=" bg-white shadow-sm overflow-hidden">
 
-    {{-- TOP LABEL (FORM CODE) --}}
+@php
+    $accent = match($document?->status) {
+        'returned' => 'bg-rose-500',
+        'approved_by_sacdev' => 'bg-emerald-500',
+        'submitted' => 'bg-blue-500',
+        default => 'bg-slate-400'
+    };
+@endphp
+
+
+
+
+<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+
+    {{-- ACCENT --}}
+    <div class="h-1  {{ $accent }}"></div>
+
+    {{-- TOP LABEL --}}
     <div class="px-6 pt-4 flex justify-end">
         <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-       
+            Form A4
         </span>
     </div>
 
-    {{-- MAIN TITLE --}}
+    {{-- TITLE --}}
     <div class="px-6 pb-6 text-center">
         <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
             Liquidation Report
@@ -40,7 +56,6 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
 
-            {{-- ORGANIZATION --}}
             <div>
                 <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                     Organization
@@ -51,7 +66,6 @@
                 </div>
             </div>
 
-            {{-- IMPLEMENTATION DATE --}}
             <div>
                 <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                     Implementation Date
@@ -64,7 +78,6 @@
                 </div>
             </div>
 
-            {{-- PROJECT HEAD --}}
             <div>
                 <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                     Project Head
@@ -79,12 +92,12 @@
 
     </div>
 
-    {{-- SECOND ROW (DETAILS + INPUTS) --}}
+    {{-- SECOND ROW --}}
     <div class="border-t border-slate-200 px-6 py-6">
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center items-start">
 
-            {{-- CONTACT NUMBER (EDITABLE) --}}
+            {{-- CONTACT NUMBER --}}
             <div>
                 <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                     Contact Number
@@ -94,11 +107,18 @@
                     <input
                         type="text"
                         name="contact_number"
-                        value="{{ old('contact_number', $report->contact_number ?? '') }}"
+                        value="{{ old('contact_number', $report->contact_number ?? $project->projectHead->user->officerEntries->first()->mobile_number ?? '') }}"
                         placeholder="Enter contact number"
-                        class="w-full md:w-[220px] text-center border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
+                        class="w-full md:w-[220px] text-center rounded-lg px-3 py-2 text-sm border
+                            {{ $errors->has('contact_number')
+                                ? 'border-rose-500 focus:ring-rose-500'
+                                : 'border-slate-300 focus:ring-blue-500' }}
+                            focus:ring-2 focus:outline-none">
                 </div>
+
+                <p class="text-[11px] text-slate-400 mt-1">
+                    Active contact for verification if needed.
+                </p>
             </div>
 
             {{-- REPORT DATE --}}
@@ -107,7 +127,7 @@
                     Report Date
                 </div>
 
-                <div class="mt-2 text-sm md:text-base font-medium text-slate-900">
+                <div class="mt-2 text-sm md:text-base font-semibold text-slate-900">
                     {{ now()->format('F d, Y') }}
                 </div>
             </div>

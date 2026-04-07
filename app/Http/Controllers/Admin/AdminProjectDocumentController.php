@@ -8,6 +8,9 @@ use App\Models\Project;
 use App\Models\ProjectAssignment;
 use App\Models\ProjectDocument;
 use App\Notifications\ReregActionNotification;
+use App\Services\ProjectFormRequirementResolver;
+use App\Support\Audit;
+use App\Support\InAppNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 class AdminProjectDocumentController extends Controller
 {
 
-    public function hub(Project $project)
+    public function hub(Project $project, \App\Services\ProjectFormRequirementResolver $resolver)
     {
 
         $documents = ProjectDocument::query()
@@ -24,6 +27,16 @@ class AdminProjectDocumentController extends Controller
             ->whereNull('archived_at')
             ->get()
             ->keyBy(fn($d) => $d->formType->code);
+
+        $project->load([
+            'externalPackets.items',
+            'submissionPackets'
+        ]);
+
+        $externalPackets = $project->externalPackets;
+        $submissionPackets = $project->submissionPackets
+            ->sortByDesc('created_at')
+            ->take(3); 
 
 
         $projectHead = ProjectAssignment::with('user')
@@ -177,6 +190,64 @@ class AdminProjectDocumentController extends Controller
 
         $groupedForms = $forms->groupBy('phase');
 
+        /*
+        |--------------------------------------------------------------------------
+        | NEW: DOCUMENT GROUPING FOR DASHBOARD
+        |--------------------------------------------------------------------------
+        */
+
+        $documentsGrouped = [
+            'action_required' => collect(),
+            'required' => collect(),
+            'submitted_optional' => collect(),
+            'approved' => collect(),
+            'others' => collect(),
+        ];
+        $requiredFormTypes = $resolver->resolve($project);
+
+
+        $requiredFormCodes = collect($requiredFormTypes)->pluck('code')->toArray();
+
+        foreach ($forms as $form) {
+
+            $doc = $form['document'];
+
+            $isRequired = in_array($form['code'], $requiredFormCodes);
+            $isSubmitted = $doc !== null;
+            $isApproved = $doc && $doc->status === 'approved_by_sacdev';
+
+            $isActionRequired =
+                $form['is_pending'] &&
+                $form['waiting_for'] === 'sacdev_admin';
+
+            // 🔴 ACTION REQUIRED
+            if ($isActionRequired || ($doc && $doc->status === 'returned')) {
+                $documentsGrouped['action_required']->push($form);
+                continue;
+            }
+
+            // 🟢 APPROVED
+            if ($isApproved) {
+                $documentsGrouped['approved']->push($form);
+                continue;
+            }
+
+            // 🟡 REQUIRED
+            if ($isRequired && !$isSubmitted) {
+                $documentsGrouped['required']->push($form);
+                continue;
+            }
+
+            // 🔵 SUBMITTED OPTIONAL
+            if (!$isRequired && $isSubmitted) {
+                $documentsGrouped['submitted_optional']->push($form);
+                continue;
+            }
+
+            // ⚪ OTHERS
+            $documentsGrouped['others']->push($form);
+        }
+
 
         $totalForms = $forms->count();
 
@@ -184,14 +255,33 @@ class AdminProjectDocumentController extends Controller
             return $doc->status === 'approved_by_sacdev';
         })->count();
 
-        $progress = [
-            'total' => $totalForms,
-            'approved' => $approvedForms,
-            'percentage' => $totalForms > 0
-                ? round(($approvedForms / $totalForms) * 100)
-                : 0,
-        ];
+        
 
+        
+        $requiredDocs = collect($requiredFormTypes)->map(function (FormType $formType) use ($documents) {
+            return $documents[$formType->code] ?? null;
+        });
+
+
+        $totalRequired = $requiredDocs->count();
+
+    
+        $approvedRequired = $requiredDocs
+            ->filter(fn($doc) => $doc && $doc->status === 'approved_by_sacdev')
+            ->count();
+
+     
+        $percentage = $totalRequired > 0
+            ? (int) round(($approvedRequired / $totalRequired) * 100)
+            : 0;
+
+    
+
+        $progress = [
+            'required' => $totalRequired,
+            'approved' => $approvedRequired,
+            'percentage' => $percentage,
+        ];
 
         $postponementType = FormType::where('code','POSTPONEMENT_NOTICE')->first();
 
@@ -233,13 +323,23 @@ class AdminProjectDocumentController extends Controller
             : collect();
 
 
+
+
+        $allRequiredApproved = $requiredDocs
+            ->every(fn($doc) => $doc && $doc->status === 'approved_by_sacdev');
+
+
+
         $canMarkComplete =
             $project->workflow_status !== 'completed' &&
-            $documents->every(fn($doc) => $doc->status === 'approved_by_sacdev');
+            $requiredDocs->isNotEmpty() &&
+            $allRequiredApproved;
 
         $actions = [
-            'can_mark_complete' => false, // disabled for now
-            'mark_complete_url' => null,
+            'can_mark_complete' => $canMarkComplete,
+            'mark_complete_url' => $canMarkComplete
+                ? route('admin.projects.mark-complete', $project)
+                : null,
         ];
 
 
@@ -265,9 +365,89 @@ class AdminProjectDocumentController extends Controller
             'budgetDoc' => $budgetDoc,
 
             'pendingForAdmin' => $pendingForAdmin,
+            
+            'externalPackets' => $externalPackets,
+            'submissionPackets' => $submissionPackets,
+            'documentsGrouped' => $documentsGrouped,
         ]);
     }
 
+
+
+    public function markComplete(Project $project, ProjectFormRequirementResolver $resolver)
+    {
+        $documents = ProjectDocument::query()
+            ->with('formType')
+            ->where('project_id', $project->id)
+            ->whereNull('archived_at')
+            ->get()
+            ->keyBy(fn($d) => $d->formType->code);
+
+        $requiredFormTypes = $resolver->resolve($project);
+
+        $requiredDocs = collect($requiredFormTypes)->map(function (FormType $formType) use ($documents) {
+            return $documents[$formType->code] ?? null;
+        });
+
+        $allApproved = $requiredDocs
+            ->filter()
+            ->every(fn($doc) => $doc->status === 'approved_by_sacdev');
+
+        if (!$allApproved) {
+            return back()->with('error', 'Project cannot be marked as completed. Some required documents are not yet approved.');
+        }
+
+        if ($project->workflow_status === 'completed') {
+            return back()->with('status', 'Project is already marked as completed.');
+        }
+
+        $project->update([
+            'workflow_status' => 'completed',
+            'status' => 'completed',
+            'completed_at' => now(),
+        ]);
+
+        $this->notifyProjectHeadCompleted($project);
+
+        Audit::log(
+            'project.completed',
+            'Project marked as completed',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'project_id' => $project->id,
+                    'title' => $project->title,
+                ]
+            ]
+        );
+
+        return back()->with('success', 'Project marked as completed successfully.');
+    }
+
+    protected function notifyProjectHeadCompleted(Project $project)
+    {
+        $assignment = ProjectAssignment::where('project_id', $project->id)
+            ->where('assignment_role', 'project_head')
+            ->whereNull('archived_at')
+            ->with('user')
+            ->first();
+
+        if (!$assignment || !$assignment->user) {
+            return;
+        }
+
+        $assignment->user->notify(new ReregActionNotification([
+            'title' => 'Project Completed',
+            'message' => 'Your project "' . $project->title . '" has been marked as completed by SACDEV.',
+            'action_url' => route('org.projects.documents.hub', $project),
+            'meta' => [
+                'project_id' => $project->id,
+                'type' => 'project_completed'
+            ]
+        ]));
+    }
 
     public function open(Project $project, $formType, $documentId = null)
     {
@@ -568,6 +748,9 @@ class AdminProjectDocumentController extends Controller
     }
 
 
+
+
+
     public function showPrint(Project $project, $formType, $documentId = null)
     {
         $query = ProjectDocument::query()
@@ -577,10 +760,13 @@ class AdminProjectDocumentController extends Controller
                 'proposalData.guests',
                 'proposalData.planOfActions',
                 'budgetProposal.items',
+                'offCampusActivity.participants',
+                'packetItems.packet',
             ])
             ->where('project_id', $project->id)
             ->whereHas('formType', fn($q) => $q->where('code', $formType));
 
+            
         $document = $documentId
             ? $query->where('id', $documentId)->firstOrFail()
             : $query->firstOrFail();
@@ -595,10 +781,32 @@ class AdminProjectDocumentController extends Controller
 
         $proposal = $document->proposalData;
         $budget = $document->budgetProposal;
+        $offcampus = $document->offCampusActivity;
+        $participants = $offcampus?->participants ?? collect();
+        $solicitation = $document->solicitationData;
+        $purchaseSourceOfFunds = $document->requestToPurchase;
+
+
+        $packetItem = $document->packetItems
+            ->sortByDesc('created_at')
+            ->first();
+
+        $packet = $packetItem?->packet;
+
 
         $view = match ($formType) {
             'PROJECT_PROPOSAL' => 'admin.projects.documents.project-proposal.print',
             'BUDGET_PROPOSAL'  => 'admin.projects.documents.budget-proposal.print',
+            'OFF_CAMPUS_APPLICATION' => 'admin.projects.documents.off-campus.print',
+            'SOLICITATION_APPLICATION' => 'admin.projects.documents.solicitation.print',
+            'SELLING_APPLICATION' => 'admin.projects.documents.selling.print',
+            'LIQUIDATION_REPORT' => 'admin.projects.documents.liquidation.print',
+            'REQUEST_TO_PURCHASE' => 'admin.projects.documents.request-to-purchase.print',
+            'SOLICITATION_SPONSORSHIP_REPORT' => 'admin.projects.documents.solicitation-report.print',
+            'SELLING_ACTIVITY_REPORT' => 'admin.projects.documents.selling-report.print',
+            'TICKET_SELLING_REPORT' => 'admin.projects.documents.ticket-report.print',
+            'FEES_COLLECTION_REPORT' => 'admin.projects.documents.fees-report.print',
+            'DOCUMENTATION_REPORT' => 'admin.projects.documents.docu.print',
             default => abort(404),
         };
 
@@ -607,6 +815,12 @@ class AdminProjectDocumentController extends Controller
             'document' => $document,
             'proposal' => $proposal,
             'budget' => $budget,
+            'offcampus'=> $offcampus,
+            'participants'=> $participants,
+            'solicitation' => $solicitation,
+            'purchaseSourceOfFunds' => $purchaseSourceOfFunds,
+            'packet' => $packet,
+
         ]);
     }
 
@@ -781,9 +995,82 @@ class AdminProjectDocumentController extends Controller
                     'status' => 'approved_by_sacdev',
                 ]);
 
+                $document->timelines()->create([
+                    'user_id' => auth()->id(),
+                    'action' => 'approved_by_sacdev',
+                    'remarks' => null,
+                    'old_status' => 'submitted',
+                    'new_status' => 'approved_by_sacdev',
+                ]);
+
+                /*
+                |----------------------------------------------------------
+                | APPLY POSTPONEMENT TO PROJECT
+                |----------------------------------------------------------
+                */
+                if ($formCode === 'POSTPONEMENT_NOTICE') {
+
+                    $postponement = \App\Models\PostponementNoticeData::where(
+                        'project_document_id',
+                        $document->id
+                    )->first();
+
+                    if ($postponement) {
+
+                        $project = $document->project;
+
+                        $project->update([
+                            'implementation_start_date' => $postponement->new_date,
+                            'implementation_end_date'   => $postponement->new_date,
+
+                            'implementation_start_time' => $postponement->new_start_time,
+                            'implementation_end_time'   => $postponement->new_end_time,
+
+                            'implementation_venue' => $postponement->venue,
+
+                            'workflow_status' => 'postponed',
+
+                            'approved_postponement_id' => $document->id,
+                        ]);
+
+                    }
+                }
+
+                if ($formCode === 'CANCELLATION_NOTICE') {
+
+                    $project = $document->project;
+
+                    $project->update([
+                        'workflow_status' => 'cancelled',
+                        'approved_cancellation_id' => $document->id,
+                        'status' => 'cancelled',
+                    ]);
+                }
+
             }
 
         });
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            $document->formType->name . ' was approved by SACDEV.'
+        );
+
+        Audit::log(
+            'document.approved_by_sacdev',
+            $document->formType->name . ' approved by SACDEV',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'project_id' => $project->id,
+                    'form_type' => $document->formType->code,
+                ],
+            ]
+        );
 
         return back()->with('success', 'Document approved successfully.');
     }
@@ -853,7 +1140,38 @@ class AdminProjectDocumentController extends Controller
                 'returned_at' => now(),
             ]);
 
+
+
         });
+        $document->timelines()->create([
+            'user_id' => auth()->id(),
+            'action' => 'returned_by_sacdev',
+            'remarks' => $request->remarks,
+            'old_status' => 'submitted',
+            'new_status' => 'draft',
+        ]);
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            'Your ' . $document->formType->name . ' was returned for revision by SACDEV.'
+        );
+
+        Audit::log(
+            'document.returned_by_sacdev',
+            $document->formType->name . ' returned for revision by SACDEV',
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'project_id' => $project->id,
+                    'form_type' => $document->formType->code,
+                    'remarks' => $request->remarks,
+                ],
+            ]
+        );      
 
         return back()->with('success', 'Document returned for revision.');
     }
@@ -923,6 +1241,8 @@ class AdminProjectDocumentController extends Controller
         });
     }
 
+
+
     protected function notifyProjectHead(Project $project, ProjectDocument $document, string $message){
         
         $assignment = ProjectAssignment::where('project_id', $project->id)
@@ -935,16 +1255,17 @@ class AdminProjectDocumentController extends Controller
             return;
         }
 
-        $assignment->user->notify(new ReregActionNotification([
+        InAppNotifier::notifyOnce($assignment->user, [
             'title' => 'Project Document Update',
             'message' => $message,
-            'action_url' => route('org.projects.documents.hub', $project),
+            'action_url' => $this->resolveOrgDocumentRoute($document),
+            'dedupe_key' => 'doc_'.$document->id.'_status_update',
             'meta' => [
                 'document_id' => $document->id,
                 'form_type'   => $document->formType->code,
                 'project_id'  => $project->id
             ]
-        ]));
+        ]);
     }
 
     public function retract(Project $project, $formCode)
@@ -971,6 +1292,14 @@ class AdminProjectDocumentController extends Controller
 
             $document->update([
                 'status' => 'submitted'
+            ]);
+
+            $document->timelines()->create([
+                'user_id' => auth()->id(),
+                'action' => 'sacdev_retract',
+                'remarks' => null,
+                'old_status' => 'approved_by_sacdev',
+                'new_status' => 'submitted',
             ]);
 
             if ($document->formType->code === 'SOLICITATION_APPLICATION') {
@@ -1025,8 +1354,61 @@ class AdminProjectDocumentController extends Controller
 
         });
 
+
+        $this->notifyProjectHead(
+            $project,
+            $document,
+            $document->formType->name . ' approval was retracted by SACDEV and is now pending review again.'
+        );
+
+        Audit::log(
+            'document.sacdev_approval_retracted',
+            'SACDEV approval retracted for ' . $document->formType->name,
+            [
+                'actor_user_id' => auth()->id(),
+                'organization_id' => $project->organization_id,
+                'school_year_id' => $project->school_year_id,
+                'meta' => [
+                    'document_id' => $document->id,
+                    'project_id' => $project->id,
+                    'form_type' => $document->formType->code,
+                ],
+            ]
+        );        
+
         return back()->with('success', 'SACDEV approval has been retracted.');
 
+    }
+
+    protected function resolveOrgDocumentRoute(ProjectDocument $document): string
+    {
+        $map = [
+            'PROJECT_PROPOSAL' => 'org.projects.documents.combined-proposal.create',
+            'BUDGET_PROPOSAL' => 'org.projects.documents.combined-proposal.create',
+
+            'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.create',
+
+            'SOLICITATION_APPLICATION' => 'org.projects.documents.solicitation.create',
+            'SELLING_APPLICATION' => 'org.projects.documents.selling.create',
+
+            'REQUEST_TO_PURCHASE' => 'org.projects.documents.request-to-purchase.create',
+
+            'FEES_COLLECTION_REPORT' => 'org.projects.documents.fees-collection.create',
+            'SELLING_ACTIVITY_REPORT' => 'org.projects.documents.selling-activity-report.create',
+            'SOLICITATION_SPONSORSHIP_REPORT' => 'org.projects.documents.solicitation-sponsorship-report.create',
+            'TICKET_SELLING_REPORT' => 'org.projects.documents.ticket-selling-report.create',
+
+            'DOCUMENTATION_REPORT' => 'org.projects.documents.documentation-report.create',
+            'LIQUIDATION_REPORT' => 'org.projects.documents.liquidation-report.create',
+            
+            
+            'POSTPONEMENT_NOTICE' => 'org.projects.documents.postponement.create',
+            'CANCELLATION_NOTICE' => 'org.projects.documents.cancellation.create',
+        ];
+
+        $routeName = $map[$document->formType->code] ?? 'org.projects.documents.hub';
+
+        return route($routeName, $document->project);
     }
 
 

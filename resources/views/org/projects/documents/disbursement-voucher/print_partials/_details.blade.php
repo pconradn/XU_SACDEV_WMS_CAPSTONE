@@ -13,7 +13,7 @@
 <tbody>
 
 <tr>
-<td><strong>{{ $project->title }}</strong></td>
+<td style="text-align: center"><strong>{{ $project->title }}</strong></td>
 <td></td>
 <td></td>
 </tr>
@@ -22,7 +22,7 @@
 
 <tr>
 
-<td>{{ $item->particulars }}</td>
+<td style="text-align: center">{{ $item->particulars }}</td>
 
 <td class="right">
 ₱ {{ number_format($item->amount,2) }}

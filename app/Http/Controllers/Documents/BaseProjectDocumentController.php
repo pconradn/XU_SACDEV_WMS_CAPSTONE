@@ -12,6 +12,7 @@ use App\Models\ProjectDocumentSignature;
 use App\Models\ProjectProposalData;
 use App\Models\User;
 use App\Notifications\ReregActionNotification;
+use App\Support\InAppNotifier;
 use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -135,18 +136,37 @@ abstract class BaseProjectDocumentController extends Controller
 
         
 
-        $signature->user->notify(new ReregActionNotification([
+        InAppNotifier::notifyOnce($signature->user, [
             'title' => 'Document awaiting review',
             'message' => $document->formType->name .
                 ' for project "' . $document->project->title . '" requires your approval.',
-            'action_url' => route('org.projects.documents.hub', $document->project),
+
+            'action_url' => $this->resolveOrgDocumentRoute($document),
+
+            'dedupe_key' => 'doc_'.$document->id.'_approval_queue',
+
             'meta' => [
                 'document_id' => $document->id,
                 'form_type'   => $document->formType->code,
                 'project_id'  => $document->project->id
             ]
-        ]));
+        ]);
     }
+
+    protected function ensureProjectEditable(Project $project): void
+    {
+        $status = strtolower((string) ($project->status ?? ''));
+        $workflow = strtolower((string) ($project->workflow_status ?? ''));
+
+        if (
+            in_array($status, ['cancelled', 'canceled', 'completed'], true) ||
+            in_array($workflow, ['cancelled', 'canceled', 'completed'], true)
+        ) {
+            abort(403, 'This project is locked. No further submissions are allowed.');
+        }
+    }
+
+
 
     protected function notifyProjectHead(Project $project, ProjectDocument $document, string $message){
         
@@ -160,16 +180,22 @@ abstract class BaseProjectDocumentController extends Controller
             return;
         }
 
-        $assignment->user->notify(new ReregActionNotification([
+        InAppNotifier::notifyOnce($assignment->user, [
             'title' => 'Project Document Update',
             'message' => $message,
-            'action_url' => route('org.projects.documents.hub', $project),
+
+            'action_url' => $this->resolveOrgDocumentRoute($document),
+
+            'dedupe_key' => 'doc_'.$document->id.'_status_update',
+
             'meta' => [
                 'document_id' => $document->id,
                 'form_type'   => $document->formType->code,
                 'project_id'  => $project->id
             ]
-        ]));
+        ]);
+
+
     }
 
     protected function approvalFlow(string $formCode): array
@@ -179,7 +205,6 @@ abstract class BaseProjectDocumentController extends Controller
             'PROJECT_PROPOSAL' => [
                 'project_head',
                 'treasurer',
-                'finance_officer',
                 'president',
                 'moderator',
                 'sacdev_admin'
@@ -188,7 +213,6 @@ abstract class BaseProjectDocumentController extends Controller
             'BUDGET_PROPOSAL' => [
                 'project_head',
                 'treasurer',
-                'finance_officer',
                 'president',
                 'moderator',
                 'sacdev_admin'
@@ -259,7 +283,6 @@ abstract class BaseProjectDocumentController extends Controller
             'LIQUIDATION_REPORT' => [
                 'project_head',
                 'treasurer',
-                'finance_officer',
                 'president',
                 'moderator',
                 'sacdev_admin'
@@ -305,13 +328,21 @@ abstract class BaseProjectDocumentController extends Controller
 
         if ($role === 'sacdev_admin') {
 
-            $user = getSacdevApprover($project);
+            $clusterId = $project->organization->cluster_id ?? null;
+
+            if (!$clusterId) {
+                abort(422, 'Organization has no cluster assigned.');
+            }
+
+            $user = DB::table('cluster_user')
+                ->join('users', 'users.id', '=', 'cluster_user.user_id')
+                ->where('cluster_user.cluster_id', $clusterId)
+                ->where('users.system_role', 'sacdev_admin')
+                ->select('users.id')
+                ->first();
 
             if (!$user) {
-                // fallback to old behavior (VERY SAFE)
-                return User::where('system_role', 'sacdev_admin')
-                    ->firstOrFail()
-                    ->id;
+                abort(422, 'No SACDEV approver assigned for this cluster.');
             }
 
             return $user->id;
@@ -322,7 +353,7 @@ abstract class BaseProjectDocumentController extends Controller
             $user = getOsaApprover();
 
             if (!$user) {
-                return User::where('system_role', 'sacdev_admin')
+                return User::where('system_role', 'osa_admin')
                     ->firstOrFail()
                     ->id;
             }
@@ -335,7 +366,12 @@ abstract class BaseProjectDocumentController extends Controller
             ->where('school_year_id', $project->school_year_id)
             ->where('role', $role)
             ->whereNull('archived_at')
-            ->firstOrFail();
+            ->orderByDesc('id') 
+            ->first();
+
+        if (!$member || !$member->user_id) {
+            abort(422, "Approval flow error: No active {$role} assigned for this organization. Please contact SACDEV admin to update organization roles.");
+        }
 
         return $member->user_id;
     }
@@ -344,9 +380,14 @@ abstract class BaseProjectDocumentController extends Controller
     {
         $flow = $this->approvalFlow($document->formType->code);
 
+        $document->loadMissing('project.organization');
+
+        if ($document->signatures()->exists()) {
+            $document->signatures()->delete();
+        }
         foreach ($flow as $index => $role) {
 
-            $userId = $this->resolveUserByRole($document->project,$role);
+            $userId = $this->resolveUserByRole($document->project, $role);
 
             ProjectDocumentSignature::create([
                 'project_document_id' => $document->id,
@@ -355,13 +396,13 @@ abstract class BaseProjectDocumentController extends Controller
                 'status' => $index === 0 ? 'signed' : 'pending',
                 'signed_at' => $index === 0 ? now() : null
             ]);
-
         }
     }
 
 
     protected function handleApproval(Project $project, ProjectDocument $document): void
     {
+        $this->ensureProjectEditable($project);
         $userId = auth()->id();
 
         $signature = $document->signatures()
@@ -412,11 +453,13 @@ abstract class BaseProjectDocumentController extends Controller
 
         $document->load('signatures','formType','project');
 
-        $this->notifyProjectHead(
-            $project,
-            $document,
-            auth()->user()->name.' approved the '.$document->formType->name.'.'
-        );
+        if ($document->status === 'approved') {
+            $message = $document->formType->name.' has been fully approved.';
+        } else {
+            $message = $document->formType->name.' was approved by '.auth()->user()->name.'.';
+        }
+
+        $this->notifyProjectHead($project, $document, $message);
 
         $this->notifyNextApprover($document);
 
@@ -436,18 +479,12 @@ abstract class BaseProjectDocumentController extends Controller
 
     protected function handleReturn(Project $project, ProjectDocument $document, string $remarks): void
     {
+        $this->ensureProjectEditable($project);
         DB::transaction(function () use ($document,$remarks){
 
             $oldStatus = $document->status;
 
-            foreach ($document->signatures as $signature) {
-
-                $signature->update([
-                    'status'=>'pending',
-                    'signed_at'=>null
-                ]);
-
-            }
+            $document->signatures()->delete();
 
             $document->update([
                 'status'=>'draft',
@@ -469,7 +506,7 @@ abstract class BaseProjectDocumentController extends Controller
         $this->notifyProjectHead(
             $project,
             $document,
-            'Your '.$document->formType->name.' was returned for revision by'
+            'Your '.$document->formType->name.' was returned for revision by '.auth()->user()->name.'.'
         );
 
         Audit::log(
@@ -493,6 +530,7 @@ abstract class BaseProjectDocumentController extends Controller
 
     public function retract(Project $project, $formCode)
     {
+        $this->ensureProjectEditable($project);
         $formType = FormType::where('code', $formCode)->firstOrFail();
 
         $document = ProjectDocument::with('signatures')
@@ -553,6 +591,9 @@ abstract class BaseProjectDocumentController extends Controller
 
     protected function handleRequestEdit(Project $project, ProjectDocument $document, string $remarks): void
     {
+
+        $this->ensureProjectEditable($project);
+
         if ($document->status !== 'approved_by_sacdev') {
             abort(403, 'Only SACDEV-approved documents can request edit.');
         }
@@ -579,6 +620,7 @@ abstract class BaseProjectDocumentController extends Controller
     {
         $oldStatus = $document->status;
         //dd($document);
+        $this->ensureProjectEditable($project);
 
         DB::transaction(function () use ($document, $project, $oldStatus) {
 
@@ -622,6 +664,8 @@ abstract class BaseProjectDocumentController extends Controller
 
     protected function handleRevertApproval(Project $project, ProjectDocument $document, string $remarks): void
     {
+        $this->ensureProjectEditable($project);
+
         if ($document->status !== 'approved') {
             abort(403, 'Only approved documents can be reverted.');
         }
@@ -658,8 +702,40 @@ abstract class BaseProjectDocumentController extends Controller
         $this->notifyProjectHead(
             $project,
             $document,
-            'SACDEV approval was reverted. Document is now pending SACDEV approval again.'
+            $document->formType->name.' approval was reverted. It is now pending SACDEV review again.'
         );
+    }
+
+
+    protected function resolveOrgDocumentRoute(ProjectDocument $document): string
+    {
+        $map = [
+            'PROJECT_PROPOSAL' => 'org.projects.documents.combined-proposal.create',
+            'BUDGET_PROPOSAL' => 'org.projects.documents.combined-proposal.create',
+
+            'OFF_CAMPUS_APPLICATION' => 'org.projects.documents.off-campus.create',
+
+            'SOLICITATION_APPLICATION' => 'org.projects.documents.solicitation.create',
+            'SELLING_APPLICATION' => 'org.projects.documents.selling.create',
+
+            'REQUEST_TO_PURCHASE' => 'org.projects.documents.request-to-purchase.create',
+
+            'FEES_COLLECTION_REPORT' => 'org.projects.documents.fees-collection.create',
+            'SELLING_ACTIVITY_REPORT' => 'org.projects.documents.selling-activity-report.create',
+            'SOLICITATION_SPONSORSHIP_REPORT' => 'org.projects.documents.solicitation-sponsorship-report.create',
+            'TICKET_SELLING_REPORT' => 'org.projects.documents.ticket-selling-report.create',
+
+            'DOCUMENTATION_REPORT' => 'org.projects.documents.documentation-report.create',
+            'LIQUIDATION_REPORT' => 'org.projects.documents.liquidation-report.create',
+            
+            
+            'POSTPONEMENT_NOTICE' => 'org.projects.documents.postponement.edit',
+            'CANCELLATION_NOTICE' => 'org.projects.documents.cancellation.edit',
+        ];
+
+        $routeName = $map[$document->formType->code] ?? 'org.projects.documents.hub';
+
+        return route($routeName, $document->project);
     }
 
 }

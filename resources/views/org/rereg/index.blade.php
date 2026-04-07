@@ -1,200 +1,184 @@
 <x-app-layout>
-    <div class="mx-auto max-w-6xl px-4 py-6">
+    <div class="mx-auto max-w-6xl px-4 py-6 space-y-6">
 
-        {{-- Header --}}
-        <div class="mb-6">
-            <h2 class="text-xl font-semibold text-slate-900">
-                Organization Re-Registration
-            </h2>
+        {{-- ================= HEADER ================= --}}
+        <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-5 shadow-sm">
 
-            <div class="text-sm text-slate-600 mt-1">
-                Select the target school year (SY) and complete required forms.
+            <div class="flex items-start justify-between gap-4">
+
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-900">
+                        Organization Re-Registration
+                    </h2>
+
+                    <p class="text-xs text-slate-500 mt-1">
+                        Complete all required forms to activate your organization for the selected school year.
+                    </p>
+                </div>
+
+                <div>
+                    @if($isActivated)
+                        <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+                            Registered
+                        </span>
+                    @elseif($allApproved)
+                        <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+                            Ready
+                        </span>
+                    @else
+                        <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                            In Progress
+                        </span>
+                    @endif
+                </div>
+
             </div>
+
         </div>
 
 
-        {{-- Status message --}}
+        {{-- ================= GUIDANCE ================= --}}
+        <div class="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 flex items-start gap-3">
+
+            <span class="text-blue-600 text-xs mt-0.5">i</span>
+
+            <div class="text-xs text-slate-700 space-y-1">
+                <p class="font-medium text-blue-700">How this works</p>
+                <ul class="list-disc ml-4 space-y-0.5">
+                    <li>Complete all required forms</li>
+                    <li>Wait for review and approval</li>
+                    <li>Once approved, your organization becomes active</li>
+                </ul>
+            </div>
+
+        </div>
+
+
+        {{-- ================= STATUS MESSAGES ================= --}}
         @if(session('error'))
-            <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                 {{ session('error') }}
             </div>
         @endif
 
         @if(session('success'))
-            <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                 {{ session('success') }}
             </div>
         @endif
 
         @if(session('status'))
-            <div class="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
                 {{ session('status') }}
             </div>
         @endif
 
 
-        {{-- Already activated --}}
+        {{-- ================= ALREADY ACTIVATED ================= --}}
         @if($isActivated)
-            <div class="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">
-                <div class="flex items-start justify-between gap-4">
-
-                    <div>
-                        <div class="text-sm font-semibold">
-                            Already Registered for this School Year
-                        </div>
-
-                        <div class="mt-1 text-sm text-emerald-800/90">
-                            This organization already has an activation record for the selected school year.
-                        </div>
+            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900 flex justify-between">
+                <div>
+                    <div class="text-sm font-semibold">
+                        Already Registered for this School Year
                     </div>
-
-                    <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-800">
-                        Registered
-                    </span>
-
+                    <div class="text-xs mt-1">
+                        This organization already has an activation record.
+                    </div>
                 </div>
+
+                <span class="text-xs font-semibold bg-emerald-100 px-3 py-1 rounded-full">
+                    Registered
+                </span>
             </div>
         @endif
 
 
-
-        {{-- School Year Selector --}}
-        <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-
-            <form method="POST"
-                  action="{{ route('org.rereg.setSy') }}"
-                  class="flex flex-col gap-3 sm:flex-row sm:items-end">
-
-                @csrf
-
-                <div class="flex-1">
-
-                    <label class="block text-sm font-medium text-slate-700">
-                        Encode / Target School Year
-                    </label>
-
-                    <select name="encode_school_year_id"
-                            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                            required>
-
-                        <option value="" disabled @selected(!$encodeSyId)>
-                            Select a school year...
-                        </option>
-
-                        @foreach($schoolYears as $sy)
-                            <option value="{{ $sy->id }}"
-                                @selected($encodeSyId && (int)$sy->id === (int)$encodeSyId)>
-                                {{ $sy->name ?? $sy->label ?? ('SY #' . $sy->id) }}
-                            </option>
-                        @endforeach
-
-                    </select>
-
-                </div>
-
-
-                <button class="inline-flex justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-                    Set SY
-                </button>
-
-            </form>
-
-        </div>
-
-
-
+        {{-- ================= NO SY ================= --}}
         @if(!$encodeSyId)
 
-            <div class="rounded-xl border border-slate-200 bg-white p-6 text-slate-700">
-                Please select a target school year to see and fill out the required forms.
+            <div class="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+                Please select a target school year to continue.
             </div>
 
         @else
 
 
-
-        {{-- Forms Grid --}}
+        {{-- ================= FORMS GRID ================= --}}
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 
             @foreach($forms as $key => $f)
 
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition">
 
                 <div class="flex items-start justify-between gap-4">
 
-                    {{-- Label --}}
-                    <div>
+                    {{-- LEFT --}}
+                    <div class="space-y-2">
 
-                        <div class="text-base font-semibold text-slate-900">
+                        <div class="text-sm font-semibold text-slate-900">
                             {{ $f['label'] }}
                         </div>
 
-                    <div class="mt-2 space-y-1">
-                        <div class="inline-flex items-center gap-2 text-sm font-medium text-slate-800">
+                        {{-- STATUS --}}
+                        <div class="inline-flex items-center gap-2 text-xs font-medium">
 
-                            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100">
-                                <span class="h-2.5 w-2.5 rounded-full {{ $f['badge']['dot'] ?? 'bg-slate-400' }}"></span>
+                            <span class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100">
+                                <span class="h-2 w-2 rounded-full {{ $f['badge']['dot'] ?? 'bg-slate-400' }}"></span>
                             </span>
 
-                            <span>
+                            <span class="text-slate-700">
                                 {{ $f['badge']['text'] }}
                             </span>
 
                         </div>
-                        @if(!empty($f['submitted_at']))
-                            <div class="text-xs text-slate-500">
-                                Submitted:
-                                {{ \Carbon\Carbon::parse($f['submitted_at'])->format('M d, Y — h:i A') }}
-                            </div>
-                        @endif
-                        @if(!empty($f['reviewed_at']))
-                            <div class="text-xs text-slate-500">
-                                Reviewed:
-                                {{ \Carbon\Carbon::parse($f['reviewed_at'])->format('M d, Y — h:i A') }}
-                            </div>
-                        @endif
-                        @if(!empty($f['approved_at']))
-                            <div class="text-xs text-emerald-600 font-medium">
-                                Approved:
-                                {{ \Carbon\Carbon::parse($f['approved_at'])->format('M d, Y — h:i A') }}
-                            </div>
-                        @endif
+
+                        {{-- TIMELINE --}}
+                        <div class="text-[10px] text-slate-500 space-y-0.5">
+
+                            @if(!empty($f['submitted_at']))
+                                <div>Submitted: {{ \Carbon\Carbon::parse($f['submitted_at'])->format('M d, Y') }}</div>
+                            @endif
+
+                            @if(!empty($f['reviewed_at']))
+                                <div>Reviewed: {{ \Carbon\Carbon::parse($f['reviewed_at'])->format('M d, Y') }}</div>
+                            @endif
+
+                            @if(!empty($f['approved_at']))
+                                <div class="text-emerald-600 font-medium">
+                                    Approved
+                                </div>
+                            @endif
+
+                        </div>
 
                     </div>
 
-                    </div>
 
+                    {{-- RIGHT ACTION --}}
+                    <div class="text-right space-y-2">
 
-
-                
-                    @if($key === 'b6')
-
-                        <div class="text-right space-y-2">
+                        {{-- CONSTITUTION --}}
+                        @if($key === 'b6')
 
                             @if($constitutionSubmission)
 
-                                {{-- Download button --}}
                                 <a href="{{ route('org.rereg.constitution.download', $constitutionSubmission) }}"
-                                class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                                class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50">
                                     Download
                                 </a>
 
-                                <div class="text-xs text-slate-500 truncate max-w-[200px]">
+                                <div class="text-[10px] text-slate-500 truncate max-w-[180px]">
                                     {{ $constitutionSubmission->original_filename }}
                                 </div>
 
                             @endif
 
-
-                            {{-- Upload / Replace button --}}
                             <form method="POST"
                                 action="{{ route('org.rereg.constitution.upload') }}"
                                 enctype="multipart/form-data">
-
                                 @csrf
 
-                                <label class="inline-flex items-center rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 cursor-pointer">
-
+                                <label class="inline-flex items-center rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 cursor-pointer">
                                     {{ $constitutionSubmission ? 'Replace' : 'Upload' }}
 
                                     <input type="file"
@@ -203,95 +187,70 @@
                                         required
                                         class="hidden"
                                         onchange="this.form.submit()">
-
                                 </label>
 
                             </form>
 
-                        </div>
+                        {{-- NORMAL --}}
+                        @elseif($key !== 'b5')
 
-
-                    {{-- Normal forms --}}
-                    @elseif($key !== 'b5')
-
-                        @if(!empty($f['editRoute']) && Route::has($f['editRoute']))
-
-                            <a href="{{ route($f['editRoute']) }}"
-                               class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-
-                                Open
-
-                            </a>
-
-                        @else
-
-                            <span class="text-xs text-slate-500">
-                                No action
-                            </span>
+                            @if(!empty($f['editRoute']) && Route::has($f['editRoute']))
+                                <a href="{{ route($f['editRoute']) }}"
+                                class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50">
+                                    Open
+                                </a>
+                            @else
+                                <span class="text-[10px] text-slate-400">
+                                    No action
+                                </span>
+                            @endif
 
                         @endif
 
-                    @endif
+                    </div>
 
                 </div>
 
 
-
-                {{-- Moderator info --}}
+                {{-- ================= MODERATOR ================= --}}
                 @if($key === 'b5')
 
                 <div class="mt-4 space-y-3">
 
-                    <div class="text-sm text-slate-600">
+                    <div class="text-xs text-slate-600">
                         This form is completed by the assigned moderator.
                     </div>
 
                     @php $mod = $b5Moderator ?? null; @endphp
 
+                    <div class="rounded-xl border border-blue-200 bg-blue-50 p-4">
 
-                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-
-                        <div class="text-sm font-semibold text-slate-900">
-                            Assigned moderator
+                        <div class="text-xs font-semibold text-slate-900">
+                            Assigned Moderator
                         </div>
-
 
                         @if($mod && $mod->user)
 
-                            <div class="mt-2 text-sm text-slate-700">
-                                <div>
-                                    <span class="text-slate-500">Name:</span>
-                                    {{ $mod->user->name }}
-                                </div>
-
-                                <div>
-                                    <span class="text-slate-500">Email:</span>
-                                    {{ $mod->user->email }}
-                                </div>
+                            <div class="mt-2 text-xs text-slate-700 space-y-1">
+                                <div>{{ $mod->user->name }}</div>
+                                <div class="text-slate-500">{{ $mod->user->email }}</div>
                             </div>
 
                         @else
 
-                            <div class="mt-2 text-sm text-slate-600">
+                            <div class="mt-2 text-xs text-slate-600">
                                 No moderator assigned yet.
                             </div>
 
                         @endif
 
-
                         @if(!empty($canAssignModerator) && $canAssignModerator)
-
                         <div class="mt-3">
-
                             <a href="{{ route('org.rereg.assign.moderator.edit') }}"
-                               class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-
-                                {{ ($mod && $mod->user) ? 'Change Moderator' : 'Assign Moderator' }}
-
+                            class="inline-flex items-center rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">
+                                {{ ($mod && $mod->user) ? 'Change' : 'Assign' }}
                             </a>
-
                         </div>
-
                         @endif
 
                     </div>
@@ -300,49 +259,62 @@
 
                 @endif
 
-
             </div>
 
             @endforeach
 
-        </div>
 
+            {{-- MEMBERS --}}
+            <a href="{{ route('org.organization-members.index') }}"
+            class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition">
 
+                <div class="flex justify-between items-center">
 
-        {{-- Footer --}}
-        <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div>
+                        <div class="text-sm font-semibold text-slate-900">
+                            Organization Members
+                        </div>
+                        <div class="text-xs text-slate-500 mt-1">
+                            Manage members for this school year.
+                        </div>
+                    </div>
 
-            <div class="flex items-center justify-between gap-4">
-
-                <div class="text-sm text-slate-600">
-
-                    @if($isActivated)
-                        Registration complete.
-                    @else
-                        All required forms including Organization Constitution must be approved.
-                    @endif
+                    <span class="text-xs font-semibold text-slate-700">
+                        Open →
+                    </span>
 
                 </div>
 
+            </a>
+
+        </div>
+
+
+        {{-- ================= FOOTER ================= --}}
+        <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-5 shadow-sm">
+
+            <div class="flex justify-between items-center">
+
+                <div class="text-xs text-slate-600">
+                    @if($isActivated)
+                        Registration complete.
+                    @else
+                        Complete all required forms and wait for approval.
+                    @endif
+                </div>
 
                 @if($isActivated)
-
-                    <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-800">
+                    <span class="text-xs font-semibold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">
                         Registered
                     </span>
-
                 @elseif($allApproved)
-
-                    <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-800">
-                        Ready for Registration
+                    <span class="text-xs font-semibold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">
+                        Ready
                     </span>
-
                 @else
-
-                    <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700">
-                        Not Yet Complete
+                    <span class="text-xs font-semibold bg-amber-100 text-amber-700 px-3 py-1 rounded-full">
+                        Incomplete
                     </span>
-
                 @endif
 
             </div>

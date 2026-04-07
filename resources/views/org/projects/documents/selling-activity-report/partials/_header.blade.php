@@ -1,138 +1,97 @@
-<div class="border border-slate-300 bg-white mb-6">
+@php
+    $accent = match($document?->status) {
+        'returned' => 'bg-rose-500',
+        'approved_by_sacdev' => 'bg-emerald-500',
+        'submitted' => 'bg-blue-500',
+        default => 'bg-slate-400'
+    };
+@endphp
 
-<div class="bg-slate-50 border-b border-slate-300 px-4 py-2">
+<div class="rounded-2xl border border-slate-200 
+    bg-gradient-to-r from-slate-50 via-white to-slate-50 
+    shadow-sm overflow-hidden">
 
-<div class="text-[12px] font-semibold text-slate-900 tracking-wide">
-Selling Activity Report
-</div>
+    <div class="h-1 {{ $accent }}"></div>
 
-</div>
+    <div class="px-6 pt-4 flex justify-end">
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+            Form A8-1
+        </span>
+    </div>
 
+    <div class="px-6 pb-6 text-center">
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
+            Selling Activity Report
+        </h1>
+        <p class="text-sm text-slate-500 mt-1 max-w-xl mx-auto">
+            Record and summarize the results of your selling activity.
+        </p>
+    </div>
 
-<div class="px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-[12px]">
+    <div class="bg-slate-50/80 border-y border-slate-200 px-6 py-2 text-center">
+        <span class="text-xs font-semibold text-slate-700 tracking-wide uppercase">
+            Activity Report Overview
+        </span>
+    </div>
 
-<div>
+    <div class="px-6 py-6">
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 text-center">
+            Project Title
+        </div>
 
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Organization
-</label>
+        <div class="text-center">
+            <h2 class="text-xl md:text-2xl font-semibold text-slate-900 tracking-tight">
+                {{ $project->title }}
+            </h2>
+        </div>
+    </div>
 
-<input
-type="text"
-value="{{ $project->organization->name }}"
-disabled
-class="mt-1 w-full border border-slate-300 px-3 py-1 text-[12px] bg-slate-50">
+    <div class="border-t border-slate-200 px-6 py-6">
 
-</div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
 
+            <div>
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Organization
+                </div>
 
-<div>
+                <div class="mt-2 text-sm md:text-base font-medium text-slate-900">
+                    {{ $project->organization->name ?? '—' }}
+                </div>
+            </div>
 
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Project Title
-</label>
+            <div>
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    School Year
+                </div>
 
-<input
-type="text"
-value="{{ $project->title }}"
-disabled
-class="mt-1 w-full border border-slate-300 px-3 py-1 text-[12px] bg-slate-50">
+                <div class="mt-2 text-sm md:text-base font-medium text-slate-900">
+                    {{ $project->schoolYear->name ?? '—' }}
+                </div>
+            </div>
 
-</div>
+            <div>
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Project Head
+                </div>
 
+                <div class="mt-2 text-sm md:text-base font-medium text-slate-900">
+                    {{ $project->projectHead?->user?->name ?? '—' }}
+                </div>
+            </div>
 
-<div>
+            <div>
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Report Date
+                </div>
 
-<label class="block text-[10px] font-medium text-blue-900 italic">
-School Year
-</label>
+                <div class="mt-2 text-sm md:text-base font-medium text-slate-900">
+                    {{ now()->format('F d, Y') }}
+                </div>
+            </div>
 
-<input
-type="text"
-value="{{ $project->schoolYear->name ?? '' }}"
-disabled
-class="mt-1 w-full border border-slate-300 px-3 py-1 text-[12px] bg-slate-50">
+        </div>
 
-</div>
-
-
-<div>
-
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Project Head
-</label>
-
-<input
-type="text"
-value="{{ $project->projectHead?->user?->name ?? '' }}"
-disabled
-class="mt-1 w-full border border-slate-300 px-3 py-1 text-[12px] bg-slate-50">
-
-</div>
-
-
-<div>
-
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Report Date
-</label>
-
-<input
-type="text"
-value="{{ now()->format('F d, Y') }}"
-disabled
-class="mt-1 w-full border border-slate-300 px-3 py-1 text-[12px] bg-slate-50">
-
-</div>
-
-
-<div>
-
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Selling Activity Name
-</label>
-
-<input
-type="text"
-name="activity_name"
-value="{{ old('activity_name', $data->activity_name ?? $project->title) }}"
-class="mt-1 w-full border border-slate-300 px-3 py-1 text-[12px]"
-@if($isReadOnly) disabled @endif>
-
-</div>
-
-
-<div>
-
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Selling From
-</label>
-
-<input
-type="date"
-name="selling_from"
-value="{{ old('selling_from', $data->selling_from ?? '') }}"
-class="mt-1 w-full border border-slate-300 px-3 py-1 text-[12px]"
-@if($isReadOnly) disabled @endif>
-
-</div>
-
-
-<div>
-
-<label class="block text-[10px] font-medium text-blue-900 italic">
-Selling To
-</label>
-
-<input
-type="date"
-name="selling_to"
-value="{{ old('selling_to', $data->selling_to ?? '') }}"
-class="mt-1 w-full border border-slate-300 px-3 py-1 text-[12px]"
-@if($isReadOnly) disabled @endif>
-
-</div>
-
-</div>
+    </div>
 
 </div>

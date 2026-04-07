@@ -1,245 +1,218 @@
 <x-app-layout>
 
-<div class="max-w-7xl mx-auto px-6 py-6 space-y-6">
+<div 
+    x-data="{ 
+        openAgreement: @json($needsAgreement),
+        helpOpen: false
+    }"
+>
+    @php
+        $clearanceHasFile = $clearance['has_file'] ?? !empty($project->clearance_file_path ?? null);
+        $clearanceRemarks = $clearance['remarks'] ?? ($project->clearance_remarks ?? null);
+        $clearanceCanUpload = $clearance['can_upload'] ?? (($clearance['is_project_head'] ?? false) && !($clearance['is_locked'] ?? false) && !($clearance['is_completed'] ?? false));
+        $clearanceStatus = $clearance['status'] ?? null;
+    @endphp
 
-    <div class="max-w-7xl mx-auto px-6 py-6">
+    {{-- ================= CONTAINER ================= --}}
+    <div class="max-w-7xl mx-auto px-4 py-6 space-y-4">
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {{-- ================= CLEARANCE WORKFLOW BANNER ================= --}}
+        @if($clearance['required'])
+            <div class="rounded-2xl border shadow-sm px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between
+                @if($clearanceStatus === 'rejected')
+                    border-rose-300 bg-rose-50
+                @elseif($clearanceHasFile)
+                    border-blue-300 bg-blue-50
+                @else
+                    border-amber-300 bg-amber-50
+                @endif
+            ">
 
-            {{-- LEFT: MAIN CONTENT --}}
-            <div class="lg:col-span-2 space-y-6">
+                {{-- LEFT --}}
+                <div class="flex items-start gap-3 min-w-0">
 
-                @include('org.projects.documents.v2.partials.header', ['header' => $header])
+                    {{-- ICON --}}
+                    <div class="mt-0.5">
+                        @if($clearanceStatus === 'rejected')
+                            <i data-lucide="x-circle" class="w-4 h-4 text-rose-600"></i>
+                        @elseif($clearanceHasFile)
+                            <i data-lucide="file-check" class="w-4 h-4 text-blue-600"></i>
+                        @else
+                            <i data-lucide="alert-circle" class="w-4 h-4 text-amber-600"></i>
+                        @endif
+                    </div>
+
+                    {{-- TEXT --}}
+                    <div class="min-w-0">
+                        <div class="text-xs font-semibold
+                            @if($clearanceStatus === 'rejected') text-rose-800
+                            @elseif($clearanceHasFile) text-blue-800
+                            @else text-amber-800
+                            @endif
+                        ">
+                            @if(!$clearanceHasFile)
+                                Off-Campus Clearance Required
+                            @elseif($clearanceStatus === 'pending')
+                                Clearance Uploaded — Awaiting Approval
+                            @elseif($clearanceStatus === 'rejected')
+                                Clearance Returned
+                            @elseif($clearanceStatus === 'verified')
+                                Clearance Approved
+                            @else
+                                Clearance In Progress
+                            @endif
+                        </div>
+
+                        <div class="mt-0.5 text-[11px]
+                            @if($clearanceStatus === 'rejected') text-rose-700
+                            @elseif($clearanceHasFile) text-blue-700
+                            @else text-amber-700
+                            @endif
+                        ">
+                            @if(!$clearanceHasFile)
+                                Generate the clearance form, secure signatures, then upload.
+                            @elseif($clearanceStatus === 'pending')
+                                Your clearance is under review.
+                            @elseif($clearanceStatus === 'rejected')
+                                Review remarks and upload again.
+                            @elseif($clearanceStatus === 'verified')
+                                Clearance approved.
+                            @endif
+                        </div>
+
+                        {{-- REMARKS --}}
+                        @if($clearanceStatus === 'rejected' && filled($clearanceRemarks))
+                            <div class="mt-2 rounded-lg border border-rose-200 bg-white/70 px-2.5 py-2">
+                                <div class="text-[10px] font-semibold uppercase text-rose-700">Remarks</div>
+                                <div class="mt-1 text-[11px] text-rose-800">
+                                    {{ $clearanceRemarks }}
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- ACTIONS --}}
+                <div class="flex items-center gap-2 shrink-0">
+
+                    <button @click="helpOpen = true"
+                        class="h-7 w-7 rounded-md border bg-white text-[11px] font-semibold shadow-sm hover:bg-slate-50">
+                        ?
+                    </button>
+
+                    @if(!$clearanceHasFile)
+                        <a href="{{ $clearance['print_url'] }}"
+                        class="px-3 py-1.5 rounded-md bg-amber-600 text-white text-[11px] hover:bg-amber-700 transition">
+                            Generate
+                        </a>
+                    @elseif($clearanceStatus === 'rejected' && $clearanceCanUpload)
+                        <a href="{{ $clearance['print_url'] }}"
+                        class="px-3 py-1.5 rounded-md bg-rose-600 text-white text-[11px] hover:bg-rose-700 transition">
+                            Review
+                        </a>
+                    @endif
+
+                </div>
+            </div>
+        @endif
+
+
+        {{-- ================= HEADER ================= --}}
+        @include('org.projects.documents.v2.partials.header', ['header' => $header])
+
+
+        {{-- ================= STATUS BANNERS ================= --}}
+        @if($header['is_completed'])
+            <div class="rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 shadow-sm">
+                <div class="flex items-start gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 mt-0.5"></i>
+                    <div>
+                        <div class="text-xs font-semibold text-emerald-800">
+                            Project Completed
+                        </div>
+                        <div class="text-[11px] mt-0.5 text-emerald-700">
+                            This project has been finalized. Submissions are now closed.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+
+        @if($header['is_cancelled'])
+            <div class="rounded-2xl border border-rose-300 bg-rose-50 px-4 py-3 shadow-sm">
+                <div class="flex items-start gap-2">
+                    <i data-lucide="slash" class="w-4 h-4 text-rose-600 mt-0.5"></i>
+                    <div>
+                        <div class="text-xs font-semibold text-rose-800">
+                            Project Cancelled
+                        </div>
+                        <div class="text-[11px] mt-0.5 text-rose-700">
+                            This project is cancelled. All submissions are locked.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+
+        {{-- ================= MAIN GRID ================= --}}
+        <div class="relative">
+
+            <div class="
+                grid grid-cols-1 lg:grid-cols-7 gap-4
+                @if($header['is_cancelled'])
+                    opacity-50 pointer-events-none select-none
+                @endif
+            ">
+
+            {{-- LEFT --}}
+            <div class="lg:col-span-5 space-y-4">
 
                 @include('org.projects.documents.v2.partials.snapshot')
 
-                @include('org.projects.documents.v2.partials.milestone', [
-                    'milestones' => $milestones,
-                    'currentStage' => $currentStage
+                @include('org.projects.documents.v2.partials.milestone')
+
+                {{-- DOCUMENT TABLE --}}
+                @include('org.projects.documents.v2.partials.document-table', [
+                    'documentsActionRequired' => $documentsActionRequired,
+                    'documentsInProgress' => $documentsInProgress,
+                    'documentsCompleted' => $documentsCompleted,
+                    'optional' => $sections['optional'] ?? collect(),
+                    'workflow' => $sections['workflow'] ?? collect(),
+                    'project' => $project,
+                    'preSubmitted' => (
+                        $proposalDoc && $proposalDoc->status !== 'draft'
+                        &&
+                        $budgetDoc && $budgetDoc->status !== 'draft'
+                    ),
                 ])
 
             </div>
 
 
-            {{-- RIGHT: SIDEBAR --}}
-            <div class="lg:col-span-1 space-y-6">
+            {{-- RIGHT SIDEBAR --}}
+            <div class="lg:col-span-2">
+                <div class="space-y-4 lg:sticky lg:top-6">
 
-                @include('org.projects.documents.v2.partials.actions')
+                    @include('org.projects.documents.v2.partials.actions')
 
-                @include('org.projects.documents.v2.partials.clearance-card')
+                    @include('org.projects.documents.v2.partials.clearance-card')
 
+                    @include('org.projects.documents.v2.partials.packet-placeholder')
+
+                </div>
             </div>
 
         </div>
+        </div>
+
+
+        {{-- ================= MODALS ================= --}}
+        @include('org.projects.documents.v2.partials.agreement')
+        @include('org.projects.documents.v2.partials.help')
 
     </div>
-
-
-
-    @php
-        $pre = $sections['pre'] ?? collect();
-        $required = $sections['required'] ?? collect();
-        $optional = $sections['optional'] ?? collect();
-        $workflow = $sections['workflow'] ?? collect();
-
-        //$proposalDoc = $project->proposalDocument;
-        //$budgetDoc = $project->budgetDocument ?? null;
-
-        $preSubmitted =
-            $proposalDoc && $proposalDoc->status !== 'draft'
-            &&
-            $budgetDoc && $budgetDoc->status !== 'draft';
-    @endphp
-
-    
-    @php
-        $requiredCount = $required->count();
-        $completedRequired = $required->filter(fn($f) => $f['document'] && $f['document']->status === 'approved_by_sacdev')->count();
-    @endphp
-
-    @php
-    function groupFormsByPhase($collection) {
-        $phaseOrder = [
-            'other',
-            'off-campus',
-            'post_implementation',
-            'notice',
-        ];
-
-        $grouped = $collection->groupBy(function ($form) {
-            return $form['phase'] ?? $form['document']?->formType->phase ?? 'other';
-        });
-
-        return collect($phaseOrder)
-            ->mapWithKeys(fn($phase) => [$phase => $grouped[$phase] ?? collect()])
-            ->filter(fn($group) => $group->isNotEmpty());
-    }
-
-    $phaseLabels = [
-        'other' => 'Supporting Documents',
-        'off-campus' => 'Off-Campus Requirements',
-        'post_implementation' => 'Post-Implementation',
-        'notice' => 'Notices / Adjustments',
-    ];
-    @endphp
-
-
-
-    <div class="bg-white border rounded-2xl p-4">
-        <div class="text-sm font-semibold text-slate-700">
-            Required Documents Progress
-        </div>
-
-        <div class="mt-2 text-xs text-slate-500">
-            {{ $completedRequired }} / {{ $requiredCount }} completed
-        </div>
-
-        <div class="mt-2 w-full bg-slate-100 rounded-full h-2">
-            <div class="bg-emerald-500 h-2 rounded-full"
-                style="width: {{ $requiredCount > 0 ? ($completedRequired / $requiredCount) * 100 : 0 }}%">
-            </div>
-        </div>
-    </div>
-
-    @if($required->contains(fn($f) => !$f['document']))
-        <div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs p-3 rounded-lg">
-            ⚠ Some required documents are still missing. Complete them before proceeding.
-        </div>
-    @endif
-
-
-
-    <div class="space-y-6">
-
-        {{-- ================= PRE IMPLEMENTATION (COMBINED) ================= --}}
-        <div class="bg-white border rounded-2xl p-5 shadow-sm">
-
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-sm font-semibold text-slate-800">
-                    Pre-Implementation
-                </h2>
-            </div>
-
-            @include('org.projects.documents.v2.partials.combined-pre-card')
-
-        </div>
-
-
-        @if($preSubmitted)
-
-            {{-- ================= REQUIRED ================= --}}
-            <div class="bg-white border rounded-2xl p-5 shadow-sm">
-
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-semibold text-slate-800">
-                        Required Forms
-                    </h2>
-                    <span class="text-xs text-slate-400">
-                        {{ count($required) }} items
-                    </span>
-                </div>
-
-                @foreach(groupFormsByPhase($required) as $phase => $forms)
-
-                    {{-- PHASE TITLE --}}
-                    <div class="mb-2 mt-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                        {{ $phaseLabels[$phase] ?? ucfirst(str_replace('_',' ', $phase)) }}
-                    </div>
-
-                    {{-- CARDS --}}
-                    <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-
-                        @foreach($forms as $form)
-                            @include('org.projects.documents.v2.partials.form-card', [
-                                'form' => $form,
-                                'type' => 'required'
-                            ])
-                        @endforeach
-
-                    </div>
-
-                @endforeach
-
-            </div>
-
-
-            {{-- ================= OPTIONAL ================= --}}
-            <div class="bg-white border rounded-2xl p-5 shadow-sm">
-
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-semibold text-slate-800">
-                        Optional Documents
-                    </h2>
-                </div>
-
-                @foreach(groupFormsByPhase($optional) as $phase => $forms)
-
-                    <div class="mb-2 mt-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                        {{ $phaseLabels[$phase] ?? ucfirst(str_replace('_',' ', $phase)) }}
-                    </div>
-
-                    <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-
-                        @foreach($forms as $form)
-                            @include('org.projects.documents.v2.partials.form-card', [
-                                'form' => $form,
-                                'type' => 'optional'
-                            ])
-                        @endforeach
-
-                    </div>
-
-                @endforeach
-
-            </div>
-
-
-            {{-- ================= APPROVED ================= --}}
-            <div class="bg-white border rounded-2xl p-5 shadow-sm">
-
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-semibold text-slate-800">
-                        Approved Documents
-                    </h2>
-                </div>
-
-                @php
-                    $approvedForms = $required->filter(fn($f) =>
-                        $f['document'] && $f['document']->status === 'approved_by_sacdev'
-                    );
-                @endphp
-
-                @foreach(groupFormsByPhase($approvedForms) as $phase => $forms)
-
-                    <div class="mb-2 mt-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                        {{ $phaseLabels[$phase] ?? ucfirst(str_replace('_',' ', $phase)) }}
-                    </div>
-
-                    <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-
-                        @foreach($forms as $form)
-                            @include('org.projects.documents.v2.partials.form-card', [
-                                'form' => $form,
-                                'type' => 'approved'
-                            ])
-                        @endforeach
-
-                    </div>
-
-                @endforeach
-
-            </div>
-
-        @else
-
-            <div class="bg-white border rounded-2xl p-6 text-center text-sm text-slate-500">
-                Other documents will be available once the Project Proposal and Budget Proposal are submitted.
-            </div>
-
-        @endif
-
-    </div>
-
-
+</div>
 
 </x-app-layout>

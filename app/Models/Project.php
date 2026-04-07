@@ -18,8 +18,13 @@ class Project extends Model
         'budget',
 
         'description', 
-
-        'source_strategic_plan_project_id',
+        
+        'clearance_snapshot',
+        'clearance_token',
+        'clearance_issued_at',
+        'clearance_revoked_at',
+        
+        'source_strategic_plan_project_id', 'status' , 'workflow_status',
 
         'requires_clearance',
         'clearance_reference',
@@ -30,6 +35,8 @@ class Project extends Model
         'clearance_uploaded_at',
         'clearance_verified_at',
         'clearance_remarks',
+
+        
 
         'implementation_start_date',
         'implementation_end_date',
@@ -48,14 +55,28 @@ class Project extends Model
         'clearance_required_at' => 'datetime',
         'clearance_uploaded_at' => 'datetime',
         'clearance_verified_at' => 'datetime',
+        'clearance_issued_at' => 'datetime',
+        'clearance_revoked_at' => 'datetime',
+        'clearance_snapshot' => 'array',
 
         'implementation_start_date' => 'date',
         'implementation_end_date' => 'date',
 
         'implementation_start_time' => 'datetime:H:i',
         'implementation_end_time' => 'datetime:H:i',
+
+
     ];
 
+    public function externalPackets()
+    {
+        return $this->hasMany(\App\Models\ExternalPacket::class);
+    }
+
+    public function sourceStrategicPlanProject()
+    {
+        return $this->belongsTo(StrategicPlanProject::class, 'source_strategic_plan_project_id');
+    }
 
     public function getImplementationDateDisplayAttribute(): ?string
     {

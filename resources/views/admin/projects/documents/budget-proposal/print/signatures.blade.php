@@ -7,155 +7,168 @@
         return $sigs[$role] ?? null;
     }
 
-    function digitalApproval($role, $sigs) {
+    function approvalLine($role, $sigs) {
         $s = $sigs[$role] ?? null;
 
         if (!$s || $s->status !== 'signed') {
-            return '
-                <div style="margin-top:8px; font-size:10px; color:#6b7280;">
-                    Digitally Approved via SACDEV System<br>
-                    Status: Pending
-                </div>
-            ';
+            return '<div style="font-size:10px; color:#9ca3af;">Pending Approval</div>';
         }
 
         return '
-            <div style="
-                margin-top:8px;
-                border-top:1px dashed #000;
-                padding-top:5px;
-                font-size:10px;
-                line-height:1.4;
-            ">
-                <div><strong>Digitally Approved via SACDEV System</strong></div>
-                <div>'.$s->user?->name.'</div>
-                <div>'.ucwords(str_replace('_',' ', $s->role)).'</div>
-                <div>'.$s->signed_at?->format('M d, Y h:i A').'</div>
+            <div style="font-size:10px; color:#2f6fb3; font-weight:600;">
+                ✔ Approved · '.$s->signed_at?->format('M d, Y h:i A').'
             </div>
         ';
     }
 @endphp
 
 
-<div style="margin-top:20px;">
+<div style="border:1px solid #2f6fb3; margin-top:15px;">
 
-    {{-- HEADER NOTE --}}
-    <div style="font-size:11px; margin-bottom:10px;">
-        <em>Original Signatures Required:</em>
+    {{-- HEADER --}}
+    <div style="
+        background:#2f6fb3;
+        color:#fff;
+        text-align:center;
+        font-weight:600;
+        font-size:12px;
+        padding:5px;
+    ">
+        SIGNATORIES
+        <div style="font-size:10px; font-weight:400;">
+            (System Approval Certification)
+        </div>
     </div>
 
-    <table style="width:100%; border-collapse:collapse; font-size:11px;">
 
-        {{-- ROW 1 --}}
-        <tr>
+    {{-- GRID --}}
+    <div style="display:grid; grid-template-columns:1fr 1fr;">
 
-            {{-- PREPARED --}}
-            <td style="width:50%; padding:15px; vertical-align:top;">
+        {{-- PREPARED --}}
+        <div style="border-right:1px solid #2f6fb3; padding:8px; page-break-inside: avoid;
+break-inside: avoid;">
 
-                <div>Prepared by:</div>
+            <div style="font-size:11px;">
+                <strong>Prepared by:</strong>
+            </div>
 
-                <div style="margin-top:40px; font-weight:bold;">
-                    SIGNATURE OVER FULL NAME
-                </div>
+            {!! approvalLine('project_head', $sigs) !!}
 
-                <div>
-                    Project Head
-                </div>
+            <div style="margin-top:8px; font-weight:600;">
+                {{ sig('project_head', $sigs)?->user?->name ?? '—' }}
+            </div>
 
-                {!! digitalApproval('project_head', $sigs) !!}
+            <div style="font-size:11px;">
+                Project Head
+            </div>
 
-            </td>
-
-
-            {{-- ENDORSED --}}
-            <td style="width:50%; padding:15px; vertical-align:top;">
-
-                <div>Endorsed by:</div>
-
-                {{-- PRESIDENT --}}
-                <div style="margin-top:30px; font-weight:bold;">
-                    SIGNATURE OVER FULL NAME
-                </div>
-
-                <div>President</div>
-
-                {!! digitalApproval('president', $sigs) !!}
-
-            </td>
-
-        </tr>
+        </div>
 
 
-        {{-- ROW 2 --}}
-        <tr>
+        {{-- PRESIDENT --}}
+        <div style="padding:8px; page-break-inside: avoid;
+break-inside: avoid;">
 
-            {{-- TREASURER (BUDGET & FINANCE) --}}
-            <td style="padding:15px; vertical-align:top;">
+            <div style="font-size:11px;">
+                <strong>Endorsed by:</strong>
+            </div>
 
-                <div>Endorsed by:</div>
+            {!! approvalLine('president', $sigs) !!}
 
-                <div style="margin-top:30px; font-weight:bold;">
-                    SIGNATURE OVER FULL NAME
-                </div>
+            <div style="margin-top:8px; font-weight:600;">
+                {{ sig('president', $sigs)?->user?->name ?? '—' }}
+            </div>
 
-                <div>Budget and Finance Officer (Treasurer)</div>
+            <div style="font-size:11px;">
+                President
+            </div>
 
-                {!! digitalApproval('treasurer', $sigs) !!}
+        </div>
 
-            </td>
-
-
-            {{-- MODERATOR --}}
-            <td style="padding:15px; vertical-align:top;">
-
-                <div>&nbsp;</div>
-
-                <div style="margin-top:30px; font-weight:bold;">
-                    SIGNATURE OVER FULL NAME
-                </div>
-
-                <div>Moderator</div>
-
-                {!! digitalApproval('moderator', $sigs) !!}
-
-            </td>
-
-        </tr>
+    </div>
 
 
-        {{-- ROW 3 --}}
-        <tr>
+    {{-- SECOND ROW --}}
+    <div style="
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        border-top:1px solid #2f6fb3;
+    ">
 
-            {{-- APPROVED --}}
-            <td style="padding:15px; vertical-align:top;">
+        {{-- TREASURER --}}
+        <div style="padding:8px; border-right:1px solid #2f6fb3; page-break-inside: avoid;
+break-inside: avoid;">
 
-                <div>Approved by:</div>
+            {!! approvalLine('treasurer', $sigs) !!}
 
-                <div style="margin-top:30px; font-weight:bold;">
-                    FULL NAME OVER SIGNATURE
-                </div>
+            <div style="margin-top:6px; font-weight:600;">
+                {{ sig('treasurer', $sigs)?->user?->name ?? '—' }}
+            </div>
 
-                <div>OSA-SACDEV</div>
+            <div style="font-size:11px;">
+                Budget and Finance Officer (Treasurer)
+            </div>
 
-                {!! digitalApproval('sacdev_admin', $sigs) !!}
-
-            </td>
+        </div>
 
 
-            {{-- REMARKS --}}
-            <td style="padding:15px; vertical-align:top;">
+        {{-- MODERATOR --}}
+        <div style="padding:8px; page-break-inside: avoid;
+break-inside: avoid;">
 
-                <div><strong>Remarks:</strong></div>
+            {!! approvalLine('moderator', $sigs) !!}
 
-                <div style="margin-top:20px;">
-                    {{ $document->remarks ?? '—' }}
-                </div>
+            <div style="margin-top:6px; font-weight:600;">
+                {{ sig('moderator', $sigs)?->user?->name ?? '—' }}
+            </div>
 
-            </td>
+            <div style="font-size:11px;">
+                Moderator
+            </div>
 
-        </tr>
+        </div>
 
-    </table>
+    </div>
+
+
+    {{-- FINAL ROW --}}
+    <div style="
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        border-top:1px solid #2f6fb3;
+    ">
+
+        {{-- SACDEV --}}
+        <div style="padding:8px; border-right:1px solid #2f6fb3; page-break-inside: avoid;
+break-inside: avoid;">
+
+            <strong style="font-size:11px;">Approved by:</strong>
+
+            {!! approvalLine('sacdev_admin', $sigs) !!}
+
+            <div style="margin-top:6px; font-weight:600;">
+                {{ sig('sacdev_admin', $sigs)?->user?->name ?? '—' }}
+            </div>
+
+            <div style="font-size:11px;">
+                OSA-SACDEV
+            </div>
+
+        </div>
+
+
+        {{-- REMARKS --}}
+        <div style="padding:8px;">
+
+            <strong style="font-size:11px;">Remarks:</strong>
+
+            <div style="margin-top:6px; font-size:12px;">
+                {{ $document->remarks ?? '—' }}
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
 

@@ -6,7 +6,7 @@
 <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm mb-4">
     <div class="flex items-center justify-between gap-3">
         <div>
-            <h3 class="text-base font-semibold text-slate-900">Continuing Education</h3>
+            <h3 class="text-base font-semibold text-slate-900">Continuing Education <span class="text-xs text-slate-400"> (Optional)</span></h3> 
             <p class="mt-1 text-sm text-slate-600">Seminars / trainings attended.</p>
         </div>
 

@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminMajorOfficerController;
+use App\Http\Controllers\Admin\AdminMemberController;
+use App\Http\Controllers\Admin\AdminOfficerController;
 use App\Http\Controllers\Admin\AdminOrgBySyController;
 use App\Http\Controllers\Admin\AdminOrgReviewController;
 use App\Http\Controllers\Admin\AdminPacketController;
@@ -19,17 +21,12 @@ use App\Http\Controllers\Admin\SacdevB5ModeratorSubmissionController;
 use App\Http\Controllers\Admin\SacdevStrategicPlanController;
 use App\Http\Controllers\Admin\SchoolYearController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\AdminExternalPacketController;
 use App\Http\Controllers\OrgConstitutionSubmissionController;
 use App\Http\Controllers\SACDEV\SacdevB2PresidentRegistrationController;
+use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 
-
-
-/*
-|--------------------------------------------------------------------------
-| BASIC MANAGEMENT (ALREADY OK)
-|--------------------------------------------------------------------------
-*/
 
 Route::middleware(['auth', 'sacdev_admin', 'must_change_password'])
     ->prefix('admin')
@@ -51,23 +48,70 @@ Route::middleware(['auth', 'sacdev_admin', 'must_change_password'])
 
     });
 
+Route::middleware(['auth','sacdev_admin','must_change_password'])
+    ->group(function () {
 
 
-/*
-|--------------------------------------------------------------------------
-| MAIN ADMIN SYSTEM
-|--------------------------------------------------------------------------
-*/
+    Route::prefix('/admin/projects/{project}/external-packets')
+        ->middleware(['permission:projects.view'])
+        ->group(function () {
+
+        Route::get('/', [AdminExternalPacketController::class, 'index'])
+            ->name('admin.external-packets.index');
+
+        Route::get('/create', [AdminExternalPacketController::class, 'create'])
+            ->name('admin.external-packets.create');
+
+        Route::post('/', [AdminExternalPacketController::class, 'store'])
+            ->name('admin.external-packets.store');
+
+        Route::get('/{packet}', [AdminExternalPacketController::class, 'show'])
+            ->name('admin.external-packets.show');
+
+        Route::get('/{packet}/print', [AdminExternalPacketController::class, 'print'])
+            ->name('admin.external-packets.print');
+
+        Route::post('/{packet}/submit', [AdminExternalPacketController::class, 'submit'])
+            ->name('admin.external-packets.submit');
+
+        Route::delete('/{packet}', [AdminExternalPacketController::class, 'archive'])
+            ->name('admin.external-packets.archive');
+    });
+
+
+
+    Route::prefix('/admin/external-packets')
+        ->middleware(['permission:projects.view'])
+        ->group(function () {
+
+        // QR + manual search page
+        Route::get('/receive', [AdminExternalPacketController::class, 'receivePage'])
+            ->name('admin.external-packets.receive');
+
+        // search form submit (optional helper)
+        Route::post('/receive/lookup', [AdminExternalPacketController::class, 'lookup'])
+            ->name('admin.external-packets.lookup');
+
+        // process packet (approve/return items)
+        Route::post('/{packet}/process', [AdminExternalPacketController::class, 'processReceive'])
+            ->name('admin.external-packets.process');
+    });
+
+});
+
+Route::get('/admin/organizations/{organization}/open', [OrganizationController::class, 'open'])
+    ->middleware(['auth', 'sacdev_admin', 'must_change_password', 'permission:projects.view'])
+    ->name('organizations.open');
+
+Route::get('/search', [SearchController::class, 'index'])
+    ->middleware(['auth', 'sacdev_admin', 'must_change_password'])
+    ->name('search.index');
 
 Route::prefix('admin')
     ->middleware(['auth', 'sacdev_admin', 'must_change_password'])
     ->group(function () {
 
-        /*
-        |--------------------------------------------------------------------------
-        | DASHBOARD + VIEW
-        |--------------------------------------------------------------------------
-        */
+
         Route::middleware('permission:projects.view')->group(function () {
 
             Route::get('/', [AdminDashboardController::class, 'index'])
@@ -94,11 +138,7 @@ Route::prefix('admin')
         });
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | CONTEXT MANAGEMENT
-        |--------------------------------------------------------------------------
-        */
+
         Route::middleware('permission:context.manage')->group(function () {
 
             Route::resource('school-years', SchoolYearController::class)
@@ -134,11 +174,7 @@ Route::prefix('admin')
         });
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | STRATEGIC PLANS
-        |--------------------------------------------------------------------------
-        */
+
         Route::prefix('strategic-plans')->name('admin.strategic_plans.')->group(function () {
 
             Route::get('/', [SacdevStrategicPlanController::class, 'index'])
@@ -167,11 +203,7 @@ Route::prefix('admin')
             ->middleware('permission:projects.approve')->name('admin.constitution.approve');
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | SACDEV VIEW
-        |--------------------------------------------------------------------------
-        */
+
         Route::prefix('sacdev')->name('sacdev.')->group(function () {
 
             Route::get('/rereg', [\App\Http\Controllers\Sacdev\SacdevReregOverviewController::class, 'index'])
@@ -181,14 +213,22 @@ Route::prefix('admin')
             Route::post('/rereg/set-sy', [\App\Http\Controllers\Sacdev\SacdevReregOverviewController::class, 'setSy'])
                 ->middleware('permission:projects.view')
                 ->name('rereg.setSy');
+
+            Route::get('/officers', [AdminOfficerController::class, 'index'])
+                ->middleware('permission:projects.view')
+                ->name('officers.index');
+
+            Route::put('/officers/{officer}/override-suspension',
+                [AdminOfficerController::class, 'overrideSuspension'])->middleware('permission:projects.approve')->name('officers.override-suspension');
+
+            Route::put('/officers/{officer}/suspend',
+                [AdminOfficerController::class, 'suspend'])->middleware('permission:projects.approve')->name('officers.suspend');                
+
+            Route::get('/members', [AdminMemberController::class, 'index'])
+                ->middleware('permission:projects.view')->name('members.index');               
         });
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | PRESIDENT REGISTRATION
-        |--------------------------------------------------------------------------
-        */
         Route::prefix('president-registrations')->name('admin.b2.president.')->group(function () {
 
             Route::get('/', [SacdevB2PresidentRegistrationController::class, 'index'])
@@ -205,11 +245,6 @@ Route::prefix('admin')
         });
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | OFFICER SUBMISSIONS
-        |--------------------------------------------------------------------------
-        */
         Route::prefix('officer-submissions')->name('admin.officer_submissions.')->group(function () {
 
             Route::get('/', [SacdevB3OfficerSubmissionController::class, 'index'])
@@ -230,11 +265,7 @@ Route::prefix('admin')
         });
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | MEMBER LISTS (VIEW)
-        |--------------------------------------------------------------------------
-        */
+
         Route::prefix('member-lists')->name('admin.member_lists.')->group(function () {
 
             Route::get('/', [SacdevB4MemberListController::class, 'index'])
@@ -245,11 +276,6 @@ Route::prefix('admin')
         });
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | MODERATOR SUBMISSIONS
-        |--------------------------------------------------------------------------
-        */
         Route::prefix('moderator-submissions')->name('admin.moderator_submissions.')->group(function () {
 
             Route::get('/', [SacdevB5ModeratorSubmissionController::class, 'index'])
@@ -274,12 +300,6 @@ Route::prefix('admin')
 
 
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | PROJECTS + DOCUMENTS
-        |--------------------------------------------------------------------------
-        */
         Route::middleware('permission:projects.view')->group(function () {
 
 
@@ -331,22 +351,18 @@ Route::prefix('admin')
 
                 Route::post('/{organization}/major-officers',
                     [AdminMajorOfficerController::class, 'update'])
+                    ->middleware('permission:projects.approve')
                     ->name('major_officers.update');
             });
 
             Route::post('/orgs-by-sy/{organization}/major-officers/{role}',
                 [AdminMajorOfficerController::class, 'updateRole'])
+                ->middleware('permission:projects.approve')
                 ->name('admin.orgs_by_sy.major_officers.update_role');
         });
 
 
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | DOCUMENT ACTIONS
-        |--------------------------------------------------------------------------
-        */
         Route::middleware('permission:documents.manage')->group(function () {
 
 
@@ -401,13 +417,12 @@ Route::prefix('admin')
         });
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | CLEARANCE
-        |--------------------------------------------------------------------------
-        */
         Route::middleware('permission:projects.approve')->group(function () {
 
+            Route::post(
+                '/projects/{project}/mark-complete',
+                [AdminProjectDocumentController::class, 'markComplete']
+            )->name('admin.projects.mark-complete');
             Route::post(
                 '/projects/{project}/require-clearance',
                 [AdminProjectController::class, 'requireClearance']
@@ -428,11 +443,6 @@ Route::prefix('admin')
         });
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | PACKETS
-        |--------------------------------------------------------------------------
-        */
         Route::prefix('packets')->name('admin.packets.')->middleware('permission:documents.manage')->group(function () {
 
             Route::get('/receive', [AdminPacketController::class, 'receivePage'])->name('receive');

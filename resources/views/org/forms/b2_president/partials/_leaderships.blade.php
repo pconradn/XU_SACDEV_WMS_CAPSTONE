@@ -6,7 +6,7 @@
 <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm mb-4">
     <div class="flex items-center justify-between gap-3">
         <div>
-            <h3 class="text-base font-semibold text-slate-900">Leadership Involvement</h3>
+            <h3 class="text-base font-semibold text-slate-900">Leadership Involvement <span class="text-xs text-slate-400"> (Optional)</span></h3>
             <p class="mt-1 text-sm text-slate-600">Add as many as needed.</p>
         </div>
 

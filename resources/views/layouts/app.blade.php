@@ -3,7 +3,8 @@
 
 @include('layouts.partials._head')
 
-<body class="font-sans antialiased bg-slate-100 text-slate-900">
+<body class="font-sans antialiased text-slate-900"
+      style="background: linear-gradient(to bottom, #f8fafc, #f1f5f9);">
 
 <div id="page-loader" class="fixed inset-0 z-[9999] flex items-center justify-center bg-white">
     <div class="loader"></div>
@@ -52,16 +53,39 @@ $activeSy = \App\Models\SchoolYear::activeYear();
 
     .content-frame {
         background: #ffffff;
-        border: 1px solid rgb(226 232 240);
+        border: 1px solid rgb(226 232 240 / 0.7);
         border-radius: 1.25rem;
         padding: 1.5rem;
-        box-shadow: 0 8px 28px -12px rgb(15 23 42 / 0.08);
+        box-shadow: 0 12px 30px -12px rgb(15 23 42 / 0.12);
         min-height: calc(100vh - 120px);
     }
 
     .content-frame.soft {
         background: rgb(248 250 252);
     }
+
+    .custom-sidebar-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+    }
+
+    .custom-sidebar-scroll::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .custom-sidebar-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .custom-sidebar-scroll::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.20);
+        border-radius: 9999px;
+    }
+
+    .custom-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+        background: rgba(148, 163, 184, 0.35);
+    }
+
 </style>
 
 
@@ -82,13 +106,16 @@ $activeSy = \App\Models\SchoolYear::activeYear();
 
 
 
-        {{-- PAGE CONTENT --}}
-        <main class="flex-1 overflow-y-auto p-6">
+        <main class="flex-1 overflow-y-auto p-0 sm:p-1 md:p-2">
 
-            <div class="max-w-7xl mx-auto">
+            <div class="min-w-[1100px]">
 
-                <div class="content-frame">
-                    @include('layouts.partials._content-wrapper')
+                <div class="max-w-7xl mx-auto">
+
+                    <div class="content-frame">
+                        @include('layouts.partials._content-wrapper')
+                    </div>
+
                 </div>
 
             </div>
@@ -206,6 +233,10 @@ document.addEventListener('submit', function () {
         loader.style.display = 'flex';
     }
 });
+</script>
+
+<script>
+    lucide.createIcons();
 </script>
 
 </body>

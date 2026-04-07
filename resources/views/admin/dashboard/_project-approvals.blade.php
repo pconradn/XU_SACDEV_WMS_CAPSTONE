@@ -3,74 +3,108 @@
         'pre_implementation' => 'bg-emerald-100 text-emerald-700',
         'off-campus' => 'bg-purple-100 text-purple-700',
         'post_implementation' => 'bg-blue-100 text-blue-700',
-        'notice' => 'bg-red-100 text-red-700',
-        'default' => 'bg-yellow-100 text-yellow-700',
+        'notice' => 'bg-rose-100 text-rose-700',
+        'completion' => 'bg-emerald-100 text-emerald-800', // NEW
+        'default' => 'bg-amber-100 text-amber-700',
     ];
 @endphp
 
-<div class="hidden">
-    bg-blue-100 text-blue-700
-    bg-purple-100 text-purple-700
-    bg-emerald-100 text-emerald-700
-    bg-red-100 text-red-700
-    bg-yellow-100 text-yellow-700
-</div>
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm overflow-hidden">
 
-<div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+    {{-- HEADER --}}
+    <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
 
-    <div class="px-5 py-4 border-b flex justify-between items-center bg-slate-50">
-        <h3 class="text-sm font-semibold text-slate-900">
-            Project Approvals
-        </h3>
+        <div class="flex items-center gap-2">
+            {{-- Lucide --}}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
 
-        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-slate-200 text-slate-700">
-            {{ $projectApprovals->count() }} projects
+            <div>
+                <div class="text-xs font-semibold text-slate-900">
+                    Project Approvals
+                </div>
+                <div class="text-[10px] text-slate-500">
+                    Pending approvals and completion-ready projects
+                </div>
+            </div>
+        </div>
+
+        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+            {{ $projectApprovals->count() }}
         </span>
+
     </div>
 
-    <div class="divide-y max-h-[420px] overflow-y-auto">
+    {{-- LIST --}}
+    <div class="divide-y divide-slate-100 max-h-[380px] overflow-y-auto">
 
         @forelse($projectApprovals as $task)
+
+            @php
+                $isCompletion = $task->is_completion ?? false;
+            @endphp
+
             <a href="{{ $task->route }}"
-               class="block px-5 py-4 hover:bg-slate-50 hover:shadow-sm transition-all">
+               class="block px-4 py-3 transition
+                      {{ $isCompletion ? 'bg-emerald-50 hover:bg-emerald-100/50' : 'hover:bg-slate-50' }}">
 
-                <div class="flex items-center justify-between">
+                {{-- TOP --}}
+                <div class="flex items-start justify-between gap-2">
 
-                    <div class="text-sm font-semibold text-slate-900">
-                        {{ $task->project->title }}
+                    <div class="min-w-0">
+                        <div class="text-xs font-semibold text-slate-900 truncate">
+                            {{ $task->project->title }}
+                        </div>
+
+                        <div class="text-[10px] text-slate-500">
+                            {{ $task->organization->name ?? '' }}
+                        </div>
                     </div>
 
-                    @if($task->count > 1)
-                        <span class="text-[10px] px-2 py-1 rounded-full bg-amber-100 text-amber-700 font-semibold">
+                    {{-- RIGHT BADGE --}}
+                    @if($isCompletion)
+                        <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold">
+                            Ready
+                        </span>
+                    @elseif($task->count > 1)
+                        <span class="text-[9px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">
                             {{ $task->count }} pending
                         </span>
                     @endif
 
                 </div>
 
-                <div class="text-xs text-slate-500 mt-1">
-                    {{ $task->organization->name ?? '' }}
+                {{-- META --}}
+                <div class="flex items-center justify-between mt-1">
+
+                    <div class="text-[10px] text-slate-400">
+                        {{ optional($task->project->implementation_start_date)->format('M d, Y') }}
+                    </div>
+
+                    <div class="text-slate-300">
+                        →
+                    </div>
+
                 </div>
 
-                <div class="text-[11px] text-slate-400 mt-1">
-                    {{ optional($task->project->implementation_start_date)->format('M d, Y') }}
-                </div>
-
-                <div class="flex flex-wrap gap-1 mt-3 max-h-[60px] overflow-y-auto pr-1">
+                {{-- FORMS --}}
+                <div class="flex flex-wrap gap-1 mt-2">
 
                     @foreach($task->forms as $form)
-
-                        <span class="text-[10px] px-2 py-1 rounded-full font-semibold {{ $classes[$form['phase']] ?? $classes['default'] }}">
+                        <span class="text-[9px] px-2 py-0.5 rounded-full font-semibold
+                            {{ $classes[$form['phase']] ?? $classes['default'] }}">
                             {{ $form['name'] }}
                         </span>
-
                     @endforeach
 
                 </div>
 
             </a>
+
         @empty
-            <div class="px-5 py-4 text-sm text-slate-500">
+            <div class="px-4 py-3 text-xs text-slate-500">
                 No pending approvals
             </div>
         @endforelse

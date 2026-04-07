@@ -1,13 +1,34 @@
 <div style="margin-bottom:15px;">
 
     {{-- TOP LEFT NOTES --}}
-    <div style="font-size:11px; margin-bottom:10px;">
-        <em>Your org letterhead here.</em><br>
-        <em>Please use A4 paper.</em>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:6px 10px; font-size:11px;">
+
+        {{-- LEFT --}}
+        <div style="font-size:11px; margin-bottom:10px;">
+            <em></em><br>
+            <em>Please use A4 paper.</em>
+        </div>
+
+        {{-- RIGHT (STACKED) --}}
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+
+            {{-- QR --}}
+            @if($document->verification_url)
+                <div style="text-align:center;">
+                    {!! QrCode::size(70)->generate($document->verification_url) !!}
+
+                    <div style="font-size:9px; margin-top:2px; color:#555;">
+                        Scan to verify
+                    </div>
+                </div>
+            @endif
+
+        </div>
+
     </div>
 
     {{-- TITLE --}}
-    <div style="text-align:center; margin-bottom:6px;">
+    <div style="text-align:center; margin-bottom:6px; margin-top:-20px">
         <div style="font-size:20px; font-weight:bold; letter-spacing:0.5px;">
             BUDGET PROPOSAL
         </div>

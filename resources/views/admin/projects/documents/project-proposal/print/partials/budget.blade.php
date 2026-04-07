@@ -102,9 +102,9 @@
                 @php
                     $counterpartAmount = $existingFunds['Counterpart'] ?? null;
                 @endphp
-
+                @dd($proposal->budgetDocument->counterpart_amount_per_pax )
                 <div>
-                    {{ $counterpartAmount ? 'Php ' . number_format($counterpartAmount, 2) : '—' }}
+                    {{ $proposal->budgetDocument->counterpart_amount_per_pax }}
                 </div>
 
             </td>

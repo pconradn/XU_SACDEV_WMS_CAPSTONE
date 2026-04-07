@@ -80,8 +80,36 @@ class RequestToPurchaseController extends BaseProjectDocumentController
 
     public function store(Request $request, Project $project)
     {
+ 
+        $items = collect($request->items)->map(function ($item) {
+            return [
+                ...$item,
+                'quantity' => isset($item['quantity'])
+                    ? (int) str_replace(',', '', $item['quantity'])
+                    : 0,
 
-        $request->validate([
+                'unit_price' => isset($item['unit_price'])
+                    ? (float) str_replace(',', '', $item['unit_price'])
+                    : 0,
+            ];
+        });
+
+        $request->merge([
+            'items' => $items->toArray(),
+
+            'xu_finance_amount' => str_replace(',', '', $request->xu_finance_amount),
+            'membership_fee_amount' => str_replace(',', '', $request->membership_fee_amount),
+            'pta_amount' => str_replace(',', '', $request->pta_amount),
+            'solicitations_amount' => str_replace(',', '', $request->solicitations_amount),
+            'others_amount' => str_replace(',', '', $request->others_amount),
+        ]);
+
+
+
+
+
+        
+        $validator = \Validator::make($request->all(), [
 
             'items.*.quantity' => ['required','integer'],
             'items.*.unit' => ['nullable','string','max:50'],
@@ -90,6 +118,16 @@ class RequestToPurchaseController extends BaseProjectDocumentController
             'items.*.vendor' => ['nullable','string','max:255'],
 
         ]);
+
+        if ($validator->fails()) {
+
+            $this->getOrCreateDocument($project, 'REQUEST_TO_PURCHASE');
+
+            return back()
+                ->with('warning', 'Form has errors. Saved as draft instead.')
+                ->withErrors($validator)
+                ->withInput();
+        }
 
 
         $document = $this->getOrCreateDocument($project, 'REQUEST_TO_PURCHASE');
@@ -196,6 +234,29 @@ class RequestToPurchaseController extends BaseProjectDocumentController
         if ($document->status !== 'draft' && !$document->edit_mode) {
             return back()->with('error', 'This form cannot be submitted.');
         }
+
+        $activeSy = \App\Models\SchoolYear::activeYear();
+
+        if (!$activeSy) {
+            return back()->with('error', 'No active school year is currently set.');
+        }
+
+        $isRegistered = \App\Models\OrganizationSchoolYear::where('organization_id', $project->organization_id)
+            ->where('school_year_id', $activeSy->id)
+            ->exists();
+
+        if (!$isRegistered) {
+
+            $document->update([
+                'status' => 'draft'
+            ]);
+
+            return back()->with('warning', 
+                'Organization is not registered for this school year. Saved as draft instead.'
+            );
+        }
+
+
 
         $this->handleRequestSubmit($project, $document);
 

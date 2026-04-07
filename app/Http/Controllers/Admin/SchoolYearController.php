@@ -14,9 +14,7 @@ class SchoolYearController extends Controller
     public function index()
     {
         $schoolYears = SchoolYear::query()
-            ->orderByDesc('is_active')
-            ->orderByDesc('start_date')
-            ->orderByDesc('id')
+            ->orderBy('start_date')
             ->get();
 
         return view('admin.school_years.index', compact('schoolYears'));

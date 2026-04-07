@@ -10,15 +10,19 @@
         </p>
     </div>
 
-
     <div class="px-6 py-6 space-y-4">
 
+        {{-- HELPER --}}
+        <p class="text-[11px] text-slate-400">
+            Enter all expenses. Amount fields will automatically format with commas. Scroll horizontally if needed on smaller screens.
+        </p>
+
         {{-- TABLE --}}
-        <div class="overflow-x-auto rounded-xl border border-slate-200">
+        <div class="overflow-x-auto overflow-y-auto max-h-[500px] rounded-xl border border-slate-200">
 
-            <table class="w-full text-sm" id="expensesTable">
+            <table class="min-w-[900px] w-full text-sm" id="expensesTable">
 
-                <thead class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wide">
+                <thead class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wide sticky top-0 z-10">
                     <tr>
                         <th class="px-3 py-2 text-left">Date</th>
                         <th class="px-3 py-2 text-left">Particulars</th>
@@ -56,7 +60,6 @@
                             </td>
                         </tr>
 
-                        {{-- ROWS --}}
                         @foreach($rows as $row)
 
                         <tr data-section="{{ $section }}" class="hover:bg-slate-50">
@@ -84,12 +87,12 @@
 
                             {{-- AMOUNT --}}
                             <td class="px-2 py-1">
-                                <input type="number"
-                                    step="0.01"
-                                    name="items[{{ $index }}][amount]"
-                                    value="{{ $row->amount }}"
-                                    placeholder="0.00"
-                                    class="w-full border border-slate-200 rounded-lg px-2 py-1 text-xs text-right">
+                            <input type="text"
+                                name="items[{{ $index }}][amount]"
+                                data-money
+                                value="{{ $row->amount !== null ? number_format($row->amount, 2, '.', '') : '' }}"
+                                placeholder="0.00"
+                                class="w-full border border-slate-200 rounded-lg px-2 py-1 text-xs text-right">
                             </td>
 
                             {{-- TYPE --}}
@@ -149,7 +152,6 @@
 
         </div>
 
-
         {{-- ACTION BUTTONS --}}
         <div class="flex flex-wrap gap-3 pt-2">
 
@@ -166,7 +168,6 @@
             </button>
 
         </div>
-
 
     </div>
 

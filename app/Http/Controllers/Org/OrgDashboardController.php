@@ -12,12 +12,33 @@ use Illuminate\Http\Request;
 use App\Services\ProjectFormRequirementResolver;
 use App\Services\ProjectFormRouteResolver;
 
+use App\Models\StrategicPlanSubmission;
+use App\Models\OfficerSubmission;
+use App\Models\PresidentRegistration;
+use App\Models\OrgConstitutionSubmission;
+use App\Models\ModeratorSubmission;
+
 class OrgDashboardController extends Controller
 {
     private function selectedSyId(Request $request): ?int
     {
         $encodeSyId = (int) $request->session()->get('encode_sy_id', 0);
         return $encodeSyId > 0 ? $encodeSyId : SchoolYear::activeId();
+    }
+
+    private function findDocument($project, $req)
+    {
+        if (!empty($req->id)) {
+            return $project->documents
+                ->first(fn ($d) => (int) $d->form_type_id === (int) $req->id);
+        }
+
+        if (!empty($req->code)) {
+            return $project->documents
+                ->first(fn ($d) => $d->formType?->code === $req->code);
+        }
+
+        return null;
     }
 
     public function index(Request $request)
@@ -78,10 +99,12 @@ class OrgDashboardController extends Controller
         $approvalTasks = collect();
 
         if ($currentOrg) {
-            $approvalTasks = ProjectDocument::with([
+
+                $approvalTasks = ProjectDocument::with([
                     'project',
-                    'signatures',
                     'formType',
+                    'signatures.user',
+
                 ])
                 ->whereHas('project', function ($q) use ($selectedSyId, $currentOrg) {
                     $q->where('school_year_id', $selectedSyId)
@@ -90,12 +113,17 @@ class OrgDashboardController extends Controller
                 ->get()
                 ->filter(function ($doc) use ($user) {
                     $pending = $doc->currentPendingSignature();
-                    return $pending && $pending->user_id === $user->id;
+
+                    return $pending
+                        && $pending->user_id === $user->id
+                        && $pending->role !== 'project_head';
                 })
                 ->values();
 
+
+
             $approvalTasks = $approvalTasks->map(function ($task) {
-                $task->type = 'approval';
+                $task->category = 'approval';
                 return $task;
             });
         }
@@ -109,7 +137,7 @@ class OrgDashboardController extends Controller
                     'project' => function ($q) {
                         $q->with([
                             'documents.formType',
-                            'documents.signatures',
+                            'documents.signatures.user',
                         ]);
                     },
                 ])
@@ -126,42 +154,155 @@ class OrgDashboardController extends Controller
                 ->values();
         }
 
-
+        $reregTasks = collect();
         $projectHeadTasks = collect();
 
         if ($currentOrg) {
             foreach ($assignedProjects as $project) {
                 $requiredForms = $resolver->resolve($project);
 
-                foreach ($requiredForms as $req) {
-                    $doc = $project->documents
-                        ->first(fn ($d) => (int) $d->form_type_id === (int) $req->form_type_id);
 
-               
+                $project->resolved_forms = $requiredForms;
+
+                foreach ($requiredForms as $req) {
+
+                    $doc = null;
+
+                    $doc = $this->findDocument($project, $req);
+
                     if (!$doc || $doc->status !== 'approved_by_sacdev') {
+
+                        $status = $doc?->status ?? 'not_started';
+
+                        $type = 'required';
+
+                        if ($status === 'returned') {
+                            $type = 'revision';
+                        }
+
                         $projectHeadTasks->push((object) [
-                            'type' => 'required',
+                            'category' => 'project_head',
+                            'state' => $type,
                             'phase' => $req->phase ?? 'other',
                             'form_name' => $req->name ?? $req->code,
                             'project' => $project,
-                            'status' => $doc?->status ?? 'not_started',
-                            'form_type_id' => $req->form_type_id,
-                            'form_code' => $req->code, 
+                            'status' => $status,
+                            'form_type_id' => $req->id,
+                            'form_code' => $req->code,
                         ]);
+
+
+
                     }
                 }
             }
         }
+        if ($currentOrg) {
+
+            $orgId = $currentOrg->id;
+            $syId = $selectedSyId;
+
+        
+            $sp = StrategicPlanSubmission::where('organization_id', $orgId)
+                ->where('target_school_year_id', $syId)
+                ->first();
+
+            if (!$sp || $sp->status === 'draft') {
+                $reregTasks->push((object)[
+                    'category' => 'rereg',
+                    'state' => 'required',
+                    'form_name' => 'Strategic Plan',
+                    'status' => $sp->status ?? 'not_started',
+                    'link' => route('org.rereg.b1.edit'),
+                ]);
+            }
+
+    
+            $officers = OfficerSubmission::where('organization_id', $orgId)
+                ->where('target_school_year_id', $syId)
+                ->first();
+
+            if (!$officers || $officers->status === 'draft') {
+                $reregTasks->push((object)[
+                    'category' => 'rereg',
+                    'state' => 'required',
+                    'form_name' => 'Officers List',
+                    'status' => $officers->status ?? 'not_started',
+                    'link' => route('org.rereg.b3.officers-list.edit'),
+                ]);
+            }
+
+    
+            $pres = PresidentRegistration::where('organization_id', $orgId)
+                ->where('target_school_year_id', $syId)
+                ->first();
+
+            if (!$pres || $pres->status === 'draft') {
+                $reregTasks->push((object)[
+                    'category' => 'rereg',
+                    'state' => 'required',
+                    'form_name' => 'President Registration',
+                    'status' => $pres->status ?? 'not_started',
+                    'link' => route('org.rereg.b2.president.edit'),
+                ]);
+            }
+
+       
+            $consti = OrgConstitutionSubmission::where('organization_id', $orgId)
+                ->where('school_year_id', $syId)
+                ->first();
+
+            if (!$consti || $consti->status === 'draft') {
+                $reregTasks->push((object)[
+                    'category' => 'rereg',
+                    'state' => 'required',
+                    'form_name' => 'Organization Constitution',
+                    'status' => $consti->status ?? 'not_started',
+                    'link' => route('org.rereg.index'),
+                ]);
+            }
+
+
+            if ($sp && $sp->status === 'submitted_to_moderator') {
+                $reregTasks->push((object)[
+                    'category' => 'rereg',
+                    'state' => 'moderator_review',
+                    'form_name' => 'Strategic Plan Review',
+                    'status' => $sp->status,
+                    'link' => route('org.moderator.strategic_plans.show', $sp->id), 
+                ]);
+            }
+
+
+            if ($roles->contains('moderator')) {
+
+                $moderator = ModeratorSubmission::where('organization_id', $orgId)
+                    ->where('target_school_year_id', $syId)
+                    ->where('moderator_user_id', $user->id)
+                    ->first();
+
+                if (!$moderator || in_array($moderator->status, ['draft', 'returned'])) {
+                    $reregTasks->push((object)[
+                        'category' => 'rereg',
+                        'state' => 'moderator',
+                        'form_name' => 'Moderator Registration',
+                        'status' => $moderator?->status ?? 'not_started',
+                        'link' => route('org.moderator.rereg.b5.edit'),
+                    ]);
+                }
+            }
+        }       
 
  
         $assignedProjects = $assignedProjects->map(function ($project) use ($resolver) {
-            $requiredForms = $resolver->resolve($project);
+            $requiredForms = $project->resolved_forms;
 
             $pendingRequiredCount = 0;
 
             foreach ($requiredForms as $req) {
-                $doc = $project->documents
-                    ->first(fn ($d) => (int) $d->form_type_id === (int) $req->form_type_id);
+                $doc = null;
+
+                $doc = $this->findDocument($project, $req);
 
                 if (!$doc || $doc->status !== 'approved_by_sacdev') {
                     $pendingRequiredCount++;
@@ -177,6 +318,7 @@ class OrgDashboardController extends Controller
         $pendingTasks = collect()
             ->merge($approvalTasks)
             ->merge($projectHeadTasks)
+            ->merge($reregTasks)
             ->sortBy(function ($task) {
 
                 $order = [
@@ -187,9 +329,9 @@ class OrgDashboardController extends Controller
                     'notice',
                 ];
 
-                $phase = $task->type === 'approval'
-                    ? ($task->formType->phase ?? 'other')
-                    : ($task->phase ?? 'other');
+                $phase = $task->phase
+                    ?? $task->formType->phase
+                    ?? 'other';
 
                 return array_search($phase, $order) !== false
                     ? array_search($phase, $order)
@@ -200,7 +342,32 @@ class OrgDashboardController extends Controller
 
         
         $pendingTasks = $pendingTasks->map(function ($task) {
-            $task->link = ProjectFormRouteResolver::resolve($task);
+
+
+
+            if (!isset($task->link)) {
+
+              
+                $code = $task->formType->code ?? $task->form_code ?? null;
+
+                if (!$code) {
+                    return $task;
+                }
+
+                if ($code === 'PROJECT_PROPOSAL') {
+
+                    $task->link = route('org.projects.documents.combined-proposal.create', [
+                        'project' => $task->project->id,
+                    ]);
+
+                } else {
+
+                    // fallback to resolver
+                    $task->link = ProjectFormRouteResolver::resolve($task);
+                }
+            
+            }
+
             return $task;
         });
         
@@ -208,7 +375,9 @@ class OrgDashboardController extends Controller
         
         $pendingApprovalCount = $approvalTasks->count();
         $projectHeadPendingCount = $projectHeadTasks->count();
-        $pendingCount = $pendingApprovalCount + $projectHeadPendingCount;
+        $reregCount = $reregTasks->count();
+
+        $pendingCount = $pendingApprovalCount + $projectHeadPendingCount + $reregCount;
 
 
         $projectCount = 0;
@@ -222,6 +391,19 @@ class OrgDashboardController extends Controller
             $documentCount = ProjectDocument::whereHas('project', function ($q) use ($selectedSyId, $currentOrg) {
                     $q->where('school_year_id', $selectedSyId)
                         ->where('organization_id', $currentOrg->id);
+                })
+                ->count();
+        }
+
+        $projectsWithoutHeadCount = 0;
+
+        if ($currentOrg) {
+            $projectsWithoutHeadCount = Project::query()
+                ->where('organization_id', $currentOrg->id)
+                ->where('school_year_id', $selectedSyId)
+                ->whereDoesntHave('assignments', function ($q) {
+                    $q->whereNull('archived_at')
+                    ->where('assignment_role', 'project_head');
                 })
                 ->count();
         }
@@ -243,6 +425,8 @@ class OrgDashboardController extends Controller
 
             'projectCount' => $projectCount,
             'documentCount' => $documentCount,
+
+            'projectsWithoutHeadCount' => $projectsWithoutHeadCount,
         ]);
     }
 

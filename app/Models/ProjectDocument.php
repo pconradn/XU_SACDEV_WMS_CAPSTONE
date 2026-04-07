@@ -6,6 +6,7 @@ use App\Models\Timeline;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class ProjectDocument extends Model
 {
@@ -321,6 +322,41 @@ class ProjectDocument extends Model
             ->where('status', 'pending')
             ->orderBy('id')
             ->first();
+    }
+
+    protected static function booted()
+    {
+        static::creating(function ($doc) {
+            if (!$doc->verification_token) {
+                $doc->verification_token = (string) Str::uuid();
+            }
+        });
+    }
+
+    public function getVerificationUrlAttribute(): ?string
+    {
+        if (!$this->verification_token) {
+            return null;
+        }
+
+        return route('verification.show', $this->verification_token);
+    }
+
+
+   public function packetItems()
+    {
+        return $this->hasMany(\App\Models\ExternalPacketItem::class, 'document_id');
+    } 
+
+    public function isApprovedBySacdev(): bool
+    {
+        
+        $sacdevSignature = $this->signatures()
+            ->where('role', 'sacdev_admin')
+            ->first();
+
+      
+        return $sacdevSignature && $sacdevSignature->status === 'signed';
     }
 
 

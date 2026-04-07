@@ -1,5 +1,20 @@
 <script>
 
+// ================= HELPERS =================
+function parseCurrency(value) {
+    if (!value) return 0;
+    return parseFloat(value.toString().replace(/,/g, '')) || 0;
+}
+
+function formatCurrency(value) {
+    if (value === '' || value === null || isNaN(value)) return '';
+    return Number(value).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+
 // ================= ADD ROW =================
 function addPurchaseItemRow() {
 
@@ -31,9 +46,9 @@ function addPurchaseItemRow() {
 </td>
 
 <td class="px-3 py-2">
-<input type="number" step="0.01"
+<input type="text"
     name="items[${index}][unit_price]"
-    oninput="updateAmount(this)"
+    oninput="formatCurrencyInput(this); updateAmount(this)"
     class="w-full rounded border border-slate-200 px-2 py-1 text-sm">
 </td>
 
@@ -81,19 +96,19 @@ function updateAmount(input) {
     const row = input.closest('tr');
     if (!row) return;
 
-    const quantity = parseFloat(
+    const quantity = parseCurrency(
         row.querySelector('input[name*="[quantity]"]')?.value
-    ) || 0;
+    );
 
-    const unitPrice = parseFloat(
+    const unitPrice = parseCurrency(
         row.querySelector('input[name*="[unit_price]"]')?.value
-    ) || 0;
+    );
 
     const amount = quantity * unitPrice;
 
     const amountField = row.querySelector('.amount-field');
     if (amountField) {
-        amountField.value = amount.toFixed(2);
+        amountField.value = formatCurrency(amount);
     }
 
     updateTotal();
@@ -108,13 +123,27 @@ function updateTotal() {
     let total = 0;
 
     amountFields.forEach(field => {
-        total += parseFloat(field.value) || 0;
+        total += parseCurrency(field.value);
     });
 
     const totalField = document.getElementById('purchaseTotal');
 
     if (totalField) {
-        totalField.value = total.toFixed(2);
+        totalField.value = formatCurrency(total);
+    }
+}
+
+
+// ================= FORMAT INPUT =================
+function formatCurrencyInput(input) {
+
+    let value = input.value.replace(/,/g, '');
+    if (value === '') return;
+
+    if (!isNaN(value)) {
+        let parts = value.split('.');
+        parts[0] = parseInt(parts[0], 10).toLocaleString('en-US');
+        input.value = parts.join('.');
     }
 }
 
@@ -122,10 +151,8 @@ function updateTotal() {
 // ================= INIT =================
 document.addEventListener('DOMContentLoaded', function () {
 
-    // initialize totals
     updateTotal();
 
-    // auto open instructions if draft
     const status = @json($status ?? 'draft');
 
     if (status === 'draft') {

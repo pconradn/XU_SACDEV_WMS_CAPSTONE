@@ -1,80 +1,81 @@
-<div id="returnModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+<div id="returnModal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
 
-<div class="bg-white rounded-lg p-6 w-96">
+    <div class="w-full max-w-md rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-white shadow-lg p-5 space-y-4">
 
-<h2 class="text-sm font-semibold mb-4">
-Return Packet
-</h2>
+        {{-- HEADER --}}
+        <div class="flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-slate-900">
+                Return Packet
+            </h2>
+            <button onclick="closeReturnModal()" class="text-slate-400 hover:text-slate-600 text-sm">
+                ✕
+            </button>
+        </div>
 
-<form id="returnForm" method="POST">
+        {{-- PACKET INFO --}}
+        <div id="returnPacketInfo" class="text-xs space-y-2">
 
-@csrf
+            <div class="flex justify-between">
+                <span class="text-slate-500">Packet Code</span>
+                <span id="modalPacketCode" class="font-semibold text-slate-800"></span>
+            </div>
 
-<textarea
-name="remarks"
-rows="3"
-class="w-full border border-slate-300 rounded px-2 py-1 text-xs"
-placeholder="Enter remarks"></textarea>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Status</span>
+                <span id="modalPacketStatus" class="font-semibold text-slate-700"></span>
+            </div>
 
-<div class="mt-4 flex justify-end gap-2">
+            {{-- CONTENT SUMMARY --}}
+            <div class="border-t border-amber-200 pt-2">
+                <div class="text-[11px] font-semibold text-amber-700 mb-1">
+                    Contents
+                </div>
 
-<button
-type="button"
-onclick="closeReturnModal()"
-class="text-xs px-3 py-1 border rounded">
+                <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600">
+                    <div>Receipts: <span id="modalReceipts"></span></div>
+                    <div>DVs: <span id="modalDvs"></span></div>
+                    <div>Letters: <span id="modalLetters"></span></div>
+                    <div>Certificates: <span id="modalCertificates"></span></div>
+                </div>
+            </div>
 
-Cancel
+        </div>
 
-</button>
+        {{-- FORM --}}
+        <form id="returnForm" method="POST" class="space-y-3">
+            @csrf
 
-<button
-class="text-xs px-3 py-1 bg-red-600 text-white rounded">
+            <div>
+                <label class="block text-[11px] font-medium text-slate-600 mb-1">
+                    Return Remarks
+                </label>
+                <textarea
+                    name="remarks"
+                    rows="3"
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    placeholder="Explain why this packet is being returned..."
+                ></textarea>
+            </div>
 
-Return Packet
+            <div class="flex justify-end gap-2 pt-2">
 
-</button>
+                <button
+                    type="button"
+                    onclick="closeReturnModal()"
+                    class="text-xs px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition">
+                    Cancel
+                </button>
+
+                <button
+                    class="text-xs px-3 py-1.5 rounded-xl 
+                           bg-gradient-to-r from-rose-600 to-rose-500 text-white 
+                           hover:from-rose-700 hover:to-rose-600 transition shadow-sm">
+                    Return Packet
+                </button>
+
+            </div>
+        </form>
+
+    </div>
 
 </div>
-
-</form>
-
-</div>
-
-</div>
-
-
-<script>
-
-function openReturnModal(packetId){
-
-const modal = document.getElementById('returnModal')
-
-modal.classList.remove('hidden')
-
-document.getElementById('returnForm').action =
-`/admin/packets/${packetId}/return`
-
-}
-
-function closeReturnModal(){
-
-document.getElementById('returnModal').classList.add('hidden')
-
-}
-
-function openApproveModal(packetId){
-
-if(confirm('Approve this packet?')){
-
-fetch(`/admin/packets/${packetId}/approve`,{
-method:'POST',
-headers:{
-'X-CSRF-TOKEN':'{{ csrf_token() }}'
-}
-}).then(()=>location.reload())
-
-}
-
-}
-
-</script>

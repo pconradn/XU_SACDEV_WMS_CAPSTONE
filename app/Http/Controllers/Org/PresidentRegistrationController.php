@@ -109,7 +109,7 @@ class PresidentRegistrationController extends Controller
         $validated = $request->validate([
             'photo_id' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
 
-            'full_name' => ['nullable', 'string', 'max:255'],
+            'full_name' => ['nullable', 'string', 'max:255',],
             'course_and_year' => ['nullable', 'string', 'max:255'],
 
             'birthday' => ['nullable', 'date'],
@@ -244,25 +244,86 @@ class PresidentRegistrationController extends Controller
             return back()->with('error', 'This form cannot be submitted right now.');
         }
 
-        $request->validate([
+        $validator = \Validator::make($request->all(), [
             'photo_id' => [$registration->photo_id_path ? 'nullable' : 'required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
 
-            'full_name' => ['required', 'string', 'max:255'],
-            'course_and_year' => ['required', 'string', 'max:255'],
+            'full_name' => ['required', 'string', 'max:255','regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
+            'course_and_year' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
             'birthday' => ['required', 'date'],
-            'sex' => ['required', 'string', 'max:20'],
+            'age' => ['required', 'integer', 'min:0', 'max:120','regex:/^\d+$/'],
+            'sex' => ['required', 'string', 'max:20','regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
+            'religion' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
-            'mobile_number' => ['required', 'string', 'max:30'],
+            'mobile_number' => ['required', 'string', 'max:30','regex:/^(09|\+639)\d{9}$/'],
+            'city_landline' => ['required', 'string', 'max:30','regex:/^[A-Za-z0-9\s\-\.\(\)]+$/'],
             'email' => ['required', 'email', 'max:255'],
-            'id_number' => ['required', 'string', 'max:50'],
-            'home_address' => ['required', 'string'],
-            'city_address' => ['required', 'string'],
+            'id_number' => ['required', 'string', 'max:50','regex:/^[A-Za-z0-9\-]+$/'],
+            'provincial_landline' => ['nullable', 'string', 'max:30','regex:/^[A-Za-z0-9\s\-\.\(\)]+$/'],
+            'facebook_url' => ['nullable', 'url', 'max:255'],
+            'home_address' => ['nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'city_address' => ['nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+
+            'father_name' => ['nullable', 'string', 'max:255','regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
+            'father_occupation' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'father_mobile' => ['nullable', 'string', 'max:30','regex:/^(09|\+639)\d{9}$/'],
+
+            'mother_name' => ['nullable', 'string', 'max:255','regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
+            'mother_occupation' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'mother_mobile' => ['nullable', 'string', 'max:30','regex:/^(09|\+639)\d{9}$/'],
+
+            'guardian_name' => ['nullable', 'string', 'max:255','regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
+            'guardian_relationship' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'guardian_mobile' => ['nullable', 'string', 'max:30','regex:/^(09|\+639)\d{9}$/'],
+
+            'siblings_count' => ['nullable', 'integer', 'min:0', 'max:30','regex:/^\d+$/'],
+
+            'high_school_name' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'high_school_address' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'high_school_year_graduated' => ['required', 'string', 'max:10'],
+
+            'grade_school_name' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'grade_school_address' => ['required', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'grade_school_year_graduated' => ['required', 'string', 'max:10'],
+
+            'scholarship_name' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'scholarship_year_granted' => ['nullable', 'string', 'max:10'],
+
+            'skills_and_interests' => ['required', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+
+            'leaderships' => ['nullable', 'array'],
+            'leaderships.*.organization_name' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'leaderships.*.position' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'leaderships.*.organization_address' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'leaderships.*.inclusive_years' => ['nullable', 'string', 'max:30'],
+
+            'trainings' => ['nullable', 'array'],
+            'trainings.*.seminar_title' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'trainings.*.organizer' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'trainings.*.venue' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'trainings.*.date_from' => ['nullable', 'date'],
+            'trainings.*.date_to' => ['nullable', 'date'],
+
+            'awards' => ['nullable', 'array'],
+            'awards.*.award_name' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'awards.*.award_description' => ['nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'awards.*.conferred_by' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'awards.*.date_received' => ['nullable', 'date'],
 
             'certified' => ['required', Rule::in(['1', 1, true, 'on'])],
         ]);
 
-        $this->saveDraft($request);
+        if ($validator->fails()) {
+
+            
+            $this->persistDraft($request, $registration, $userId);
+
+            return back()
+                ->withErrors($validator)
+                ->with('error', 'Submission has errors. Saved as draft instead.');
+        }
+
+        $this->persistDraft($request, $registration, $userId);
 
         $registration->refresh();
         $oldStatus = $registration->getOriginal('status');
@@ -286,6 +347,47 @@ class PresidentRegistrationController extends Controller
         
 
         return back()->with('success', 'Submitted to SACDEV successfully.');
+    }
+
+
+    private function persistDraft($request, $registration, $userId)
+    {
+        DB::transaction(function () use ($request, $registration, $userId) {
+
+            if ($request->hasFile('photo_id')) {
+                if ($registration->photo_id_path && \Storage::disk('public')->exists($registration->photo_id_path)) {
+                    \Storage::disk('public')->delete($registration->photo_id_path);
+                }
+
+                $path = $request->file('photo_id')->store('president-ids', 'public');
+                $registration->photo_id_path = $path;
+            }
+
+            $registration->fill($request->except(['leaderships', 'trainings', 'awards', 'photo_id']));
+            $registration->encoded_by_user_id = $registration->encoded_by_user_id ?: $userId;
+
+            $registration->version = ((int) $registration->version) + 1;
+            $registration->status = 'draft';
+            $registration->save();
+
+            $registration->leaderships()->delete();
+            foreach (($request->input('leaderships') ?? []) as $i => $row) {
+                if ($this->rowEmpty($row)) continue;
+                $registration->leaderships()->create(array_merge($row, ['sort_order' => $i + 1]));
+            }
+
+            $registration->trainings()->delete();
+            foreach (($request->input('trainings') ?? []) as $i => $row) {
+                if ($this->rowEmpty($row)) continue;
+                $registration->trainings()->create(array_merge($row, ['sort_order' => $i + 1]));
+            }
+
+            $registration->awards()->delete();
+            foreach (($request->input('awards') ?? []) as $i => $row) {
+                if ($this->rowEmpty($row)) continue;
+                $registration->awards()->create(array_merge($row, ['sort_order' => $i + 1]));
+            }
+        });
     }
 
     public function unsubmit(Request $request)

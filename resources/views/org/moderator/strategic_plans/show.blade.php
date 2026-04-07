@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-app-layout style="border: 1px solid transparent;">
 
     @php
         $projectsJson = $submission->projects->map(function ($p) {
@@ -66,8 +66,8 @@
 
 
     <div
-        class="mx-auto max-w-6xl px-4 py-6 space-y-6"
-        x-data='window.spAdminReview(@json($projectsJson))'
+        
+        x-data='window.spAdminReview(@json($projectsJson))' 
     >
 
         

@@ -16,7 +16,7 @@ class Organization extends Model
         'logo_original_name',
         'logo_mime',
         'logo_size_bytes',
-        'last_b1_submission_id',
+        'last_b1_submission_id', "cluster_id"
     ];
 
     protected $casts = [
@@ -88,6 +88,11 @@ class Organization extends Model
     public function cluster()
     {
         return $this->belongsTo(\App\Models\Cluster::class);
+    }
+
+    public function memberRecords()
+    {
+        return $this->hasMany(OrganizationMemberRecord::class);
     }
 
 

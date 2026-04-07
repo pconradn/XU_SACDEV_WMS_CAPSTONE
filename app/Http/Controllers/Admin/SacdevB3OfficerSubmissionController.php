@@ -111,7 +111,13 @@ class SacdevB3OfficerSubmissionController extends Controller
     public function returnToOrg(Request $request, OfficerSubmission $submission)
     {
         $data = $request->validate([
-            'sacdev_remarks' => ['required', 'string', 'min:3'],
+            'sacdev_remarks' => [
+                'required',
+                'string',
+                'min:3',
+                'max:5000',
+                'regex:/^[\pL\pN\s\-\.\,\(\)\'\"\/]+$/u',
+            ],
         ]);
 
         $orgId = (int) $submission->organization_id;
@@ -211,11 +217,48 @@ class SacdevB3OfficerSubmissionController extends Controller
             ]);
 
 
+            $existingEntries = OfficerEntry::where('organization_id', $orgId)
+                ->where('school_year_id', $syId)
+                ->get()
+                ->keyBy('student_id_number');
+
+            $submittedIds = [];
+
+
+            logger()->info('EXISTING OFFICER ENTRIES BEFORE APPROVE', [
+                'org_id' => $orgId,
+                'sy_id' => $syId,
+                'entries' => $existingEntries->map(fn($e) => [
+                    'id' => $e->id,
+                    'student_id' => $e->student_id_number,
+                    'name' => $e->full_name,
+                    'role' => $e->major_officer_role,
+                    'is_major' => $e->is_major_officer,
+                ])->values()->toArray(),
+            ]);
+
+            $presBefore = OrgMembership::where('organization_id', $orgId)
+                ->where('school_year_id', $syId)
+                ->where('role', 'president')
+                ->get();
+
+            logger()->warning('PRESIDENT STATE BEFORE LOOP', [
+                'data' => $presBefore->toArray(),
+            ]);
+
+
             foreach ($locked->items as $item) {
 
-                if ($item->isPropagated()) {
-                    continue;
-                }
+                logger()->info('PROCESSING SUBMISSION ITEM', [
+                    'student_id' => $item->student_id_number,
+                    'name' => $item->officer_name,
+                    'is_major' => $item->is_major_officer,
+                    'major_role' => $item->major_officer_role,
+                ]);
+
+
+
+
 
                 $studentId = $item->student_id_number;
                 $email = $studentId . '@my.xu.edu.ph';
@@ -239,21 +282,24 @@ class SacdevB3OfficerSubmissionController extends Controller
                 }
 
 
-                $entry = OfficerEntry::query()
-                    ->where('organization_id', $orgId)
-                    ->where('school_year_id', $syId)
-                    ->where('student_id_number', $studentId)
-                    ->first();
+                $submittedIds[] = $studentId;
 
-                if (!$entry) {
+                logger()->info('CHECK EXISTING ENTRY', [
+                    'student_id' => $studentId,
+                    'exists' => $existingEntries->has($studentId),
+                ]);
 
+
+
+
+                if ($existingEntries->has($studentId)) {
+                    $entry = $existingEntries[$studentId];
+                } else {
                     $entry = new OfficerEntry();
-
                     $entry->organization_id = $orgId;
                     $entry->school_year_id = $syId;
                     $entry->student_id_number = $studentId;
                 }
-
 
 
                 $entry->full_name = $item->officer_name;
@@ -274,48 +320,130 @@ class SacdevB3OfficerSubmissionController extends Controller
                 $entry->sort_order = $item->sort_order;
                 $entry->source_officer_submission_item_id = $item->id;
 
+                $entry->current_first_sem_qpi = null;
+                $entry->current_second_sem_qpi = null;
+
+                logger()->info('ENTRY SELECTED OR CREATED', [
+                    'entry_id' => $entry->id ?? null,
+                    'student_id' => $studentId,
+                    'is_new' => !$existingEntries->has($studentId),
+                ]);
+
+
+                logger()->info('ENTRY BEFORE SAVE', [
+                    'entry_id' => $entry->id,
+                    'student_id' => $studentId,
+                    'name' => $entry->full_name,
+                    'major_role' => $entry->major_officer_role,
+                    'is_major' => $entry->is_major_officer,
+                ]);
+
                 $entry->save();
 
+                logger()->info('ENTRY SAVED', [
+                    'entry_id' => $entry->id,
+                ]);
 
+                $first  = $item->first_sem_qpi;
+                $second = $item->second_sem_qpi;
+                $inter  = $item->intersession_qpi;
 
-                $failingCount = collect([
-                    $item->first_sem_qpi,
-                    $item->second_sem_qpi,
-                    $item->intersession_qpi
-                ])
-                ->filter()
-                ->filter(fn($qpi) => $qpi < 2.0)
-                ->count();
+                $isUnderProbation = false;
 
-                $isUnderProbation = $failingCount >= 2;
-
-
-                $membership = OrgMembership::query()
-                    ->where('organization_id', $orgId)
-                    ->where('school_year_id', $syId)
-                    ->where('officer_entry_id', $entry->id)
-                    ->first();
-
-                if (!$membership) {
-
-                    $membership = new OrgMembership();
-
-                    $membership->organization_id = $orgId;
-                    $membership->school_year_id = $syId;
-                    $membership->officer_entry_id = $entry->id;
-
-                    // user_id intentionally NULL
-                    $membership->user_id = null;
+               
+                if (!is_null($first) && !is_null($second)) {
+                    if ($first < 2.0 && $second < 2.0) {
+                        $isUnderProbation = true;
+                    }
                 }
 
-                $membership->role = $item->major_officer_role ?? 'officer';
-                $membership->is_under_probation = $isUnderProbation;
+              
+                if (!$isUnderProbation && !is_null($inter)) {
+                    if (!is_null($second) && $second < 2.0 && $inter < 2.0) {
+                        $isUnderProbation = true;
+                    }
+                }
 
-                $membership->save();
+                $membershipRole = 'officer';
+
+                if ($item->major_officer_role === 'treasurer') {
+                    $membershipRole = 'treasurer';
+                } elseif ($item->major_officer_role === 'finance_officer') {
+                    $membershipRole = 'finance_officer';
+                }
+
+                    $membership = OrgMembership::query()
+                        ->where('organization_id', $orgId)
+                        ->where('school_year_id', $syId)
+                        ->where('officer_entry_id', $entry->id)
+                        ->whereIn('role', ['officer', 'treasurer', 'finance_officer'])
+                        ->first();
+
+                    logger()->warning('MEMBERSHIP LOOKUP RESULT', [
+                        'student_id' => $studentId,
+                        'entry_id' => $entry->id,
+                        'membership' => $membership ? $membership->toArray() : null,
+                    ]);
+
+                    if ($membership && $membership->role !== 'president') {
+                        logger()->warning('MEMBERSHIP BEFORE UPDATE', [
+                            'id' => $membership->id,
+                            'role' => $membership->role,
+                            'user_id' => $membership->user_id,
+                            'officer_entry_id' => $membership->officer_entry_id,
+                        ]);
+                        if ($membership->archived_at) {
+                            $membership->archived_at = null;
+                        }
+
+                        $membership->role = $membershipRole;
+                        $membership->is_under_probation = $isUnderProbation;
+                        $membership->save();
+
+                        logger()->warning('MEMBERSHIP AFTER UPDATE', [
+                            'id' => $membership->id,
+                            'role' => $membership->role,
+                            'user_id' => $membership->user_id,
+                            'officer_entry_id' => $membership->officer_entry_id,
+                        ]);
+
+                        if ($membership->user_id) {
+                            User::whereKey($membership->user_id)->update([
+                                'name' => $item->officer_name,
+                            ]);
+                        }
+
+                    } else {
+
+                        logger()->warning('MEMBERSHIP CREATED', [
+                            'student_id' => $studentId,
+                            'entry_id' => $entry->id,
+                            'role' => $membershipRole,
+                        ]);
+
+                        $membership = OrgMembership::create([
+                            'organization_id' => $orgId,
+                            'school_year_id' => $syId,
+                            'officer_entry_id' => $entry->id,
+                            'user_id' => null,
+                            'role' => $membershipRole,
+                            'is_under_probation' => $isUnderProbation,
+                        ]);
+                    }
+
+
+
+
+
 
 
 
                 if ($item->isTreasurer() || $item->major_officer_role === 'finance_officer') {
+
+                    logger()->warning('PROVISIONING MAJOR OFFICER ACCOUNT', [
+                        'student_id' => $studentId,
+                        'role' => $item->major_officer_role,
+                    ]);
 
                     [$user, $tempPassword] =
                         AccountProvisioner::findOrCreateUser(
@@ -326,8 +454,16 @@ class SacdevB3OfficerSubmissionController extends Controller
                     $entry->user_id = $user->id;
                     $entry->save();
 
-                    $membership->user_id = $user->id;
-                    $membership->save();
+                    $user->name = $item->officer_name;
+                    $user->save();
+
+                    OrgMembership::where('organization_id', $orgId)
+                        ->where('school_year_id', $syId)
+                        ->where('officer_entry_id', $entry->id)
+                        ->whereIn('role', ['treasurer', 'finance_officer'])
+                        ->update([
+                            'user_id' => $user->id,
+                        ]);
 
                     $roleLabel = $item->major_officer_role ?? 'officer';
 
@@ -372,7 +508,35 @@ class SacdevB3OfficerSubmissionController extends Controller
                 );
             }
 
+            foreach ($existingEntries as $studentId => $entry) {
 
+                if (!in_array($studentId, $submittedIds)) {
+
+                    OrgMembership::where('organization_id', $orgId)
+                        ->where('school_year_id', $syId)
+                        ->where('officer_entry_id', $entry->id)
+                        ->whereNull('archived_at')
+                        ->update([
+                            'archived_at' => now(),
+                        ]);
+                    
+                    logger()->error('REMOVING OFFICER ENTRY', [
+                        'student_id' => $studentId,
+                        'entry_id' => $entry->id,
+                    ]);
+
+                    $entry->delete();
+                }
+            }
+
+            $presAfter = OrgMembership::where('organization_id', $orgId)
+                ->where('school_year_id', $syId)
+                ->where('role', 'president')
+                ->get();
+
+            logger()->error('PRESIDENT STATE AFTER APPROVE', [
+                'data' => $presAfter->toArray(),
+            ]);
 
 
             $presidentEntry = OfficerEntry::query()

@@ -18,6 +18,7 @@ use App\Http\Controllers\Org\SellingActivityReportController;
 use App\Http\Controllers\Org\SellingApplicationController;
 use App\Http\Controllers\Org\SolicitationApplicationController;
 use App\Http\Controllers\Org\SolicitationSponsorshipReportController;
+use App\Http\Controllers\Org\StudentTravelFormController;
 use App\Http\Controllers\Org\TicketSellingReportController;
 use App\Http\Controllers\ProjectAgreementController;
 use App\Http\Controllers\SubmissionPacketController;
@@ -57,6 +58,9 @@ Route::prefix('projects/{project}')
 
         Route::post('clearance/upload', [ClearanceController::class, 'upload'])
             ->name('clearance.upload');
+
+        Route::post('clearance/reissue', [ClearanceController::class, 'reissue'])
+            ->name('clearance.reissue');
 
    
         $standardDocument = function (
@@ -264,6 +268,16 @@ Route::prefix('projects/{project}')
                 Route::post('return', [OffCampusApplicationController::class, 'return'])
                     ->middleware('project.role:president,moderator')
                     ->name('return');
+
+                    
+                Route::get('/travel-form', [StudentTravelFormController::class, 'create'])
+                    ->name('travel-form.create');
+
+                // Generate printable form
+                Route::post('/travel-form/generate', [StudentTravelFormController::class, 'generate'])
+                    ->name('travel-form.generate');
+
+
             });
 
         /*

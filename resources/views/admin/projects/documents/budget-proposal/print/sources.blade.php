@@ -1,3 +1,14 @@
+@php
+    $grandTotal = $budget->total_expenses ?? 0;
+
+    $counterpart = ($budget->counterpart_amount_per_pax ?? 0) * ($budget->counterpart_pax ?? 0);
+
+    $pta = $budget->pta_amount ?? 0;
+    $raised = $budget->raised_funds ?? 0;
+
+    $orgTotal = $grandTotal - ($counterpart + $pta + $raised);
+@endphp
+
 <div style="margin-top:10px;">
 
     <table style="width:100%; border-collapse:collapse; font-size:11px;">
@@ -5,7 +16,7 @@
         {{-- HEADER --}}
         <tr style="background:#1f6fb2; color:#fff; font-weight:bold;">
             <td style="padding:4px; border:1px solid #1f6fb2;">
-                Sources of Funds:
+                Less (Source of funds rather than finance) 
             </td>
             <td style="padding:4px; border:1px solid #1f6fb2; text-align:center;">
                 Amount/Pax
@@ -84,10 +95,11 @@
             <td style="border:1px solid #1f6fb2;"></td>
 
             <td style="border:1px solid #1f6fb2; text-align:right;">
-                {{ number_format($budget->org_total ?? 0, 2) }}
+                {{ number_format($orgTotal, 2) }}
             </td>
         </tr>
 
     </table>
 
 </div>
+

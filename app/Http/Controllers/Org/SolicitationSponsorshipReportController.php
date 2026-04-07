@@ -80,28 +80,55 @@ class SolicitationSponsorshipReportController extends BaseProjectDocumentControl
     public function store(Request $request, Project $project)
     {
 
-        $request->validate([
 
-            'activity_name' => ['required','string','max:255'],
+        $request->merge([
+
+            'approved_letters_distributed' => $request->approved_letters_distributed
+                ? str_replace(',', '', $request->approved_letters_distributed)
+                : null,
+
+            'items' => collect($request->items)->map(function ($item) {
+                $item['amount_given'] = isset($item['amount_given'])
+                    ? str_replace(',', '', $item['amount_given'])
+                    : null;
+
+                return $item;
+            })->toArray(),
+
+        ]);
+
+        $validator = \Validator::make($request->all(), [
+
+            'activity_name' => ['required','string','max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
             'purpose' => ['nullable','string'],
 
             'solicitation_from' => ['required','date'],
             'solicitation_to' => ['required','date'],
 
-            'approved_letters_distributed' => ['nullable','integer'],
+            'approved_letters_distributed' => ['nullable','integer','regex:/^\d+$/'],
 
             'items.*.control_number' => ['required','string','max:100'],
-            'items.*.person_in_charge' => ['required','string','max:255'],
+            'items.*.person_in_charge' => ['required','string','max:255','regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
             'items.*.recipient' => ['required','string','max:255'],
             'items.*.amount_given' => ['nullable','numeric'],
-            'items.*.remarks' => ['nullable','string'],
+            'items.*.remarks' => ['nullable','string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
 
         ]);
+
+        if ($validator->fails()) {
+
+            $this->getOrCreateDocument($project, 'SOLICITATION_SPONSORSHIP_REPORT');
+
+            return back()
+                ->with('warning', 'Form has errors. Saved as draft instead.')
+                ->withErrors($validator)
+                ->withInput();
+        }
 
 
         $document = $this->getOrCreateDocument(
             $project,
-            'SOLICITATION_SPONSORSHIP_REPORT'
+                'SOLICITATION_SPONSORSHIP_REPORT'
         );
 
         if ($document->isLocked() && !$document->edit_mode) {
@@ -211,6 +238,28 @@ class SolicitationSponsorshipReportController extends BaseProjectDocumentControl
         if ($document->status !== 'draft' && !$document->edit_mode) {
             return back()->with('error', 'This form cannot be submitted.');
         }
+
+        $activeSy = \App\Models\SchoolYear::activeYear();
+
+        if (!$activeSy) {
+            return back()->with('error', 'No active school year is currently set.');
+        }
+
+        $isRegistered = \App\Models\OrganizationSchoolYear::where('organization_id', $project->organization_id)
+            ->where('school_year_id', $activeSy->id)
+            ->exists();
+
+        if (!$isRegistered) {
+
+            $document->update([
+                'status' => 'draft'
+            ]);
+
+            return back()->with('warning', 
+                'Organization is not registered for this school year. Saved as draft instead.'
+            );
+        }
+
 
         $this->handleRequestSubmit($project, $document);
 

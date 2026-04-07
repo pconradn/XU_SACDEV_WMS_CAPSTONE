@@ -4,6 +4,8 @@ use App\Models\OrgMembership;
 use App\Models\OrganizationSchoolYear;
 use App\Models\ProjectAssignment;
 
+
+
 $user = auth()->user();
 $isAdmin = $user && $user->isSacdev();
 
@@ -15,32 +17,45 @@ $linkClass = function (array $activePatterns) {
         : 'bg-white text-slate-700 border-transparent hover:bg-slate-50 hover:text-slate-900';
 };
 
-$item = function (string $label, string $href, array $activePatterns, $badge = null) use ($linkClass) {
+$item = function (string $label, string $href, array $activePatterns, $badge = null, $icon = null) use ($linkClass) {
     return [
         'label' => $label,
         'href' => $href,
         'class' => $linkClass($activePatterns),
         'badge' => $badge,
+        'icon' => $icon,
     ];
 };
 
 $dashboardLinks = [];
 $contextLinks = [];
-$groups = [];
-
-
 
 if (Route::has('dashboard')) {
-    $dashboardLinks[] = $item('Dashboard', route('dashboard'), ['dashboard']);
+    $dashboardLinks[] = $item(
+        'Dashboard',
+        route('dashboard'),
+        ['dashboard'],
+        null,
+        'dashboard'
+    );
 }
 
 if (Route::has('context.show') && !$isAdmin) {
     $contextLinks[] = $item(
-        'Select SY / Organization',
+        'Switch Organization',
         route('context.show'),
-        ['context.*', 'org.encode-sy.*']
+        ['context.*', 'org.encode-sy.*'],
+        null,
+        'folder'
     );
 }
+
+
+
+$groups = [];
+
+
+
 
 
 if ($user && $isAdmin) {
@@ -54,52 +69,35 @@ if ($user && $isAdmin) {
 
     if (Route::has('admin.rereg.index') && $can('projects.view')) {
         $rereg[] = $item(
-            'Re-Registration Hub',
+            'Manage Submissions',
             route('admin.rereg.index'),
             ['admin.rereg.*','rereg.*'],
-            $adminReregBadgeCount ?? null
+            $adminReregBadgeCount ?? null,
+            'clipboard'
         );
     }
 
 
-    if (Route::has('admin.strategic_plans.index') && $can('projects.view')) {
-        $queues[] = $item('Strategic Plans (B-1)', route('admin.strategic_plans.index'), ['admin.strategic_plans.*']);
-    }
 
-    if (Route::has('admin.b2.president.index') && $can('projects.view')) {
-        $queues[] = $item('President Registrations (B-2)', route('admin.b2.president.index'), ['admin.b2.president.*']);
-    }
-
-    if (Route::has('admin.officer_submissions.index') && $can('projects.view')) {
-        $queues[] = $item('Officer Submissions (B-3)', route('admin.officer_submissions.index'), ['admin.officer_submissions.*']);
-    }
-
-    if (Route::has('admin.member_lists.index') && $can('projects.view')) {
-        $queues[] = $item('Member Lists (B-4)', route('admin.member_lists.index'), ['admin.member_lists.*']);
-    }
-
-    if (Route::has('admin.moderator_submissions.index') && $can('projects.view')) {
-        $queues[] = $item('Moderator Submissions (B-5)', route('admin.moderator_submissions.index'), ['admin.moderator_submissions.*']);
-    }
-
-
-    if (Route::has('admin.review.index') && $can('projects.view')) {
-        $orgTools[] = $item('Organization Review', route('admin.review.index'), ['admin.review.*']);
-    }
-
-    if (Route::has('admin.president_assignments.index') && $can('context.manage')) {
-        $orgTools[] = $item('Assign Org President', route('admin.president_assignments.index'), ['admin.president_assignments.*']);
-    }
 
 
     //admin.organizations.assign-president
 
     if (Route::has('admin.packets.receive') && $can('documents.manage')) {
-        $orgTools[] = $item('Packet Receiving', route('admin.packets.receive'), ['admin.packets.*']);
+        $orgTools[] = $item('Org Packet Receiving', route('admin.packets.receive'), ['admin.packets.*']);
+    }
+
+    if (Route::has('admin.external-packets.receive') && $can('documents.manage')) {
+        $orgTools[] = $item('External Packet Receiving', route('admin.external-packets.receive'), ['admin.external-packets.*']);
     }
 
     if (Route::has('admin.orgs_by_sy.index') && $can('projects.view')) {
-        $orgTools[] = $item('Organizations (by SY)', route('admin.orgs_by_sy.index'), ['admin.orgs_by_sy.*']);
+        $orgTools[] = $item('Manage Organizations', route('admin.orgs_by_sy.index'), ['admin.orgs_by_sy.*']);
+    }
+
+
+    if (Route::has('student-clearance.index')) {
+        $orgTools[] = $item('Check Student Clearance', route('student-clearance.index'), ['student-clearance.*']);
     }
 
 
@@ -148,11 +146,21 @@ if ($user && $isAdmin) {
 }
 
 
-
+$orgLinks = [];
 $activeOrgId = (int) session('active_org_id');
 $syId = (int) session('encode_sy_id');
 
 if ($user && $activeOrgId && $syId) {
+
+    if (Route::has('org.organization-info.show')) {
+        $orgLinks[] = $item(
+            'Organization',
+            route('org.organization-info.show'),
+            ['org.organization-info.*'],
+            null,
+            'house'
+        );
+    }
 
     $orgRole = OrgMembership::query()
         ->where('user_id', $user->id)
@@ -183,6 +191,8 @@ if ($user && $activeOrgId && $syId) {
         $isPresident = ((int)$osyPresident === (int)$user->id);
     }
 
+
+
  
     if ($isPresident) {
 
@@ -197,6 +207,9 @@ if ($user && $activeOrgId && $syId) {
             $rereg[] = $item('Assign Next SY President', route('org.provision.next_president.edit'), ['org.provision.*']);
         }
 
+
+
+
         if (Route::has('org.officers.index')) {
             $ops[] = $item('Officer List', route('org.officers.index'), ['org.officers.*']);
         }
@@ -205,17 +218,22 @@ if ($user && $activeOrgId && $syId) {
             $ops[] = $item('Projects', route('org.projects.index'), ['org.projects.*']);
         }
 
-        if (Route::has('org.assign-roles.edit')) {
-            $ops[] = $item('Assign Treasurer / Moderator', route('org.assign-roles.edit'), ['org.assign-roles.*']);
-        }
 
-        if (Route::has('org.assign-project-heads.index')) {
-            $ops[] = $item('Assign Project Heads', route('org.assign-project-heads.index'), ['org.assign-project-heads.*']);
-        }
 
         if (Route::has('org.activation-status.index')) {
             $ops[] = $item('Activation Status', route('org.activation-status.index'), ['org.activation-status.*']);
         }
+
+
+        if (Route::has('org.assign-project-heads.index')) {
+            $ops[] = $item('Assign Project Head', route('org.assign-project-heads.index'), ['org.assign-project-heads.*']);
+        }
+
+
+
+
+
+
 
         if ($rereg) {
             $groups[] = [
@@ -236,24 +254,42 @@ if ($user && $activeOrgId && $syId) {
 
 
 
-
     $projectLinks = [];
 
     if ($isModerator && Route::has('org.projects.index')) {
-        $projectLinks[] = $item('Projects', route('org.projects.index'), ['org.projects.*']);
+        $projectLinks[] = $item(
+            'Projects',
+            route('org.projects.index'),
+            ['org.projects.*'],
+            null,
+            'folder'
+        );
     }
 
     if (($isTreasurer || $isFinance_Officer) && Route::has('org.projects.index')) {
-        $projectLinks[] = $item('Projects', route('org.projects.index'), ['org.projects.*']);
+        $projectLinks[] = $item(
+            'Projects',
+            route('org.projects.index'),
+            ['org.projects.*'],
+            null,
+            'folder'
+        );
     }
 
     if ($isProjectHead && Route::has('org.projects.index')) {
-        $projectLinks[] = $item('My Projects', route('org.projects.index'), ['org.projects.*']);
+        $projectLinks[] = $item(
+            'My Projects',
+            route('org.projects.index'),
+            ['org.projects.*'],
+            null,
+            'folder'
+        );
     }
 
     /* remove duplicates */
     if (!empty($projectLinks)) {
         $seen = [];
+
         $projectLinks = array_values(array_filter($projectLinks, function ($link) use (&$seen) {
             if (in_array($link['label'], $seen, true)) return false;
             $seen[] = $link['label'];
@@ -263,7 +299,7 @@ if ($user && $activeOrgId && $syId) {
         $groups[] = [
             'title' => 'Projects',
             'links' => $projectLinks,
-            'icon' => 'clipboard'
+            'icon' => 'folder' // <- updated
         ];
     }
 
@@ -287,6 +323,7 @@ if ($user && $activeOrgId && $syId) {
                 ['org.moderator.strategic_plans.*']
             );
         }
+        
 
         if ($mod) {
             $groups[] = [
@@ -305,6 +342,11 @@ if ($user && $activeOrgId && $syId) {
 
 @if ($contextLinks)
 @include('layouts.nav._menu', ['links' => $contextLinks])
+@endif
+
+
+@if (!empty($orgLinks))
+@include('layouts.nav._menu', ['links' => $orgLinks])
 @endif
 
 @foreach ($groups as $group)

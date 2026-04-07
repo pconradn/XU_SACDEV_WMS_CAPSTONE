@@ -1,53 +1,58 @@
-<div class="bg-white border rounded-2xl p-6 shadow-sm flex flex-col lg:flex-row justify-between gap-6">
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm px-5 py-4">
 
-    {{-- LEFT --}}
-    <div>
-        <h1 class="text-2xl font-bold text-slate-800">
-            {{ $header['title'] }}
-        </h1>
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
 
-        <p class="text-sm text-slate-500 mt-1">
-            {{ $header['org'] ?? '—' }} • {{ $header['school_year'] ?? '' }}
-        </p>
+        {{-- LEFT --}}
+        <div class="min-w-0">
 
-        <p class="text-sm text-slate-600 mt-3">
-            Project Head:
-            <span class="font-medium">
-                {{ $header['project_head'] ?? '—' }}
+            {{-- TITLE --}}
+            <div class="flex items-center gap-2">
+                <i data-lucide="folder" class="w-4 h-4 text-slate-500"></i>
+
+                <h1 class="text-sm font-semibold text-slate-900 leading-tight truncate">
+                    {{ $header['title'] }}
+                </h1>
+            </div>
+
+            {{-- META --}}
+            <div class="mt-1 text-[11px] text-slate-500">
+                {{ $header['org'] ?? '—' }}
+                <span class="mx-1">•</span>
+                {{ $header['school_year'] ?? '' }}
+            </div>
+
+            {{-- PROJECT HEAD --}}
+            <div class="mt-2 flex items-center gap-1.5 text-[11px] text-slate-600">
+                <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
+
+                <span>Project Head:</span>
+
+                <span class="font-medium text-slate-800">
+                    {{ $header['project_head'] ?? '—' }}
+                </span>
+            </div>
+
+        </div>
+
+        {{-- RIGHT --}}
+        <div class="flex flex-col items-start lg:items-end gap-2">
+
+            {{-- STATUS --}}
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold rounded-md border shadow-sm {{ $header['status_class'] }}">
+                <i data-lucide="activity" class="w-3 h-3"></i>
+                {{ $header['status_label'] }}
             </span>
-        </p>
-    </div>
 
-    {{-- RIGHT --}}
-    <div class="flex flex-col items-start lg:items-end gap-3">
+            {{-- HELP BUTTON --}}
+            <button 
+                @click="helpOpen = true"
+                class="flex items-center gap-1 px-2 py-1 text-[10px] rounded-md bg-purple-100 text-purple-700 hover:bg-purple-200 transition"
+            >
+                <i data-lucide="help-circle" class="w-3 h-3"></i>
+                Guide
+            </button>
 
-        {{-- STATUS --}}
-        <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full ring-1 {{ $header['status_class'] }}">
-            {{ $header['status_label'] }}
-        </span>
-
-        {{-- PROPOSAL CTA --}}
-        @if($header['proposal_action'])
-
-            <a href="{{ $header['proposal_action']['url'] }}"
-               class="px-3 py-2 text-xs font-medium rounded-md
-               
-               @if($header['proposal_action']['type'] === 'create')
-                    bg-indigo-600 text-white hover:bg-indigo-700
-
-               @elseif($header['proposal_action']['type'] === 'edit')
-                    bg-amber-100 text-amber-800 hover:bg-amber-200
-
-               @else
-                    bg-slate-200 text-slate-700 hover:bg-slate-300
-               @endif
-               ">
-
-                {{ $header['proposal_action']['label'] }}
-
-            </a>
-
-        @endif
+        </div>
 
     </div>
 

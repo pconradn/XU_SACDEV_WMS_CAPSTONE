@@ -32,79 +32,7 @@
 
 
 {{-- ================= STATUS CARD ================= --}}
-<div class="rounded-2xl border {{ $style }} px-5 py-4 shadow-sm">
-
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-
-        <div class="font-semibold tracking-wide">
-            LIQUIDATION REPORT STATUS:
-            <span class="ml-1 uppercase">{{ $status }}</span>
-        </div>
-
-        @if($status === 'submitted' && $currentApprover)
-            <div class="text-xs font-medium">
-                Awaiting:
-                <span class="capitalize font-semibold">
-                    {{ str_replace('_',' ', $currentApprover->role) }}
-                </span>
-            </div>
-        @endif
-
-        @if($status === 'approved')
-            <div class="text-xs font-medium">
-                Fully approved and finalized.
-            </div>
-        @endif
-
-        @if($status === 'draft')
-            <div class="text-xs">
-                This report is still editable.
-            </div>
-        @endif
-
-        @if($status === 'returned')
-            <div class="text-xs font-medium">
-                Returned for revision. Please update and resubmit.
-            </div>
-        @endif
-
-    </div>
-
-</div>
-
-
-
-{{-- ================= RETURN REMARKS ================= --}}
-@if(isset($document) && $document->remarks && $isProjectHead)
-
-<div class="rounded-2xl border border-amber-200 bg-amber-50 shadow-sm p-5 relative">
-
-    <button
-        onclick="this.closest('div').remove()"
-        class="absolute top-3 right-4 text-amber-500 hover:text-amber-700 text-sm">
-        ✕
-    </button>
-
-    <div class="font-semibold text-amber-800 mb-2">
-        Returned for Revision
-    </div>
-
-    <div class="text-sm text-amber-700 mb-2">
-        {{ $document->remarks }}
-    </div>
-
-    @if($document->returnedBy)
-    <div class="text-xs text-amber-600 italic">
-        Returned by {{ $document->returnedBy->name }}
-        @if($document->returned_at)
-            on {{ \Carbon\Carbon::parse($document->returned_at)->format('F d, Y h:i A') }}
-        @endif
-    </div>
-    @endif
-
-</div>
-
-@endif
+@include('components.document.status-bar', ['document' => $document])
 
 
 {{-- ================= FORM ================= --}}
@@ -113,6 +41,7 @@
       id="proposalForm">
 
 @csrf
+<input type="hidden" name="action" id="formAction" value="draft">
 
 @if($isReadOnly)
 <fieldset disabled class="space-y-6">
@@ -121,25 +50,20 @@
 
 <div class="grid gap-6">
 
-    {{-- HEADER --}}
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+
         @include('org.projects.documents.liquidation-report.partials._header')
-    </div>
 
-    {{-- SOURCE OF FUNDS --}}
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+
+
         @include('org.projects.documents.liquidation-report.partials._funds')
-    </div>
 
-    {{-- EXPENSES --}}
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+
+
         @include('org.projects.documents.liquidation-report.partials._expenses')
-    </div>
 
     {{-- SUMMARY --}}
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+
         @include('org.projects.documents.liquidation-report.partials._summary')
-    </div>
 
 </div>
 

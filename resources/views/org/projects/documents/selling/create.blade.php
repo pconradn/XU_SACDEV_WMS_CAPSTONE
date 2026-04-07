@@ -35,67 +35,7 @@
 
 
 {{-- ================= STATUS CARD ================= --}}
-<div class="border {{ $style }} px-4 py-3 text-sm">
-
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-
-        <div class="font-semibold tracking-wide">
-            APPLICATION FOR SELLING STATUS:
-            <span class="ml-1 uppercase">{{ $status }}</span>
-        </div>
-
-        @if($status === 'submitted' && $currentApprover)
-            <div class="text-[12px] font-medium">
-                Awaiting:
-                <span class="capitalize font-semibold">
-                    {{ str_replace('_',' ', $currentApprover->role) }}
-                </span>
-            </div>
-        @endif
-
-        @if($status === 'approved')
-            <div class="text-[12px] font-medium">
-                Fully approved and finalized.
-            </div>
-        @endif
-
-        @if($status === 'draft')
-            <div class="text-[12px]">
-                This form is still editable.
-            </div>
-        @endif
-
-        @if($status === 'returned')
-            <div class="text-[12px] font-medium">
-                Returned for revision. Please update and resubmit.
-            </div>
-        @endif
-
-    </div>
-</div>
-
-
-{{-- ================= REMARKS ================= --}}
-@if(isset($document) && $document->remarks && $isProjectHead)
-<div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-
-    <div class="text-sm font-semibold text-amber-800 mb-1">
-        Returned for Revision
-    </div>
-
-    <div class="text-sm text-amber-700">
-        {{ $document->remarks }}
-    </div>
-
-    @if($document->returnedBy)
-        <div class="text-xs text-amber-600 mt-2 italic">
-            {{ $document->returnedBy->name }}
-            • {{ \Carbon\Carbon::parse($document->returned_at)->format('M d, Y h:i A') }}
-        </div>
-    @endif
-
-</div>
-@endif
+@include('components.document.status-bar', ['document' => $document])
 
 
 {{-- ================= HEADER ================= --}}
@@ -118,15 +58,11 @@
 
 <div class="grid gap-6">
 
-    {{-- ACTIVITY INFO --}}
-    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        @include('org.projects.documents.selling.partials._activity-info')
-    </div>
+    @include('org.projects.documents.selling.partials._activity-info')
 
-    {{-- GOODS TABLE --}}
-    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        @include('org.projects.documents.selling.partials._goods-table')
-    </div>
+
+    @include('org.projects.documents.selling.partials._goods-table')
+  
 
 </div>
 

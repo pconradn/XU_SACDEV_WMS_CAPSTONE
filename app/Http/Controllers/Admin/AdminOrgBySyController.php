@@ -45,7 +45,7 @@ class AdminOrgBySyController extends Controller
             ->when($q !== '', function ($qq) use ($q) {
                 $qq->whereHas('organization', function ($oq) use ($q) {
                     $oq->where('name', 'like', "%{$q}%")
-                    ->orWhere('acronym', 'like', "%{$q}%");
+                       ->orWhere('acronym', 'like', "%{$q}%");
                 });
             })
             ->orderByDesc('id');
@@ -71,21 +71,24 @@ class AdminOrgBySyController extends Controller
 
         $request->session()->put(self::SESSION_KEY, (int) $data['school_year_id']);
 
-        return redirect()->route('admin.orgs_by_sy.index')->with('status', 'School year context updated.');
+        return redirect()->route('admin.orgs_by_sy.index')
+            ->with('status', 'School year context updated.');
     }
 
     public function show(Request $request, Organization $organization)
     {
         $syId = $this->selectedSyId($request);
+
         if ($syId <= 0) {
             return redirect()->route('admin.orgs_by_sy.index')
                 ->with('error', 'Select a school year first.');
         }
 
+
         $activeSy = $this->activeSy();
         $selectedSy = SchoolYear::find($syId);
 
- 
+
         $orgSy = OrganizationSchoolYear::query()
             ->with(['president'])
             ->where('organization_id', $organization->id)
@@ -97,17 +100,70 @@ class AdminOrgBySyController extends Controller
                 ->with('error', 'This organization has no registration record for the selected school year.');
         }
 
+
+        $routes = [
+            'rereg' => route('rereg.hub', $organization->id),
+
+            'officers' => route('sacdev.officers.index', [
+                'organization_id' => $organization->id,
+                'school_year_id' => $syId,
+            ]),
+
+            'members' => route('sacdev.members.index', [
+                'organization_id' => $organization->id,
+                'school_year_id' => $syId,
+            ]),
+
+            'projects' => route('admin.org.projects.index', [
+                $organization->id,
+                $syId
+            ]),
+        ];
+
+
+        $orgInfo = [
+            'name' => $organization->name,
+            'acronym' => $organization->acronym,
+            'mission' => $organization->mission,
+            'vision' => $organization->vision,
+
+            'logo_path' => $organization->logo_path,
+            'hasLogo' => !empty($organization->logo_path),
+            'logoUrl' => $organization->logo_path
+                ? asset('storage/' . $organization->logo_path)
+                : null,
+
+            'logo_original_name' => $organization->logo_original_name,
+            'logo_size_bytes' => $organization->logo_size_bytes,
+
+            'cluster_id' => $organization->cluster_id,
+
+            'created_at' => $organization->created_at,
+            'updated_at' => $organization->updated_at,
+            'archived_at' => $organization->archived_at,
+        ];
+
+
+        $orgMeta = [
+            'president_name' => optional($orgSy->president)->name,
+            'president_confirmed_at' => $orgSy->president_confirmed_at,
+
+            'isActiveSy' => $activeSy && $selectedSy
+                ? (int)$activeSy->id === (int)$selectedSy->id
+                : false,
+        ];
+
+
         return view('admin.orgs_by_sy.show', [
             'organization' => $organization,
+            'orgInfo' => $orgInfo,   
+            'orgMeta' => $orgMeta,    
             'orgSy' => $orgSy,
             'selectedSy' => $selectedSy,
             'activeSy' => $activeSy,
+            'routes' => $routes,
         ]);
     }
-
-
-
-
 
     public function majorOfficers(Request $request, Organization $organization)
     {
