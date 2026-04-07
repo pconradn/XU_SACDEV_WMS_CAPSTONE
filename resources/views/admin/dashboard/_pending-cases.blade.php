@@ -7,6 +7,7 @@
         'Officer Submission' => 'bg-emerald-100 text-emerald-700',
         'Moderator Submission' => 'bg-indigo-100 text-indigo-700',
         'default' => 'bg-slate-100 text-slate-700',
+        'edit_requested' => 'bg-amber-100 text-amber-700',
     ];
 @endphp
 

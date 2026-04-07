@@ -53,7 +53,9 @@ class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-
                 </label>
                 <input id="modal_student_id"
                     type="text"
-                    placeholder="Ex: 2021-12345"
+                    inputmode="numeric"
+                    pattern="\d*"
+                    placeholder="Ex: 202112345"
                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
                            focus:ring-2 focus:ring-blue-200 focus:border-blue-500 focus:outline-none">
             </div>

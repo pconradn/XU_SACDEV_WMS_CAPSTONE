@@ -205,7 +205,7 @@ class B3OfficerListController extends Controller
             'items' => ['nullable', 'array'],
             'items.*.position' => ['nullable', 'string', 'max:255'],
             'items.*.officer_name' => ['nullable', 'string', 'max:255'],
-            'items.*.student_id_number' => ['nullable', 'string', 'max:50'],
+            'items.*.student_id_number' => ['nullable', 'string', 'max:50',],
             'items.*.course_and_year' => ['nullable', 'string', 'max:255'],
             
             'items.*.mobile_number' => ['nullable', 'string', 'max:30'],

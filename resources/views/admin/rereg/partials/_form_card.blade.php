@@ -4,25 +4,36 @@
         $badge = $form['badge'] ?? null;
         $rawStatus = strtolower($badge['text'] ?? 'no submission');
 
-        if (in_array($rawStatus, ['submitted to sacdev', 'forwarded to sacdev'])) {
+        $editRequested = $form['edit_requested'] ?? false;
+
+        if ($editRequested) {
+            $status = 'Edit Requested';
+            $statusType = 'edit_requested';
+
+        } elseif (in_array($rawStatus, ['submitted to sacdev', 'forwarded to sacdev'])) {
             $status = 'Ready for Approval';
             $statusType = 'ready';
+
         } elseif (str_contains($rawStatus, 'approved')) {
             $status = 'Approved';
             $statusType = 'approved';
+
         } elseif (str_contains($rawStatus, 'returned')) {
             $status = 'Returned';
             $statusType = 'returned';
+
         } elseif (str_contains($rawStatus, 'submitted')) {
             $status = 'Submitted';
             $statusType = 'submitted';
+
         } else {
             $status = 'No submission';
             $statusType = 'none';
         }
 
-        // Minimal, subtle status colors (badge only)
+       
         $statusClasses = match($statusType) {
+            'edit_requested' => 'bg-purple-50 text-purple-700 border-purple-200',
             'ready' => 'bg-amber-50 text-amber-700 border-amber-200',
             'approved' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
             'returned' => 'bg-rose-50 text-rose-700 border-rose-200',
@@ -50,7 +61,8 @@
                 <div class="inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-[11px] font-semibold {{ $statusClasses }}">
                     
                     <span class="w-1.5 h-1.5 rounded-full
-                        @if($statusType === 'approved') bg-emerald-500
+                        @if($statusType === 'edit_requested') bg-purple-500
+                        @elseif($statusType === 'approved') bg-emerald-500
                         @elseif($statusType === 'returned') bg-rose-500
                         @elseif($statusType === 'ready') bg-amber-400
                         @elseif($statusType === 'submitted') bg-blue-500

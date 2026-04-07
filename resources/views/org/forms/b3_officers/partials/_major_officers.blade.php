@@ -111,6 +111,8 @@
                         </label>
 
                         <input type="text"
+                            inputmode="numeric"
+                            pattern="\d*"
                             name="items[{{ $idx }}][student_id_number]"
                             value="{{ old("items.$idx.student_id_number", $item->student_id_number ?? '') }}"
                             class="w-full rounded-lg border px-3 py-2 text-sm

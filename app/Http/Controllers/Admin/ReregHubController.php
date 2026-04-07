@@ -121,6 +121,25 @@ class ReregHubController extends Controller
 
         ];
 
+        foreach ($forms as $key => &$form) {
+
+            $model = match ($key) {
+                'b1' => $b1,
+                'b2' => $b2,
+                'b3' => $b3,
+                'b5' => $b5,
+                'b6' => $b6,
+                default => null,
+            };
+
+            if ($model && isset($model->edit_requested)) {
+                $form['edit_requested'] = (bool) $model->edit_requested;
+                $form['edit_request_reason'] = $model->edit_request_reason ?? null;
+            } else {
+                $form['edit_requested'] = false;
+            }
+        }
+
         $allApproved = collect($forms)->every(function ($form) {
 
             return isset($form['status'])

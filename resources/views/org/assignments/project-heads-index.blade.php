@@ -18,7 +18,7 @@
                                     Assign Project Heads
                                 </h1>
                                 <p class="text-xs text-slate-500 mt-1">
-                                    Select the responsible officer for each project under the active encoding context.
+                                    Select the responsible project head (officer or department member) for each project under the active encoding context.
                                 </p>
                             </div>
                         </div>
@@ -96,9 +96,14 @@
 
                     @forelse($projects as $p)
                         @php
-                            $assignedHead = $p->assignments
-                            ->where('assignment_role', 'project_head')
-                            ->first()->officerEntry;
+                            $assignment = $p->assignments
+                                ->where('assignment_role', 'project_head')
+                                ->whereNull('archived_at')
+                                ->first();
+
+                            $user = $assignment?->user;
+
+                            $assignedHead = $user;
                         @endphp
 
                         <div class="px-5 py-4 border-b last:border-b-0 border-slate-100 hover:bg-slate-50/70 transition">
@@ -133,8 +138,10 @@
                                             <div class="mt-3 text-xs text-slate-600">
                                                 @if($assignedHead)
                                                     <span class="font-medium text-slate-700">Current head:</span>
-                                                    {{ $assignedHead->full_name ?? $assignedHead->name ?? 'Assigned Officer' }}
-                                                    @if(!empty($assignedHead->email))
+                                                    {{ $assignedHead?->name 
+                                                        ?? $assignedHead?->email 
+                                                        ?? 'Assigned User' }}
+                                                    @if(!empty($assignedHead?->email))
                                                         <span class="text-slate-400">• {{ $assignedHead->email }}</span>
                                                     @endif
                                                 @else
@@ -165,6 +172,10 @@
                                     {{-- MODAL --}}
                                     <div
                                         x-show="open"
+                                        x-data="{ 
+                                            type: '{{ $assignment && $assignment->officerEntry ? 'officer' : 'member' }}', 
+                                            selectedDept: '' 
+                                        }"
                                         x-cloak
                                         x-transition.opacity
                                         class="fixed inset-0 z-[999] flex items-center justify-center bg-slate-950/50 backdrop-blur-sm px-3"
@@ -189,7 +200,7 @@
                                                                     {{ $assignedHead ? 'Update Project Head' : 'Assign Project Head' }}
                                                                 </h3>
                                                                 <p class="text-xs text-slate-500 mt-1">
-                                                                    Select one officer who will be responsible for this project.
+                                                                    Select either an officer or a department member who will be responsible for this project.
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -263,7 +274,7 @@
                                                                 Current Head
                                                             </div>
                                                             <div class="mt-2 text-sm text-slate-700">
-                                                                {{ $assignedHead->full_name ?? $assignedHead->name ?? 'None assigned yet' }}
+                                                                {{ $assignedHead?->name ?? $assignedHead?->email ?? 'None assigned yet' }}
                                                             </div>
                                                             @if($assignedHead && !empty($assignedHead->email))
                                                                 <div class="mt-1 text-xs text-slate-500">
@@ -276,29 +287,107 @@
                                                     {{-- SELECT --}}
                                                     <div>
                                                         <label class="block text-xs font-semibold text-slate-700 mb-2">
-                                                            Choose Officer
+                                                            Assignment Type
                                                         </label>
 
+                                                        <div class="flex gap-2 mb-3">
+
+                                                            <button type="button"
+                                                                @click="type = 'officer'"
+                                                                :class="type === 'officer'
+                                                                    ? 'bg-blue-600 text-white'
+                                                                    : 'bg-white text-slate-700 border border-slate-300'"
+                                                                class="px-3 py-1.5 text-xs rounded-lg">
+                                                                Officer
+                                                            </button>
+
+                                                            <button type="button"
+                                                                @click="type = 'member'"
+                                                                :class="type === 'member'
+                                                                    ? 'bg-indigo-600 text-white'
+                                                                    : 'bg-white text-slate-700 border border-slate-300'"
+                                                                class="px-3 py-1.5 text-xs rounded-lg">
+                                                                Department Member
+                                                            </button>
+
+                                                        </div>
+
+                                                        <input type="hidden" name="assignment_type" :value="type">
+
                                                         <div class="relative">
-                                                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                                <i data-lucide="users" class="w-4 h-4 text-slate-400"></i>
+
+
+                                                            <div x-show="type === 'officer'">
+                                                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                                                    <i data-lucide="users" class="w-4 h-4 text-slate-400"></i>
+                                                                </div>
+
+                                                                <select
+                                                                    name="officer_id"
+                                                                    class="w-full rounded-2xl border border-slate-300 bg-white pl-10 pr-4 py-3 text-sm text-slate-800 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                                                    
+                                                                >
+                                                                    <option value="">Select an officer...</option>
+                                                                    @foreach($officers as $o)
+                                                                        @php
+                                                                            $selectedId = $assignment?->user_id ?? null;
+                                                                        @endphp
+                                                                        <option value="{{ $o->id }}"
+                                                                            {{ $assignment && $assignment->user_id == $o->user_id ? 'selected' : '' }}>
+                                                                            {{ $o->full_name }}{{ !empty($o->email) ? ' ('.$o->email.')' : '' }}
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+
+
                                                             </div>
 
-                                                            <select
-                                                                name="officer_id"
-                                                                class="w-full rounded-2xl border border-slate-300 bg-white pl-10 pr-4 py-3 text-sm text-slate-800 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                                                                required
-                                                            >
-                                                                <option value="">Select an officer...</option>
-                                                                @foreach($officers as $o)
-                                                                    @php
-                                                                        $selectedId = $assignedHead->id ?? null;
-                                                                    @endphp
-                                                                    <option value="{{ $o->id }}" {{ (string)$selectedId === (string)$o->id ? 'selected' : '' }}>
-                                                                        {{ $o->full_name }}{{ !empty($o->email) ? ' ('.$o->email.')' : '' }}
-                                                                    </option>
-                                                                @endforeach
-                                                            </select>
+                                                            <div x-show="type === 'member'" class="space-y-3">
+
+                                                                {{-- DEPARTMENT --}}
+                                                                <div>
+                                                                    <label class="block text-xs font-semibold text-slate-700 mb-2">
+                                                                        Select Department
+                                                                    </label>
+
+                                                                    <select name="department_id"
+                                                                            x-model="selectedDept"
+                                                                            class="w-full rounded-2xl border border-slate-300 text-sm">
+                                                                        <option value="">Choose department...</option>
+
+                                                                        @foreach($departments as $dept)
+                                                                            <option value="{{ $dept->id }}">
+                                                                                {{ $dept->name }}
+                                                                            </option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                </div>
+
+                                                                {{-- MEMBER --}}
+                                                                <div>
+                                                                    <label class="block text-xs font-semibold text-slate-700 mb-2">
+                                                                        Select Member
+                                                                    </label>
+
+                                                                    <select name="member_id"
+                                                                            class="w-full rounded-2xl border border-slate-300 text-sm">
+
+                                                                        <option value="">Choose member...</option>
+
+                                                                    @foreach($members as $m)
+                                                                        <option value="{{ $m->id }}"
+                                                                            x-bind:hidden="selectedDept && selectedDept != '{{ $m->department_id }}'"
+                                                                            {{ $assignment && $m->user_id && $assignment->user_id == $m->user_id ? 'selected' : '' }}>
+                                                                            {{ $m->full_name }}
+                                                                        </option>
+                                                                    @endforeach
+
+                                                                    </select>
+                                                                </div>
+
+                                                            </div>
+
+
                                                         </div>
 
                                                         @error('officer_id')
@@ -308,7 +397,7 @@
                                                         @enderror
 
                                                         <div class="mt-2 text-xs text-slate-500">
-                                                            Only officers available in the current organization context should appear in this list.
+                                                            Only users within the current organization context will appear (officers or department members).
                                                         </div>
                                                     </div>
 

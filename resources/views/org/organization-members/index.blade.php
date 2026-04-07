@@ -89,6 +89,51 @@
 
         </div>
 
+        @if($isPresident)
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-900">
+                        Departments
+                    </h3>
+                    <p class="text-xs text-slate-500">
+                        Manage departments and assign members
+                    </p>
+                </div>
+
+                <button onclick="openDeptModal()"
+                    class="text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                    + Add Department
+                </button>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                @foreach($departments as $dept)
+                    <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg text-xs">
+
+                        <span>{{ $dept->name }}</span>
+
+                        <button onclick="editDept({{ $dept->id }}, '{{ $dept->name }}')"
+                            class="text-blue-600 hover:underline">Edit</button>
+
+                        <form method="POST"
+                            action="{{ route('org.departments.destroy', $dept->id) }}">
+                            @csrf
+                            @method('DELETE')
+                            <button class="text-red-600 hover:underline">
+                                Archive
+                            </button>
+                        </form>
+
+                    </div>
+                @endforeach
+            </div>
+
+        </div>
+        @endif
+
+
         {{-- ================= TABLE CARD ================= --}}
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
@@ -101,6 +146,12 @@
                     Showing all members under current school year
                 </div>
             </div>
+
+
+
+
+
+
 
             {{-- TABLE --}}
             <div class="overflow-x-auto">
@@ -116,6 +167,7 @@
                             <th class="px-4 py-3 text-left">Contact</th>
 
                             @if($isPresident)
+                                <th class="px-4 py-3 text-left">Department</th>
                                 <th class="px-4 py-3 text-right">Actions</th>
                             @endif
                         </tr>
@@ -165,6 +217,40 @@
 
                                 {{-- ACTIONS (PRESIDENT ONLY) --}}
                                 @if($isPresident)
+                                    <td class="px-4 py-3">
+                                        @if($isPresident)
+
+                                            <form method="POST"
+                                                action="{{ route('org.members.assign-department', $member->id) }}">
+                                                @csrf
+                                                @method('PUT')
+
+                                                <select name="department_id"
+                                                        onchange="this.form.submit()"
+                                                        class="text-xs rounded border-slate-300">
+
+                                                    <option value="">No Department</option>
+
+                                                    @foreach($departments as $dept)
+                                                        <option value="{{ $dept->id }}"
+                                                            {{ $member->department_id == $dept->id ? 'selected' : '' }}>
+                                                            {{ $dept->name }}
+                                                        </option>
+                                                    @endforeach
+
+                                                </select>
+                                            </form>
+
+                                        @else
+                                            <span class="text-xs text-slate-600">
+                                                {{ $member->department->name ?? '-' }}
+                                            </span>
+                                        @endif
+                                    </td>
+
+
+
+
                                     <td class="px-4 py-3 text-right">
 
                                         <div class="flex justify-end gap-2">
@@ -215,6 +301,45 @@
 
         </div>
 
+    </div>
+
+
+
+    <div id="deptModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-xl">
+
+            <form method="POST" action="{{ route('org.departments.store') }}">
+                @csrf
+
+                <div class="p-4 space-y-3">
+
+                    <h2 class="text-sm font-semibold">Add Department</h2>
+
+                    <input name="name"
+                        placeholder="Department name"
+                        required
+                        class="w-full rounded-lg border-slate-200 text-sm">
+
+                </div>
+
+                <div class="px-4 py-3 border-t flex justify-end gap-2">
+
+                    <button type="button" onclick="closeDeptModal()"
+                        class="text-sm text-slate-600">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                        class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg">
+                        Save
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
     </div>
 
     {{-- ================= ADD MEMBER MODAL ================= --}}
@@ -290,6 +415,32 @@
                                 class="mt-1 w-full rounded-lg border-slate-200 text-sm">
                         </div>
 
+                    </div>
+
+                    {{-- DEPARTMENT --}}
+                    <div>
+                        <label class="text-xs text-slate-500">Department</label>
+
+                        <select name="department_id"
+                            class="mt-1 w-full rounded-lg border-slate-200 text-sm">
+
+                            <option value="">No Department</option>
+
+                            @if(!empty($departments) && count($departments))
+                                @foreach($departments as $dept)
+                                    <option value="{{ $dept->id }}">
+                                        {{ $dept->name }}
+                                    </option>
+                                @endforeach
+                            @endif
+
+                        </select>
+
+                        @if(empty($departments) || !count($departments))
+                            <p class="text-xs text-slate-400 mt-1">
+                                No departments yet. You can still add the member.
+                            </p>
+                        @endif
                     </div>
 
                 </div>
@@ -387,6 +538,33 @@
 
                     </div>
 
+                    {{-- DEPARTMENT --}}
+                    <div>
+                        <label class="text-xs text-slate-500">Department</label>
+
+                        <select id="edit_department_id" name="department_id"
+                            class="mt-1 w-full rounded-lg border-slate-200 text-sm">
+
+                            <option value="">No Department</option>
+
+                            @if(!empty($departments) && count($departments))
+                                @foreach($departments as $dept)
+                                    <option value="{{ $dept->id }}">
+                                        {{ $dept->name }}
+                                    </option>
+                                @endforeach
+                            @endif
+
+                        </select>
+
+                        @if(empty($departments) || !count($departments))
+                            <p class="text-xs text-slate-400 mt-1">
+                                No departments yet. You can still edit the member.
+                            </p>
+                        @endif
+                    </div>
+
+
                 </div>
 
                 <div class="px-5 py-3 border-t flex justify-end gap-2">
@@ -410,6 +588,9 @@
 
     {{-- ================= JS ================= --}}
     <script>
+
+
+
         function openAddModal() {
             document.getElementById('addModal').classList.remove('hidden');
         }
@@ -437,6 +618,7 @@
             document.getElementById('edit_course').value = m.course_and_year ?? '';
             document.getElementById('edit_email').value = m.email ?? '';
             document.getElementById('edit_mobile').value = m.mobile_number ?? '';
+            document.getElementById('edit_department_id').value = m.department_id ?? '';
 
             document.getElementById('editForm').action =
                 `/org/organization-members/${id}`;
@@ -473,7 +655,13 @@
             ];
         @endif
 
-        let table = $('#membersTable').DataTable(options);
+        let hasRealRows = $('#membersTable tbody tr').filter(function () {
+            return $(this).find('td').length > 1;
+        }).length > 0;
+
+        if (hasRealRows) {
+            let table = $('#membersTable').DataTable(options);
+        }
 
         /* ===== FORCE TAILWIND LOOK ===== */
 
@@ -494,6 +682,16 @@
         );
 
     });
+    </script>
+
+
+    <script>
+        function openDeptModal() {
+            document.getElementById('deptModal').classList.remove('hidden');
+        }
+        function closeDeptModal() {
+            document.getElementById('deptModal').classList.add('hidden');
+        }
     </script>
 
 

@@ -111,6 +111,34 @@ class AdminDashboardController extends Controller
                     })
             )
             ->merge(
+                OfficerSubmission::query()
+                    ->with('organization')
+                    ->whereIn('target_school_year_id', $targetSyIds)
+                    ->where('edit_requested', true)
+                    ->whereHas('organization', function ($q) use ($user) {
+                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    })
+                    ->get()
+                    ->map(function ($r) {
+                        return (object) [
+                            'type' => 'Officer Submission (Edit Request)',
+                            'organization_id' => $r->organization_id,
+                            'school_year_id' => $r->target_school_year_id,
+                            'organization' => $r->organization,
+                            'school_year' => \App\Models\SchoolYear::find($r->target_school_year_id),
+
+                            'status' => 'edit_requested',
+
+                            'created_at' => $r->edit_requested_at ?? $r->updated_at,
+
+                            'route' => route('admin.officer_submissions.show', $r->id),
+
+                  
+                            'edit_request_reason' => $r->edit_request_reason,
+                        ];
+                    })
+            )
+            ->merge(
                 ModeratorSubmission::query()
                     ->with('organization')
                     ->whereIn('target_school_year_id', $targetSyIds)

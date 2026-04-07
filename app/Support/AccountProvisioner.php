@@ -112,7 +112,9 @@ class AccountProvisioner
         int $orgId,
         int $syId,
         string $role,
-        ?int $officerEntryId = null
+        ?int $officerEntryId = null,
+        ?string $sourceType = null,
+        ?int $sourceId = null
     ): OrgMembership {
 
         OrgMembership::where('user_id', $userId)
@@ -127,6 +129,9 @@ class AccountProvisioner
             'school_year_id' => $syId,
             'role' => $role,
             'officer_entry_id' => $officerEntryId,
+            
+            'source_type' => $sourceType,
+            'source_id' => $sourceId,
         ]);
     }
    
@@ -134,10 +139,12 @@ class AccountProvisioner
         int $userId,
         int $orgId,
         int $syId,
-        ?int $officerEntryId = null
+        ?int $officerEntryId = null,
+        ?string $sourceType = null,
+        ?int $sourceId = null
     ): OrgMembership {
 
-        $role = 'member';
+        $role = $sourceType === 'member' ? 'member' : 'officer';
 
         OrgMembership::where('user_id', $userId)
             ->where('organization_id', $orgId)
@@ -150,7 +157,13 @@ class AccountProvisioner
             'organization_id' => $orgId,
             'school_year_id' => $syId,
             'role' => $role,
+
+        
             'officer_entry_id' => $officerEntryId,
+
+            
+            'source_type' => $sourceType,
+            'source_id' => $sourceId,
         ]);
     }
 

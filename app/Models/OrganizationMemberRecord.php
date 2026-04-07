@@ -23,6 +23,8 @@ class OrganizationMemberRecord extends Model
 
         'encoded_by',
         'archived_at',
+
+        'department_id'
     ];
 
     protected $casts = [
@@ -57,4 +59,10 @@ class OrganizationMemberRecord extends Model
             ($this->middle_initial ? ' ' . $this->middle_initial . '.' : '')
         );
     }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
 }

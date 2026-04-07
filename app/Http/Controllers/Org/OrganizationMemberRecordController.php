@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\OrganizationMemberRecord;
 use App\Models\OrgMembership;
+use App\Models\Department;
 
 class OrganizationMemberRecordController extends Controller
 {
@@ -38,9 +39,14 @@ class OrganizationMemberRecordController extends Controller
             ->latest()
             ->get();
 
+        $departments = Department::where('organization_id', $orgId)
+            ->where('is_archived', false)
+            ->orderBy('name')
+            ->get();
+
         $isPresident = $this->isPresident($userId, $orgId, $targetSyId);
 
-        return view('org.organization-members.index', compact('members', 'isPresident'));
+        return view('org.organization-members.index', compact('departments','members', 'isPresident'));
     }
 
     public function store(Request $request)
@@ -62,6 +68,9 @@ class OrganizationMemberRecordController extends Controller
             'student_id_number' => 'nullable|string|max:32',
             'course_and_year' => 'nullable|string|max:255',
             'mobile_number' => 'nullable|string|max:32',
+
+            'department_id' => 'nullable|exists:departments,id',
+
         ]);
 
         OrganizationMemberRecord::create([
@@ -79,6 +88,7 @@ class OrganizationMemberRecordController extends Controller
             'mobile_number' => $request->mobile_number,
 
             'encoded_by' => $userId,
+            'department_id' => $request->department_id,
         ]);
 
         return back()->with('success', 'Member added successfully.');
@@ -105,6 +115,7 @@ class OrganizationMemberRecordController extends Controller
 
             'email' => 'nullable|email',
             'student_id_number' => 'nullable|string|max:32',
+            'department_id' => 'nullable|exists:departments,id',
         ]);
 
         $member->update($request->only([
@@ -116,6 +127,7 @@ class OrganizationMemberRecordController extends Controller
             'student_id_number',
             'course_and_year',
             'mobile_number',
+            'department_id',
         ]));
 
         return back()->with('success', 'Member updated.');
@@ -139,4 +151,91 @@ class OrganizationMemberRecordController extends Controller
 
         return back()->with('success', 'Member removed.');
     }
+
+    //department classes
+
+    public function storeDepartment(Request $request)
+    {
+        ['orgId' => $orgId, 'targetSy' => $targetSyId, 'userId' => $userId] = $this->ctx($request);
+
+        if (!$this->isPresident($userId, $orgId, $targetSyId)) {
+            abort(403);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        Department::create([
+            'organization_id' => $orgId,
+            'name' => $request->name,
+        ]);
+
+        return back()->with('success', 'Department created.');
+    }
+
+    public function updateDepartment(Request $request, $id)
+    {
+        ['orgId' => $orgId, 'targetSy' => $targetSyId, 'userId' => $userId] = $this->ctx($request);
+
+        if (!$this->isPresident($userId, $orgId, $targetSyId)) {
+            abort(403);
+        }
+
+        $department = Department::where('organization_id', $orgId)
+            ->findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $department->update([
+            'name' => $request->name
+        ]);
+
+        return back()->with('success', 'Department updated.');
+    }
+
+    public function destroyDepartment(Request $request, $id)
+    {
+        ['orgId' => $orgId, 'targetSy' => $targetSyId, 'userId' => $userId] = $this->ctx($request);
+
+        if (!$this->isPresident($userId, $orgId, $targetSyId)) {
+            abort(403);
+        }
+
+        $department = Department::where('organization_id', $orgId)
+            ->findOrFail($id);
+
+        $department->update([
+            'is_archived' => true
+        ]);
+
+        return back()->with('success', 'Department archived.');
+    }
+
+    public function assignDepartment(Request $request, $memberId)
+    {
+        ['orgId' => $orgId, 'targetSy' => $targetSyId, 'userId' => $userId] = $this->ctx($request);
+
+        if (!$this->isPresident($userId, $orgId, $targetSyId)) {
+            abort(403);
+        }
+
+        $request->validate([
+            'department_id' => 'nullable|exists:departments,id'
+        ]);
+
+        $member = OrganizationMemberRecord::where('organization_id', $orgId)
+            ->where('school_year_id', $targetSyId)
+            ->findOrFail($memberId);
+
+        $member->update([
+            'department_id' => $request->department_id
+        ]);
+
+        return back()->with('success', 'Member department updated.');
+    }
+
+
 }

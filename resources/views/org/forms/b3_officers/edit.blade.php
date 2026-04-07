@@ -13,6 +13,8 @@
             'registration' => $registration,
         ])
 
+  
+
         <form method="POST" action="{{ route('org.rereg.b3.officers-list.saveDraft') }}">
             @csrf
             <input type="hidden" name="certified" value="0">
@@ -36,6 +38,10 @@
                 'isLocked' => $isLocked,
             ])
         </form>
+
+        @include('org.forms.b3_officers.partials._edit_request', [
+            'registration' => $registration,
+        ])  
     </div>
 
     @include('org.forms.b3_officers.partials._scripts', [
