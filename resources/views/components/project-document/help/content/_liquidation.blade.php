@@ -1,41 +1,79 @@
-<div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-    <h3 class="text-sm font-semibold text-slate-900 mb-2">Financial Summary</h3>
-    <ul class="space-y-1 text-sm text-slate-700">
-        <li>Total Expenses = sum of all expense entries.</li>
-        <li>Total Advanced = total cash advance and other funding sources.</li>
-        <li>Balance = Total Advanced minus Total Expenses.</li>
-        <li>Ensure all computed values are consistent before submission.</li>
-    </ul>
-</div>
+<div class="space-y-4">
 
-<div class="rounded-xl border border-slate-200 p-4">
-    <h3 class="text-sm font-semibold text-slate-900 mb-2">How to fill out this form</h3>
-    <ul class="space-y-1 text-sm text-slate-700">
-        <li>Use the same project title and project details as the approved proposal.</li>
-        <li>Enter the actual amounts used, not planned estimates.</li>
-        <li>Attach supporting proofs such as receipts, invoices, and vouchers.</li>
-        <li>Review all rows before submission to avoid mismatched totals.</li>
-    </ul>
-</div>
+    <!-- HOW IT WORKS -->
+    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-5">
+        <h3 class="text-sm font-semibold text-slate-900 mb-2">
+            How this works
+        </h3>
 
-<div class="rounded-xl border border-slate-200 p-4">
-    <h3 class="text-sm font-semibold text-slate-900 mb-2">Expense table reminders</h3>
-    <ul class="space-y-1 text-sm text-slate-700">
-        <li>One row should represent one actual expense item or receipt entry.</li>
-        <li>Group similar expenses properly.</li>
-        <li>Arrange entries clearly and consistently.</li>
-        <li>Double-check subtotals and overall totals.</li>
-    </ul>
-</div>
-
-<div class="rounded-xl border border-blue-200 bg-blue-50 p-4">
-    <h3 class="text-sm font-semibold text-blue-900 mb-2">Supporting document legend</h3>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-blue-800">
-        <div>OR – Official Receipt</div>
-        <div>SR – Subsidiary Receipt</div>
-        <div>CI – Cash Invoice</div>
-        <div>SI – Sales Invoice</div>
-        <div>AR – Acknowledgment Receipt</div>
-        <div>PV – Payment Voucher</div>
+        <ul class="space-y-1 text-xs text-slate-600">
+            <li>• Add expenses using <span class="font-medium text-slate-800">receipt entries</span>, not manual rows.</li>
+            <li>• Each receipt can contain multiple expense items.</li>
+            <li>• The system automatically generates the expense table below.</li>
+            <li>• Hover a receipt reference in the table to view its total.</li>
+        </ul>
     </div>
+
+
+    <!-- FINANCIAL SUMMARY -->
+    <div class="rounded-2xl border border-emerald-200 bg-gradient-to-b from-emerald-50 to-white p-5">
+        <h3 class="text-sm font-semibold text-emerald-900 mb-2">
+            Financial Summary
+        </h3>
+
+        <ul class="space-y-1 text-xs text-emerald-800">
+            <li>• <span class="font-medium">Total Expenses</span> = sum of all receipt items.</li>
+            <li>• <span class="font-medium">Total Advanced</span> = all funding sources entered below.</li>
+            <li>• <span class="font-medium">Balance</span> = Total Advanced − Total Expenses.</li>
+            <li>• Values are computed automatically — do not edit manually.</li>
+        </ul>
+    </div>
+
+
+    <!-- INPUT GUIDELINES -->
+    <div class="rounded-2xl border border-slate-200 bg-white p-5">
+        <h3 class="text-sm font-semibold text-slate-900 mb-2">
+            Input Guidelines
+        </h3>
+
+        <ul class="space-y-1 text-xs text-slate-600">
+            <li>• Use actual values based on receipts — not estimates.</li>
+            <li>• Ensure receipt reference numbers are accurate.</li>
+            <li>• Group items properly using sections (e.g., Food, Transportation).</li>
+            <li>• Review all entries before submission.</li>
+        </ul>
+    </div>
+
+
+    <!-- RECEIPT RULES -->
+    <div class="rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-white p-5">
+        <h3 class="text-sm font-semibold text-amber-900 mb-2">
+            Receipt Entry Rules
+        </h3>
+
+        <ul class="space-y-1 text-xs text-amber-800">
+            <li>• One receipt = one source document (OR, SI, etc.).</li>
+            <li>• Multiple items can be listed under a single receipt.</li>
+            <li>• Each item must have correct amount and section.</li>
+            <li>• Avoid duplicate or incorrect receipt references.</li>
+        </ul>
+    </div>
+
+
+    <!-- DOCUMENT LEGEND -->
+    <div class="rounded-2xl border border-blue-200 bg-gradient-to-b from-blue-50 to-white p-5">
+        <h3 class="text-sm font-semibold text-blue-900 mb-3">
+            Supporting Document Types
+        </h3>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-blue-800">
+            <div class="px-2 py-1 rounded-lg bg-white border border-blue-100">OR – Official Receipt</div>
+            <div class="px-2 py-1 rounded-lg bg-white border border-blue-100">SR – Subsidiary Receipt</div>
+            <div class="px-2 py-1 rounded-lg bg-white border border-blue-100">CI – Cash Invoice</div>
+            <div class="px-2 py-1 rounded-lg bg-white border border-blue-100">SI – Sales Invoice</div>
+            <div class="px-2 py-1 rounded-lg bg-white border border-blue-100">AR – Acknowledgment Receipt</div>
+            <div class="px-2 py-1 rounded-lg bg-white border border-blue-100">PV – Payment Voucher</div>
+        </div>
+    </div>
+
 </div>

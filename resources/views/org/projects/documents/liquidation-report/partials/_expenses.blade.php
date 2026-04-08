@@ -42,7 +42,9 @@
             </div>
 
             {{-- RECEIPT LIST --}}
-            <div id="receiptList" class="space-y-3"></div>
+            <div id="receiptList"
+                class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            </div>
 
         </div>
 
