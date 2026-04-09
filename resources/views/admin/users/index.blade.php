@@ -42,6 +42,17 @@ table.dataTable thead th {
 table.dataTable tbody tr:hover {
     background-color: #f8fafc;
 }
+table.dataTable {
+    border-collapse: separate !important;
+    border-spacing: 0;
+}
+
+table.dataTable tbody tr {
+    border-bottom: 1px solid #e2e8f0;
+}
+table.dataTable tbody td {
+    border-bottom: 1px solid #e2e8f0;
+}
 </style>
 
 <div class="space-y-6">
@@ -83,9 +94,9 @@ table.dataTable tbody tr:hover {
                 </tr>
             </thead>
 
-            <tbody class="bg-white divide-y divide-slate-100">
+            <tbody class="bg-white">
                 @foreach($users as $user)
-                <tr class="hover:bg-slate-50/70">
+                <tr class="hover:bg-slate-50/70 border-b border-slate-200">
                     <td class="px-6 py-4">
                         <div class="font-semibold text-slate-900">{{ $user->name }}</div>
                         <div class="text-sm text-slate-500">{{ $user->email }}</div>

@@ -1,10 +1,11 @@
 <?php
 
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Session\TokenMismatchException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -33,6 +34,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'project.role' => \App\Http\Middleware\RequireProjectRole::class,
             'document.type' => \App\Http\Middleware\EnsureDocumentType::class,
 
+            'nocache' => \App\Http\Middleware\NoCache::class,
+
 
             'permission' => \App\Http\Middleware\CheckPermission::class,
         ]);
@@ -55,7 +58,18 @@ return Application::configure(basePath: dirname(__DIR__))
                     'exception' => $e
                 ], 403);
             }
+            
+            if ($e->getStatusCode() === 419) {
+                return redirect()->route('login');
+            }
         });
+
+        $exceptions->render(function (TokenMismatchException $e, $request) {
+            return redirect()->route('login');
+        });
+
+
+
 
     })->create();
         //

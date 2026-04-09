@@ -48,7 +48,7 @@
 
                 <span class="text-[10px] opacity-80 flex items-center gap-1">
                     Open
-                    <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                    
                 </span>
             </div>
         </a>

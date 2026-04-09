@@ -202,19 +202,40 @@ class OrgDashboardController extends Controller
             $orgId = $currentOrg->id;
             $syId = $selectedSyId;
 
-        
+
+            $hasModerator = OrgMembership::where('organization_id', $orgId)
+                ->where('school_year_id', $syId)
+                ->where('role', 'moderator')
+                ->whereNull('archived_at')
+                ->exists();
+                    
+
             $sp = StrategicPlanSubmission::where('organization_id', $orgId)
                 ->where('target_school_year_id', $syId)
                 ->first();
 
-            if (!$sp || $sp->status === 'draft') {
+            if (!$hasModerator) {
+
                 $reregTasks->push((object)[
                     'category' => 'rereg',
-                    'state' => 'required',
-                    'form_name' => 'Strategic Plan',
-                    'status' => $sp->status ?? 'not_started',
-                    'link' => route('org.rereg.b1.edit'),
+                    'state' => 'blocked',
+                    'form_name' => 'Assign Moderator First',
+                    'status' => 'missing_moderator',
+                    'link' => route('org.rereg.index'),
                 ]);
+
+            } else {
+
+                if (!$sp || $sp->status === 'draft') {
+                    $reregTasks->push((object)[
+                        'category' => 'rereg',
+                        'state' => 'required',
+                        'form_name' => 'Strategic Plan',
+                        'status' => $sp->status ?? 'not_started',
+                        'link' => route('org.rereg.b1.edit'),
+                    ]);
+                }
+
             }
 
     

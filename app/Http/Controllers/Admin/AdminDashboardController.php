@@ -249,6 +249,10 @@ class AdminDashboardController extends Controller
                 })
                 ->get()
                 ->filter(function ($doc) {
+                    if ($doc->edit_requested) {
+                        return true;
+                    }
+
                     $pending = $doc->currentPendingSignature();
                     return $pending && $pending->role === 'sacdev_admin';
                 })
@@ -259,13 +263,15 @@ class AdminDashboardController extends Controller
 
                         'forms' => collect([
                             [
-                                'name' => $doc->formType->name ?? 'Form',
+                                'name' => $doc->edit_requested
+                                    ? ($doc->formType->name ?? 'Form') . ' (Edit Requested)'
+                                    : ($doc->formType->name ?? 'Form'),
                                 'code' => $doc->formType->code ?? null,
                                 'phase' => $doc->formType->phase ?? 'default',
                             ]
                         ]),
-
-                        'status' => $doc->status,
+                        'edit_request_remarks' => $doc->edit_requested ? $doc->edit_request_remarks : null,
+                        'status' => $doc->edit_requested ? 'edit_requested' : $doc->status,
                         'route' => route('admin.projects.documents.hub', $doc->project_id),
                         'form_route' => in_array($doc->formType->code, ['PROJECT_PROPOSAL', 'BUDGET_PROPOSAL'])
                             ? route('admin.projects.documents.combined-proposal.open', $doc->project_id)
@@ -278,66 +284,99 @@ class AdminDashboardController extends Controller
                         'is_completion' => false, // required
                     ];
                 })
-                ->values();
-
+                ->values();      
+            
+            
             $debug = [];
 
             $resolver = app(ProjectFormRequirementResolver::class);
 
-$projectsReadyForCompletion = Project::with([
-        'documents.formType'
-    ])
-    ->where('school_year_id', $activeSyId)
-    ->where('workflow_status', '!=', 'completed')
-    ->where('workflow_status', '!=', 'cancelled')
-    ->whereHas('organization', function ($q) use ($user) {
-        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
-    })
-    ->get()
-    ->filter(function ($project) use ($resolver, &$debug) {
+        $projectsReadyForCompletion = Project::with([
+                'documents.formType'
+            ])
+            ->where('school_year_id', $activeSyId)
+            ->where('workflow_status', '!=', 'completed')
+            ->where('workflow_status', '!=', 'cancelled')
+            ->whereHas('organization', function ($q) use ($user) {
+                $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+            })
+            ->get()
+            ->filter(function ($project) use ($resolver, &$debug) {
 
-        $requiredFormTypes = $resolver->resolve($project);
+                $requiredFormTypes = $resolver->resolve($project);
 
-        $documents = $project->documents
-            ->whereNull('archived_at')
-            ->keyBy(fn($d) => $d->formType->code);
+                $documents = $project->documents
+                    ->whereNull('archived_at')
+                    ->keyBy(fn($d) => $d->formType->code);
 
-        $requiredDocs = collect($requiredFormTypes)->map(function (\App\Models\FormType $formType) use ($documents) {
-            return $documents[$formType->code] ?? null;
-        });
+                $requiredDocs = collect($requiredFormTypes)->map(function (\App\Models\FormType $formType) use ($documents) {
+                    return $documents[$formType->code] ?? null;
+                });
 
-        if ($requiredDocs->isEmpty()) {
-            return false;
-        }
+                if ($requiredDocs->isEmpty()) {
+                    return false;
+                }
 
-        return $requiredDocs
-            ->every(fn($doc) => $doc && $doc->status === 'approved_by_sacdev');
-    })
-    ->map(function ($project) {
-        return (object)[
-            'project' => $project,
-            'organization' => $project->organization ?? null,
+                return $requiredDocs
+                    ->every(fn($doc) => $doc && $doc->status === 'approved_by_sacdev');
+            })
+            ->map(function ($project) {
+                return (object)[
+                    'project' => $project,
+                    'organization' => $project->organization ?? null,
 
-            'forms' => collect([
-                [
-                    'name' => 'Ready for Completion',
-                    'code' => 'READY_FOR_COMPLETION',
-                    'phase' => 'completion',
-                ]
-            ]),
+                    'forms' => collect([
+                        [
+                            'name' => 'Ready for Completion',
+                            'code' => 'READY_FOR_COMPLETION',
+                            'phase' => 'completion',
+                        ]
+                    ]),
 
-            'route' => route('admin.projects.documents.hub', $project->id),
+                    'route' => route('admin.projects.documents.hub', $project->id),
 
-            'form_route' => route('admin.projects.documents.hub', $project->id),
+                    'form_route' => route('admin.projects.documents.hub', $project->id),
 
-            'count' => 1,
-            'is_completion' => true,
-        ];
-    })
-    ->values();
+                    'count' => 1,
+                    'is_completion' => true,
+                ];
+            })
+            ->values();
+
+
+            $projectsForClearanceReview = Project::with('organization')
+                    ->where('school_year_id', $activeSyId)
+                    ->where('clearance_status', 'uploaded')
+                    ->whereHas('organization', function ($q) use ($user) {
+                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    })
+                    ->get()
+                    ->map(function ($project) {
+                        return (object)[
+                            'project' => $project,
+                            'organization' => $project->organization ?? null,
+
+                            'forms' => collect([
+                                [
+                                    'name' => 'Clearance Review Required',
+                                    'code' => 'CLEARANCE_REVIEW',
+                                    'phase' => 'off_campus',
+                                ]
+                            ]),
+
+                            'route' => route('admin.projects.documents.hub', $project->id),
+
+                            'form_route' => route('admin.projects.documents.hub', $project->id),
+
+                            'count' => 1,
+                            'is_completion' => false,
+                        ];
+                    })
+                    ->values();     
 
             $projectApprovals = collect($projectApprovals)
                 ->merge(collect($projectsReadyForCompletion))
+                ->merge(collect($projectsForClearanceReview))
                 ->sortByDesc(fn ($item) => $item->project->updated_at ?? now())
                 ->values();
 
@@ -430,10 +469,24 @@ $projectsReadyForCompletion = Project::with([
 
 
 
-            ]);
-        }
+        ]);
 
 
+
+
+
+
+
+
+
+
+    }
+
+
+    
+    
+    
+    
     protected function resolveOrgDocumentRoute(ProjectDocument $document): string
     {
         $map = [

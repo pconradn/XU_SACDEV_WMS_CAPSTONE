@@ -36,11 +36,26 @@ class ContextController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        // SCHOOL YEARS (FILTER: only <= active SY)
         $schoolYears = SchoolYear::query()
             ->whereIn('id', $syIds)
             ->when($activeSy, function ($q) use ($activeSy) {
-                $q->where('start_date', '<=', $activeSy->end_date);
+
+                $previousSy = SchoolYear::query()
+                    ->where('end_date', '<', $activeSy->start_date)
+                    ->orderByDesc('end_date')
+                    ->first();
+
+                $q->where(function ($sub) use ($activeSy, $previousSy) {
+
+                    $sub->where('id', $activeSy->id);
+
+                    if ($previousSy) {
+                        $sub->orWhere('id', $previousSy->id);
+                    }
+
+                    $sub->orWhere('start_date', '>', $activeSy->end_date);
+                });
+
             })
             ->orderByDesc('start_date')
             ->get(['id', 'name', 'start_date']);

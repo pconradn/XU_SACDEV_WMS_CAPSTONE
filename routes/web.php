@@ -86,12 +86,7 @@ Route::get(
 )->name('clearance.verify');
 
 
-/*
-|--------------------------------------------------------------------------
-| Auth-only routes (force password change)
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth','nocache'])->group(function () {
     Route::get('/force-change-password', [ForcedPasswordController::class, 'show'])
         ->name('password.force.form');
 
@@ -105,11 +100,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('context.update');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Dashboard Redirect
-|--------------------------------------------------------------------------
-*/
+
 
 Route::get('/dashboard', function () {
     $user = auth()->user();
@@ -132,7 +123,7 @@ Route::get('/dashboard', function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth','nocache'])->group(function () {
     Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])
         ->name('notifications.index');
 

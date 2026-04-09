@@ -29,7 +29,7 @@ use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 
 
-Route::middleware(['auth', 'sacdev_admin', 'must_change_password'])
+Route::middleware(['auth', 'sacdev_admin', 'must_change_password','nocache'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -168,7 +168,7 @@ Route::prefix('admin')
                 ->middleware('permission:users.manage')
                 ->name('admin.coa.bulk-update');;
 
-    });
+        });
 
             
 
@@ -310,7 +310,7 @@ Route::prefix('admin')
 
 
 
-        Route::middleware('permission:projects.view')->group(function () {
+        Route::prefix('admin')->middleware('permission:projects.view')->group(function () {
 
 
             Route::get(
@@ -473,9 +473,7 @@ Route::prefix('admin')
         Route::middleware('permission:projects.view')->group(function () {
 
             Route::get(
-                '/projects/{project}/packets',
-                [AdminPacketController::class, 'projectPackets']
-            )->name('admin.projects.packets.index');
+                '/projects/{project}/packets',[AdminPacketController::class, 'projectPackets'])->name('admin.projects.packets.index');
         });
 
         Route::middleware('permission:projects.approve')->group(function () {

@@ -31,9 +31,6 @@
 
             </span>
 
-            <span>
-                {{ $submission->photo_id_path ? 'ID Uploaded' : 'No ID Uploaded' }}
-            </span>
 
         </div>
 

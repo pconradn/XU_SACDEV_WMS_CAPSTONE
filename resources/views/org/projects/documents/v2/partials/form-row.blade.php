@@ -162,17 +162,44 @@
 
             @if($form['can_create'])
                 <a href="{{ $form['create_url'] }}"
-                   class="px-2.5 py-1 text-[10px] rounded bg-blue-600 text-white hover:bg-blue-700">
+                class="px-2.5 py-1 text-[10px] rounded bg-blue-600 text-white hover:bg-blue-700">
                     Create
                 </a>
             @endif
 
-
             @if($form['can_review'])
                 <a href="{{ $form['view_url'] }}"
-                   class="px-2.5 py-1 text-[10px] rounded bg-emerald-600 text-white hover:bg-emerald-700">
+                class="px-2.5 py-1 text-[10px] rounded bg-emerald-600 text-white hover:bg-emerald-700">
                     Review
                 </a>
+            @endif
+
+            @php
+                $isNotice = in_array($form['code'] ?? '', [
+                    'POSTPONEMENT_NOTICE',
+                    'CANCELLATION_NOTICE'
+                ]);
+
+                $doc = $form['document'] ?? null;
+            @endphp
+
+            @if(
+                $isNotice &&
+                $doc &&
+                $doc->status === 'draft'
+            )
+                <form method="POST"
+                    action="{{ route('org.projects.documents.notices.archive', [$project, $doc]) }}"
+                    onsubmit="return confirm('This will remove this draft notice. Continue?')">
+                    @csrf
+                    @method('DELETE')
+
+                    <button type="submit"
+                        class="px-2.5 py-1 text-[10px] rounded
+                            bg-rose-600 text-white hover:bg-rose-700">
+                        Cancel Draft
+                    </button>
+                </form>
             @endif
 
         </div>

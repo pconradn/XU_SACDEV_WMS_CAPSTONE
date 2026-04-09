@@ -45,7 +45,20 @@
 
 
                 {{-- NEW PASSWORD --}}
-                <div>
+                <div x-data="{
+                        password: '',
+                        validLength: false,
+                        hasLetter: false,
+                        hasNumber: false,
+                        validate() {
+                            this.validLength = this.password.length >= 8
+                            this.hasLetter = /[a-zA-Z]/.test(this.password)
+                            this.hasNumber = /[0-9]/.test(this.password)
+                            this.hasSymbol = /[\W_]/.test(this.password)
+                        }
+                    }"
+                    x-init="validate()"
+                >
                     <label class="text-xs font-semibold text-slate-600">
                         New Password
                     </label>
@@ -55,18 +68,32 @@
                         name="password"
                         required
                         minlength="8"
+                        x-model="password"
+                        @input="validate()"
                         class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm
-                               focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition"
+                            focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition"
                     >
 
-                    <p class="mt-1 text-[11px] text-slate-400">
-                        Must be at least 8 characters.
-                    </p>
+                    <div class="mt-2 space-y-1 text-[11px]">
+                        <div :class="validLength ? 'text-emerald-600' : 'text-slate-400'">
+                            • At least 8 characters
+                        </div>
+                        <div :class="hasLetter ? 'text-emerald-600' : 'text-slate-400'">
+                            • Contains a letter
+                        </div>
+                        <div :class="hasNumber ? 'text-emerald-600' : 'text-slate-400'">
+                            • Contains a number
+                        </div>
+                        <div :class="hasSymbol ? 'text-emerald-600' : 'text-slate-400'">
+                            • Contains a symbol (e.g. ! @ # $)
+                        </div>
+                    </div>
                 </div>
 
 
-                {{-- CONFIRM PASSWORD --}}
-                <div>
+                <div x-data="{ confirm: '', password: '' }"
+                    x-init="password = document.querySelector('input[name=password]').value"
+                >
                     <label class="text-xs font-semibold text-slate-600">
                         Confirm Password
                     </label>
@@ -76,20 +103,28 @@
                         name="password_confirmation"
                         required
                         minlength="8"
+                        x-model="confirm"
+                        @input="password = document.querySelector('input[name=password]').value"
                         class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm
-                               focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition"
+                            focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition"
                     >
-                </div>
+
+                    <div class="mt-1 text-[11px]"
+                        :class="confirm && confirm === password ? 'text-emerald-600' : 'text-slate-400'">
+                        • Passwords must match
+                    </div>
 
 
-                {{-- ACTION --}}
-                <div class="pt-2">
-                    <button
-                        type="submit"
-                        class="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 transition shadow-sm"
-                    >
-                        Update Password
-                    </button>
+                                
+                    <div class="pt-2">
+                        <button
+                            type="submit"
+                            class="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 transition shadow-sm"
+                        >
+                            Update Password
+                        </button>
+                    </div>
+
                 </div>
 
             </form>

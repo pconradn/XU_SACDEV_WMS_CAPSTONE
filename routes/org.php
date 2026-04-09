@@ -5,7 +5,7 @@ use App\Http\Controllers\Org\OrganizationInfoController;
 use App\Http\Controllers\Org\OrganizationMemberRecordController;
 
 Route::prefix('org')
-    ->middleware(['auth', 'must_change_password', 'require.context'])
+    ->middleware(['auth', 'must_change_password', 'require.context','nocache'])
     ->group(function () {
 
         require __DIR__.'/org/context.php';

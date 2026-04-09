@@ -1,6 +1,6 @@
 <x-app-layout>
 
-    {{-- ================= INLINE OVERRIDES ================= --}}
+
     <style>
         .page-container {
             max-width: 1200px;
@@ -45,12 +45,12 @@
     </style>
 
 
-    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm px-5 py-4 flex items-center justify-between">
+    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm px-5 py-2 flex items-center justify-between">
 
-        {{-- LEFT --}}
+  
         <div class="flex items-start gap-3">
 
-            {{-- ICON --}}
+      
             <div class="mt-1 flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 text-blue-600">
                 <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
             </div>
@@ -68,17 +68,16 @@
         </div>
 
 
-        {{-- RIGHT (optional future space) --}}
         <div class="hidden sm:flex items-center gap-2 text-[11px] text-slate-400">
-            {{-- You can add filters / date / SY badge here later --}}
+       
         </div>
 
     </div>
 
     <div class="py-6">
-        <div class="page-container mx-auto px-5 space-y-5">
+        <div class="page-container mx-auto px-0 sm:px-4 lg:px-5 space-y-5">
 
-            {{-- FLASH --}}
+         
             @if (session('status'))
                 <div class="card border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
                     <div class="text-xs">{{ session('status') }}</div>
@@ -86,42 +85,23 @@
             @endif
 
 
-            {{-- ================= STATS ================= --}}
+     
             @include('portals.partials._org_dashboard_stats')
 
 
-            {{-- ================= MAIN GRID ================= --}}
+    
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-                {{-- ================= LEFT ================= --}}
+      
                 <div class="lg:col-span-2 space-y-5">
 
                     @include('portals.partials._org_dashboard_pending_tasks')
 
 
-                    {{-- ================= ORG + ROLES ================= --}}
+                  
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-                        {{-- ORGANIZATION --}}
-                        <div class="card p-4">
-                            <div class="card-header">
-                                Selected Organization
-                            </div>
-
-                            <div class="mt-1 card-title">
-                                {{ $currentOrg?->name ?? '—' }}
-                            </div>
-
-                            <div class="mt-1 text-xs text-slate-600">
-                                Acronym: {{ $currentOrg?->acronym ?? '—' }}
-                            </div>
-
-                            @if(!$currentOrg)
-                                <div class="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs text-slate-600">
-                                    You are not currently assigned to an organization.
-                                </div>
-                            @endif
-                        </div>
+                    
 
 
                         {{-- ROLES --}}
@@ -155,10 +135,10 @@
                 </div>
 
 
-                {{-- ================= RIGHT ================= --}}
+          
                 <div class="space-y-5">
 
-                    {{-- WARNING CARD --}}
+                    
                     @if($roles->contains('president') && $projectsWithoutHeadCount > 0)
                     <div class="card border-amber-200 bg-amber-50 p-4">
 
@@ -189,7 +169,7 @@
                     @endif
 
 
-                    {{-- PROJECTS --}}
+             
                     @include('portals.partials._org_dashboard_assigned_projects')
 
 
@@ -201,10 +181,10 @@
                     @endphp
 
 
-                    {{-- QUICK ACCESS --}}
+            
                     <div class="card p-4">
 
-                        {{-- HEADER --}}
+                    
                         <div>
                             <div class="flex items-center gap-2">
                                 <i data-lucide="zap" class="w-4 h-4 text-slate-400"></i>
@@ -217,12 +197,11 @@
                         </div>
 
 
-                        {{-- LINKS --}}
                         <div class="mt-3 flex flex-col gap-2">
 
                             @if($roles->contains('president'))
 
-                                {{-- RE-REG --}}
+                           
                                 <a href="{{ route('org.rereg.index') }}"
                                 class="group flex items-center justify-between rounded-lg border border-blue-200 bg-gradient-to-b from-blue-50 to-white px-3 py-2 text-xs font-medium text-blue-800 transition hover:shadow-sm">
 
@@ -238,7 +217,6 @@
                                 </a>
 
 
-                                {{-- ASSIGN HEAD --}}
                                 <a href="{{ route('org.assign-project-heads.index') }}"
                                 class="group flex items-center justify-between rounded-lg border border-amber-200 bg-gradient-to-b from-amber-50 to-white px-3 py-2 text-xs font-medium text-amber-800 transition hover:shadow-sm">
 
@@ -256,7 +234,7 @@
                             @endif
 
 
-                            {{-- PROJECTS --}}
+                        
                             <a href="{{ route('org.projects.index') }}"
                             class="group flex items-center justify-between rounded-lg border border-emerald-200 bg-gradient-to-b from-emerald-50 to-white px-3 py-2 text-xs font-medium text-emerald-800 transition hover:shadow-sm">
 
@@ -274,7 +252,7 @@
                         </div>
 
 
-                        {{-- FOOTER INFO --}}
+                 
                         @if(!$isProjectHead && !$roles->contains('president'))
                             <div class="mt-3 text-[11px] text-slate-500">
                                 Some modules are role-restricted.

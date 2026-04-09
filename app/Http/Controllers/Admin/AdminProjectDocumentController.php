@@ -140,8 +140,15 @@ class AdminProjectDocumentController extends Controller
             $allowedRemainingRoles = ['sacdev_admin', 'coa_officer'];
 
             $isFinalStage =
-                empty($remainingRoles) ||
+                !empty($remainingRoles) &&
                 count(array_diff($remainingRoles, $allowedRemainingRoles)) === 0;
+
+            $canPrint =
+                $doc &&
+                (
+                    $doc->status === 'approved_by_sacdev' ||
+                    ($doc->status === 'submitted' && $isFinalStage)
+                );
 
             return [
                 'name' => $formType->name,
@@ -162,7 +169,9 @@ class AdminProjectDocumentController extends Controller
                     ? route('admin.projects.documents.open', [$project, $formType->code])
                     : null,
 
-                'print_url' => ($doc && $isFinalStage)
+
+
+                'print_url' => $canPrint
                     ? route('admin.projects.documents.print', [$project, $formType->code, $doc->id])
                     : null,
 
@@ -855,10 +864,14 @@ class AdminProjectDocumentController extends Controller
         $allowedRemainingRoles = ['sacdev_admin', 'coa_officer'];
 
         $isFinalStage =
-            empty($remainingRoles) || // fully approved
+            !empty($remainingRoles) &&
             count(array_diff($remainingRoles, $allowedRemainingRoles)) === 0;
 
-        if (!$isFinalStage) {
+        $canPrint =
+            $document->status === 'approved_by_sacdev' ||
+            ($document->status === 'submitted' && $isFinalStage);
+
+        if (!$canPrint) {
             abort(403, 'Document not ready for printing.');
         }
 

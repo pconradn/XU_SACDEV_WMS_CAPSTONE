@@ -64,20 +64,35 @@ class OrganizationPresidentController extends Controller
         $data = $request->validate([
             'organization_id'   => ['required', 'exists:organizations,id'],
             'school_year_id'    => ['required', 'exists:school_years,id'],
-            'president_name'    => ['required', 'string', 'max:255'],
-            'student_id_number' => ['required', 'string', 'max:50'],
+            'first_name' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z]+(?:\s[A-Za-z]+)*$/'],
+            'middle_initial' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z]+(?:\s[A-Za-z]+)*$/'],
+            'last_name'      => ['required', 'string', 'max:100', 'regex:/^[A-Za-z]+(?:[ \-][A-Za-z]+)*$/'],
+            'prefix'         => ['nullable', 'string', 'max:20', 'regex:/^[A-Za-z\.]+$/'],
+            'student_id_number' => ['required', 'string', 'max:50', 'regex:/^[0-9]{11}$/'],
         ]);
+
+    
 
         $orgId = (int) $data['organization_id'];
         $syId  = (int) $data['school_year_id'];
+
+        $fullName = trim(collect([
+            $data['prefix'] ?? null,
+            $data['first_name'],
+            isset($data['middle_initial']) ? $data['middle_initial'] . '.' : null,
+            $data['last_name'],
+        ])->filter()->implode(' '));
+
         $email = trim($data['student_id_number']) . '@my.xu.edu.ph';
 
         
-        $alreadyPresidentElsewhere = OfficerEntry::query()
+        $alreadyPresidentElsewhere = OrgMembership::query()
             ->where('school_year_id', $syId)
-            //->where('major_officer_role', ['president', 'treasurer','vice_president', 'finance_officer'])
-            ->where('is_major_officer', true)
-            ->where('student_id_number', $data['student_id_number'])
+            ->where('role', 'president')
+            ->whereNull('archived_at')
+            ->whereHas('officerEntry', function ($q) use ($data) {
+                $q->where('student_id_number', $data['student_id_number']);
+            })
             ->where('organization_id', '!=', $orgId)
             ->exists();
 
@@ -88,14 +103,17 @@ class OrganizationPresidentController extends Controller
             ])->withInput();
         }
 
-        //dd($alreadyPresidentElsewhere);
-    
-        $existingPresidentEntry = OfficerEntry::query()
+            
+            
+        $existingMembership = OrgMembership::query()
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
-            ->where('major_officer_role', 'president')
-            ->where('is_major_officer', true)
+            ->where('role', 'president')
+            ->whereNull('archived_at')
+            ->with('officerEntry')
             ->first();
+
+        $existingPresidentEntry = $existingMembership?->officerEntry;
 
 
         $hasOrgSyEntry = \App\Models\OrganizationSchoolYear::query()
@@ -103,33 +121,40 @@ class OrganizationPresidentController extends Controller
             ->where('school_year_id', $syId)
             ->exists();
 
+        $forceReplace = $request->boolean('force_replace');
+
         if ($existingPresidentEntry && $existingPresidentEntry->user_id) {
 
             $existingUser = User::find($existingPresidentEntry->user_id);
 
-            $hasOrgSyEntry = \App\Models\OrganizationSchoolYear::query()
-                ->where('organization_id', $orgId)
-                ->where('school_year_id', $syId)
-                ->exists();
+            $isPending = $existingUser
+                && $existingUser->must_change_password
+                && $existingUser->password_changed_at === null;
 
-            if (
-                $existingUser &&
-                (int) $existingUser->must_change_password === 0 &&
-                $hasOrgSyEntry 
-            ) {
+            if (!$isPending && !$forceReplace) {
                 return back()->withErrors([
                     'president_name' =>
-                        'This organization already has an activated President account. ' .
-                        'To change President due to suspension, use the Major Officer Roles page (Active SY only).',
+                        'This organization already has an activated President. Use replace action if needed.',
                 ])->withInput();
             }
         }
 
         try {
-            DB::transaction(function () use ($data, $orgId, $syId, $email, $existingPresidentEntry) {
+            DB::transaction(function () use ($fullName, $data, $orgId, $syId, $email, $existingPresidentEntry) {
 
                 $user = null;
 
+                $forceReplace = request()->boolean('force_replace');
+
+                if ($existingPresidentEntry && $forceReplace) {
+                    OfficerEntry::query()
+                        ->where('organization_id', $orgId)
+                        ->where('school_year_id', $syId)
+                        ->where('major_officer_role', 'president')
+                        ->update([
+                            'is_major_officer' => false
+                        ]);
+                }
     
                 if ($existingPresidentEntry && $existingPresidentEntry->user_id) {
                     $existingUser = User::find($existingPresidentEntry->user_id);
@@ -156,7 +181,11 @@ class OrganizationPresidentController extends Controller
                         }
 
                 
-                        $existingUser->name  = $data['president_name'];
+                 
+                        $existingUser->first_name = $data['first_name'];
+                        $existingUser->middle_initial = $data['middle_initial'] ?? null;
+                        $existingUser->last_name = $data['last_name'];
+                        $existingUser->prefix = $data['prefix'] ?? null;
                         $existingUser->email = $email;
                         $existingUser->save();
 
@@ -170,7 +199,7 @@ class OrganizationPresidentController extends Controller
     
                 if (!$user) {
                     [$user, $tempPassword] = AccountProvisioner::findOrCreateUser(
-                        $data['president_name'],
+                        $fullName,
                         $email
                     );
 
@@ -188,7 +217,7 @@ class OrganizationPresidentController extends Controller
                         'student_id_number' => $data['student_id_number'],
                     ],
                     [
-                        'full_name'         => $data['president_name'],
+                        'full_name'         => $fullName,
                         'email'             => $email,
                         'position'          => 'President',
 
@@ -225,7 +254,7 @@ class OrganizationPresidentController extends Controller
 
                 Audit::log(
                     'president_assigned',
-                    "President {$data['president_name']} assigned to {$organization->name}",
+                    "President {$fullName} assigned to {$organization->name}",
                     [
                         'actor_user_id'   => $actor->id,
                         'organization_id' => $orgId,     
@@ -236,7 +265,7 @@ class OrganizationPresidentController extends Controller
                             'organization_name' => $organization->name,
                             'school_year_name'  => $schoolYear->name,
                             'assigned_email'       => $email,
-                            'replaced_existing' => $existingPresidentEntry ? true : false,
+                            'replaced_existing' => $existingPresidentEntry && $existingPresidentEntry->user_id ? true : false,
                         ],
                     ]
                 );
@@ -250,108 +279,7 @@ class OrganizationPresidentController extends Controller
             return back()->withErrors($e->errors())->withInput();
         }
 
-        return back()->with('status', 'President assigned successfully.');
-    }
-
-
-
-
-    public function create()
-    {
-        $organizations = Organization::query()->orderBy('name')->get();
-        $schoolYears = SchoolYear::query()->orderByDesc('start_date')->orderByDesc('id')->get();
-
-        return view('admin.organizations.assign-president', compact('organizations', 'schoolYears'));
-    }
-
-
-
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'organization_id' => ['required', 'exists:organizations,id'],
-            'school_year_id' => ['required', 'exists:school_years,id'],
-            'president_name' => ['required', 'string', 'max:255'],
-            'student_id_number' => ['required', 'string', 'max:50'],
-        ]);
-
-        $email = $data['student_id_number'] . '@my.xu.edu.ph';
-
-        DB::transaction(function () use ($data, $email) {
-
-  
-
-            $existingPresident = \App\Models\OfficerEntry::query()
-                ->where('school_year_id', $data['school_year_id'])
-                ->where('major_officer_role', 'president')
-                ->where('student_id_number', $data['student_id_number'])
-                ->exists();
-
-            if ($existingPresident) {
-                abort(422, 'This student is already a president of another organization in this school year.');
-            }
-
-
-
-            $officerEntry = \App\Models\OfficerEntry::updateOrCreate(
-                [
-                    'organization_id' => $data['organization_id'],
-                    'school_year_id' => $data['school_year_id'],
-                    'student_id_number' => $data['student_id_number'],
-                ],
-                [
-                    'full_name' => $data['president_name'],
-                    'email' => $email,
-
-                    'position' => 'President',
-
-                    'major_officer_role' => 'president',
-                    'is_major_officer' => true,
-
-                    'is_under_probation' => false,
-                ]
-            );
-
-
-
-            [$user, $tempPassword] =
-                \App\Support\AccountProvisioner::findOrCreateUser(
-                    $data['president_name'],
-                    $email
-                );
-
-
-
-            $officerEntry->update([
-                'user_id' => $user->id
-            ]);
-
-
-            \App\Models\OrgMembership::query()
-                ->where('organization_id', $data['organization_id'])
-                ->where('school_year_id', $data['school_year_id'])
-                ->where('role', 'president')
-                ->whereNull('archived_at')
-                ->update([
-                    'archived_at' => now(),
-                ]);
-
-
-            \App\Models\OrgMembership::create([
-                'organization_id' => $data['organization_id'],
-                'school_year_id' => $data['school_year_id'],
-
-                'user_id' => $user->id,
-                'officer_entry_id' => $officerEntry->id,
-
-                'role' => 'president',
-            ]);
-
-        });
-
-        return redirect()
-            ->route('admin.organizations.index')
-            ->with('status', 'President assigned successfully.');
+        return back()->with('success', 'President assigned successfully.');
     }
 
 

@@ -320,8 +320,9 @@
                                     data-org-name="{{ $org->name }}"
                                     data-sy-id="{{ $selectedSyId }}"
                                     data-sy-name="{{ $selectedSchoolYear?->name }}"
-                                    data-current-name="{{ $assigned?->full_name }}"
-                                    data-current-id="{{ $assigned?->student_id_number }}"
+                                    data-has-president="{{ $assigned ? '1' : '0' }}"
+                                    data-current-name="{{ $assigned?->officerEntry?->full_name ?? '' }}"
+                                    data-current-id="{{ $assigned?->officerEntry?->student_id_number ?? '' }}"
                                 >
                                     {{ $assigned ? 'Replace' : 'Assign' }}
                                 </button>
@@ -381,7 +382,7 @@
 
             <div class="flex items-start justify-between">
                 <div>
-                    <h2 class="text-base font-semibold text-slate-900">
+                    <h2 id="modalTitle" class="text-base font-semibold text-slate-900">
                         Assign President
                     </h2>
 
@@ -422,24 +423,46 @@
 
         {{-- FORM --}}
         <form method="POST" action="{{ route('admin.president_assignments.assign') }}" class="px-6 py-5 space-y-4">
+            <input type="hidden" name="force_replace" id="modalForceReplace" value="0">
+            
             @csrf
 
             <input type="hidden" name="organization_id" id="modalOrgId">
             <input type="hidden" name="school_year_id" id="modalSyId">
 
             {{-- NAME --}}
-            <div>
-                <label class="block text-xs font-medium text-slate-600">
-                    President Full Name
-                </label>
+            <div class="grid grid-cols-2 gap-3">
 
-                <input
-                    name="president_name"
-                    id="modalPresidentName"
-                    class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20"
-                    placeholder="Juan Dela Cruz"
-                    required
-                >
+                <div>
+                    <label class="text-xs text-slate-600">First Name</label>
+                    <input name="first_name" id="modalFirstName"
+                        class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                        required pattern="[A-Za-z\s\]+">
+                </div>
+
+                <div>
+                    <label class="text-xs text-slate-600">Last Name</label>
+                    <input name="last_name" id="modalLastName"
+                        class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                        required pattern="[A-Za-z\s\-]+">
+                </div>
+
+                <div>
+                    <label class="text-xs text-slate-600">Middle Initial</label>
+                    <input name="middle_initial" id="modalMiddleInitial"
+                        maxlength="1"
+                        class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                        pattern="[A-Za-z]">
+                </div>
+
+                <div>
+                    <label class="text-xs text-slate-600">Prefix</label>
+                    <input name="prefix" id="modalPrefix"
+                        class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                        placeholder="Mr. / Ms."
+                        pattern="[A-Za-z\.]+">
+                </div>
+
             </div>
 
             {{-- STUDENT ID --}}
@@ -453,6 +476,7 @@
                     id="modalStudentId"
                     class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
                     placeholder="2018xxxxxxx"
+                    pattern="[0-9]{11}"
                     required
                 >
 
@@ -530,31 +554,48 @@
             document.getElementById('modalSyId').value = btn.dataset.syId;
 
             // RESET
-            document.getElementById('modalPresidentName').value = '';
+            document.getElementById('modalFirstName').value = '';
+            document.getElementById('modalLastName').value = '';
+            document.getElementById('modalMiddleInitial').value = '';
+            document.getElementById('modalPrefix').value = '';
             document.getElementById('modalStudentId').value = '';
             document.getElementById('modalEmailPreview').textContent = 'studentID@my.xu.edu.ph';
 
             // CURRENT PRESIDENT LOGIC
-            const currentName = btn.dataset.currentName;
-            const currentId = btn.dataset.currentId;
+            const hasPresident = btn.dataset.hasPresident === '1';
+            const currentName = btn.dataset.currentName || '';
+            const currentId = btn.dataset.currentId || '';
 
             const box = document.getElementById('currentPresidentBox');
             const warning = document.getElementById('replaceWarning');
+            const title = document.getElementById('modalTitle');
+            const forceReplaceInput = document.getElementById('modalForceReplace');
+            const submitBtn = document.getElementById('submitBtn');
 
-            if (currentName && currentName !== 'null') {
+            if (hasPresident) {
+                title.textContent = 'Replace President';
+                submitBtn.textContent = 'Replace';
+                forceReplaceInput.value = '1';
 
                 box.classList.remove('hidden');
                 warning.classList.remove('hidden');
 
                 document.getElementById('currentPresidentName').textContent = currentName;
                 document.getElementById('currentPresidentId').textContent = currentId;
-
             } else {
+                title.textContent = 'Assign President';
+                submitBtn.textContent = 'Assign';
+                forceReplaceInput.value = '0';
 
                 box.classList.add('hidden');
                 warning.classList.add('hidden');
+
+                document.getElementById('currentPresidentName').textContent = '';
+                document.getElementById('currentPresidentId').textContent = '';
             }
 
+
+            console.log('force_replace:', document.getElementById('modalForceReplace').value);
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         });
@@ -572,6 +613,25 @@
         const id = e.target.value.trim();
         document.getElementById('modalEmailPreview').textContent =
             id ? `${id}@my.xu.edu.ph` : 'studentID@my.xu.edu.ph';
+    });
+    </script>
+
+
+    <script>
+    document.querySelector('form').addEventListener('submit', function(e) {
+
+        const first = document.getElementById('modalFirstName').value.trim();
+        const last = document.getElementById('modalLastName').value.trim();
+        const mi = document.getElementById('modalMiddleInitial').value.trim();
+        const prefix = document.getElementById('modalPrefix').value.trim();
+        const id = document.getElementById('modalStudentId').value.trim();
+
+        const nameRegex = /^[A-Za-z]+$/;
+        const lastRegex = /^[A-Za-z\s\-]+$/;
+        const prefixRegex = /^[A-Za-z\.]+$/;
+        const idRegex = /^[0-9]{11}$/;
+
+
     });
     </script>
 

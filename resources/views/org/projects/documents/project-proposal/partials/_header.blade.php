@@ -18,7 +18,7 @@
     {{-- MAIN TITLE --}}
     <div class="px-6 py-6 text-center">
         <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
-            Project Proposal
+            Project and Budget Proposal
         </h1>
         <p class="text-sm text-slate-500 mt-1">
             Define and plan your project details

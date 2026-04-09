@@ -267,22 +267,28 @@ class Project extends Model
     }   
 
 
-    public static function generateClearanceReference()
+    public static function generateClearanceReference(): string
     {
         $year = now()->year;
 
-        $last = self::whereYear('created_at', $year)
-            ->whereNotNull('clearance_reference')
-            ->orderByDesc('id')
-            ->first();
+        $lastReference = self::whereNotNull('clearance_reference')
+            ->where('clearance_reference', 'like', 'CL-' . $year . '-%')
+            ->orderByDesc('clearance_reference')
+            ->value('clearance_reference');
 
-        $number = 1;
+        $nextNumber = 1;
 
-        if ($last && preg_match('/CL-\d{4}-(\d+)/', $last->clearance_reference, $matches)) {
-            $number = intval($matches[1]) + 1;
+        if ($lastReference && preg_match('/^CL-\d{4}-(\d{5})$/', $lastReference, $matches)) {
+            $nextNumber = ((int) $matches[1]) + 1;
         }
 
-        return sprintf('CL-%s-%05d', $year, $number);
+        do {
+            $reference = sprintf('CL-%s-%05d', $year, $nextNumber);
+            $exists = self::where('clearance_reference', $reference)->exists();
+            $nextNumber++;
+        } while ($exists);
+
+        return $reference;
     }
 
 

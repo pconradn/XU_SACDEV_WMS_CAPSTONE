@@ -237,6 +237,10 @@ class StrategicPlanController extends Controller
     {
         ['orgId' => $orgId, 'targetSy' => $targetSyId] = $this->ctx($request);
 
+        $validated = $request->validated();
+        $validated['projects'] = array_values($validated['projects'] ?? []);
+        $validated['fund_sources'] = array_values($validated['fund_sources'] ?? []);
+
         if ($orgId <= 0) {
             return redirect()->route('org.home')->with('error', 'Please select an organization first.');
         }
@@ -312,7 +316,10 @@ class StrategicPlanController extends Controller
             $submission->sacdev_reviewed_at = null;
             $submission->sacdev_remarks = null;
             $submission->approved_at = null;
-             
+            
+            $this->syncProjects($submission, $validated['projects'] ?? []);
+            $this->syncFundSources($submission, $validated['fund_sources'] ?? []);
+            $this->recomputeTotals($submission);
 
             $submission->save();
 

@@ -3,7 +3,8 @@
 <div 
     x-data="{ 
         openAgreement: @json($needsAgreement),
-        helpOpen: false
+        helpOpen: false,
+        tab: 'documents'
     }"
 >
     @php
@@ -28,7 +29,7 @@
                 @endif
             ">
 
-                {{-- LEFT --}}
+                
                 <div class="flex items-start gap-3 min-w-0">
 
                     {{-- ICON --}}
@@ -56,7 +57,7 @@
                                 Clearance Uploaded — Awaiting Approval
                             @elseif($clearanceStatus === 'rejected')
                                 Clearance Returned
-                            @elseif($clearanceStatus === 'verified')
+                            @elseif($clearanceStatus === 'approved')
                                 Clearance Approved
                             @else
                                 Clearance In Progress
@@ -80,7 +81,7 @@
                             @endif
                         </div>
 
-                        {{-- REMARKS --}}
+                     
                         @if($clearanceStatus === 'rejected' && filled($clearanceRemarks))
                             <div class="mt-2 rounded-lg border border-rose-200 bg-white/70 px-2.5 py-2">
                                 <div class="text-[10px] font-semibold uppercase text-rose-700">Remarks</div>
@@ -95,10 +96,6 @@
                 {{-- ACTIONS --}}
                 <div class="flex items-center gap-2 shrink-0">
 
-                    <button @click="helpOpen = true"
-                        class="h-7 w-7 rounded-md border bg-white text-[11px] font-semibold shadow-sm hover:bg-slate-50">
-                        ?
-                    </button>
 
                     @if(!$clearanceHasFile)
                         <a href="{{ $clearance['print_url'] }}"
@@ -117,11 +114,11 @@
         @endif
 
 
-        {{-- ================= HEADER ================= --}}
+    
         @include('org.projects.documents.v2.partials.header', ['header' => $header])
 
 
-        {{-- ================= STATUS BANNERS ================= --}}
+     
         @if($header['is_completed'])
             <div class="rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 shadow-sm">
                 <div class="flex items-start gap-2">
@@ -156,7 +153,7 @@
         @endif
 
 
-        {{-- ================= MAIN GRID ================= --}}
+   
         <div class="relative">
 
             <div class="
@@ -169,24 +166,70 @@
             {{-- LEFT --}}
             <div class="lg:col-span-5 space-y-4">
 
-                @include('org.projects.documents.v2.partials.snapshot')
 
-                @include('org.projects.documents.v2.partials.milestone')
+                {{-- ================= TABS ================= --}}
+                <div class="flex items-center gap-2 border-b border-slate-200 pb-2">
 
-                {{-- DOCUMENT TABLE --}}
-                @include('org.projects.documents.v2.partials.document-table', [
-                    'documentsActionRequired' => $documentsActionRequired,
-                    'documentsInProgress' => $documentsInProgress,
-                    'documentsCompleted' => $documentsCompleted,
-                    'optional' => $sections['optional'] ?? collect(),
-                    'workflow' => $sections['workflow'] ?? collect(),
-                    'project' => $project,
-                    'preSubmitted' => (
-                        $proposalDoc && $proposalDoc->status !== 'draft'
-                        &&
-                        $budgetDoc && $budgetDoc->status !== 'draft'
-                    ),
-                ])
+                    {{-- OVERVIEW TAB --}}
+                    <button 
+                        @click="tab = 'overview'"
+                        :class="tab === 'overview' 
+                            ? 'text-slate-900 border-slate-900' 
+                            : 'text-slate-400 border-transparent hover:text-slate-600'"
+                        class="px-3 py-1.5 text-xs font-semibold border-b-2 transition"
+                    >
+                        Overview
+                    </button>
+
+                    {{-- DOCUMENTS TAB --}}
+                    <button 
+                        @click="tab = 'documents'"
+                        :class="tab === 'documents' 
+                            ? 'text-slate-900 border-slate-900' 
+                            : 'text-slate-400 border-transparent hover:text-slate-600'"
+                        class="px-3 py-1.5 text-xs font-semibold border-b-2 transition flex items-center gap-2"
+                    >
+                        Documents
+
+                        {{-- PENDING COUNT --}}
+                        @if($documentsActionRequired->count())
+                            <span class="px-1.5 py-0.5 text-[10px] rounded-md bg-rose-100 text-rose-700 font-semibold">
+                                {{ $documentsActionRequired->count() }}
+                            </span>
+                        @endif
+
+                    </button>
+
+                </div>
+
+                {{-- ================= OVERVIEW ================= --}}
+                <div x-show="tab === 'overview'" x-transition class="space-y-4">
+
+                    @include('org.projects.documents.v2.partials.snapshot')
+
+                    @include('org.projects.documents.v2.partials.milestone')
+
+                </div>
+
+
+                {{-- ================= DOCUMENTS ================= --}}
+                <div x-show="tab === 'documents'" x-transition>
+
+                    @include('org.projects.documents.v2.partials.document-table', [
+                        'documentsActionRequired' => $documentsActionRequired,
+                        'documentsInProgress' => $documentsInProgress,
+                        'documentsCompleted' => $documentsCompleted,
+                        'optional' => $sections['optional'] ?? collect(),
+                        'workflow' => $sections['workflow'] ?? collect(),
+                        'project' => $project,
+                        'preSubmitted' => (
+                            $proposalDoc && $proposalDoc->status !== 'draft'
+                            &&
+                            $budgetDoc && $budgetDoc->status !== 'draft'
+                        ),
+                    ])
+
+                </div>
 
             </div>
 

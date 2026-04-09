@@ -1,7 +1,10 @@
 <div 
     x-data="{
         showRequireModal: false,
-        showRetractModal: false
+        showRetractModal: false,
+        showVerifyModal: false,
+        showReturnModal: false,
+        returnRemarks: ''
     }"
     class="w-full"
 >
@@ -114,25 +117,23 @@
 
         <div class="flex gap-2">
 
-            <form method="POST"
-                  action="{{ route('admin.projects.clearance.verify', $project) }}"
-                  class="flex-1">
-                @csrf
-                <button class="w-full px-3 py-2 text-xs font-semibold rounded-xl 
-                               bg-gradient-to-r from-emerald-600 to-emerald-500 text-white">
-                    Verify Clearance
-                </button>
-            </form>
+            <button
+                type="button"
+                @click="showVerifyModal = true"
+                class="flex-1 w-full px-3 py-2 text-xs font-semibold rounded-xl 
+                    bg-gradient-to-r from-emerald-600 to-emerald-500 text-white
+                    hover:from-emerald-700 hover:to-emerald-600 transition shadow-sm">
+                Verify Clearance
+            </button>
 
-            <form method="POST"
-                  action="{{ route('admin.projects.clearance.reject', $project) }}"
-                  class="flex-1">
-                @csrf
-                <button class="w-full px-3 py-2 text-xs font-semibold rounded-xl 
-                               bg-gradient-to-r from-rose-600 to-rose-500 text-white">
-                    Return
-                </button>
-            </form>
+            <button
+                type="button"
+                @click="showReturnModal = true"
+                class="flex-1 w-full px-3 py-2 text-xs font-semibold rounded-xl 
+                    bg-gradient-to-r from-rose-600 to-rose-500 text-white
+                    hover:from-rose-700 hover:to-rose-600 transition shadow-sm">
+                Return
+            </button>
 
         </div>
 
@@ -241,6 +242,98 @@
                 </button>
             </form>
         </div>
+
+    </div>
+</div>
+
+<div x-show="showVerifyModal"
+     x-cloak
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl border p-6 space-y-4">
+
+        <div class="flex items-start gap-3">
+            <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600 mt-1"></i>
+
+            <div>
+                <div class="text-sm font-semibold text-slate-900">
+                    Verify Clearance
+                </div>
+                <p class="text-xs text-slate-500 mt-1">
+                    You are about to approve this uploaded off-campus clearance. This action cannot be undone through this page.
+                </p>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-2">
+            <button @click="showVerifyModal = false"
+                    type="button"
+                    class="px-3 py-1.5 text-xs border rounded-lg">
+                Cancel
+            </button>
+
+            <form method="POST" action="{{ route('admin.projects.clearance.verify', $project) }}">
+                @csrf
+                <button class="px-3 py-1.5 text-xs bg-emerald-600 text-white rounded-lg">
+                    Confirm Approval
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<div x-show="showReturnModal"
+     x-cloak
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl border p-6 space-y-4">
+
+        <div class="flex items-start gap-3">
+            <i data-lucide="corner-up-left" class="w-5 h-5 text-rose-600 mt-1"></i>
+
+            <div>
+                <div class="text-sm font-semibold text-slate-900">
+                    Return Clearance
+                </div>
+                <p class="text-xs text-slate-500 mt-1">
+                    Add remarks for the project head before returning this clearance. These remarks are required.
+                </p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ route('admin.projects.clearance.return', $project) }}" class="space-y-4">
+            @csrf
+
+            <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">
+                    Remarks
+                </label>
+                <textarea
+                    name="remarks"
+                    x-model="returnRemarks"
+                    rows="4"
+                    required
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-rose-500 focus:ring focus:ring-rose-100"
+                    placeholder="Enter return remarks"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <button @click="showReturnModal = false"
+                        type="button"
+                        class="px-3 py-1.5 text-xs border rounded-lg">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="px-3 py-1.5 text-xs bg-rose-600 text-white rounded-lg"
+                    :disabled="!returnRemarks.trim()"
+                    :class="{ 'opacity-50 cursor-not-allowed': !returnRemarks.trim() }">
+                    Confirm Return
+                </button>
+            </div>
+        </form>
 
     </div>
 </div>

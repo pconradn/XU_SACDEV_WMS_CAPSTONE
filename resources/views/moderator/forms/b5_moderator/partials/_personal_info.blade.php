@@ -32,43 +32,62 @@
             @enderror
         </div>
 
-        <div>
-            <label class="text-xs font-medium text-slate-600">
-                Birthday <span class="text-rose-500">*</span>
-            </label>
+        <div x-data="{
+                birthday: '{{ old('birthday', optional($submission->birthday)->format('Y-m-d')) }}',
+                age: null,
+                calcAge() {
+                    if (!this.birthday) {
+                        this.age = null;
+                        return;
+                    }
+                    const today = new Date();
+                    const birth = new Date(this.birthday);
+                    let age = today.getFullYear() - birth.getFullYear();
+                    const m = today.getMonth() - birth.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                        age--;
+                    }
+                    this.age = age;
+                }
+            }"
+            x-init="calcAge()"
+            class="contents"
+        >
 
-            <input type="date"
-                   name="birthday"
-                   value="{{ old('birthday', optional($submission->birthday)->format('Y-m-d')) }}"
-                   class="mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900
-                          {{ $errors->has('birthday') ? 'border-rose-400 focus:ring-rose-200' : 'border-slate-300 focus:ring-slate-200' }}
-                          focus:ring-2 focus:outline-none"
-                   {{ $isLocked ? 'disabled' : '' }}>
+            <!-- Birthday -->
+            <div>
+                <label class="text-xs font-medium text-slate-600">
+                    Birthday <span class="text-rose-500">*</span>
+                </label>
 
-            @error('birthday')
-                <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
-            @enderror
-        </div>
+                <input type="date"
+                    name="birthday"
+                    x-model="birthday"
+                    @change="calcAge()"
+                    class="mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900
+                            {{ $errors->has('birthday') ? 'border-rose-400 focus:ring-rose-200' : 'border-slate-300 focus:ring-slate-200' }}
+                            focus:ring-2 focus:outline-none"
+                    {{ $isLocked ? 'disabled' : '' }}>
 
-        <div>
-            <label class="text-xs font-medium text-slate-600">
-                Age <span class="text-rose-500">*</span>
-            </label>
+                @error('birthday')
+                    <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
+                @enderror
+            </div>
 
-            <input type="number"
-                   name="age"
-                   min="0"
-                   max="120"
-                   value="{{ old('age', $submission->age) }}"
-                   placeholder="Enter age"
-                   class="mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900
-                          {{ $errors->has('age') ? 'border-rose-400 focus:ring-rose-200' : 'border-slate-300 focus:ring-slate-200' }}
-                          focus:ring-2 focus:outline-none"
-                   {{ $isLocked ? 'disabled' : '' }}>
+            <!-- Age -->
+            <div>
+                <label class="text-xs font-medium text-slate-600">
+                    Age
+                </label>
 
-            @error('age')
-                <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
-            @enderror
+                <input type="text"
+                    x-model="age"
+                    placeholder="Auto-calculated"
+                    class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700
+                            focus:outline-none"
+                    readonly>
+            </div>
+
         </div>
 
         <div>

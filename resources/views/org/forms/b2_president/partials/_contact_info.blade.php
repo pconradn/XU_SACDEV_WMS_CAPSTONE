@@ -72,7 +72,7 @@
 
         <div>
             <label class="text-xs font-medium text-slate-600">
-                City Landline <span class="text-rose-500">*</span>
+                City Landline <span class="text-rose-500"></span>
             </label>
 
             <input type="text"
