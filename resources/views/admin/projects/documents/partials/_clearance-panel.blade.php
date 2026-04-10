@@ -17,7 +17,7 @@
     $cardStyles = match(true) {
         !$project->requires_clearance => 'border-slate-200 bg-white',
         $status === 'uploaded' => 'border-purple-300 border-l-4 border-l-purple-400 bg-gradient-to-br from-purple-50 to-white',
-        $status === 'verified' => 'border-emerald-300 bg-gradient-to-br from-emerald-50 to-white',
+        $status === 'approved' => 'border-emerald-300 bg-gradient-to-br from-emerald-50 to-white',
         $status === 'rejected' => 'border-rose-300 bg-gradient-to-br from-rose-50 to-white',
         default => 'border-slate-200 bg-white'
     };
@@ -25,7 +25,7 @@
     $statusLabel = match($status) {
         'required' => ['Waiting for upload', 'bg-amber-100 text-amber-700'],
         'uploaded' => ['Uploaded', 'bg-purple-100 text-purple-700'],
-        'verified' => ['Verified', 'bg-emerald-100 text-emerald-700'],
+        'approved' => ['Approved', 'bg-emerald-100 text-emerald-700'],
         'rejected' => ['Returned', 'bg-rose-100 text-rose-700'],
         default => ['—', 'bg-slate-100 text-slate-500']
     };
@@ -145,15 +145,15 @@
 
         <div class="text-[10px] border-t pt-2
             @if($status === 'uploaded') text-purple-600 border-purple-200
-            @elseif($status === 'verified') text-emerald-600 border-emerald-200
+            @elseif($status === 'approved') text-emerald-600 border-emerald-200
             @elseif($status === 'rejected') text-rose-600 border-rose-200
             @else text-slate-400 border-slate-200
             @endif
         ">
             @if($status === 'uploaded')
                 Review the uploaded clearance before approval
-            @elseif($status === 'verified')
-                Clearance has been successfully verified
+            @elseif($status === 'approved')
+                Clearance has been successfully approved
             @elseif($status === 'rejected')
                 Clearance was returned and needs revision
             @else

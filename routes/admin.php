@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\AdminPacketController;
 use App\Http\Controllers\Admin\AdminProjectClearanceController;
 use App\Http\Controllers\Admin\AdminProjectController;
 use App\Http\Controllers\Admin\AdminProjectDocumentController;
+use App\Http\Controllers\Admin\AdminReregHubController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\CoaAssignmentController;
 use App\Http\Controllers\Admin\OrgActivationController;
@@ -23,6 +24,8 @@ use App\Http\Controllers\Admin\SacdevB5ModeratorSubmissionController;
 use App\Http\Controllers\Admin\SacdevStrategicPlanController;
 use App\Http\Controllers\Admin\SchoolYearController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Org\ModeratorSubmissionController;
+use App\Http\Controllers\Org\ProfileController;
 use App\Http\Controllers\OrgConstitutionSubmissionController;
 use App\Http\Controllers\SACDEV\SacdevB2PresidentRegistrationController;
 use App\Http\Controllers\SearchController;
@@ -33,6 +36,13 @@ Route::middleware(['auth', 'sacdev_admin', 'must_change_password','nocache'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+
+
+        Route::get('/users/{user}/profile', [ProfileController::class, 'view'])
+            ->name('profile.view');
+
+        Route::get('/rereg/{org}/{sy}/moderator', [ModeratorSubmissionController::class, 'view'])
+            ->name('rereg.moderator.view');
 
         Route::middleware('permission:users.manage')->group(function () {
             Route::resource('users', UserController::class);
@@ -121,8 +131,8 @@ Route::prefix('admin')
             Route::post('/rereg/set-sy', [\App\Http\Controllers\Admin\ReregHubController::class, 'setSy'])
                 ->name('rereg.setSy');
 
-            Route::get('/rereg/{organization}/hub', [\App\Http\Controllers\Admin\ReregHubController::class, 'hub'])
-                ->name('rereg.hub');
+            Route::get('/admin/rereg/{organization}', [AdminReregHubController::class, 'hub'])
+                ->name('admin.rereg.hub');
 
             Route::get('review', [AdminOrgReviewController::class, 'index'])
                 ->name('admin.review.index');

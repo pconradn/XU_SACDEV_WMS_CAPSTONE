@@ -1201,29 +1201,25 @@ class AdminProjectDocumentController extends Controller
 
         $userId = auth()->id();
 
-        if (!$project->isAssignedCoa($project)) {
+        $userSignature = $document->signatures
+            ->where('user_id', $userId)
+            ->first();
 
-            $userSignature = $document->signatures
-                ->where('user_id', $userId)
-                ->first();
+        if (!$userSignature) {
+            return back()->with('error', 'You are not part of the approval workflow.');
+        }
 
-            if (!$userSignature) {
-                return back()->with('error', 'You are not part of the approval workflow.');
-            }
+        $currentPending = $document->signatures
+            ->where('status', 'pending')
+            ->sortBy('id')
+            ->first();
 
-            $currentPending = $document->signatures
-                ->where('status', 'pending')
-                ->sortBy('id')
-                ->first();
+        if (!$currentPending) {
+            return back()->with('error', 'No pending approvals remain.');
+        }
 
-            if (!$currentPending) {
-                return back()->with('error', 'No pending approvals remain.');
-            }
-
-            if ($currentPending->user_id !== $userId) {
-                return back()->with('error', 'It is not your turn to return this document yet.');
-            }
-
+        if ($currentPending->user_id !== $userId) {
+            return back()->with('error', 'It is not your turn to return this document yet.');
         }
 
 
@@ -1402,12 +1398,23 @@ class AdminProjectDocumentController extends Controller
 
         DB::transaction(function () use ($document) {
 
-            $document->signatures()
-                ->where('role', 'sacdev_admin')
-                ->update([
-                    'status' => 'pending',
-                    'signed_at' => null
-                ]);
+            $lastSigned = $document->signatures
+                ->where('status', 'signed')
+                ->sortByDesc('id')
+                ->first();
+
+            if (!$lastSigned) {
+                throw new \Exception('No signed approval to retract.');
+            }
+
+            if ($lastSigned->user_id !== auth()->id()) {
+                return back()->with('error', 'You can only retract your own approval.');
+            }
+
+            $lastSigned->update([
+                'status' => 'pending',
+                'signed_at' => null
+            ]);
 
             $document->update([
                 'status' => 'submitted'
@@ -1415,7 +1422,7 @@ class AdminProjectDocumentController extends Controller
 
             $document->timelines()->create([
                 'user_id' => auth()->id(),
-                'action' => 'sacdev_retract',
+                'action' => 'approval_retracted',
                 'remarks' => null,
                 'old_status' => 'approved_by_sacdev',
                 'new_status' => 'submitted',

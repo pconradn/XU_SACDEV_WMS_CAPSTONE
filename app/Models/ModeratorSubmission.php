@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ModeratorSubmission extends Model
 {
@@ -25,33 +24,11 @@ class ModeratorSubmission extends Model
         'sacdev_remarks',
         'sacdev_reviewed_at',
 
-        'photo_id_path',
-
-        'full_name',
-
-        'birthday',
-        'age',
-        'sex',
-        'religion',
-
-        'university_designation',
-        'unit_department',
-        'employment_status',
-        'years_of_service',
-
-        'mobile_number',
-        'email',
-        'landline',
-        'facebook_url',
-        'city_address',
-
         'was_moderator_before',
         'moderated_org_name',
 
         'served_nominating_org_before',
         'served_nominating_org_years',
-
-        'skills_and_interests',
 
         'version',
 
@@ -68,23 +45,15 @@ class ModeratorSubmission extends Model
 
         'sacdev_reviewed_at' => 'datetime',
 
-        'birthday' => 'date',
-
         'was_moderator_before' => 'boolean',
         'served_nominating_org_before' => 'boolean',
 
-        'age' => 'integer',
-        'years_of_service' => 'integer',
         'served_nominating_org_years' => 'integer',
 
         'version' => 'integer',
         'edit_requested' => 'boolean',
         'edit_requested_at' => 'datetime',
     ];
-
-    // --------------------
-    // Relationships
-    // --------------------
 
     public function organization(): BelongsTo
     {
@@ -111,12 +80,7 @@ class ModeratorSubmission extends Model
         return $this->belongsTo(User::class, 'sacdev_reviewed_by_user_id');
     }
 
-    public function leaderships(): HasMany
-    {
-        return $this->hasMany(ModeratorSubmissionLeadership::class, 'moderator_submission_id')
-            ->orderBy('sort_order');
-    }
-    public function editRequestedBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function editRequestedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'edit_requested_by_user_id');
     }
@@ -125,5 +89,4 @@ class ModeratorSubmission extends Model
     {
         return $this->morphMany(\App\Models\Timeline::class, 'timelineable')->latest();
     }
-
 }

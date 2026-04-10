@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\Org\B3OfficerListController;
 use App\Http\Controllers\Org\B4MembersListController;
+use App\Http\Controllers\Org\ModeratorSubmissionController;
 use App\Http\Controllers\Org\OrgReregAssignmentsController;
 use App\Http\Controllers\Org\OrgReregDashboardController;
+use App\Http\Controllers\Org\PresidentProfileController;
 use App\Http\Controllers\Org\PresidentRegistrationController;
 use App\Http\Controllers\Org\StrategicPlanController;
 use App\Http\Controllers\OrgConstitutionSubmissionController;
@@ -16,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('rereg')
-    ->middleware(['require.context', 'org.role:president'])
+    ->middleware(['require.context', 'org.role:president,moderator'])
     ->name('org.rereg.')
     ->group(function () {
 
@@ -46,8 +48,20 @@ Route::prefix('rereg')
                 Route::get('/edit', [StrategicPlanController::class, 'edit'])
                     ->name('edit');
 
-                Route::post('/draft', [StrategicPlanController::class, 'saveDraft'])
-                    ->name('draft');
+                Route::post('/profile', [StrategicPlanController::class, 'saveProfile'])
+                    ->name('profile.save');
+
+                Route::post('/projects', [StrategicPlanController::class, 'storeProject'])
+                    ->name('projects.store');
+
+                Route::put('/projects/{project}', [StrategicPlanController::class, 'updateProject'])
+                    ->name('projects.update');
+
+                Route::delete('/projects/{project}', [StrategicPlanController::class, 'deleteProject'])
+                    ->name('projects.delete');
+
+                Route::post('/fund-sources', [StrategicPlanController::class, 'saveFundSources'])
+                    ->name('funds.save');
 
                 Route::post('/submit', [StrategicPlanController::class, 'submitToModerator'])
                     ->name('submit');
@@ -153,6 +167,21 @@ Route::prefix('rereg')
                     ->name('moderator.store');
 
             });
+
+
+        Route::prefix('moderator-submission')
+            ->name('moderator.')
+            ->group(function () {
+
+                Route::get('/', [ModeratorSubmissionController::class, 'edit'])
+                    ->name('edit');
+
+                Route::post('/', [ModeratorSubmissionController::class, 'update'])
+                    ->name('update');
+
+            });
+
+
 
 
         /*

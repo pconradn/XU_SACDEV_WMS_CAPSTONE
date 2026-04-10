@@ -70,6 +70,115 @@ class StrategicPlanSubmission extends Model
         'sacdev_reviewed_at' => 'datetime',
     ];
 
+    private function cleanArray(array $items): array
+    {
+        return collect($items)
+            ->map(fn ($v) => is_string($v) ? trim($v) : $v)
+            ->filter(fn ($v) => !is_null($v) && $v !== '')
+            ->values()
+            ->toArray();
+    }
+
+    public function syncFundSources(array $fundSourcesPayload): void
+    {
+        $this->fundSources()->delete();
+
+        foreach ($fundSourcesPayload as $fs) {
+
+            $type = $fs['type'] ?? null;
+            $amount = $fs['amount'] ?? null;
+
+            if (!$type || $amount === null) {
+                continue;
+            }
+
+            $this->fundSources()->create([
+                'type'   => $type,
+                'label'  => trim($fs['label'] ?? ''),
+                'amount' => $amount,
+            ]);
+        }
+    }
+
+    public function recomputeTotals(): void
+    {
+        $projects = $this->projects;
+
+        $orgDev  = $projects->where('category', StrategicPlanProject::CAT_ORG_DEV)->sum('budget');
+        $stud    = $projects->where('category', StrategicPlanProject::CAT_STUDENT_SERVICES)->sum('budget');
+        $comm    = $projects->where('category', StrategicPlanProject::CAT_COMMUNITY_INVOLVEMENT)->sum('budget');
+
+        $this->update([
+            'total_org_dev' => $orgDev,
+            'total_student_services' => $stud,
+            'total_community_involvement' => $comm,
+            'total_overall' => $orgDev + $stud + $comm,
+        ]);
+    }
+
+
+    public function syncAll(array $projects, array $fundSources): void
+    {
+        $this->syncProjects($projects);
+        $this->syncFundSources($fundSources);
+        $this->load('projects');
+        $this->recomputeTotals();
+    }
+
+    public function syncProjects(array $projectsPayload): void
+    {
+        $this->projects()->each(function ($p) {
+            $p->objectives()->delete();
+            $p->beneficiaries()->delete();
+            $p->deliverables()->delete();
+            $p->partners()->delete();
+        });
+
+        $this->projects()->delete();
+
+        foreach ($projectsPayload as $proj) {
+
+            $title = trim($proj['title'] ?? '');
+
+            if ($title === '') {
+                continue;
+            }
+
+            $objectives     = $this->cleanArray($proj['objectives'] ?? []);
+            $beneficiaries  = $this->cleanArray($proj['beneficiaries'] ?? []);
+            $deliverables   = $this->cleanArray($proj['deliverables'] ?? []);
+            $partners       = $this->cleanArray($proj['partners'] ?? []);
+
+            if (empty($objectives) || empty($beneficiaries) || empty($deliverables)) {
+                continue;
+            }
+
+            $project = $this->projects()->create([
+                'category'          => $proj['category'] ?? null,
+                'target_date'       => $proj['target_date'] ?? null,
+                'title'             => $title,
+                'implementing_body' => trim($proj['implementing_body'] ?? ''),
+                'budget'            => $proj['budget'] ?? 0,
+            ]);
+
+            foreach ($objectives as $text) {
+                $project->objectives()->create(['text' => $text]);
+            }
+
+            foreach ($beneficiaries as $text) {
+                $project->beneficiaries()->create(['text' => $text]);
+            }
+
+            foreach ($deliverables as $text) {
+                $project->deliverables()->create(['text' => $text]);
+            }
+
+            foreach ($partners as $text) {
+                $project->partners()->create(['text' => $text]);
+            }
+        }
+    }
+
     // Relationships
     public function organization(): BelongsTo
     {

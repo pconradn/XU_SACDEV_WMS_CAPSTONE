@@ -203,7 +203,21 @@
                         @endif
                     </div>
 
-                    <div class="px-2 py-2">
+                    <div class="px-2 py-2 space-y-1">
+
+                        @if(auth()->user()->system_role !== 'sacdev_admin')
+                            <a href="{{ route('org.profile.edit') }}"
+                            class="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 transition">
+
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5.121 17.804A9 9 0 1118.88 6.196 9 9 0 015.121 17.804z"/>
+                                </svg>
+
+                                <span>Profile</span>
+                            </a>
+                        @endif
+
                         <form method="POST" action="/logout">
                             @csrf
                             <button
@@ -211,11 +225,12 @@
                             >
                                 <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M17 16l4-4m0 0l-4-4m4 4H9m4 8H7a2 2 0 01-2-2V6a2 2 0 012-2h6"/>
+                                        d="M17 16l4-4m0 0l-4-4m4 4H9m4 8H7a2 2 0 01-2-2V6a2 2 0 012-2h6"/>
                                 </svg>
                                 <span>Logout</span>
                             </button>
                         </form>
+
                     </div>
                 </div>
             </div>

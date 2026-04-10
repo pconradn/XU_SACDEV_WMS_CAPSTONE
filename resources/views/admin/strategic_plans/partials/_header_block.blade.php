@@ -48,7 +48,7 @@
 
                     {{-- BACK --}}
                     <div>
-                        <a href="{{ route('rereg.hub', $submission->organization->id) }}"
+                        <a href="{{ route('admin.rereg.hub', $submission->organization->id) }}"
                            class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-teal-600 transition">
 
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

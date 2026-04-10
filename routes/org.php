@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Org\OrganizationInfoController;
 use App\Http\Controllers\Org\OrganizationMemberRecordController;
+use App\Http\Controllers\Org\ProfileController;
+use Illuminate\Support\Facades\Route;
 
 Route::prefix('org')
     ->middleware(['auth', 'must_change_password', 'require.context','nocache'])
@@ -46,6 +47,19 @@ Route::prefix('org')
         */
         Route::get('/organization-info', [OrganizationInfoController::class, 'show'])
             ->name('org.organization-info.show');
+
+
+        Route::prefix('profile')
+            ->name('org.profile.')
+            ->group(function () {
+
+                Route::get('/{user?}', [ProfileController::class, 'edit'])
+                    ->name('edit');
+
+                Route::post('/', [ProfileController::class, 'update'])
+                    ->name('update');
+
+            });
 
 
         /*

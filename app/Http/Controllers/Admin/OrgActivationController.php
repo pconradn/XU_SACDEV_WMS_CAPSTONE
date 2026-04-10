@@ -35,11 +35,6 @@ class OrgActivationController extends Controller
             ->latest('id')
             ->first();
 
-        $b2 = PresidentRegistration::query()
-            ->where('organization_id', $organization->id)
-            ->where('target_school_year_id', $encodeSyId)
-            ->latest('id')
-            ->first();
 
         $b3 = OfficerSubmission::query()
             ->where('organization_id', $organization->id)
@@ -61,13 +56,13 @@ class OrgActivationController extends Controller
 
 
         // Validate ALL approved
-        $allApproved = collect([$b1, $b2, $b3, $b5, $b6])
+        $allApproved = collect([$b1, $b3])
             ->every(fn ($m) => $m && $m->status === 'approved_by_sacdev');
 
         if (! $allApproved) {
             return back()->with(
                 'status',
-                'Activation blocked: All B-1, B-2, B-3, B-5, and B-6 must be approved by SAcDev.'
+                'Activation blocked: Strategic Plan (B-1) and Officer Submission (B-3) must be approved by SAcDev.'
             );
         }
 

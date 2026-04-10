@@ -244,17 +244,23 @@ class AdminDashboardController extends Controller
                     $q->where('workflow_status', '!=', 'cancelled');
 
                     $q->whereHas('organization', function ($org) use ($user) {
-                        $org->whereIn('cluster_id', $user->clusters->pluck('id'));
+                        if ($user->clusters->isNotEmpty()) {
+                            $org->whereIn('cluster_id', $user->clusters->pluck('id'));
+                        }
                     });
                 })
                 ->get()
+                //->tap(fn($docs) => dd($docs->count()))
                 ->filter(function ($doc) {
+                    $userId = auth()->id();
+
                     if ($doc->edit_requested) {
-                        return true;
+                        return $doc->edit_requested_by === $userId;
                     }
 
                     $pending = $doc->currentPendingSignature();
-                    return $pending && $pending->role === 'sacdev_admin';
+             
+                    return $pending && $pending->user_id === $userId;
                 })
                 ->map(function ($doc) {
                     return (object) [

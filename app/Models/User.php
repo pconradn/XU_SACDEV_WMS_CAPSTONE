@@ -138,5 +138,18 @@ class User extends Authenticatable
         return $user ?? getFallbackAdmin();
     }
 
+    public function profile()
+    {
+        return $this->hasOne(\App\Models\UserProfile::class);
+    }
+
+    public function isModerator(): bool
+    {
+        return $this->orgMemberships()
+            ->where('role', 'moderator')
+            ->where('is_active', 1)
+            ->exists();
+    }
+
 
 }

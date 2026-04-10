@@ -245,6 +245,18 @@ class OrganizationPresidentController extends Controller
                     $officerEntry->id
                 );
 
+
+                $user->profile()->updateOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'prefix' => $data['prefix'] ?? null,
+                        'first_name' => $data['first_name'],
+                        'middle_initial' => $data['middle_initial'] ?? null,
+                        'last_name' => $data['last_name'],
+                        'full_name' => $fullName,
+                    ]
+                );
+
             
 
 

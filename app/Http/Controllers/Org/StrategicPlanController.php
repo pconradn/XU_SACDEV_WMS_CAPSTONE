@@ -3,17 +3,9 @@
 namespace App\Http\Controllers\Org;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Org\SaveDraftStrategicPlanRequest;
-use App\Http\Requests\Org\SubmitStrategicPlanRequest;
 use App\Models\Organization;
 use App\Models\OrgMembership;
 use App\Models\SchoolYear;
-use App\Models\StrategicPlanBeneficiary;
-use App\Models\StrategicPlanDeliverable;
-use App\Models\StrategicPlanFundSource;
-use App\Models\StrategicPlanObjective;
-use App\Models\StrategicPlanPartner;
-use App\Models\StrategicPlanProject;
 use App\Models\StrategicPlanSubmission;
 use App\Models\User;
 use App\Support\Audit;
@@ -36,6 +28,26 @@ class StrategicPlanController extends Controller
         ];
     }
 
+
+
+
+
+    private function validateSubmit(Request $request): array
+    {
+        return $request->validate([
+            'confirm' => ['required', 'in:yes'],
+
+            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+
+            'org_acronym' => ['required', 'string', 'max:50', 'regex:/^[A-Z0-9\s\-]+$/'],
+            'org_name' => ['required', 'string', 'max:255', 'regex:/^[\pL\pN\s\-\.\,\(\)\'\"]+$/u'],
+            'mission' => ['required', 'string', 'max:2000', 'regex:/^[\pL\pN\s\-\.\,\(\)\'\"]+$/u'],
+            'vision' => ['required', 'string', 'max:2000', 'regex:/^[\pL\pN\s\-\.\,\(\)\'\"]+$/u'],
+        ], [
+            'confirm.required' => 'Please confirm before submitting.',
+            'confirm.in' => 'Invalid confirmation value.',
+        ]);
+    }
 
     private function assertMembership(Request $request, int $orgId, int $targetSyId): ?RedirectResponse
     {
@@ -138,82 +150,229 @@ class StrategicPlanController extends Controller
         ));
     }
 
-   
-    public function saveDraft(SaveDraftStrategicPlanRequest $request)
+
+    public function saveFundSources(Request $request)
     {
-        ['orgId' => $orgId, 'targetSy' => $targetSyId, 'userId' => $userId] = $this->ctx($request);
+        ['orgId' => $orgId, 'targetSy' => $targetSyId] = $this->ctx($request);
+
+        $data = $request->all();
+
+        foreach ($data['fund_sources'] ?? [] as $i => $fs) {
+            if (isset($fs['amount'])) {
+                $data['fund_sources'][$i]['amount'] = str_replace(',', '', $fs['amount']);
+            }
+        }
+
+        $request->merge($data);
+
+        $validated = $request->validate([
+            'fund_sources' => ['nullable','array','min:0'],
+            'fund_sources.*.type' => ['required','in:org_funds,aeco,pta,membership_fee,raised_funds,other'],
+            'fund_sources.*.label' => ['nullable','string','max:255'],
+            'fund_sources.*.amount' => ['nullable','numeric','min:0'],
+        ]);
 
         if ($orgId <= 0) {
-            return redirect()->route('org.home')->with('status', 'Please select an organization first.');
+            return back()->with('error', 'No organization selected.');
         }
 
         if ($targetSyId <= 0) {
-            return redirect()->route('org.rereg.index')->with('status', 'Please select a target school year first.');
+            return back()->with('error', 'No school year selected.');
         }
 
-        $this->assertMembership($request, $orgId, $targetSyId);
+        if ($resp = $this->assertMembership($request, $orgId, $targetSyId)) {
+            return $resp;
+        }
 
-        $validated = $request->validated();
-        $validated['projects'] = array_values($validated['projects'] ?? []);
-        $validated['fund_sources'] = array_values($validated['fund_sources'] ?? []);
+        DB::transaction(function () use ($validated, $orgId, $targetSyId) {
 
-        DB::transaction(function () use ($request, $validated, $orgId, $targetSyId, $userId) {
             $submission = StrategicPlanSubmission::query()
                 ->where('organization_id', $orgId)
                 ->where('target_school_year_id', $targetSyId)
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $this->assertEditableStatus($submission);
+            $submission->fundSources()->delete();
 
-            if ($request->hasFile('logo')) {
+            foreach ($validated['fund_sources'] as $fs) {
 
-                $file = $request->file('logo');
+                $amount = $fs['amount'] ?? null;
 
-               
-                $filename = 'logo.' . $file->getClientOriginalExtension();
-
-                
-                $path = $file->storeAs(
-                    "strategic-plans/{$orgId}/{$targetSyId}",
-                    $filename,
-                    'public'
-                );
-
-              
-                if ($submission->logo_path && Storage::disk('public')->exists($submission->logo_path)) {
-                    Storage::disk('public')->delete($submission->logo_path);
+                if ($amount === null || $amount === '') {
+                    continue;
                 }
 
-                
-                $submission->logo_path = $path;
-                $submission->logo_original_name = $file->getClientOriginalName();
-                $submission->logo_mime = $file->getMimeType();
-                $submission->logo_size_bytes = $file->getSize();
+                $submission->fundSources()->create([
+                    'type' => $fs['type'],
+                    'label' => trim($fs['label'] ?? ''),
+                    'amount' => $fs['amount'],
+                ]);
             }
-
-            $submission->fill([
-                'org_acronym' => $validated['org_acronym'] ?? null,
-                'org_name'    => $validated['org_name'] ?? ($submission->org_name ?? ''),
-                'mission'     => $validated['mission'] ?? null,
-                'vision'      => $validated['vision'] ?? null,
-            ]);
-
-            // stays draft on save
-            $submission->status = StrategicPlanSubmission::STATUS_DRAFT;
-            $submission->submitted_by_user_id = $submission->submitted_by_user_id ?: $userId;
-
-            $submission->save();
-
-            $this->syncProjects($submission, $validated['projects'] ?? []);
-            $this->syncFundSources($submission, $validated['fund_sources'] ?? []);
-            $this->recomputeTotals($submission);
         });
 
-        return redirect()
-            ->route('org.rereg.b1.edit')
-            ->with('success', 'Draft saved.');
+        return back()->with('success', 'Fund sources saved.');
     }
+
+
+    public function storeProject(Request $request)
+    {
+        ['orgId' => $orgId, 'targetSy' => $targetSyId] = $this->ctx($request);
+
+        $validated = $request->validate([
+            'category' => ['required','in:org_dev,student_services,community_involvement'],
+            'target_date' => ['nullable','date'],
+            'title' => ['required','string','max:255'],
+            'implementing_body' => ['nullable','string','max:255'],
+            'budget' => ['required','numeric','min:0'],
+            'objectives' => ['nullable','array'],
+            'objectives.*' => ['nullable','string','max:500'],
+            'beneficiaries' => ['nullable','array'],
+            'beneficiaries.*' => ['nullable','string','max:500'],
+            'deliverables' => ['nullable','array'],
+            'deliverables.*' => ['nullable','string','max:500'],
+            'partners' => ['nullable','array'],
+            'partners.*' => ['nullable','string','max:500'],
+        ]);
+
+        if ($resp = $this->assertMembership($request, $orgId, $targetSyId)) {
+            return $resp;
+        }
+
+        DB::transaction(function () use ($validated, $orgId, $targetSyId) {
+
+            $submission = StrategicPlanSubmission::where('organization_id', $orgId)
+                ->where('target_school_year_id', $targetSyId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $project = $submission->projects()->create([
+                'category' => $validated['category'],
+                'target_date' => $validated['target_date'] ?? null,
+                'title' => trim($validated['title']),
+                'implementing_body' => trim($validated['implementing_body'] ?? ''),
+                'budget' => $validated['budget'],
+            ]);
+
+            foreach ($validated['objectives'] ?? [] as $text) {
+                if (trim($text) !== '') {
+                    $project->objectives()->create(['text' => trim($text)]);
+                }
+            }
+
+            foreach ($validated['beneficiaries'] ?? [] as $text) {
+                if (trim($text) !== '') {
+                    $project->beneficiaries()->create(['text' => trim($text)]);
+                }
+            }
+
+            foreach ($validated['deliverables'] ?? [] as $text) {
+                if (trim($text) !== '') {
+                    $project->deliverables()->create(['text' => trim($text)]);
+                }
+            }
+
+            foreach ($validated['partners'] ?? [] as $text) {
+                if (trim($text) !== '') {
+                    $project->partners()->create(['text' => trim($text)]);
+                }
+            }
+        });
+
+        return back()->with('success', 'Project added.');
+    }
+
+
+    public function updateProject(Request $request, $projectId)
+    {
+        ['orgId' => $orgId, 'targetSy' => $targetSyId] = $this->ctx($request);
+
+        $validated = $request->validate([
+            'category' => ['required','in:org_dev,student_services,community_involvement'],
+            'target_date' => ['nullable','date'],
+            'title' => ['required','string','max:255'],
+            'implementing_body' => ['nullable','string','max:255'],
+            'budget' => ['required','numeric','min:0'],
+            'objectives' => ['nullable','array'],
+            'beneficiaries' => ['nullable','array'],
+            'deliverables' => ['nullable','array'],
+            'partners' => ['nullable','array'],
+        ]);
+
+        DB::transaction(function () use ($validated, $projectId, $orgId, $targetSyId) {
+
+            $project = \App\Models\StrategicPlanProject::where('id', $projectId)
+                ->whereHas('submission', function ($q) use ($orgId, $targetSyId) {
+                    $q->where('organization_id', $orgId)
+                    ->where('target_school_year_id', $targetSyId);
+                })
+                ->firstOrFail();
+
+            $project->update([
+                'category' => $validated['category'],
+                'target_date' => $validated['target_date'] ?? null,
+                'title' => trim($validated['title']),
+                'implementing_body' => trim($validated['implementing_body'] ?? ''),
+                'budget' => $validated['budget'],
+            ]);
+
+            $project->objectives()->delete();
+            $project->beneficiaries()->delete();
+            $project->deliverables()->delete();
+            $project->partners()->delete();
+
+            foreach ($validated['objectives'] ?? [] as $text) {
+                if (trim($text) !== '') {
+                    $project->objectives()->create(['text' => trim($text)]);
+                }
+            }
+
+            foreach ($validated['beneficiaries'] ?? [] as $text) {
+                if (trim($text) !== '') {
+                    $project->beneficiaries()->create(['text' => trim($text)]);
+                }
+            }
+
+            foreach ($validated['deliverables'] ?? [] as $text) {
+                if (trim($text) !== '') {
+                    $project->deliverables()->create(['text' => trim($text)]);
+                }
+            }
+
+            foreach ($validated['partners'] ?? [] as $text) {
+                if (trim($text) !== '') {
+                    $project->partners()->create(['text' => trim($text)]);
+                }
+            }
+        });
+
+        return back()->with('success', 'Project updated.');
+    }
+
+    public function deleteProject(Request $request, $projectId)
+    {
+        ['orgId' => $orgId, 'targetSy' => $targetSyId] = $this->ctx($request);
+
+        DB::transaction(function () use ($projectId, $orgId, $targetSyId) {
+
+            $project = \App\Models\StrategicPlanProject::where('id', $projectId)
+                ->whereHas('submission', function ($q) use ($orgId, $targetSyId) {
+                    $q->where('organization_id', $orgId)
+                    ->where('target_school_year_id', $targetSyId);
+                })
+                ->firstOrFail();
+
+            $project->objectives()->delete();
+            $project->beneficiaries()->delete();
+            $project->deliverables()->delete();
+            $project->partners()->delete();
+
+            $project->delete();
+        });
+
+        return back()->with('success', 'Project deleted.');
+    }
+
+
 
 
     private function moderatorForSy(int $orgId, int $targetSyId): ?User
@@ -231,15 +390,89 @@ class StrategicPlanController extends Controller
         return $membership?->user;
     }
 
+    public function saveProfile(Request $request)
+    {
+        ['orgId' => $orgId, 'targetSy' => $targetSyId, 'userId' => $userId] = $this->ctx($request);
 
+        $request->merge([
+            'org_acronym' => $request->org_acronym ? strtoupper(trim($request->org_acronym)) : null,
+            'org_name' => $request->org_name ? trim($request->org_name) : null,
+            'mission' => $request->mission ? trim($request->mission) : null,
+            'vision' => $request->vision ? trim($request->vision) : null,
+        ]);
 
-    public function submitToModerator(SubmitStrategicPlanRequest $request)
+        $validated = $request->validate([
+            'logo' => ['nullable','image','mimes:jpg,jpeg,png','max:2048'],
+
+            'org_acronym' => ['required','string','max:50','regex:/^[A-Z0-9\s\-]+$/'],
+            'org_name' => ['required','string','max:255'],
+            'mission' => ['required','string','max:2000'],
+            'vision' => ['required','string','max:2000'],
+        ]);
+
+        if ($orgId <= 0) {
+            return redirect()->route('org.home')->with('error', 'Please select an organization first.');
+        }
+
+        if ($targetSyId <= 0) {
+            return redirect()->route('org.rereg.index')->with('error', 'Please select a target school year first.');
+        }
+
+        if ($resp = $this->assertMembership($request, $orgId, $targetSyId)) {
+            return $resp;
+        }
+
+        DB::transaction(function () use ($request, $validated, $orgId, $targetSyId, $userId) {
+
+            $submission = StrategicPlanSubmission::query()
+                ->where('organization_id', $orgId)
+                ->where('target_school_year_id', $targetSyId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $this->assertEditableStatus($submission);
+
+            if ($request->hasFile('logo')) {
+
+                $file = $request->file('logo');
+
+                $filename = 'logo.' . $file->getClientOriginalExtension();
+
+                $path = $file->storeAs(
+                    "strategic-plans/{$orgId}/{$targetSyId}",
+                    $filename,
+                    'public'
+                );
+
+                if ($submission->logo_path && Storage::disk('public')->exists($submission->logo_path)) {
+                    Storage::disk('public')->delete($submission->logo_path);
+                }
+
+                $submission->logo_path = $path;
+                $submission->logo_original_name = $file->getClientOriginalName();
+                $submission->logo_mime = $file->getMimeType();
+                $submission->logo_size_bytes = $file->getSize();
+            }
+
+            $submission->update([
+                'org_acronym' => $validated['org_acronym'],
+                'org_name'    => $validated['org_name'],
+                'mission'     => $validated['mission'],
+                'vision'      => $validated['vision'],
+                'submitted_by_user_id' => $submission->submitted_by_user_id ?: $userId,
+            ]);
+        });
+
+        return back()->with('success', 'Organization profile saved.');
+    }
+
+    public function submitToModerator(Request $request)
     {
         ['orgId' => $orgId, 'targetSy' => $targetSyId] = $this->ctx($request);
 
-        $validated = $request->validated();
-        $validated['projects'] = array_values($validated['projects'] ?? []);
-        $validated['fund_sources'] = array_values($validated['fund_sources'] ?? []);
+        $request->validate([
+            'confirm' => ['required', 'in:yes'],
+        ]);
 
         if ($orgId <= 0) {
             return redirect()->route('org.home')->with('error', 'Please select an organization first.');
@@ -260,7 +493,7 @@ class StrategicPlanController extends Controller
                 ->with('error', 'No moderator assigned for this organization and school year.');
         }
 
-        $result = DB::transaction(function () use ($request, $orgId, $targetSyId) {
+        $result = DB::transaction(function () use ($orgId, $targetSyId) {
 
             $submission = StrategicPlanSubmission::query()
                 ->where('organization_id', $orgId)
@@ -272,10 +505,7 @@ class StrategicPlanController extends Controller
                 StrategicPlanSubmission::STATUS_DRAFT,
                 StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
                 StrategicPlanSubmission::STATUS_RETURNED_BY_SACDEV,
-                StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR,
             ], true);
-
-            //dd($editable);
 
             if (! $editable) {
                 return redirect()
@@ -283,28 +513,32 @@ class StrategicPlanController extends Controller
                     ->with('error', 'This submission cannot be submitted right now.');
             }
 
-            if ($request->hasFile('logo')) {
+            // PURE DB CHECKS (new system)
 
-                $file = $request->file('logo');
-
-                $filename = 'logo.' . $file->getClientOriginalExtension();
-
-                $path = $file->storeAs(
-                    "strategic-plans/{$orgId}/{$targetSyId}",
-                    $filename,
-                    'public'
-                );
-
-                if ($submission->logo_path && Storage::disk('public')->exists($submission->logo_path)) {
-                    Storage::disk('public')->delete($submission->logo_path);
-                }
-
-                $submission->logo_path = $path;
-                $submission->logo_original_name = $file->getClientOriginalName();
-                $submission->logo_mime = $file->getMimeType();
-                $submission->logo_size_bytes = $file->getSize();
+            if (
+                empty($submission->org_name) ||
+                empty($submission->mission) ||
+                empty($submission->vision)
+            ) {
+                return redirect()
+                    ->route('org.rereg.b1.edit')
+                    ->with('error', 'Complete organization profile before submitting.');
             }
+
+            if ($submission->projects()->count() === 0) {
+                return redirect()
+                    ->route('org.rereg.b1.edit')
+                    ->with('error', 'Add at least one project before submitting.');
+            }
+
+            if ($submission->fundSources()->count() === 0) {
+                return redirect()
+                    ->route('org.rereg.b1.edit')
+                    ->with('error', 'Add at least one fund source before submitting.');
+            }
+
             $oldStatus = $submission->getOriginal('status');
+
             $submission->status = StrategicPlanSubmission::STATUS_SUBMITTED_TO_MODERATOR;
             $submission->submitted_to_moderator_at = now();
 
@@ -316,10 +550,6 @@ class StrategicPlanController extends Controller
             $submission->sacdev_reviewed_at = null;
             $submission->sacdev_remarks = null;
             $submission->approved_at = null;
-            
-            $this->syncProjects($submission, $validated['projects'] ?? []);
-            $this->syncFundSources($submission, $validated['fund_sources'] ?? []);
-            $this->recomputeTotals($submission);
 
             $submission->save();
 
@@ -340,7 +570,6 @@ class StrategicPlanController extends Controller
                     'school_year_id'  => $targetSyId,
                     'meta' => [
                         'submission_id' => $submission->id,
-                        'logo_uploaded' => $submission->logo_path ? true : false,
                     ],
                 ]
             );
@@ -348,7 +577,6 @@ class StrategicPlanController extends Controller
             return (int) $submission->getKey();
         });
 
-        
         if ($result instanceof RedirectResponse) {
             return $result;
         }
@@ -359,13 +587,13 @@ class StrategicPlanController extends Controller
             'rereg','strategic_plan','submitted_to_moderator',
             'org'.$orgId,'sy'.$targetSyId,'sub'.$submissionId,
             'to_user'.$moderator->getKey(),
-            now()->timestamp 
+            now()->timestamp
         ]);
 
         InAppNotifier::notifyOnce($moderator, [
             'dedupe_key'   => $dedupeKey,
             'title'        => 'Strategic Plan Submitted for Review',
-            'message'      => 'A Strategic Plan has been submitted to you for review. Please evaluate it and either return it with feedback or forward it to SACDEV.',
+            'message'      => 'A Strategic Plan has been submitted for your review.',
             'org_id'       => $orgId,
             'target_sy_id' => $targetSyId,
             'form'         => 'strategic_plan',
@@ -378,96 +606,6 @@ class StrategicPlanController extends Controller
         return redirect()
             ->route('org.rereg.b1.edit')
             ->with('success', 'Submitted to moderator for review.');
-    }
-
-
-
-
-    
-
-    private function syncProjects(StrategicPlanSubmission $submission, array $projectsPayload): void
-    {
-       
-        $existingProjects = $submission->projects()->get();
-
-        foreach ($existingProjects as $p) {
-            $p->objectives()->delete();
-            $p->beneficiaries()->delete();
-            $p->deliverables()->delete();
-            $p->partners()->delete();
-        }
-        $submission->projects()->delete();
-
-        foreach ($projectsPayload as $proj) {
-            if (empty($proj['title'])) {
-                continue;
-            }
-
-            $project = StrategicPlanProject::create([
-                'submission_id'     => $submission->id,
-                'category'          => $proj['category'] ?? null,
-                'target_date'       => $proj['target_date'] ?? null,
-                'title'             => $proj['title'],
-                'implementing_body' => $proj['implementing_body'] ?? null,
-                'budget'            => $proj['budget'] ?? 0,
-            ]);
-
-            foreach (($proj['objectives'] ?? []) as $text) {
-                if (trim((string) $text) === '') continue;
-                StrategicPlanObjective::create(['project_id' => $project->id, 'text' => $text]);
-            }
-
-            foreach (($proj['beneficiaries'] ?? []) as $text) {
-                if (trim((string) $text) === '') continue;
-                StrategicPlanBeneficiary::create(['project_id' => $project->id, 'text' => $text]);
-            }
-
-            foreach (($proj['deliverables'] ?? []) as $text) {
-                if (trim((string) $text) === '') continue;
-                StrategicPlanDeliverable::create(['project_id' => $project->id, 'text' => $text]);
-            }
-
-            foreach (($proj['partners'] ?? []) as $text) {
-                if (trim((string) $text) === '') continue;
-                StrategicPlanPartner::create(['project_id' => $project->id, 'text' => $text]);
-            }
-        }
-    }
-
-    private function syncFundSources(StrategicPlanSubmission $submission, array $fundSourcesPayload): void
-    {
-        $submission->fundSources()->delete();
-
-        foreach ($fundSourcesPayload as $fs) {
-            $type = $fs['type'] ?? null;
-            if (!$type) continue;
-
-            $amount = $fs['amount'] ?? 0;
-
-            StrategicPlanFundSource::create([
-                'submission_id' => $submission->id,
-                'type'          => $type,
-                'label'         => $fs['label'] ?? null,
-                'amount'        => $amount,
-            ]);
-        }
-    }
-
-    private function recomputeTotals(StrategicPlanSubmission $submission): void
-    {
-        $projects = $submission->projects()->get();
-
-        $orgDev  = $projects->where('category', StrategicPlanProject::CAT_ORG_DEV)->sum('budget');
-        $stud    = $projects->where('category', StrategicPlanProject::CAT_STUDENT_SERVICES)->sum('budget');
-        $comm    = $projects->where('category', StrategicPlanProject::CAT_COMMUNITY_INVOLVEMENT)->sum('budget');
-        $overall = $orgDev + $stud + $comm;
-
-        $submission->total_org_dev = $orgDev;
-        $submission->total_student_services = $stud;
-        $submission->total_community_involvement = $comm;
-        $submission->total_overall = $overall;
-
-        $submission->save();
     }
 
  

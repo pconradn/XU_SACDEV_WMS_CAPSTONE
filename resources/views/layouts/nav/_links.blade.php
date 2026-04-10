@@ -309,34 +309,6 @@ if ($user && $activeOrgId && $syId) {
 
 
 
-    if ($isModerator) {
-        $mod = [];
-
-        if (Route::has('org.moderator.rereg.dashboard')) {
-            $mod[] = $item(
-                'Re-Registration Dashboard',
-                route('org.moderator.rereg.dashboard'),
-                ['org.moderator.rereg.*']
-            );
-        }
-
-        if (Route::has('org.moderator.strategic_plans.index')) {
-            $mod[] = $item(
-                'Review Strategic Plans (B-1)',
-                route('org.moderator.strategic_plans.index'),
-                ['org.moderator.strategic_plans.*']
-            );
-        }
-        
-
-        if ($mod) {
-            $groups[] = [
-                'title' => 'Moderator',
-                'links' => $mod,
-                'icon' => 'user'
-            ];
-        }
-    }
 
 }
 @endphp

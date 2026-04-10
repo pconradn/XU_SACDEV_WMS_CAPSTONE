@@ -1,167 +1,255 @@
 <div id="officerModal"
-class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden">
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
 
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl mx-4 border border-slate-200">
+    <div class="w-full max-w-3xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
 
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 rounded-t-2xl">
-
+        <div class="flex items-start justify-between border-b border-slate-200 bg-gradient-to-b from-slate-50 to-white px-6 py-4">
             <div>
-                <h2 id="officerModalTitle"
-                    class="text-base font-semibold text-slate-900">
+                <h2 id="officerModalTitle" class="text-sm font-semibold text-slate-900">
                     Add Officer
                 </h2>
-                <p class="text-xs text-slate-500 mt-1">
-                    Fill in officer details
+                <p class="mt-1 text-xs text-slate-500">
+                    Fill in the officer details below
                 </p>
             </div>
 
             <button type="button"
-                id="cancelOfficerBtn"
-                class="text-slate-400 hover:text-slate-600 text-xl leading-none">
-                ×
+                    id="cancelOfficerBtn"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700">
+                <span class="text-lg leading-none">&times;</span>
             </button>
-
         </div>
 
-        <div class="px-6 py-5 space-y-5">
-
-            <div>
-                <label class="block text-xs font-medium text-slate-600 mb-1">
-                    Position
-                </label>
-                <input id="modal_position"
-                    type="text"
-                    placeholder="Ex: Committee Head"
-                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
-                           focus:ring-2 focus:ring-blue-200 focus:border-blue-500 focus:outline-none">
-            </div>
-
-            <div>
-                <label class="block text-xs font-medium text-slate-600 mb-1">
-                    Officer Name
-                </label>
-                <input id="modal_name"
-                    type="text"
-                    placeholder="Full name"
-                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
-                           focus:ring-2 focus:ring-blue-200 focus:border-blue-500 focus:outline-none">
-            </div>
-
-            <div>
-                <label class="block text-xs font-medium text-slate-600 mb-1">
-                    Student ID
-                </label>
-                <input id="modal_student_id"
-                    type="text"
-                    inputmode="numeric"
-                    pattern="\d*"
-                    placeholder="Ex: 202112345"
-                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
-                           focus:ring-2 focus:ring-blue-200 focus:border-blue-500 focus:outline-none">
-            </div>
-
-            <div>
-                <label class="block text-xs font-medium text-slate-600 mb-1">
-                    Course & Year
-                </label>
-                <input id="modal_course"
-                    type="text"
-                    placeholder="Ex: BSIT 3"
-                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
-                           focus:ring-2 focus:ring-blue-200 focus:border-blue-500 focus:outline-none">
-            </div>
-
-            <div class="grid grid-cols-3 gap-3">
+        <div class="max-h-[80vh] overflow-y-auto px-6 py-5">
+            <div class="space-y-6">
 
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">
-                        1st Sem QPI
+                    <label for="modal_position" class="block text-xs font-medium text-slate-600">
+                        Position
                     </label>
-                    <input id="modal_first_qpi"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="4"
-                        placeholder="0.00"
-                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
-                               focus:ring-2 focus:ring-blue-200 focus:border-blue-500 focus:outline-none">
+                    <input id="modal_position"
+                           type="text"
+                           placeholder="Ex: Committee Head"
+                           class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                    <div class="mb-3">
+                        <div class="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                            Officer Name
+                        </div>
+                        <p class="mt-1 text-[11px] text-slate-500">
+                            Enter the name by parts. The full name preview updates automatically.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <div>
+                            <label for="modal_prefix" class="block text-xs font-medium text-slate-600">
+                                Prefix
+                            </label>
+                            <input id="modal_prefix"
+                                   type="text"
+                                   placeholder="Ex: Mr., Engr."
+                                   class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                        </div>
+
+                        <div>
+                            <label for="modal_first" class="block text-xs font-medium text-slate-600">
+                                First Name
+                            </label>
+                            <input id="modal_first"
+                                   type="text"
+                                   placeholder="First name"
+                                   class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                        </div>
+
+                        <div>
+                            <label for="modal_mi" class="block text-xs font-medium text-slate-600">
+                                M.I.
+                            </label>
+                            <input id="modal_mi"
+                                   type="text"
+                                   maxlength="1"
+                                   placeholder="M"
+                                   class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                        </div>
+
+                        <div>
+                            <label for="modal_last" class="block text-xs font-medium text-slate-600">
+                                Last Name
+                            </label>
+                            <input id="modal_last"
+                                   type="text"
+                                   placeholder="Last name"
+                                   class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                        </div>
+                    </div>
+
+                    <div class="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2">
+                        <div class="text-[11px] font-medium uppercase tracking-wide text-blue-700">
+                            Full Name Preview
+                        </div>
+                        <div id="modal_full_preview" class="mt-1 text-sm font-semibold text-blue-900">
+                            —
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                        <label for="modal_student_id" class="block text-xs font-medium text-slate-600">
+                            Student ID
+                        </label>
+                        <input id="modal_student_id"
+                               type="text"
+                               placeholder="Ex: 202112345"
+                               class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                    </div>
+
+                    <div>
+                        <label for="modal_course" class="block text-xs font-medium text-slate-600">
+                            Course &amp; Year
+                        </label>
+                        <input id="modal_course"
+                               type="text"
+                               placeholder="Ex: BSIT 3"
+                               class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                        <label for="modal_first_qpi" class="block text-xs font-medium text-slate-600">
+                            1st Sem QPI
+                        </label>
+                        <input id="modal_first_qpi"
+                               type="number"
+                               step="0.01"
+                               min="0"
+                               max="4"
+                               placeholder="0.00"
+                               class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                    </div>
+
+                    <div>
+                        <label for="modal_second_qpi" class="block text-xs font-medium text-slate-600">
+                            2nd Sem QPI
+                        </label>
+                        <input id="modal_second_qpi"
+                               type="number"
+                               step="0.01"
+                               min="0"
+                               max="4"
+                               placeholder="0.00"
+                               class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                    </div>
+
+                    <div>
+                        <label for="modal_inter_qpi" class="block text-xs font-medium text-slate-600">
+                            Intersession QPI
+                        </label>
+                        <input id="modal_inter_qpi"
+                               type="number"
+                               step="0.01"
+                               min="0"
+                               max="4"
+                               placeholder="0.00"
+                               class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                    </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">
-                        2nd Sem QPI
+                    <label for="modal_mobile" class="block text-xs font-medium text-slate-600">
+                        Mobile Number
                     </label>
-                    <input id="modal_second_qpi"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="4"
-                        placeholder="0.00"
-                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
-                               focus:ring-2 focus:ring-blue-200 focus:border-blue-500 focus:outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">
-                        Intersession QPI
-                    </label>
-                    <input id="modal_inter_qpi"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="4"
-                        placeholder="0.00"
-                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
-                               focus:ring-2 focus:ring-blue-200 focus:border-blue-500 focus:outline-none">
+                    <input id="modal_mobile"
+                           type="text"
+                           placeholder="Ex: 09123456789"
+                           class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
                 </div>
 
             </div>
-
-            <div>
-                <label class="block text-xs font-medium text-slate-600 mb-1">
-                    Mobile Number
-                </label>
-                <input id="modal_mobile"
-                    type="text"
-                    placeholder="Ex: 09123456789"
-                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
-                           focus:ring-2 focus:ring-blue-200 focus:border-blue-500 focus:outline-none">
-            </div>
-
         </div>
 
-        <div class="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-2xl">
-
+        <div class="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-4">
             <button type="button"
-                id="cancelOfficerBtnFooter"
-                class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-100">
+                    id="cancelOfficerBtnFooter"
+                    class="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">
                 Cancel
             </button>
 
             <button type="button"
-                id="saveOfficerBtn"
-                class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                    id="saveOfficerBtn"
+                    class="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700">
                 Save Officer
             </button>
-
         </div>
 
     </div>
 
 </div>
 
-
-
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('officerModal');
+    if (!modal) return;
 
-    const closeModal = () => {
+    const cancelTop = document.getElementById('cancelOfficerBtn');
+    const cancelBottom = document.getElementById('cancelOfficerBtnFooter');
+
+    const prefixInput = document.getElementById('modal_prefix');
+    const firstInput = document.getElementById('modal_first');
+    const miInput = document.getElementById('modal_mi');
+    const lastInput = document.getElementById('modal_last');
+    const preview = document.getElementById('modal_full_preview');
+
+    function closeModal() {
         modal.classList.add('hidden');
-    };
+        modal.classList.remove('flex');
+    }
 
-    document.getElementById('cancelOfficerBtn')?.addEventListener('click', closeModal);
-    document.getElementById('cancelOfficerBtnFooter')?.addEventListener('click', closeModal);
+    function openModal() {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            document.getElementById('modal_position')?.focus();
+        }, 0);
+    }
+
+    function updateFullNamePreview() {
+        const prefix = (prefixInput?.value || '').trim();
+        const first = (firstInput?.value || '').trim();
+        let mi = (miInput?.value || '').trim();
+        const last = (lastInput?.value || '').trim();
+
+        mi = mi.replace(/\./g, '').toUpperCase();
+
+        const parts = [];
+        if (prefix) parts.push(prefix);
+        if (first) parts.push(first);
+
+        let middlePart = '';
+        if (mi) middlePart = mi + '.';
+
+        let fullName = parts.join(' ');
+        if (middlePart) fullName += (fullName ? ' ' : '') + middlePart;
+        if (last) fullName += (fullName ? ' ' : '') + last;
+
+        preview.textContent = fullName || '—';
+    }
+
+    [prefixInput, firstInput, miInput, lastInput].forEach((input) => {
+        input?.addEventListener('input', updateFullNamePreview);
+    });
+
+    miInput?.addEventListener('input', function () {
+        this.value = this.value.replace(/[^A-Za-z]/g, '').slice(0, 1).toUpperCase();
+        updateFullNamePreview();
+    });
+
+    cancelTop?.addEventListener('click', closeModal);
+    cancelBottom?.addEventListener('click', closeModal);
 
     modal.addEventListener('click', function (e) {
         if (e.target === modal) {
@@ -170,9 +258,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
             closeModal();
         }
     });
+
+    window.openOfficerModal = openModal;
+    window.closeOfficerModal = closeModal;
+
+    updateFullNamePreview();
 });
 </script>

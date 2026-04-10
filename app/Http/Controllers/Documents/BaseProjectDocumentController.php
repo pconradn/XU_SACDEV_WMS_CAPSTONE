@@ -413,6 +413,30 @@ abstract class BaseProjectDocumentController extends Controller
             ->where('user_id',$userId)
             ->firstOrFail();
 
+
+
+        $isProposal = $document->formType->code === 'PROJECT_PROPOSAL';
+
+        if (!$isProposal) {
+
+            $proposalDoc = ProjectDocument::where('project_id', $project->id)
+                ->whereHas('formType', fn($q) => $q->where('code', 'PROJECT_PROPOSAL'))
+                ->first();
+
+            if ($proposalDoc) {
+
+                $proposalSignature = $proposalDoc->signatures()
+                    ->where('user_id', $userId)
+                    ->first();
+
+                if ($proposalSignature && $proposalSignature->status !== 'signed') {
+                    abort(403, 'You must approve the Project Proposal first before approving other documents.');
+                }
+            }
+        }
+
+
+
         if ($signature->status === 'signed') {
             abort(403,'You have already approved this document.');
         }

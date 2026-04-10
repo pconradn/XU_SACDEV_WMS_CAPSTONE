@@ -140,13 +140,12 @@ class ReregHubController extends Controller
             }
         }
 
-        $allApproved = collect($forms)->every(function ($form) {
+        $allApproved =
+            isset($forms['b1']['status']) &&
+            $forms['b1']['status'] === 'approved_by_sacdev' &&
 
-            return isset($form['status'])
-                && $form['status'] === 'approved_by_sacdev';
-
-        });
-
+            isset($forms['b3']['status']) &&
+            $forms['b3']['status'] === 'approved_by_sacdev';
 
 
         $alreadyActivated = OrganizationSchoolYear::query()
@@ -404,17 +403,13 @@ class ReregHubController extends Controller
 
             $orgIds = collect()
                 ->merge($b1->keys())
-                ->merge($b2->keys())
                 ->merge($b3->keys())
-                ->merge($b5->keys())
                 ->unique();
 
             foreach ($orgIds as $orgId) {
                 $statuses = [
                     optional($b1->get($orgId))->status,
-                    optional($b2->get($orgId))->status,
                     optional($b3->get($orgId))->status,
-                    optional($b5->get($orgId))->status,
                 ];
 
             

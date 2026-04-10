@@ -147,7 +147,7 @@
                             @endphp
 
                                 <tr
-                                onclick="window.location='{{ route('rereg.hub', $org->id) }}'"
+                                onclick="window.location='{{ route('admin.rereg.hub', $org->id) }}'"
                                 class="cursor-pointer transition-all duration-150 {{ $rowColor }} hover:scale-[1.005] border-b">
 
                                 {{-- ORG --}}

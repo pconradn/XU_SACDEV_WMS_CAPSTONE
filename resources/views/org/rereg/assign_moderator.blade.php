@@ -142,15 +142,44 @@
                 <input type="hidden" name="target_sy_id" value="{{ (int) $selectedSyId }}">
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div class="sm:col-span-2">
-                        <label class="block text-sm font-medium text-slate-700">Full Name</label>
-                        <input id="fullNameInput"
-                               name="full_name"
-                               value="{{ $prefillName }}"
-                               class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none disabled:bg-slate-100"
-                               required
-                               @disabled($isLocked)>
-                        @error('full_name') <div class="mt-1 text-xs text-rose-600">{{ $message }}</div> @enderror
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Prefix</label>
+                        <input name="prefix"
+                            value="{{ old('prefix') }}"
+                            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                            @disabled($isLocked)>
+                        @error('prefix') <div class="mt-1 text-xs text-rose-600">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">First Name</label>
+                        <input id="firstNameInput"
+                            name="first_name"
+                            value="{{ old('first_name') }}"
+                            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                            required
+                            @disabled($isLocked)>
+                        @error('first_name') <div class="mt-1 text-xs text-rose-600">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Middle Initial</label>
+                        <input name="middle_initial"
+                            value="{{ old('middle_initial') }}"
+                            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                            @disabled($isLocked)>
+                        @error('middle_initial') <div class="mt-1 text-xs text-rose-600">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Last Name</label>
+                        <input id="lastNameInput"
+                            name="last_name"
+                            value="{{ old('last_name') }}"
+                            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                            required
+                            @disabled($isLocked)>
+                        @error('last_name') <div class="mt-1 text-xs text-rose-600">{{ $message }}</div> @enderror
                     </div>
 
                     <div class="sm:col-span-2">
@@ -187,19 +216,23 @@
 
     @if(isset($suggested) && $suggested)
         <script>
-            (function () {
-                const btn = document.getElementById('useSuggestedBtn');
-                if (!btn) return;
+        (function () {
+            const btn = document.getElementById('useSuggestedBtn');
+            if (!btn) return;
 
-                btn.addEventListener('click', function () {
-                    const nameEl = document.getElementById('fullNameInput');
-                    const emailEl = document.getElementById('emailInput');
-                    if (!nameEl || !emailEl) return;
+            btn.addEventListener('click', function () {
 
-                    nameEl.value = @json($suggested->name);
-                    emailEl.value = @json($suggested->email);
-                });
-            })();
+                const full = @json($suggested->name);
+                const email = @json($suggested->email);
+
+                const parts = full.split(' ');
+
+                document.getElementById('firstNameInput').value = parts[0] ?? '';
+                document.getElementById('lastNameInput').value = parts.slice(1).join(' ') ?? '';
+
+                document.getElementById('emailInput').value = email;
+            });
+        })();
         </script>
     @endif
 </x-app-layout>

@@ -154,8 +154,59 @@ class OrgDashboardController extends Controller
                 ->values();
         }
 
+        $isModerator = $roles->contains('moderator');
+        $isPresident = !$isModerator && $roles->contains('president');
+
+
+
         $reregTasks = collect();
         $projectHeadTasks = collect();
+
+
+        $orgId = $currentOrg->id;
+        $syId = $selectedSyId;
+
+        $sp = StrategicPlanSubmission::where('organization_id', $orgId)
+            ->where('target_school_year_id', $syId)
+            ->first();
+
+        $officers = OfficerSubmission::where('organization_id', $orgId)
+            ->where('target_school_year_id', $syId)
+            ->first();
+
+        /*
+        |--------------------------------------------------------------------------
+        | B1 Strategic Plan
+        |--------------------------------------------------------------------------
+        */
+        if (!$sp || in_array($sp->status, ['draft', 'returned_by_moderator', 'returned_by_sacdev'])) {
+            $reregTasks->push((object)[
+                'category' => 'rereg',
+                'state' => 'required',
+                'form_name' => 'Strategic Plan',
+                'status' => $sp->status ?? 'not_started',
+                'link' => route('org.rereg.b1.edit'),
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | B3 Officers
+        |--------------------------------------------------------------------------
+        */
+        if (!$officers || in_array($officers->status, ['draft', 'returned'])) {
+            $reregTasks->push((object)[
+                'category' => 'rereg',
+                'state' => 'required',
+                'form_name' => 'Officers List',
+                'status' => $officers->status ?? 'not_started',
+                'link' => route('org.rereg.b3.officers-list.edit'),
+            ]);
+        }
+
+
+
+        
 
         if ($currentOrg) {
             foreach ($assignedProjects as $project) {
@@ -163,6 +214,26 @@ class OrgDashboardController extends Controller
 
 
                 $project->resolved_forms = $requiredForms;
+
+                if (
+                    $project->requires_clearance == 1 &&
+                    in_array($project->clearance_status, ['required', 'rejected'])
+                ) {
+                    $projectHeadTasks->push((object) [
+                        'category'   => 'project_head',
+                        'state'      => $project->clearance_status === 'rejected' ? 'revision' : 'required',
+                        'phase'      => 'off-campus',
+                        'form_name'  => 'Off-Campus Clearance',
+                        'project'    => $project,
+                        'status'     => $project->clearance_status,
+                        'form_type_id' => null,
+                        'form_code'  => 'OFF_CAMPUS_CLEARANCE',
+                    ]);
+                }
+
+
+
+
 
                 foreach ($requiredForms as $req) {
 
@@ -197,122 +268,39 @@ class OrgDashboardController extends Controller
                 }
             }
         }
+
+
         if ($currentOrg) {
 
             $orgId = $currentOrg->id;
             $syId = $selectedSyId;
-
 
             $hasModerator = OrgMembership::where('organization_id', $orgId)
                 ->where('school_year_id', $syId)
                 ->where('role', 'moderator')
                 ->whereNull('archived_at')
                 ->exists();
-                    
 
             $sp = StrategicPlanSubmission::where('organization_id', $orgId)
                 ->where('target_school_year_id', $syId)
                 ->first();
 
-            if (!$hasModerator) {
-
-                $reregTasks->push((object)[
-                    'category' => 'rereg',
-                    'state' => 'blocked',
-                    'form_name' => 'Assign Moderator First',
-                    'status' => 'missing_moderator',
-                    'link' => route('org.rereg.index'),
-                ]);
-
-            } else {
-
-                if (!$sp || $sp->status === 'draft') {
-                    $reregTasks->push((object)[
-                        'category' => 'rereg',
-                        'state' => 'required',
-                        'form_name' => 'Strategic Plan',
-                        'status' => $sp->status ?? 'not_started',
-                        'link' => route('org.rereg.b1.edit'),
-                    ]);
-                }
-
-            }
-
-    
             $officers = OfficerSubmission::where('organization_id', $orgId)
                 ->where('target_school_year_id', $syId)
                 ->first();
 
-            if (!$officers || $officers->status === 'draft') {
-                $reregTasks->push((object)[
-                    'category' => 'rereg',
-                    'state' => 'required',
-                    'form_name' => 'Officers List',
-                    'status' => $officers->status ?? 'not_started',
-                    'link' => route('org.rereg.b3.officers-list.edit'),
-                ]);
-            }
-
-    
             $pres = PresidentRegistration::where('organization_id', $orgId)
                 ->where('target_school_year_id', $syId)
                 ->first();
 
-            if (!$pres || $pres->status === 'draft') {
-                $reregTasks->push((object)[
-                    'category' => 'rereg',
-                    'state' => 'required',
-                    'form_name' => 'President Registration',
-                    'status' => $pres->status ?? 'not_started',
-                    'link' => route('org.rereg.b2.president.edit'),
-                ]);
-            }
-
-       
             $consti = OrgConstitutionSubmission::where('organization_id', $orgId)
                 ->where('school_year_id', $syId)
                 ->first();
 
-            if (!$consti || $consti->status === 'draft') {
-                $reregTasks->push((object)[
-                    'category' => 'rereg',
-                    'state' => 'required',
-                    'form_name' => 'Organization Constitution',
-                    'status' => $consti->status ?? 'not_started',
-                    'link' => route('org.rereg.index'),
-                ]);
-            }
+   
 
-
-            if ($sp && $sp->status === 'submitted_to_moderator') {
-                $reregTasks->push((object)[
-                    'category' => 'rereg',
-                    'state' => 'moderator_review',
-                    'form_name' => 'Strategic Plan Review',
-                    'status' => $sp->status,
-                    'link' => route('org.moderator.strategic_plans.show', $sp->id), 
-                ]);
-            }
-
-
-            if ($roles->contains('moderator')) {
-
-                $moderator = ModeratorSubmission::where('organization_id', $orgId)
-                    ->where('target_school_year_id', $syId)
-                    ->where('moderator_user_id', $user->id)
-                    ->first();
-
-                if (!$moderator || in_array($moderator->status, ['draft', 'returned'])) {
-                    $reregTasks->push((object)[
-                        'category' => 'rereg',
-                        'state' => 'moderator',
-                        'form_name' => 'Moderator Registration',
-                        'status' => $moderator?->status ?? 'not_started',
-                        'link' => route('org.moderator.rereg.b5.edit'),
-                    ]);
-                }
-            }
-        }       
+ 
+        }      
 
  
         $assignedProjects = $assignedProjects->map(function ($project) use ($resolver) {

@@ -16,34 +16,6 @@ use Illuminate\Http\RedirectResponse;
 class OrgReregAssignmentsController extends Controller
 {
 
-    private function assertActiveSyPresident(Request $request, int $orgId): ?RedirectResponse{
-        $userId = (int) $request->user()->id;
-        $activeSyId = $this->activeSyId();
-
-        if ($activeSyId <= 0) {
-            return redirect()
-                ->back()
-                ->with('error', 'No active school year found. Please contact the administrator.');
-        }
-
-        $ok = OrgMembership::query()
-            ->where('user_id', $userId)
-            ->where('organization_id', $orgId)
-            ->where('school_year_id', $activeSyId)
-            ->where('role', 'president')
-            ->whereNull('archived_at')
-            ->exists();
-
-        if (! $ok) {
-            return redirect()
-                ->back()
-                ->with('error', 'President access only for the active school year.');
-        }
-
-        return null; 
-    }
-
-
     private function orgId(Request $request): int
     {
         return (int) $request->session()->get('active_org_id');
@@ -73,9 +45,6 @@ class OrgReregAssignmentsController extends Controller
 
 
 
-    /**
-
-     */
     private function isActivated(User $user): bool
     {
 
@@ -169,16 +138,25 @@ class OrgReregAssignmentsController extends Controller
 
 
         $data = $request->validate([
-            'full_name' => ['required', 'string', 'max:255'],
-            'email'     => ['required', 'email', 'max:255'],
+            'prefix' => ['nullable','string','max:20','regex:/^[A-Za-z\.]+$/'],
+            'first_name' => ['required','string','max:100','regex:/^[A-Za-z]+(?:\s[A-Za-z]+)*$/'],
+            'middle_initial' => ['nullable','string','max:5','regex:/^[A-Za-z]?$/'],
+            'last_name' => ['required','string','max:100','regex:/^[A-Za-z]+(?:[ \-][A-Za-z]+)*$/'],
+            'email' => ['required','email','max:255'],
         ]);
 
- 
+        $fullName = trim(collect([
+            $data['prefix'] ?? null,
+            $data['first_name'],
+            isset($data['middle_initial']) ? $data['middle_initial'] . '.' : null,
+            $data['last_name'],
+        ])->filter()->implode(' '));
+        
 
-        [$user, $tempPassword, $didResetTemp] = DB::transaction(function () use ($data, $orgId, $targetSyId) {
+        [$user, $tempPassword, $didResetTemp] = DB::transaction(function () use ($fullName, $data, $orgId, $targetSyId) {
 
          
-            [$user, $tempPassword] = AccountProvisioner::findOrCreateUser($data['full_name'], $data['email']);
+            [$user, $tempPassword] = AccountProvisioner::findOrCreateUser($fullName, $data['email']);
 
        
             $didResetTemp = false;
@@ -195,7 +173,13 @@ class OrgReregAssignmentsController extends Controller
             }
 
        
-
+            $user->first_name = $data['first_name'];
+            $user->middle_initial = $data['middle_initial'] ?? null;
+            $user->last_name = $data['last_name'];
+            $user->prefix = $data['prefix'] ?? null;
+            $user->name = $fullName;
+            $user->email = $data['email'];
+            $user->save();
        
             OrgMembership::query()
                 ->where('organization_id', $orgId)
@@ -205,6 +189,18 @@ class OrgReregAssignmentsController extends Controller
                 ->update(['archived_at' => now()]);
 
             AccountProvisioner::ensureMembership($user->id, $orgId, $targetSyId, 'moderator');
+
+            $user->profile()->updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'prefix' => $data['prefix'] ?? null,
+                    'first_name' => $data['first_name'],
+                    'middle_initial' => $data['middle_initial'] ?? null,
+                    'last_name' => $data['last_name'],
+                    'full_name' => $fullName,
+                ]
+            );
+
 
             return [$user, $tempPassword, $didResetTemp];
         });
@@ -232,91 +228,7 @@ class OrgReregAssignmentsController extends Controller
             );
     }
 
-    public function editNextPresident(Request $request)
-    {
-        $orgId = $this->orgId($request);
 
-       
-        $selectedSyId = (int) $request->query('target_sy_id', $this->targetSyId($request));
-        $this->requireTargetSySelected($selectedSyId);
-
-        $this->assertActiveSyPresident($request, $orgId);
-
-        $schoolYears = \App\Models\SchoolYear::query()
-            ->orderByDesc('id')
-            ->get(['id', 'name']); 
-
-        $current = OrgMembership::query()
-            ->with('user')
-            ->where('organization_id', $orgId)
-            ->where('school_year_id', $selectedSyId)
-            ->where('role', 'president')
-            ->whereNull('archived_at')
-            ->first();
-
-        return view('org.rereg.assign_next_president', [
-            'schoolYears'  => $schoolYears,
-            'selectedSyId' => $selectedSyId,
-            'current'      => $current,
-        ]);
-    }
-
-
-    public function storeNextPresident(Request $request)
-    {
-        $orgId = $this->orgId($request);
-        $targetSyId = $this->targetSyId($request);
-
-        $this->requireTargetSySelected($targetSyId);
-
-      
-        $this->assertActiveSyPresident($request, $orgId);
-
-        $data = $request->validate([
-            'target_sy_id' => ['required', 'integer', 'exists:school_years,id'],
-            'full_name'  => ['required', 'string', 'max:255'],
-            'student_id' => ['required', 'string', 'max:50'],
-            'email'      => ['required', 'email', 'max:255'],
-        ]);
-
-        $targetSyId = (int) $data['target_sy_id'];
-
-        [$user, $tempPassword] = DB::transaction(function () use ($data, $orgId, $targetSyId) {
-
-         
-            [$user, $tempPassword] = AccountProvisioner::findOrCreateUser($data['full_name'], $data['email']);
-
-         
-
-      
-            OrgMembership::query()
-                ->where('organization_id', $orgId)
-                ->where('school_year_id', $targetSyId)
-                ->where('role', 'president')
-                ->whereNull('archived_at')
-                ->update(['archived_at' => now()]);
-
-         
-            AccountProvisioner::ensureMembership($user->id, $orgId, $targetSyId, 'president');
-
-            return [$user, $tempPassword];
-        });
-
-        Log::info($tempPassword ? '[REREG] Created next SY president account' : '[REREG] Assigned existing user as next SY president', [
-            'email' => $user->email,
-            'name'  => $user->name,
-            'org_id' => $orgId,
-            'sy_id'  => $targetSyId,
-            'temp_password' => $tempPassword,
-        ]);
-
-        return redirect()
-            ->route('org.provision.next_president.edit')
-            ->with('status', $tempPassword
-                ? 'Next SY president assigned. Temporary password logged.'
-                : 'Next SY president assigned (existing user).'
-            );
-    }
 
 
 

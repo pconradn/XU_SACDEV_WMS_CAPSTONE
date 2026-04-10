@@ -22,7 +22,7 @@
             <div class="rounded-2xl border shadow-sm px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between
                 @if($clearanceStatus === 'rejected')
                     border-rose-300 bg-rose-50
-                @elseif($clearanceHasFile)
+                @elseif($clearanceStatus === 'pending')
                     border-blue-300 bg-blue-50
                 @else
                     border-amber-300 bg-amber-50
@@ -36,7 +36,7 @@
                     <div class="mt-0.5">
                         @if($clearanceStatus === 'rejected')
                             <i data-lucide="x-circle" class="w-4 h-4 text-rose-600"></i>
-                        @elseif($clearanceHasFile)
+                        @elseif($clearanceStatus === 'pending')
                             <i data-lucide="file-check" class="w-4 h-4 text-blue-600"></i>
                         @else
                             <i data-lucide="alert-circle" class="w-4 h-4 text-amber-600"></i>
@@ -47,11 +47,11 @@
                     <div class="min-w-0">
                         <div class="text-xs font-semibold
                             @if($clearanceStatus === 'rejected') text-rose-800
-                            @elseif($clearanceHasFile) text-blue-800
+                            @elseif($clearanceStatus === 'pending') text-blue-800
                             @else text-amber-800
                             @endif
                         ">
-                            @if(!$clearanceHasFile)
+                            @if($clearanceStatus === 'required')
                                 Off-Campus Clearance Required
                             @elseif($clearanceStatus === 'pending')
                                 Clearance Uploaded — Awaiting Approval
@@ -66,11 +66,11 @@
 
                         <div class="mt-0.5 text-[11px]
                             @if($clearanceStatus === 'rejected') text-rose-700
-                            @elseif($clearanceHasFile) text-blue-700
+                            @elseif($clearanceStatus === 'pending') text-blue-700
                             @else text-amber-700
                             @endif
                         ">
-                            @if(!$clearanceHasFile)
+                            @if($clearanceStatus === 'required')
                                 Generate the clearance form, secure signatures, then upload.
                             @elseif($clearanceStatus === 'pending')
                                 Your clearance is under review.
@@ -97,7 +97,7 @@
                 <div class="flex items-center gap-2 shrink-0">
 
 
-                    @if(!$clearanceHasFile)
+                    @if($clearanceStatus === 'required')
                         <a href="{{ $clearance['print_url'] }}"
                         class="px-3 py-1.5 rounded-md bg-amber-600 text-white text-[11px] hover:bg-amber-700 transition">
                             Generate

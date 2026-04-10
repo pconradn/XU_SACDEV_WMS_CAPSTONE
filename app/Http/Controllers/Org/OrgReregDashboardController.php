@@ -29,6 +29,76 @@ class OrgReregDashboardController extends Controller
         ];
     }
 
+
+    private function b5Badge($b5, bool $isModerator, bool $isProfileComplete): array
+    {
+        if (!$b5) {
+
+            if ($isModerator && !$isProfileComplete) {
+                return [
+                    'text' => 'Profile Incomplete',
+                    'dot'  => 'bg-rose-500',
+                ];
+            }
+
+            return [
+                'text' => 'Not submitted',
+                'dot'  => 'bg-slate-400',
+            ];
+        }
+
+        return match ($b5->status) {
+
+            'draft' => [
+                'text' => 'Draft',
+                'dot'  => 'bg-slate-400',
+            ],
+
+            'submitted' => [
+                'text' => 'Submitted',
+                'dot'  => 'bg-amber-500',
+            ],
+
+            'returned' => [
+                'text' => 'Returned',
+                'dot'  => 'bg-rose-500',
+            ],
+
+            'approved_by_sacdev' => [
+                'text' => 'Approved',
+                'dot'  => 'bg-emerald-500',
+            ],
+
+            default => [
+                'text' => 'Not submitted',
+                'dot'  => 'bg-slate-400',
+            ],
+        };
+    }
+
+
+    private function b2Badge($presidentUser, bool $isComplete): array
+    {
+        if (!$presidentUser) {
+            return [
+                'text' => 'Not assigned',
+                'dot'  => 'bg-slate-400',
+            ];
+        }
+
+        if (!$isComplete) {
+            return [
+                'text' => 'Profile Incomplete',
+                'dot'  => 'bg-rose-500',
+            ];
+        }
+
+        return [
+            'text' => 'Complete',
+            'dot'  => 'bg-emerald-500',
+        ];
+    } 
+
     public function index(Request $request)
     {
         ['orgId' => $orgId, 'syId' => $syId, 'userId' => $userId] = $this->ctx($request);
@@ -43,15 +113,15 @@ class OrgReregDashboardController extends Controller
                 ->exists();
         }
 
+        
+
         $allowedSyIds = OrgMembership::query()
             ->where('user_id', $userId)
             ->where('organization_id', $orgId)
             ->whereNull('archived_at')
-            ->distinct()
             ->pluck('school_year_id')
             ->map(fn ($v) => (int) $v)
             ->all();
-
 
         $schoolYears = SchoolYear::query()
             ->whereIn('id', $allowedSyIds ?: [-1])
@@ -62,199 +132,164 @@ class OrgReregDashboardController extends Controller
             ->where('is_active', true)
             ->value('id');
 
-
-        $canAssignNextPresident = $activeSyId > 0
-            ? $this->hasRole($userId, $orgId, $activeSyId, 'president')
-            : false;
-
-
         $canAssignModerator = ($syId > 0)
             ? $this->hasRole($userId, $orgId, $syId, 'president')
             : false;
 
-
-        $isTargetSyModerator = ($syId > 0)
+        $isModerator = ($syId > 0)
             ? $this->hasRole($userId, $orgId, $syId, 'moderator')
             : false;
 
         if ($syId <= 0 || !in_array($syId, $allowedSyIds, true)) {
-
             return view('org.rereg.index', [
-
                 'schoolYears' => $schoolYears,
                 'encodeSyId'  => null,
                 'forms'       => [],
                 'allApproved' => false,
                 'isActivated' => false,
-
-                'canAssignNextPresident' => $canAssignNextPresident,
-                'canAssignModerator'     => false,
-                'isTargetSyModerator'    => false,
-
+                'canAssignModerator' => false,
+                'isModerator' => false,
                 'constitutionSubmission' => null,
+                'isAdminReregHub' => false,
             ]);
         }
 
-        $b1 = StrategicPlan::query()
-            ->where('organization_id', $orgId)
+        $b1 = StrategicPlan::where('organization_id', $orgId)
             ->where('target_school_year_id', $syId)
-            ->latest('id')
-            ->first();
+            ->latest()->first();
 
-
-        $b2 = PresidentRegistration::query()
-            ->where('organization_id', $orgId)
+        $b2 = PresidentRegistration::where('organization_id', $orgId)
             ->where('target_school_year_id', $syId)
-            ->latest('id')
-            ->first();
+            ->latest()->first();
 
-
-        $b3 = OfficerSubmission::query()
-            ->where('organization_id', $orgId)
+        $b3 = OfficerSubmission::where('organization_id', $orgId)
             ->where('target_school_year_id', $syId)
-            ->latest('id')
-            ->first();
+            ->latest()->first();
 
-
-        $b5 = ModeratorSubmission::query()
-            ->where('organization_id', $orgId)
+        $b5 = ModeratorSubmission::where('organization_id', $orgId)
             ->where('target_school_year_id', $syId)
-            ->latest('id')
-            ->first();
+            ->latest()->first();
 
-
-        
-
-        $b6 = OrgConstitutionSubmission::query()
-            ->where('organization_id', $orgId)
+        $b6 = OrgConstitutionSubmission::where('organization_id', $orgId)
             ->where('school_year_id', $syId)
-            ->latest('id')
+            ->latest()->first();
+
+        $presidentMembership = OrgMembership::where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->where('role', 'president')
+            ->whereNull('archived_at')
+            ->with('user.profile')
+            ->first();
+
+        $presidentUser = $presidentMembership?->user;
+        $presProfile = $presidentUser?->profile;
+
+        $isPresidentProfileComplete =
+            $presProfile
+            && $presProfile->first_name
+            && $presProfile->last_name
+            && $presProfile->birthday
+            && $presProfile->sex
+            && $presProfile->mobile_number
+            && $presProfile->email
+            && $presProfile->home_address
+            && $presProfile->city_address;
+
+        $profile = auth()->user()->profile;
+
+        $isProfileComplete =
+            $profile
+            && $profile->first_name
+            && $profile->last_name
+            && $profile->mobile_number
+            && $profile->email
+            && $profile->city_address
+            && $profile->university_designation
+            && $profile->unit_department
+            && $profile->employment_status
+            && $profile->years_of_service;
+
+        $b5Moderator = OrgMembership::where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->where('role', 'moderator')
+            ->whereNull('archived_at')
+            ->with('user.profile')
             ->first();
 
         $forms = [
 
             'b1' => [
-                'label' => 'B-1 Strategic Plan',
-
+                'label' => 'Strategic Plan',
                 'badge' => $this->statusBadge($b1?->status),
-
                 'submitted_at' => $b1?->submitted_to_moderator_at,
                 'reviewed_at'  => $b1?->moderator_reviewed_at,
                 'approved_at'  => $b1?->approved_at,
-
                 'editRoute' => 'org.rereg.b1.edit',
-                'viewRoute' => null,
-
                 'submission' => $b1,
             ],
 
-
             'b2' => [
-                'label' => 'B-2 President Registration',
-
-                'badge' => $this->statusBadge($b2?->status),
-
+                'label' => 'President Profile',
+                'badge' => $this->b2Badge($presidentUser, $isPresidentProfileComplete),
                 'submitted_at' => $b2?->submitted_at,
                 'reviewed_at'  => $b2?->reviewed_at,
                 'approved_at'  => $b2?->approved_at,
-
                 'editRoute' => 'org.rereg.b2.president.edit',
-                'viewRoute' => null,
-
                 'submission' => $b2,
             ],
 
-
             'b3' => [
-                'label' => 'B-3 Officers List',
-
+                'label' => 'Officers List',
                 'badge' => $this->statusBadge($b3?->status),
-
                 'submitted_at' => $b3?->submitted_at,
                 'reviewed_at'  => $b3?->sacdev_reviewed_at,
                 'approved_at'  => $b3?->approved_at,
-
                 'editRoute' => 'org.rereg.b3.officers-list.edit',
-                'viewRoute' => null,
-
                 'submission' => $b3,
             ],
 
-
             'b5' => [
-                'label' => 'B-5 Moderator Form',
-
-                'badge' => $this->statusBadge($b5?->status),
-
+                'label' => 'Moderator Profile',
+                'badge' => $this->b5Badge($b5, $isModerator, $isProfileComplete),
                 'submitted_at' => $b5?->submitted_at,
                 'reviewed_at'  => $b5?->reviewed_at,
                 'approved_at'  => $b5?->approved_at,
-
                 'editRoute' => null,
-                'viewRoute' => null,
-
                 'submission' => $b5,
             ],
 
-
             'b6' => [
-                'label' => 'B-6 Organization Constitution',
-
+                'label' => 'Organization Constitution',
                 'badge' => $this->statusBadge($b6?->status),
-
                 'submitted_at' => $b6?->created_at,
                 'reviewed_at'  => $b6?->reviewed_at,
                 'approved_at'  => $b6?->approved_at,
-
                 'editRoute' => null,
-                'viewRoute' => null,
-
                 'submission' => $b6,
             ],
-
         ];
-
 
         $allApproved =
             $this->isApproved($b1?->status)
-            && $this->isApproved($b2?->status)
+            && $presidentUser && $isPresidentProfileComplete
             && $this->isApproved($b3?->status)
-            && $this->isApproved($b5?->status)
+            && $b5 && $this->isApproved($b5?->status)
             && $b6 !== null;
 
-
-
-        $b5Moderator = OrgMembership::query()
-            ->where('organization_id', $orgId)
-            ->where('school_year_id', $syId)
-            ->where('role', 'moderator')
-            ->whereNull('archived_at')
-            ->with('user')
-            ->first();
-
-
-
         return view('org.rereg.index', [
-
             'schoolYears' => $schoolYears,
-
             'encodeSyId'  => $syId,
-
             'forms'       => $forms,
-
             'allApproved' => $allApproved,
-
             'isActivated' => $isActivated,
-
-            'canAssignNextPresident' => $canAssignNextPresident,
-
-            'canAssignModerator' => true,
-
+            'canAssignModerator' => $canAssignModerator,
+            'isModerator' => $isModerator,
+            'isProfileComplete' => $isProfileComplete,
             'b5Moderator' => $b5Moderator,
-
-            'isTargetSyModerator' => $isTargetSyModerator,
-
             'constitutionSubmission' => $b6,
+            'presidentUser' => $presidentUser,
+            'isPresidentProfileComplete' => $isPresidentProfileComplete,
+            'isAdminReregHub' => false,
         ]);
     }
 

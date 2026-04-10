@@ -14,6 +14,12 @@ class OfficerSubmissionItem extends Model
 
         'position',
         'officer_name',
+        'prefix',
+        'first_name',
+        'middle_initial',
+        'last_name',
+
+
         'student_id_number',
         'course_and_year',
 

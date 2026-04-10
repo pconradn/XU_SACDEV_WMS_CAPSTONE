@@ -102,7 +102,8 @@ class B3OfficerListController extends Controller
     {
         $values = [
             $row['position'] ?? null,
-            $row['officer_name'] ?? null,
+            $row['first_name'] ?? null,
+            $row['last_name'] ?? null,
             $row['student_id_number'] ?? null,
             $row['course_and_year'] ?? null,
 
@@ -150,20 +151,36 @@ class B3OfficerListController extends Controller
             $isMajorOfficer = !empty($row['major_officer_role']);
             $majorRole = $row['major_officer_role'] ?? null;
 
+            $prefix = trim($row['prefix'] ?? '');
+            $first  = trim($row['first_name'] ?? '');
+            $mi = strtoupper(trim($row['middle_initial'] ?? ''));
+            $mi = rtrim($mi, '.');
+            $last   = trim($row['last_name'] ?? '');
+
+            $officerName = trim(
+                ($prefix ? $prefix . ' ' : '') .
+                $first .
+                ($mi ? ' ' . $mi . '.' : '') .
+                ' ' . $last
+            );
+
             $registration->items()->create([
 
                 'position' => $row['position'] ?? '',
 
-                'officer_name' => $row['officer_name'] ?? '',
+                'prefix'         => $prefix,
+                'first_name'     => $first,
+                'middle_initial' => $mi,
+                'last_name'      => $last,
+
+                'officer_name'   => $officerName,
 
                 'student_id_number' => $row['student_id_number'] ?? '',
 
                 'course_and_year' => $row['course_and_year'] ?? '',
 
                 'first_sem_qpi' => $row['first_sem_qpi'] ?? null,
-
                 'second_sem_qpi' => $row['second_sem_qpi'] ?? null,
-
                 'intersession_qpi' => $row['intersession_qpi'] ?? null,
                 'latest_qpi' => $row['second_sem_qpi'] ?? $row['latest_qpi'] ?? null,
 
@@ -172,7 +189,6 @@ class B3OfficerListController extends Controller
                 'sort_order' => $sort++,
 
                 'is_major_officer' => $isMajorOfficer,
-
                 'major_officer_role' => $isMajorOfficer ? $majorRole : null,
 
                 'propagated_to_memberships' => false,
@@ -204,7 +220,12 @@ class B3OfficerListController extends Controller
 
             'items' => ['nullable', 'array'],
             'items.*.position' => ['nullable', 'string', 'max:255'],
-            'items.*.officer_name' => ['nullable', 'string', 'max:255'],
+
+            'items.*.prefix'         => ['nullable', 'string', 'max:50', 'regex:/^[A-Za-z.\s]+$/'],
+            'items.*.first_name'     => ['nullable', 'string', 'max:100', 'regex:/^[A-Za-z\s\-]+$/'],
+            'items.*.middle_initial' => ['nullable', 'string', 'max:1', 'regex:/^[A-Za-z]$/'],
+            'items.*.last_name'      => ['nullable', 'string', 'max:100', 'regex:/^[A-Za-z\s\-]+$/'],
+
             'items.*.student_id_number' => ['nullable', 'string', 'max:50',],
             'items.*.course_and_year' => ['nullable', 'string', 'max:255'],
             
@@ -223,7 +244,7 @@ class B3OfficerListController extends Controller
 
         if ($validator->fails()) {
 
-            // Save as draft
+            
             $this->persistDraft($request, $registration);
 
             return back()
@@ -232,7 +253,7 @@ class B3OfficerListController extends Controller
                 ->with('error', 'Submission has errors. Saved as draft instead.');
         }
 
-        $this->persistDraft($request, $registration);
+
         $this->persistDraft($request, $registration);
 
         $registration->refresh();
@@ -287,7 +308,12 @@ class B3OfficerListController extends Controller
             'items' => ['nullable', 'array'],
 
             'items.*.position' => ['required', 'string', 'max:255', 'regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
-            'items.*.officer_name' => ['nullable', 'string', 'max:255', 'regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],
+
+            'items.*.prefix'         => ['nullable', 'string', 'max:50', 'regex:/^[A-Za-z.\s]+$/'],
+            'items.*.first_name'     => ['required', 'string', 'max:100', 'regex:/^[A-Za-z\s\-]+$/'],
+            'items.*.middle_initial' => ['nullable', 'string', 'max:1', 'regex:/^[A-Za-z]$/'],
+            'items.*.last_name'      => ['required', 'string', 'max:100', 'regex:/^[A-Za-z\s\-]+$/'],
+
             'items.*.student_id_number' => ['nullable', 'string', 'max:50','regex:/^[A-Za-z0-9\-]+$/'],
             'items.*.course_and_year' => ['nullable', 'string', 'max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
             'items.*.mobile_number' => ['nullable', 'string', 'max:30','regex:/^[0-9+\-\s]+$/'],
@@ -307,10 +333,10 @@ class B3OfficerListController extends Controller
         foreach ($request->input('items', []) as $index => $row) {
 
             if ($this->rowEmpty($row)) continue;
-
             $requiredFields = [
                 'position',
-                'officer_name',
+                'first_name',
+                'last_name',
                 'student_id_number',
                 'course_and_year',
                 'mobile_number',

@@ -23,7 +23,6 @@ class SacdevStrategicPlanController extends Controller
             ->with(['organization', 'targetSchoolYear'])
             ->orderByDesc('updated_at');
 
-        // optional quick filters
         if ($status = $request->get('status')) {
             $q->where('status', $status);
         }
