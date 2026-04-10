@@ -19,6 +19,7 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
+        "@alpinejs/collapse": "^3.15.11",
         "@fontsource/inter": "^5.2.8",
         "@heroicons/vue": "^2.2.0",
         "lucide": "^0.577.0",

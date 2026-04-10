@@ -84,19 +84,38 @@ class B3OfficerListController extends Controller
 
         $schoolYear = SchoolYear::find($targetSyId);
 
-      
-        $isLocked = in_array($registration->status, ['submitted_to_sacdev', 'approved_by_sacdev'], true);
-
         $currentUser = auth()->user();
+
+        // ROLE
+        $isPresident = $currentUser?->hasRoleInOrg($orgId, $targetSyId, 'president') ?? false;
+
+        // STATUS FLAGS
+        $isLocked = in_array($registration->status, [
+            'submitted_to_sacdev',
+            'approved_by_sacdev'
+        ], true);
+
+        $isEditable = in_array($registration->status, [
+            'draft',
+            'returned_by_sacdev'
+        ], true);
+
+        // FINAL PERMISSION
+        $canEdit = $isPresident && $isEditable;
 
         return view('org.forms.b3_officers.edit', [
             'registration' => $registration,
             'targetSyId' => $targetSyId,
             'schoolYear' => $schoolYear,
-            'isLocked' => $isLocked,
             'currentUser' => $currentUser,
+
+            'isPresident' => $isPresident,
+            'isLocked' => $isLocked,
+            'isEditable' => $isEditable,
+            'canEdit' => $canEdit,
         ]);
     }
+
 
     private function rowEmpty(array $row): bool
     {
@@ -237,7 +256,7 @@ class B3OfficerListController extends Controller
 
             'items.*.major_officer_role' => [
                 'nullable',
-                Rule::in(['president', 'vice_president', 'treasurer', 'finance_officer'])
+                Rule::in(['president', 'auditor', 'treasurer', 'finance_officer'])
             ],
 
         ]);
@@ -324,7 +343,7 @@ class B3OfficerListController extends Controller
 
             'items.*.major_officer_role' => [
                 'nullable',
-                Rule::in(['president', 'vice_president', 'treasurer', 'finance_officer'])
+                Rule::in(['president', 'auditor', 'treasurer', 'finance_officer'])
             ],
 
 

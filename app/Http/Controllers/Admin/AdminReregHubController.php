@@ -147,11 +147,11 @@ class AdminReregHubController extends Controller
         ];
 
         $allApproved =
-            $this->isApproved($b1?->status)
-            && $presidentUser && $isPresidentProfileComplete
-            && $this->isApproved($b3?->status)
-            && $b5 && $this->isApproved($b5?->status)
-            && $b6 !== null;
+            $this->isApproved($b1?->status)   // Strategic Plan approved
+            && $this->isApproved($b3?->status) // Officers approved
+            && $b5 !== null                   // Moderator submission exists
+            && $presidentUser                 // President assigned
+            && $b6 !== null;                  // Constitution exists
 
         $isActivated = false;
 
@@ -162,7 +162,12 @@ class AdminReregHubController extends Controller
                 ->exists();
         }
 
-        //dd( $organization->id);
+        $isPresident = OrgMembership::where('user_id', $userId)
+            ->where('organization_id', $organization->id)
+            ->where('school_year_id', $encodeSyId)
+            ->where('role', 'president')
+            ->whereNull('archived_at')
+            ->exists();
 
         return view('org.rereg.index', [
             'organization' => $organization,
@@ -179,6 +184,8 @@ class AdminReregHubController extends Controller
             'presidentUser' => $presidentUser,
             'isPresidentProfileComplete' => $isPresidentProfileComplete,
             'isAdminReregHub' => true,
+            'isPresident' => $isPresident,
+            
         ]);
     }
 

@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Traits\FormatsName;
 
 class User extends Authenticatable
 {
     use Notifiable;
+    use FormatsName;
 
     protected $fillable = [
         'name', 'email', 'password',
@@ -26,6 +28,17 @@ class User extends Authenticatable
         'must_change_password' => 'boolean',
         'password_changed_at' => 'datetime',
     ];
+    
+    public function setFirstNameAttribute($value)
+    {
+        $this->attributes['first_name'] = $this->formatName($value);
+    }
+
+    public function setLastNameAttribute($value)
+    {
+        $this->attributes['last_name'] = $this->formatName($value);
+    }
+
 
     public function isCoaOfficer(): bool
     {
@@ -151,5 +164,14 @@ class User extends Authenticatable
             ->exists();
     }
 
+    public function hasRoleInOrg(int $orgId, int $schoolYearId, string $role): bool
+    {
+        return $this->orgMemberships()
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $schoolYearId)
+            ->where('role', $role)
+            ->whereNull('archived_at')
+            ->exists();
+    }
 
 }

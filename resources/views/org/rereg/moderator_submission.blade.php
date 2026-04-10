@@ -3,238 +3,418 @@
 @php
     $isAdminView = $isAdminView ?? false;
 
-    
+    $isEditable = !$isAdminView && $isModerator && $isProfileComplete;
+
+    if ($isAdminView) {
+        $profileRoute = route('admin.profile.view', ['user' => $profile->user_id]);
+    } elseif ($isModerator) {
+        $profileRoute = route('org.profile.edit');
+    } else {
+        $profileRoute = route('org.profile.edit', ['user' => $profile->user_id]);
+    }
 @endphp
 
-    <div class="max-w-4xl mx-auto px-4 py-6 space-y-5">
+<style>
+    .page-container {
+        max-width: 1180px;
+    }
+</style>
 
-        {{-- HEADER --}}
-        <div>
-            <h2 class="text-lg font-semibold text-slate-900">
-                Moderator Submission
-            </h2>
-            <p class="text-xs text-slate-500 mt-1">
-                @if($isAdminView)
-                    Admin viewing mode. This page is read-only.
-                @else
-                    Organization members can view. Only the assigned moderator can edit.
-                @endif
-            </p>
-        </div>
+<div class="page-container mx-auto px-4 py-6 space-y-6">
 
+    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm px-5 py-4">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
 
-        {{-- SUCCESS --}}
-        @if(session('success'))
-            <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900 text-sm">
-                {{ session('success') }}
-            </div>
-        @endif
-
-
-        {{-- PROFILE INCOMPLETE WARNING --}}
-        @if(!$isProfileComplete && $isModerator)
-            <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-4 text-rose-900">
-                <div class="text-sm font-semibold">Profile Incomplete</div>
-
-                <div class="mt-2 text-xs">
-                    Please complete the following fields before submitting:
+            <div class="flex items-start gap-3">
+                <div class="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+                    <i data-lucide="shield-check" class="h-4 w-4"></i>
                 </div>
 
-                <ul class="mt-2 list-disc ml-5 text-xs space-y-1">
-                    @foreach($missingFields as $field)
-                        <li>{{ $field }}</li>
-                    @endforeach
-                </ul>
+                <div>
+                    <h2 class="text-sm font-semibold text-slate-900">
+                        Moderator Submission
+                    </h2>
+                    <p class="mt-0.5 text-xs text-slate-500">
+                        @if($isAdminView)
+                            Admin viewing mode. This page is read-only.
+                        @else
+                            Organization members can view this page. Only the assigned moderator can update the submission.
+                        @endif
+                    </p>
+                </div>
+            </div>
 
+            <div class="flex flex-wrap items-center gap-2">
                 @if($isAdminView)
-                    <a href="{{ route('admin.profile.view', ['user' => $profile->user_id]) }}"
-                    class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50">
-                        View Moderator Profile
-                    </a>
-                @elseif($isModerator)
-                    <a href="{{ route('org.profile.edit') }}"
-                    class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50">
-                        Open Profile
-                    </a>
+                    <span class="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700">
+                        <i data-lucide="eye" class="h-3.5 w-3.5"></i>
+                        Read Only
+                    </span>
+                @endif
+
+                @if($isProfileComplete)
+                    <span class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
+                        <i data-lucide="badge-check" class="h-3.5 w-3.5"></i>
+                        Profile Complete
+                    </span>
                 @else
-                    <a href="{{ route('a.profile.edit', ['user' => $profile->user_id]) }}"
-                    class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50">
-                        Open Moderator Profile
-                    </a>
+                    <span class="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-medium text-rose-700">
+                        <i data-lucide="alert-circle" class="h-3.5 w-3.5"></i>
+                        Profile Incomplete
+                    </span>
                 @endif
             </div>
-        @endif
+
+        </div>
+    </div>
 
 
-        {{-- PROFILE SUMMARY --}}
-        <div class="card p-4">
-            <div class="card-header">Profile Summary</div>
+    @if(session('success'))
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-sm">
+            <div class="flex items-start gap-2">
+                <div class="mt-0.5 text-emerald-600">
+                    <i data-lucide="check-circle-2" class="h-4 w-4"></i>
+                </div>
+                <div class="text-xs font-medium text-emerald-800">
+                    {{ session('success') }}
+                </div>
+            </div>
+        </div>
+    @endif
 
-            <div class="mt-3 flex items-center gap-4">
 
-                <div class="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden bg-slate-100 flex items-center justify-center">
-                    @if($profile->photo_id_path)
-                        <img src="{{ asset('storage/'.$profile->photo_id_path) }}"
-                            class="w-full h-full object-cover">
-                    @else
-                        <span class="text-[10px] text-slate-400">No Photo</span>
+    @if(!$isProfileComplete && $isModerator)
+        <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 shadow-sm">
+            <div class="flex items-start gap-3">
+                <div class="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
+                    <i data-lucide="shield-alert" class="h-4 w-4"></i>
+                </div>
+
+                <div class="min-w-0 flex-1">
+                    <div class="text-sm font-semibold text-rose-900">
+                        Profile Incomplete
+                    </div>
+                    <p class="mt-1 text-xs text-rose-800">
+                        Complete the following required profile details before the moderator submission can be updated.
+                    </p>
+
+                    <ul class="mt-3 space-y-1.5 text-xs text-rose-800">
+                        @foreach($missingFields as $field)
+                            <li class="flex items-start gap-2">
+                                <i data-lucide="dot" class="mt-[1px] h-4 w-4 shrink-0"></i>
+                                <span>{{ $field }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+
+                    <div class="mt-4">
+                        <a href="{{ $profileRoute }}"
+                           class="inline-flex items-center gap-2 rounded-xl border border-white/70 bg-white px-3 py-2 text-xs font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50">
+                            <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
+                            {{ $isAdminView ? 'View Moderator Profile' : ($isModerator ? 'Open Profile' : 'Open Moderator Profile') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+
+        <div class="space-y-6 lg:col-span-2">
+
+            <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                                <i data-lucide="user-round" class="h-4 w-4"></i>
+                            </div>
+                            <div class="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                                Profile Summary
+                            </div>
+                        </div>
+                        <p class="mt-1 text-[11px] text-slate-400">
+                            Moderator identity and profile details used for this submission
+                        </p>
+                    </div>
+
+                    <a href="{{ $profileRoute }}"
+                       class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                        <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
+                        {{ $isAdminView ? 'View Profile' : ($isModerator ? 'Open Profile' : 'Open Moderator Profile') }}
+                    </a>
+                </div>
+
+                <div class="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+                    <div class="flex items-start gap-4">
+                        <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+                            @if($profile && $profile->photo_id_path)
+                                <img src="{{ asset('storage/'.$profile->photo_id_path) }}"
+                                     class="h-full w-full object-cover">
+                            @else
+                                <i data-lucide="image-off" class="h-5 w-5 text-slate-400"></i>
+                            @endif
+                        </div>
+
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm font-semibold text-slate-900">
+                                {{ $profile->full_name ?? '—' }}
+                            </div>
+                            <div class="mt-1 text-xs text-slate-500">
+                                {{ $profile->email ?? '—' }}
+                            </div>
+
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                                    {{ $profile->university_designation ?? 'No Designation' }}
+                                </span>
+                                <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                                    {{ $profile->unit_department ?? 'No Department' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div class="rounded-xl bg-slate-50 px-3 py-3">
+                            <div class="text-[11px] text-slate-500">Name</div>
+                            <div class="mt-1 text-sm font-medium text-slate-900">{{ $profile->full_name ?? '—' }}</div>
+                        </div>
+
+                        <div class="rounded-xl bg-slate-50 px-3 py-3">
+                            <div class="text-[11px] text-slate-500">Email</div>
+                            <div class="mt-1 text-sm font-medium text-slate-900 break-all">{{ $profile->email ?? '—' }}</div>
+                        </div>
+
+                        <div class="rounded-xl bg-slate-50 px-3 py-3">
+                            <div class="text-[11px] text-slate-500">Mobile</div>
+                            <div class="mt-1 text-sm font-medium text-slate-900">{{ $profile->mobile_number ?? '—' }}</div>
+                        </div>
+
+                        <div class="rounded-xl bg-slate-50 px-3 py-3">
+                            <div class="text-[11px] text-slate-500">City Address</div>
+                            <div class="mt-1 text-sm font-medium text-slate-900">{{ $profile->city_address ?? '—' }}</div>
+                        </div>
+
+                        <div class="rounded-xl bg-slate-50 px-3 py-3">
+                            <div class="text-[11px] text-slate-500">Designation</div>
+                            <div class="mt-1 text-sm font-medium text-slate-900">{{ $profile->university_designation ?? '—' }}</div>
+                        </div>
+
+                        <div class="rounded-xl bg-slate-50 px-3 py-3">
+                            <div class="text-[11px] text-slate-500">Department</div>
+                            <div class="mt-1 text-sm font-medium text-slate-900">{{ $profile->unit_department ?? '—' }}</div>
+                        </div>
+
+                        <div class="rounded-xl bg-slate-50 px-3 py-3">
+                            <div class="text-[11px] text-slate-500">Employment</div>
+                            <div class="mt-1 text-sm font-medium text-slate-900">{{ $profile->employment_status ?? '—' }}</div>
+                        </div>
+
+                        <div class="rounded-xl bg-slate-50 px-3 py-3">
+                            <div class="text-[11px] text-slate-500">Years of Service</div>
+                            <div class="mt-1 text-sm font-medium text-slate-900">{{ $profile->years_of_service ?? '—' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <form method="POST" action="{{ route('org.rereg.moderator.update') }}">
+                @csrf
+
+                <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+                                    <i data-lucide="file-pen-line" class="h-4 w-4"></i>
+                                </div>
+                                <div class="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                                    Moderator Details
+                                </div>
+                            </div>
+                            <p class="mt-1 text-[11px] text-slate-400">
+                                Background details needed for moderator nomination and review
+                            </p>
+                        </div>
+
+                        @if($isEditable)
+                            <span class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
+                                <i data-lucide="pencil-line" class="h-3.5 w-3.5"></i>
+                                Editable
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                                <i data-lucide="lock" class="h-3.5 w-3.5"></i>
+                                Locked
+                            </span>
+                        @endif
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+
+                        <div class="rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
+                            <label class="mb-1.5 flex items-center gap-1 text-xs font-medium text-slate-600">
+                                <i data-lucide="history" class="h-3.5 w-3.5 text-slate-400"></i>
+                                Have you been a moderator before?
+                            </label>
+
+                            <select name="was_moderator_before"
+                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                                    @disabled(!$isEditable)>
+                                <option value="">Select</option>
+                                <option value="1" @selected(old('was_moderator_before', $submission?->was_moderator_before) == 1)>Yes</option>
+                                <option value="0" @selected(old('was_moderator_before', $submission?->was_moderator_before) == 0)>No</option>
+                            </select>
+
+                            @error('was_moderator_before')
+                                <div class="mt-1 text-[11px] text-rose-600">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+
+                        <div class="rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
+                            <label class="mb-1.5 flex items-center gap-1 text-xs font-medium text-slate-600">
+                                <i data-lucide="building-2" class="h-3.5 w-3.5 text-slate-400"></i>
+                                If yes, which organization?
+                            </label>
+
+                            <input type="text"
+                                   name="moderated_org_name"
+                                   value="{{ old('moderated_org_name', $submission?->moderated_org_name) }}"
+                                   class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                                   @disabled(!$isEditable)>
+
+                            @error('moderated_org_name')
+                                <div class="mt-1 text-[11px] text-rose-600">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+
+                        <div class="rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
+                            <label class="mb-1.5 flex items-center gap-1 text-xs font-medium text-slate-600">
+                                <i data-lucide="users-round" class="h-3.5 w-3.5 text-slate-400"></i>
+                                Served this nominating organization before?
+                            </label>
+
+                            <select name="served_nominating_org_before"
+                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                                    @disabled(!$isEditable)>
+                                <option value="">Select</option>
+                                <option value="1" @selected(old('served_nominating_org_before', $submission?->served_nominating_org_before) == 1)>Yes</option>
+                                <option value="0" @selected(old('served_nominating_org_before', $submission?->served_nominating_org_before) == 0)>No</option>
+                            </select>
+
+                            @error('served_nominating_org_before')
+                                <div class="mt-1 text-[11px] text-rose-600">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+
+                        <div class="rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
+                            <label class="mb-1.5 flex items-center gap-1 text-xs font-medium text-slate-600">
+                                <i data-lucide="calendar-range" class="h-3.5 w-3.5 text-slate-400"></i>
+                                If yes, how many years?
+                            </label>
+
+                            <input type="number"
+                                   name="served_nominating_org_years"
+                                   value="{{ old('served_nominating_org_years', $submission?->served_nominating_org_years) }}"
+                                   class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                                   @disabled(!$isEditable)>
+
+                            @error('served_nominating_org_years')
+                                <div class="mt-1 text-[11px] text-rose-600">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                    </div>
+
+                    @if($isModerator && !$isAdminView)
+                        <div class="mt-5 flex justify-end">
+                            <button type="submit"
+                                    class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                    @disabled(!$isProfileComplete)>
+                                <i data-lucide="save" class="h-3.5 w-3.5"></i>
+                                Save Submission
+                            </button>
+                        </div>
                     @endif
                 </div>
-
-                <div class="flex-1">
-                    <div class="text-sm font-medium text-slate-900">
-                        {{ $profile->full_name ?? '—' }}
-                    </div>
-                    <div class="text-[11px] text-slate-500">
-                        {{ $profile->email ?? '—' }}
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-
-                <div>
-                    <div class="text-[11px] text-slate-500">Name</div>
-                    <div class="font-medium">{{ $profile->full_name ?? '—' }}</div>
-                </div>
-
-                <div>
-                    <div class="text-[11px] text-slate-500">Email</div>
-                    <div class="font-medium">{{ $profile->email ?? '—' }}</div>
-                </div>
-
-                <div>
-                    <div class="text-[11px] text-slate-500">Mobile</div>
-                    <div class="font-medium">{{ $profile->mobile_number ?? '—' }}</div>
-                </div>
-
-                <div>
-                    <div class="text-[11px] text-slate-500">City Address</div>
-                    <div class="font-medium">{{ $profile->city_address ?? '—' }}</div>
-                </div>
-
-                <div>
-                    <div class="text-[11px] text-slate-500">Designation</div>
-                    <div class="font-medium">{{ $profile->university_designation ?? '—' }}</div>
-                </div>
-
-                <div>
-                    <div class="text-[11px] text-slate-500">Department</div>
-                    <div class="font-medium">{{ $profile->unit_department ?? '—' }}</div>
-                </div>
-
-                <div>
-                    <div class="text-[11px] text-slate-500">Employment</div>
-                    <div class="font-medium">{{ $profile->employment_status ?? '—' }}</div>
-                </div>
-
-                <div>
-                    <div class="text-[11px] text-slate-500">Years of Service</div>
-                    <div class="font-medium">{{ $profile->years_of_service ?? '—' }}</div>
-                </div>
-
-            </div>
-        </div>
-
-        <div class="mt-4 flex justify-end">
-
-            @if($isModerator)
-                <a href="{{ route('org.profile.edit') }}"
-                class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50">
-                    Open Profile
-                </a>
-
-            @elseif($isAdminView)
-                <a href="{{ route('admin.profile.view', ['user' => $profile->user_id]) }}"
-                class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50">
-                    View Moderator Profile
-                </a>
-            @else
-                <a href="{{ route('org.profile.edit', ['user' => $profile->user_id]) }}"
-                class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50">
-                    Open Moderator Profile
-                </a>
-            @endif
+            </form>
 
         </div>
 
 
-        {{-- FORM --}}
-        <form method="POST" action="{{ route('org.rereg.moderator.update') }}">
-            @csrf
+        <div class="space-y-6">
 
-            <div class="card p-4 space-y-4">
-
-                <div class="card-header">Moderator Details</div>
-
-                {{-- WAS MODERATOR BEFORE --}}
-                <div>
-                    <label class="text-xs text-slate-600">Have you been a moderator before?</label>
-
-                    <select name="was_moderator_before"
-                            class="mt-1 w-full rounded-lg border border-slate-200 text-sm"
-                            @disabled($isAdminView || !$isModerator || !$isProfileComplete)>
-                        <option value="">Select</option>
-                        <option value="1" @selected(old('was_moderator_before', $submission?->was_moderator_before) == 1)>Yes</option>
-                        <option value="0" @selected(old('was_moderator_before', $submission?->was_moderator_before) == 0)>No</option>
-                    </select>
+            <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
+                <div class="flex items-center gap-2">
+                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <i data-lucide="info" class="h-4 w-4"></i>
+                    </div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                        Submission Status
+                    </div>
                 </div>
 
+                <div class="mt-4 space-y-3">
+                    <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
+                        <div class="text-[11px] text-slate-500">Viewing Mode</div>
+                        <div class="mt-1 text-sm font-medium text-slate-900">
+                            {{ $isAdminView ? 'Admin Read-Only' : ($isModerator ? 'Moderator Editable View' : 'Organization Read-Only View') }}
+                        </div>
+                    </div>
 
-                {{-- ORG NAME --}}
-                <div>
-                    <label class="text-xs text-slate-600">If yes, which organization?</label>
+                    <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
+                        <div class="text-[11px] text-slate-500">Profile Requirement</div>
+                        <div class="mt-1 text-sm font-medium {{ $isProfileComplete ? 'text-emerald-700' : 'text-rose-700' }}">
+                            {{ $isProfileComplete ? 'Completed' : 'Incomplete' }}
+                        </div>
+                    </div>
 
-                    <input type="text"
-                           name="moderated_org_name"
-                           value="{{ old('moderated_org_name', $submission?->moderated_org_name) }}"
-                           class="mt-1 w-full rounded-lg border border-slate-200 text-sm"
-                           @disabled($isAdminView || !$isModerator || !$isProfileComplete)>
+                    <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
+                        <div class="text-[11px] text-slate-500">Submission Access</div>
+                        <div class="mt-1 text-sm font-medium text-slate-900">
+                            {{ $isEditable ? 'Can Edit and Save' : 'Locked' }}
+                        </div>
+                    </div>
                 </div>
-
-
-                {{-- SERVED BEFORE --}}
-                <div>
-                    <label class="text-xs text-slate-600">Served this nominating organization before?</label>
-
-                    <select name="served_nominating_org_before"
-                            class="mt-1 w-full rounded-lg border border-slate-200 text-sm"
-                            @disabled($isAdminView || !$isModerator || !$isProfileComplete)>
-                        <option value="">Select</option>
-                        <option value="1" @selected(old('served_nominating_org_before', $submission?->served_nominating_org_before) == 1)>Yes</option>
-                        <option value="0" @selected(old('served_nominating_org_before', $submission?->served_nominating_org_before) == 0)>No</option>
-                    </select>
-                </div>
-
-
-                {{-- YEARS --}}
-                <div>
-                    <label class="text-xs text-slate-600">If yes, how many years?</label>
-
-                    <input type="number"
-                           name="served_nominating_org_years"
-                           value="{{ old('served_nominating_org_years', $submission?->served_nominating_org_years) }}"
-                           class="mt-1 w-full rounded-lg border border-slate-200 text-sm"
-                           @disabled($isAdminView || !$isModerator || !$isProfileComplete)>
-                </div>
-
             </div>
 
 
-            {{-- ACTION --}}
-            @if($isModerator && !$isAdminView)
-                <div class="flex justify-end mt-4">
-                    <button type="submit"
-                            class="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm hover:bg-slate-800"
-                            @disabled(!$isProfileComplete)>
-                        Save Submission
-                    </button>
+            <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
+                <div class="flex items-center gap-2">
+                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                        <i data-lucide="clipboard-list" class="h-4 w-4"></i>
+                    </div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                        Guidance
+                    </div>
                 </div>
-            @endif
 
-        </form>
+                <div class="mt-4 space-y-3 text-xs text-slate-600">
+                    <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
+                        Complete the moderator profile first before filling out the submission details.
+                    </div>
+
+                    <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
+                        Only the assigned moderator can update this submission when profile requirements are complete.
+                    </div>
+
+                    <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
+                        Admin view is intended for review and verification only.
+                    </div>
+                </div>
+            </div>
+
+        </div>
 
     </div>
+
+</div>
 
 </x-app-layout>

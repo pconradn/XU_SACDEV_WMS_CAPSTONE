@@ -1,20 +1,9 @@
-<div class="rounded-2xl border border-blue-200 bg-gradient-to-b from-blue-50 to-white p-6 shadow-sm mb-6">
-
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h3 class="text-sm font-semibold text-blue-900">
-                Major Officers
-            </h3>
-            <p class="text-xs text-blue-700 mt-1">
-                Assign key organizational roles. Required for submission.
-            </p>
-        </div>
-    </div>
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-5">
 
     @php
         $majorRoles = [
             'president' => 'President',
-            'vice_president' => 'Vice President',
+            'auditor' => 'Auditor',
             'treasurer' => 'Treasurer',
             'finance_officer' => 'Finance Officer',
         ];
@@ -22,29 +11,61 @@
         $existing = collect($registration->items ?? [])
             ->filter(fn($i) => !empty($i->major_officer_role))
             ->keyBy('major_officer_role');
+
+        $presidentMembership = \App\Models\OrgMembership::where('organization_id', $registration->organization_id)
+            ->where('school_year_id', $registration->target_school_year_id)
+            ->where('role', 'president')
+            ->whereNull('archived_at')
+            ->with('user')
+            ->first();
+
+        $presidentUser = $presidentMembership?->user;
     @endphp
 
-    <div class="space-y-6">
+    {{-- HEADER --}}
+    <div class="mb-4 flex items-start justify-between gap-4">
+        <div>
+            <div class="text-xs font-semibold text-slate-900 flex items-center gap-2">
+                <i data-lucide="users" class="w-4 h-4 text-slate-500"></i>
+                System Major Officers
+            </div>
+            <div class="text-[11px] text-slate-500 mt-1">
+                Key roles required before submission
+            </div>
+        </div>
+    </div>
+
+    {{-- GRID --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         @foreach($majorRoles as $roleKey => $systemRoleLabel)
 
         @php
             $item = $existing->get($roleKey);
-
             $idx = "major_{$roleKey}";
-            $hasError = collect($errors->get("items.$idx.*"))->flatten()->isNotEmpty();
+            $isPresRow = $roleKey === 'president';
+
+            $user = $isPresRow ? $presidentUser : null;
+
+            $prefix = $isPresRow ? ($user->prefix ?? '') : ($item->prefix ?? '');
+            $first  = $isPresRow ? ($user->first_name ?? '') : ($item->first_name ?? '');
+            $mi     = $isPresRow ? ($user->middle_initial ?? '') : ($item->middle_initial ?? '');
+            $last   = $isPresRow ? ($user->last_name ?? '') : ($item->last_name ?? '');
+
+            $studentId = $isPresRow
+                ? (isset($user->email) ? explode('@', $user->email)[0] : '')
+                : ($item->student_id_number ?? '');
         @endphp
 
-        <div data-officer-row
-             class="rounded-2xl border p-5 bg-white shadow-sm
-             {{ $hasError ? 'border-rose-300 bg-rose-50/40' : 'border-blue-200' }}">
+        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-4">
 
-            <div class="flex items-center justify-between mb-4">
-                <div class="text-sm font-semibold text-blue-800">
+            {{-- HEADER --}}
+            <div class="flex items-center justify-between mb-3">
+                <div class="text-xs font-semibold text-slate-800">
                     {{ $systemRoleLabel }}
                 </div>
-                <span class="text-[10px] px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 font-semibold">
-                    System Role
+                <span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                    System Role: {{ $systemRoleLabel }}
                 </span>
             </div>
 
@@ -53,110 +74,115 @@
                 value="{{ $roleKey }}">
 
             {{-- POSITION --}}
-            <div class="mb-4">
-                <label class="text-xs font-medium text-slate-600">
-                    Display Position Title
-                </label>
-
+            <div class="mb-3">
+                <label class="block text-[10px] text-slate-500 mb-1">Display Position</label>
                 <input type="text"
                     name="items[{{ $idx }}][position]"
                     value="{{ old("items.$idx.position") ?? ($item->position ?? $systemRoleLabel) }}"
-                    class="mt-1 w-full rounded-lg border px-3 py-2 text-sm border-slate-300 focus:ring-2 focus:ring-blue-200"
-                    {{ $isLocked ? 'readonly' : '' }}>
+                    class="w-full rounded-xl border px-3 py-2 text-xs border-slate-200"
+                    {{ !$canEdit ? 'readonly' : '' }}>
             </div>
 
             {{-- NAME --}}
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="grid grid-cols-2 gap-2">
 
-                <input type="text"
-                    name="items[{{ $idx }}][prefix]"
-                    value="{{ old("items.$idx.prefix") ?? ($item->prefix ?? '') }}"
-                    placeholder="Prefix"
-                    class="mt-1 w-full rounded-lg border px-3 py-2 text-sm border-slate-300">
+                <div>
+                    <label class="text-[10px] text-slate-500">Prefix</label>
+                    <input type="text"
+                        name="items[{{ $idx }}][prefix]"
+                        value="{{ $prefix }}"
+                        class="w-full rounded-xl border px-2 py-1.5 text-xs border-slate-200"
+                        {{ $isPresRow ? 'readonly' : (!$canEdit ? 'readonly' : '') }}>
+                </div>
 
-                <input type="text"
-                    name="items[{{ $idx }}][first_name]"
-                    value="{{ old("items.$idx.first_name") ?? ($item->first_name ?? '') }}"
-                    placeholder="First Name"
-                    class="mt-1 w-full rounded-lg border px-3 py-2 text-sm border-slate-300">
+                <div>
+                    <label class="text-[10px] text-slate-500">First Name</label>
+                    <input type="text"
+                        name="items[{{ $idx }}][first_name]"
+                        value="{{ $first }}"
+                        class="w-full rounded-xl border px-2 py-1.5 text-xs border-slate-200"
+                        {{ $isPresRow ? 'readonly' : (!$canEdit ? 'readonly' : '') }}>
+                </div>
 
-                <input type="text"
-                    name="items[{{ $idx }}][middle_initial]"
-                    value="{{ old("items.$idx.middle_initial") ?? ($item->middle_initial ?? '') }}"
-                    maxlength="1"
-                    placeholder="M.I."
-                    class="mt-1 w-full rounded-lg border px-3 py-2 text-sm border-slate-300">
+                <div>
+                    <label class="text-[10px] text-slate-500">M.I.</label>
+                    <input type="text"
+                        name="items[{{ $idx }}][middle_initial]"
+                        value="{{ $mi }}"
+                        class="w-full rounded-xl border px-2 py-1.5 text-xs border-slate-200"
+                        {{ $isPresRow ? 'readonly' : (!$canEdit ? 'readonly' : '') }}>
+                </div>
 
-                <input type="text"
-                    name="items[{{ $idx }}][last_name]"
-                    value="{{ old("items.$idx.last_name") ?? ($item->last_name ?? '') }}"
-                    placeholder="Last Name"
-                    class="mt-1 w-full rounded-lg border px-3 py-2 text-sm border-slate-300">
+                <div>
+                    <label class="text-[10px] text-slate-500">Last Name</label>
+                    <input type="text"
+                        name="items[{{ $idx }}][last_name]"
+                        value="{{ $last }}"
+                        class="w-full rounded-xl border px-2 py-1.5 text-xs border-slate-200"
+                        {{ $isPresRow ? 'readonly' : (!$canEdit ? 'readonly' : '') }}>
+                </div>
 
             </div>
 
-            {{-- PREVIEW --}}
-            <div class="mt-2 text-[11px] text-slate-500">
-                Full Name:
-                <span id="preview_{{ $idx }}">
-                    {{
-                        trim(
-                            (($item->prefix ?? '') ? $item->prefix . ' ' : '') .
-                            ($item->first_name ?? '') .
-                            (($item->middle_initial ?? '') ? ' ' . rtrim($item->middle_initial, '.') . '.' : '') .
-                            (($item->last_name ?? '') ? ' ' . $item->last_name : '')
-                        )
-                    }}
-                </span>
-            </div>
-
-            {{-- DETAILS --}}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-
+            {{-- STUDENT ID --}}
+            <div class="mt-3">
+                <label class="text-[10px] text-slate-500">Student ID</label>
                 <input type="text"
                     name="items[{{ $idx }}][student_id_number]"
-                    value="{{ old("items.$idx.student_id_number") ?? ($item->student_id_number ?? '') }}"
-                    placeholder="Student ID"
-                    class="mt-1 w-full rounded-lg border px-3 py-2 text-sm border-slate-300">
+                    value="{{ $studentId }}"
+                    class="w-full rounded-xl border px-2 py-1.5 text-xs border-slate-200"
+                    {{ $isPresRow ? 'readonly' : (!$canEdit ? 'readonly' : '') }}>
+            </div>
 
-                <input type="text"
-                    name="items[{{ $idx }}][course_and_year]"
-                    value="{{ old("items.$idx.course_and_year") ?? ($item->course_and_year ?? '') }}"
-                    placeholder="Course & Year"
-                    class="mt-1 w-full rounded-lg border px-3 py-2 text-sm border-slate-300">
+            {{-- COURSE + MOBILE --}}
+            <div class="grid grid-cols-2 gap-2 mt-3">
+                <div>
+                    <label class="text-[10px] text-slate-500">Course & Year</label>
+                    <input type="text"
+                        name="items[{{ $idx }}][course_and_year]"
+                        value="{{ old("items.$idx.course_and_year") ?? ($item->course_and_year ?? '') }}"
+                        class="w-full rounded-xl border px-2 py-1.5 text-xs border-slate-200"
+                        {{ !$canEdit ? 'readonly' : '' }}>
+                </div>
 
-                <input type="text"
-                    name="items[{{ $idx }}][mobile_number]"
-                    value="{{ old("items.$idx.mobile_number") ?? ($item->mobile_number ?? '') }}"
-                    placeholder="Mobile"
-                    class="mt-1 w-full rounded-lg border px-3 py-2 text-sm border-slate-300">
-
+                <div>
+                    <label class="text-[10px] text-slate-500">Mobile</label>
+                    <input type="text"
+                        name="items[{{ $idx }}][mobile_number]"
+                        value="{{ old("items.$idx.mobile_number") ?? ($item->mobile_number ?? '') }}"
+                        class="w-full rounded-xl border px-2 py-1.5 text-xs border-slate-200"
+                        {{ !$canEdit ? 'readonly' : '' }}>
+                </div>
             </div>
 
             {{-- QPI --}}
-            <div class="grid grid-cols-3 gap-4 mt-4">
+            <div class="grid grid-cols-3 gap-2 mt-3">
+                <div>
+                    <label class="text-[10px] text-slate-500">1st Sem</label>
+                    <input type="number" step="0.01" min="0" max="4"
+                        name="items[{{ $idx }}][first_sem_qpi]"
+                        value="{{ old("items.$idx.first_sem_qpi") ?? ($item->first_sem_qpi ?? '') }}"
+                        class="w-full rounded-xl border px-2 py-1.5 text-xs border-slate-200"
+                        {{ !$canEdit ? 'readonly' : '' }}>
+                </div>
 
-                <input type="number"
-                    step="0.01" min="0" max="4"
-                    name="items[{{ $idx }}][first_sem_qpi]"
-                    value="{{ old("items.$idx.first_sem_qpi") ?? ($item->first_sem_qpi ?? '') }}"
-                    placeholder="1st Sem"
-                    class="mt-1 w-full rounded-lg border px-3 py-2 text-sm border-slate-300">
+                <div>
+                    <label class="text-[10px] text-slate-500">2nd Sem</label>
+                    <input type="number" step="0.01" min="0" max="4"
+                        name="items[{{ $idx }}][second_sem_qpi]"
+                        value="{{ old("items.$idx.second_sem_qpi") ?? ($item->second_sem_qpi ?? '') }}"
+                        class="w-full rounded-xl border px-2 py-1.5 text-xs border-slate-200"
+                        {{ !$canEdit ? 'readonly' : '' }}>
+                </div>
 
-                <input type="number"
-                    step="0.01" min="0" max="4"
-                    name="items[{{ $idx }}][second_sem_qpi]"
-                    value="{{ old("items.$idx.second_sem_qpi") ?? ($item->second_sem_qpi ?? '') }}"
-                    placeholder="2nd Sem"
-                    class="mt-1 w-full rounded-lg border px-3 py-2 text-sm border-slate-300">
-
-                <input type="number"
-                    step="0.01" min="0" max="4"
-                    name="items[{{ $idx }}][intersession_qpi]"
-                    value="{{ old("items.$idx.intersession_qpi") ?? ($item->intersession_qpi ?? '') }}"
-                    placeholder="Intersession"
-                    class="mt-1 w-full rounded-lg border px-3 py-2 text-sm border-slate-300">
-
+                <div>
+                    <label class="text-[10px] text-slate-500">Inter</label>
+                    <input type="number" step="0.01" min="0" max="4"
+                        name="items[{{ $idx }}][intersession_qpi]"
+                        value="{{ old("items.$idx.intersession_qpi") ?? ($item->intersession_qpi ?? '') }}"
+                        class="w-full rounded-xl border px-2 py-1.5 text-xs border-slate-200"
+                        {{ !$canEdit ? 'readonly' : '' }}>
+                </div>
             </div>
 
         </div>
@@ -166,26 +192,3 @@
     </div>
 
 </div>
-
-<script>
-document.addEventListener('input', function(e) {
-
-    const row = e.target.closest('[data-officer-row]');
-    if (!row) return;
-
-    const prefix = row.querySelector('[name*="[prefix]"]')?.value || '';
-    const first  = row.querySelector('[name*="[first_name]"]')?.value || '';
-    const mi     = row.querySelector('[name*="[middle_initial]"]')?.value || '';
-    const last   = row.querySelector('[name*="[last_name]"]')?.value || '';
-
-    let name = '';
-
-    if (prefix) name += prefix + ' ';
-    name += first;
-    if (mi) name += ' ' + mi + '.';
-    if (last) name += ' ' + last;
-
-    const preview = row.querySelector('[id^="preview_"]');
-    if (preview) preview.textContent = name.trim();
-});
-</script>

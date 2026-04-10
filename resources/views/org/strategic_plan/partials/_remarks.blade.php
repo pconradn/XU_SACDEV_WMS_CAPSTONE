@@ -1,6 +1,4 @@
-{{-- ========================= --}}
-{{-- REMARKS BUTTON --}}
-{{-- ========================= --}}
+<div x-data="{ openRemarks: false }">
 @if($submission->moderator_remarks || $submission->sacdev_remarks)
 
 <div class="flex justify-end">
@@ -25,13 +23,11 @@
 @endif
 
 
-{{-- ========================= --}}
-{{-- REMARKS MODAL --}}
-{{-- ========================= --}}
+
 <div x-show="openRemarks" x-cloak x-transition.opacity.scale
      class="fixed inset-0 z-50 flex items-center justify-center p-4">
 
-    {{-- BACKDROP --}}
+   
     <div class="absolute inset-0 bg-slate-900/50" @click="openRemarks=false"></div>
 
     {{-- MODAL --}}
@@ -101,4 +97,5 @@
         </div>
 
     </div>
+</div>
 </div>

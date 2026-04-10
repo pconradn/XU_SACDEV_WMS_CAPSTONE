@@ -1,115 +1,123 @@
 <x-app-layout>
-    <div class="mx-auto max-w-6xl px-4 py-6">
-        <div class="mb-4">
-            <h2 class="text-xl font-semibold text-slate-900">B-3 Officers Submissions</h2>
-            <p class="mt-1 text-sm text-slate-600">Review officer lists submitted by organizations.</p>
-        </div>
 
+<div class="bg-white shadow-sm rounded-2xl border border-slate-200 overflow-hidden">
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm mb-4">
-            <form method="GET" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700">Target School Year</label>
-                    <select name="target_school_year_id"
-                            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
-                        <option value="0">All</option>
-                        @foreach($schoolYears as $sy)
-                            <option value="{{ $sy->id }}" @selected((int)$sy->id === (int)$targetSyId)>
-                                {{ $sy->label ?? $sy->name ?? ('SY #' . $sy->id) }}
-                            </option>
-                        @endforeach
-                    </select>
+    <div class="h-1.5 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500"></div>
+
+    <div class="p-4 sm:p-6">
+
+        <div x-data="{ openTimeline: false, openRemarks: false }">
+
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+
+                <div class="space-y-3">
+
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h1 class="text-base sm:text-lg font-semibold text-slate-900">
+                            Officers List
+                        </h1>
+
+                        <span class="text-[10px] sm:text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                            Form B-3
+                        </span>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 text-[11px] sm:text-xs">
+
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800">
+                            <i data-lucide="building-2" class="w-3.5 h-3.5 text-amber-500"></i>
+                            <span class="font-medium">
+                                {{ $submission->organization->name ?? ('Org #' . $submission->organization_id) }}
+                            </span>
+                        </span>
+
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-50 border border-orange-200 text-orange-800">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5 text-orange-500"></i>
+                            <span class="font-medium">
+                                {{ $submission->targetSchoolYear->name ?? '—' }}
+                            </span>
+                        </span>
+
+                    </div>
+
+                    <div>
+                        <a href="{{ route('admin.rereg.hub', $submission->organization->id) }}"
+                           class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-amber-600 transition">
+
+                            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                            Back to Re-registration Hub
+                        </a>
+                    </div>
+
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-slate-700">Status</label>
-                    <select name="status"
-                            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
-                        <option value="" @selected(!$status)>Submitted/Returned/Approved</option>
-                        <option value="submitted_to_sacdev" @selected($status==='submitted_to_sacdev')>Submitted</option>
-                        <option value="returned_by_sacdev" @selected($status==='returned_by_sacdev')>Returned</option>
-                        <option value="approved_by_sacdev" @selected($status==='approved_by_sacdev')>Approved</option>
-                    </select>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:justify-end">
+
+                    @php
+                        $status = $submission->status;
+
+                        $config = match($status) {
+                            'draft' => [
+                                'label' => 'Draft',
+                                'class' => 'bg-slate-50 text-slate-700 border-slate-200'
+                            ],
+                            'submitted_to_sacdev' => [
+                                'label' => 'For Review',
+                                'class' => 'bg-blue-50 text-blue-700 border-blue-200'
+                            ],
+                            'returned_by_sacdev' => [
+                                'label' => 'Returned',
+                                'class' => 'bg-rose-50 text-rose-700 border-rose-200'
+                            ],
+                            'approved_by_sacdev' => [
+                                'label' => 'Approved',
+                                'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            ],
+                            default => [
+                                'label' => ucwords(str_replace('_', ' ', $status)),
+                                'class' => 'bg-slate-50 text-slate-700 border-slate-200'
+                            ],
+                        };
+                    @endphp
+
+                    <div class="flex items-center gap-2">
+
+                        <span class="inline-flex items-center text-[10px] sm:text-xs px-3 py-1 rounded-full border font-semibold {{ $config['class'] }}">
+                            {{ $config['label'] }}
+                        </span>
+
+                        <div class="flex items-center gap-1">
+
+                            @include('partials.timeline_remarks._remarks_button', [
+                                'submission' => $submission
+                            ])
+
+                            @include('partials.timeline_remarks._timeline_button')
+
+                        </div>
+
+                    </div>
+
                 </div>
 
-                <div class="flex items-end gap-2">
-                    <button class="inline-flex justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-                        Filter
-                    </button>
-
-                    <a href="{{ route('admin.officer_submissions.index') }}"
-                       class="inline-flex justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                        Reset
-                    </a>
-                </div>
-            </form>
-        </div>
-
-        <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-left text-sm">
-                    <thead class="text-xs uppercase text-slate-500 border-b border-slate-200">
-                        <tr>
-                            <th class="py-3 px-4">Org</th>
-                            <th class="py-3 px-4">Target SY</th>
-                            <th class="py-3 px-4">Status</th>
-                            <th class="py-3 px-4">Submitted</th>
-                            <th class="py-3 px-4 text-right">Action</th>
-                        </tr>
-                    </thead>
-
-                    <tbody class="divide-y divide-slate-100">
-                        @forelse($submissions as $s)
-                            @php
-                                $badge = match ($s->status) {
-                                    'submitted_to_sacdev' => 'bg-blue-50 text-blue-700 ring-blue-200',
-                                    'returned_by_sacdev'  => 'bg-amber-50 text-amber-800 ring-amber-200',
-                                    'approved_by_sacdev'  => 'bg-emerald-50 text-emerald-800 ring-emerald-200',
-                                    default               => 'bg-slate-100 text-slate-800 ring-slate-200',
-                                };
-                            @endphp
-                            <tr>
-                                <td class="py-3 px-4">
-                                    <div class="font-semibold text-slate-900">
-                                        {{ $s->organization->name ?? ('Org #' . $s->organization_id) }}
-                                    </div>
-                                </td>
-
-                                <td class="py-3 px-4">
-                                    {{ $s->targetSchoolYear->label ?? $s->target_school_year_id }}
-                                </td>
-
-                                <td class="py-3 px-4">
-                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset {{ $badge }}">
-                                        {{ $s->status }}
-                                    </span>
-                                </td>
-
-                                <td class="py-3 px-4 text-slate-600">
-                                    {{ $s->submitted_at ? $s->submitted_at->format('M d, Y') : '—' }}
-                                </td>
-
-                                <td class="py-3 px-4 text-right">
-                                    <a href="{{ route('admin.officer_submissions.show', $s->id) }}"
-                                       class="inline-flex justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                                        Open
-                                    </a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td class="py-6 px-4 text-slate-600" colspan="5">No submissions found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
             </div>
 
-            <div class="p-4">
-                {{ $submissions->links() }}
+            <div class="mt-5 border-t border-slate-100 pt-4 text-[11px] text-slate-500">
+                Manage and review organization officers assigned for this academic year. Ensure roles are complete and aligned with project head assignments.
             </div>
+
+            @include('partials.timeline_remarks._remarks_modal', [
+                'submission' => $submission
+            ])
+
+            @include('partials.timeline_remarks._timeline_modal', [
+                'submission' => $submission
+            ])
+
         </div>
+
     </div>
 
-    
+</div>
+
 </x-app-layout>

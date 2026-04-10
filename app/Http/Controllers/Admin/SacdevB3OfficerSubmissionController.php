@@ -370,13 +370,15 @@ class SacdevB3OfficerSubmissionController extends Controller
                     $membershipRole = 'treasurer';
                 } elseif ($item->major_officer_role === 'finance_officer') {
                     $membershipRole = 'finance_officer';
+                } elseif ($item->major_officer_role === 'auditor') {
+                    $membershipRole = 'auditor';
                 }
 
                     $membership = OrgMembership::query()
                         ->where('organization_id', $orgId)
                         ->where('school_year_id', $syId)
                         ->where('officer_entry_id', $entry->id)
-                        ->whereIn('role', ['officer', 'treasurer', 'finance_officer'])
+                        ->whereIn('role', ['officer', 'treasurer', 'finance_officer','auditor'])
                         ->first();
 
                     logger()->warning('MEMBERSHIP LOOKUP RESULT', [
@@ -438,7 +440,10 @@ class SacdevB3OfficerSubmissionController extends Controller
 
 
 
-                if ($item->isTreasurer() || $item->major_officer_role === 'finance_officer') {
+                if (
+                    $item->isTreasurer() ||
+                    in_array($item->major_officer_role, ['finance_officer', 'auditor'])
+                ) {
 
                     logger()->warning('PROVISIONING MAJOR OFFICER ACCOUNT', [
                         'student_id' => $studentId,
@@ -460,7 +465,7 @@ class SacdevB3OfficerSubmissionController extends Controller
                     OrgMembership::where('organization_id', $orgId)
                         ->where('school_year_id', $syId)
                         ->where('officer_entry_id', $entry->id)
-                        ->whereIn('role', ['treasurer', 'finance_officer'])
+                        ->whereIn('role', ['treasurer', 'finance_officer', 'auditor'])
                         ->update([
                             'user_id' => $user->id,
                         ]);

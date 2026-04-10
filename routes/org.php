@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Org\OrganizationInfoController;
 use App\Http\Controllers\Org\OrganizationMemberRecordController;
+use App\Http\Controllers\Org\OrgReregDashboardController;
 use App\Http\Controllers\Org\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -86,6 +87,12 @@ Route::prefix('org')
         Route::delete('/organization-members/{id}', [OrganizationMemberRecordController::class, 'destroy'])
             ->middleware(['org.role:president'])
             ->name('org.organization-members.destroy');
+
+        Route::post('/rereg/constitution/upload', [OrgReregDashboardController::class, 'uploadConstitution'])
+            ->name('org.rereg.constitution.upload');
+
+        Route::get('/rereg/constitution/{id}/download', [OrgReregDashboardController::class, 'downloadConstitution'])
+            ->name('org.rereg.constitution.download');
 
 
     });

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Traits\FormatsName;
 
 class OfficerSubmission extends Model
 {
@@ -40,6 +41,19 @@ class OfficerSubmission extends Model
         'sacdev_reviewed_at' => 'datetime',
         'edit_requested_at' => 'datetime',
     ];
+
+    use FormatsName;
+
+    public function setFirstNameAttribute($value)
+    {
+        $this->attributes['first_name'] = $this->formatName($value);
+    }
+
+    public function setLastNameAttribute($value)
+    {
+        $this->attributes['last_name'] = $this->formatName($value);
+    }
+ 
 
     // Relationships
     // --------------------

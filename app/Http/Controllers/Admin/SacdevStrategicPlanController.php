@@ -63,23 +63,41 @@ class SacdevStrategicPlanController extends Controller
     public function show(StrategicPlanSubmission $submission)
     {
         $submission->load([
-            'organization',
-            'targetSchoolYear',
             'projects.objectives',
             'projects.beneficiaries',
             'projects.deliverables',
             'projects.partners',
             'fundSources',
-            'timelines.user',
+            'organization',
+            'targetSchoolYear',
         ]);
 
-        return view('admin.strategic_plans.show', compact('submission'));
-    }
+        $organization = $submission->organization;
 
+        $schoolYear = $submission->targetSchoolYear;
+
+        $isPresident = false;
+
+        $isApproved = $submission->status === StrategicPlanSubmission::STATUS_APPROVED_BY_SACDEV;
+
+        $canEdit = false;
+
+        return view('org.strategic_plan.edit', compact(
+            'submission',
+            'schoolYear',
+            'organization',
+            'isPresident',
+            'canEdit',
+            'isApproved'
+        ));
+    }
+    
     public function returnToOrg(Request $request, StrategicPlanSubmission $submission){
         $request->validate([
             'remarks' => ['required', 'string', 'min:5'],
         ]);
+
+        
 
         $orgId = (int) $submission->organization_id;
         $syId  = (int) $submission->target_school_year_id;
@@ -354,10 +372,8 @@ class SacdevStrategicPlanController extends Controller
     public function revertApproval(Request $request, StrategicPlanSubmission $submission)
     {
         $request->validate([
-            'remarks' => ['required', function ($attribute, $value, $fail) {
-                if (trim(strip_tags($value)) === '') {
-                    $fail('Remarks cannot be empty.');
-                }
+            'remarks' => ['nullable', function ($attribute, $value, $fail) {
+
             }],
         ]);
 

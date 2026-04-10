@@ -25,7 +25,7 @@ class OrganizationMemberRecordController extends Controller
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
             ->where('role', 'president')
-            ->whereNull('archived_at')
+            
             ->exists();
     }
 
@@ -35,7 +35,7 @@ class OrganizationMemberRecordController extends Controller
 
         $members = OrganizationMemberRecord::where('organization_id', $orgId)
             ->where('school_year_id', $targetSyId)
-            ->whereNull('archived_at')
+            
             ->latest()
             ->get();
 
@@ -145,11 +145,9 @@ class OrganizationMemberRecordController extends Controller
             ->where('school_year_id', $targetSyId)
             ->findOrFail($id);
 
-        $member->update([
-            'archived_at' => now()
-        ]);
+        $member->delete();
 
-        return back()->with('success', 'Member removed.');
+        return back()->with('success', 'Member permanently deleted.');
     }
 
     //department classes

@@ -14,6 +14,7 @@ use App\Models\PresidentRegistration;
 use App\Models\SchoolYear;
 use App\Models\StrategicPlanSubmission as StrategicPlan; 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 
 use App\Models\OrgConstitutionSubmission;
@@ -260,21 +261,31 @@ class OrgReregDashboardController extends Controller
 
             'b6' => [
                 'label' => 'Organization Constitution',
-                'badge' => $this->statusBadge($b6?->status),
-                'submitted_at' => $b6?->created_at,
-                'reviewed_at'  => $b6?->reviewed_at,
-                'approved_at'  => $b6?->approved_at,
+                'badge' => [
+                    'text' => $b6 ? 'Uploaded' : 'Not uploaded',
+                    'dot'  => $b6 ? 'bg-emerald-500' : 'bg-slate-400',
+                ],
+                'submitted_at' => $b6?->submitted_at,
+                'reviewed_at'  => null,
+                'approved_at'  => null,
                 'editRoute' => null,
                 'submission' => $b6,
             ],
         ];
 
+        $isPresident = OrgMembership::where('user_id', $userId)
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->where('role', 'president')
+            ->whereNull('archived_at')
+            ->exists();
+
         $allApproved =
-            $this->isApproved($b1?->status)
-            && $presidentUser && $isPresidentProfileComplete
-            && $this->isApproved($b3?->status)
-            && $b5 && $this->isApproved($b5?->status)
-            && $b6 !== null;
+            $this->isApproved($b1?->status)   // Strategic Plan approved
+            && $this->isApproved($b3?->status) // Officers approved
+            && $b5 !== null                   // Moderator submission exists
+            && $presidentUser                 // President assigned
+            && $b6 !== null;                  // Constitution exists
 
         return view('org.rereg.index', [
             'schoolYears' => $schoolYears,
@@ -290,6 +301,7 @@ class OrgReregDashboardController extends Controller
             'presidentUser' => $presidentUser,
             'isPresidentProfileComplete' => $isPresidentProfileComplete,
             'isAdminReregHub' => false,
+            'isPresident' => $isPresident,
         ]);
     }
 
@@ -393,6 +405,72 @@ class OrgReregDashboardController extends Controller
                 'dot'  => 'bg-slate-400',
             ],
         };
+    }
+
+    public function uploadConstitution(Request $request)
+    {
+        ['orgId' => $orgId, 'syId' => $syId, 'userId' => $userId] = $this->ctx($request);
+
+        $request->validate([
+            'constitution_file' => ['required', 'file', 'mimes:pdf', 'max:5120'],
+        ]);
+
+        $existing = OrgConstitutionSubmission::where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->latest()
+            ->first();
+
+
+        if ($existing && $existing->file_path && Storage::exists($existing->file_path)) {
+            Storage::delete($existing->file_path);
+        }
+
+        $file = $request->file('constitution_file');
+
+        $path = $file->store('org_constitutions', 'public');
+
+        OrgConstitutionSubmission::updateOrCreate(
+            [
+                'organization_id' => $orgId,
+                'school_year_id' => $syId,
+            ],
+            [
+                'file_path' => $path,
+                'original_filename' => $file->getClientOriginalName(),
+                'submitted_by_user_id' => $userId,
+                'submitted_at' => now(),
+                'status' => 'uploaded',
+            ]
+        );
+        return back()->with('success', 'Constitution uploaded successfully.');
+    }
+
+    public function downloadConstitution(Request $request, $id)
+    {
+        $submission = OrgConstitutionSubmission::findOrFail($id);
+
+        $isAdmin = $request->user()->isSacdev();
+
+        if (!$isAdmin) {
+            ['orgId' => $orgId, 'syId' => $syId] = $this->ctx($request);
+
+            abort_if(
+                $submission->organization_id !== $orgId ||
+                $submission->school_year_id !== $syId,
+                403
+            );
+        }
+
+        $disk = Storage::disk('public');
+
+        if (!$disk->exists($submission->file_path)) {
+            abort(404);
+        }
+
+        return $disk->download(
+            $submission->file_path,
+            $submission->original_filename
+        );
     }
 
 

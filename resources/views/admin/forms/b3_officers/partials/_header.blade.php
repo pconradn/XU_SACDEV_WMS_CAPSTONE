@@ -1,131 +1,161 @@
-<div class="bg-white shadow-sm rounded-2xl border border-slate-200 overflow-hidden">
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm overflow-hidden">
 
-    {{-- TOP ACCENT BAR --}}
-    <div class="h-1.5 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500"></div>
+    @php
+        $status = $submission->status;
 
-    <div class="p-6">
+        $config = match($status) {
+            'draft' => [
+                'label' => 'Draft',
+                'badge' => 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200',
+                'panel' => 'border-slate-200 bg-slate-50 text-slate-700',
+                'accent' => 'from-slate-100/60 to-white',
+                'icon' => 'file-text',
+            ],
+            'submitted_to_sacdev' => [
+                'label' => 'Under SACDEV Review',
+                'badge' => 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
+                'panel' => 'border-blue-200 bg-blue-50 text-blue-700',
+                'accent' => 'from-blue-100/60 to-white',
+                'icon' => 'shield-check',
+            ],
+            'returned_by_sacdev' => [
+                'label' => 'Returned by SACDEV',
+                'badge' => 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200',
+                'panel' => 'border-rose-200 bg-rose-50 text-rose-700',
+                'accent' => 'from-rose-100/60 to-white',
+                'icon' => 'rotate-ccw',
+            ],
+            'approved_by_sacdev' => [
+                'label' => 'Approved',
+                'badge' => 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
+                'panel' => 'border-emerald-200 bg-emerald-50 text-emerald-700',
+                'accent' => 'from-emerald-100/60 to-white',
+                'icon' => 'badge-check',
+            ],
+            default => [
+                'label' => ucwords(str_replace('_', ' ', $status)),
+                'badge' => 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200',
+                'panel' => 'border-slate-200 bg-slate-50 text-slate-700',
+                'accent' => 'from-slate-100/60 to-white',
+                'icon' => 'info',
+            ],
+        };
 
-        <div x-data="{ openTimeline: false, openRemarks: false }">
+        $nextAction = match($status) {
+            'draft' => 'Waiting for submission.',
+            'submitted_to_sacdev' => 'Currently under review.',
+            'returned_by_sacdev' => 'Waiting for organization revision.',
+            'approved_by_sacdev' => 'Fully approved.',
+            default => null,
+        };
+    @endphp
 
-            <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+    <div class="bg-gradient-to-r {{ $config['accent'] }}">
+        <div class="p-4 sm:p-6">
+            <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
 
-                {{-- LEFT --}}
-                <div class="space-y-3">
+                <div class="space-y-3 min-w-0">
 
-                    {{-- TITLE --}}
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <h1 class="text-lg font-semibold text-slate-900">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-slate-500 font-medium">
+                            <i data-lucide="users" class="h-3.5 w-3.5"></i>
+                            Form B-3
+                        </div>
+
+                        <h1 class="text-base sm:text-lg font-semibold text-slate-900">
                             Officers List
                         </h1>
 
-                        <span class="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md">
-                            Form B-3
-                        </span>
+                        <p class="text-[11px] text-slate-500">
+                            Review submitted organization officers.
+                        </p>
                     </div>
 
-                    {{-- META --}}
-                    <div class="flex flex-wrap items-center gap-2 text-sm">
+                    <div class="flex flex-wrap items-center gap-2 text-[11px]">
 
-                        {{-- ORG --}}
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800">
-                            <span class="text-amber-400">Org</span>
-                            <span class="font-medium">
+                        <div class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 shadow-sm">
+                            <i data-lucide="building-2" class="h-3.5 w-3.5 text-slate-500"></i>
+                            <span class="font-medium text-slate-700">
                                 {{ $submission->organization->name ?? ('Org #' . $submission->organization_id) }}
                             </span>
-                        </span>
+                        </div>
 
-                        {{-- SY --}}
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-orange-50 border border-orange-200 text-orange-800">
-                            <span class="text-orange-400">SY</span>
-                            <span class="font-medium">
+                        <div class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 shadow-sm">
+                            <i data-lucide="calendar-range" class="h-3.5 w-3.5 text-slate-500"></i>
+                            <span class="font-medium text-slate-700">
                                 {{ $submission->targetSchoolYear->name ?? '—' }}
                             </span>
-                        </span>
+                        </div>
 
-                    </div>
-
-                    {{-- BACK --}}
-                    <div>
                         <a href="{{ route('admin.rereg.hub', $submission->organization->id) }}"
-                           class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-amber-600 transition">
-
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                            </svg>
-
-                            Back to Re-registration Hub
+                           class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-slate-600 hover:bg-slate-50 transition">
+                            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                            Back
                         </a>
+
                     </div>
 
                 </div>
 
+                <div class="flex flex-col gap-2 xl:min-w-[240px]">
 
-                {{-- RIGHT --}}
-                <div class="flex items-center gap-2 flex-wrap lg:justify-end">
+                    <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                        <div class="flex items-center justify-between gap-2">
 
-                    {{-- STATUS --}}
-                    @php
-                        $status = $submission->status;
+                            <div class="space-y-1">
+                                <div class="text-[10px] uppercase tracking-[0.14em] text-slate-500 font-medium">
+                                    Status
+                                </div>
 
-                        $config = match($status) {
+                                <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold {{ $config['badge'] }}">
+                                    <i data-lucide="{{ $config['icon'] }}" class="h-3.5 w-3.5"></i>
+                                    {{ $config['label'] }}
+                                </span>
+                            </div>
 
-                            'draft' => [
-                                'label' => 'Draft',
-                                'class' => 'bg-slate-50 text-slate-700 border-slate-200'
-                            ],
+                            <div class="h-8 w-8 flex items-center justify-center rounded-lg bg-white ring-1 ring-slate-200">
+                                <i data-lucide="{{ $config['icon'] }}" class="h-4 w-4 text-slate-600"></i>
+                            </div>
 
-                            'submitted_to_sacdev' => [
-                                'label' => 'For Review',
-                                'class' => 'bg-blue-50 text-blue-700 border-blue-200'
-                            ],
+                        </div>
+                    </div>
 
-                            'returned_by_sacdev' => [
-                                'label' => 'Returned',
-                                'class' => 'bg-rose-50 text-rose-700 border-rose-200'
-                            ],
-
-                            'approved_by_sacdev' => [
-                                'label' => 'Approved',
-                                'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            ],
-
-                            default => [
-                                'label' => ucwords(str_replace('_', ' ', $status)),
-                                'class' => 'bg-slate-50 text-slate-700 border-slate-200'
-                            ],
-                        };
-                    @endphp
-
-                    <span class="inline-flex items-center text-xs px-3 py-1.5 rounded-full border font-semibold {{ $config['class'] }}">
-                        {{ $config['label'] }}
-                    </span>
-
-                    {{-- ACTIONS --}}
-                    <div class="flex items-center gap-1">
-
+                    <div class="flex gap-1.5 xl:justify-end">
+                        @include('partials.timeline_remarks._timeline_button')
                         @include('partials.timeline_remarks._remarks_button', [
                             'submission' => $submission
                         ])
+                    </div>
 
-                        @include('partials.timeline_remarks._timeline_button')
-
+                    <div class="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[11px] text-blue-700 flex items-center gap-1.5">
+                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                        Review Mode (Admin)
                     </div>
 
                 </div>
 
             </div>
-
-            {{-- MODALS --}}
-            @include('partials.timeline_remarks._remarks_modal', [
-                'submission' => $submission
-            ])
-
-            @include('partials.timeline_remarks._timeline_modal', [
-                'submission' => $submission
-            ])
-
         </div>
-
     </div>
+
+    @if($nextAction)
+    <div class="border-t border-slate-200 px-4 py-3 sm:px-6">
+        <div class="flex items-start gap-2 rounded-xl border px-3 py-2 text-[11px] shadow-sm {{ $config['panel'] }}">
+            <i data-lucide="sparkles" class="h-3.5 w-3.5 mt-0.5"></i>
+            <div>
+                <div class="font-semibold">Status Insight</div>
+                <div class="mt-0.5">{{ $nextAction }}</div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    @include('partials.timeline_remarks._remarks_modal', [
+        'submission' => $submission
+    ])
+
+    @include('partials.timeline_remarks._timeline_modal', [
+        'submission' => $submission
+    ])
 
 </div>

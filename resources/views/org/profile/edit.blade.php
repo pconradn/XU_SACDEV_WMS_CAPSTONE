@@ -8,56 +8,20 @@
         .page-container {
             max-width: 1200px;
         }
-
-        .card {
-            border-radius: 1rem;
-            border: 1px solid #e2e8f0;
-            background: linear-gradient(to bottom, #f8fafc, #ffffff);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-        }
-
-        .card-solid {
-            border-radius: 1rem;
-            border: 1px solid #e2e8f0;
-            background: #ffffff;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-        }
-
-        .card-header {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        .card-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: #0f172a;
-        }
-
-        .muted {
-            font-size: 0.75rem;
-            color: #64748b;
-        }
     </style>
 
-
     {{-- HEADER --}}
-    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm px-5 py-3 flex items-center justify-between">
+    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm px-5 py-4 flex items-center justify-between">
 
         <div class="flex items-start gap-3">
-
-            <div class="mt-1 flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600">
+            <div class="mt-1 flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600">
                 <i data-lucide="user" class="w-4 h-4"></i>
             </div>
 
             <div>
-                <h2 class="text-base font-semibold text-slate-900">
+                <h2 class="text-sm font-semibold text-slate-900">
                     {{ $isOwner ? 'My Profile' : 'Profile' }}
                 </h2>
-
                 <p class="text-xs text-slate-500 mt-0.5">
                     {{ $isOwner 
                         ? 'Manage your personal and organization-related information.' 
@@ -65,23 +29,21 @@
                     }}
                 </p>
             </div>
-
         </div>
 
     </div>
 
 
-    <div class="py-6">
-        <div class="page-container mx-auto px-0 sm:px-4 lg:px-5 space-y-5">
+    <div class="py-8">
+        <div class="page-container mx-auto px-4 lg:px-6 space-y-8">
 
-            {{-- SUCCESS --}}
             @if(session('success') && $isOwner)
-                <div class="card border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900">
-                    <div class="text-xs">{{ session('success') }}</div>
+                <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-sm">
+                    <div class="text-xs font-medium text-emerald-800">
+                        {{ session('success') }}
+                    </div>
                 </div>
             @endif
-
-
 
 
             @if($isOwner)
@@ -89,46 +51,91 @@
                     @csrf
             @endif
 
-                <div class="space-y-5">
+
+            {{-- MAIN GRID --}}
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {{-- LEFT COLUMN --}}
+                <div class="lg:col-span-1 space-y-6">
 
                     {{-- PERSONAL --}}
-                    @include('org.profile.partials.personal', ['isOwner' => $isOwner])
+                    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-4">
+                        @include('org.profile.partials.personal', ['isOwner' => $isOwner])
+                    </div>
 
-                    {{-- CONTACT --}}
-                    @include('org.profile.partials.contact', ['isOwner' => $isOwner])
+                    {{-- CONTACT + ADDRESS --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                    {{-- ADDRESS --}}
-                    @include('org.profile.partials.address', ['isOwner' => $isOwner])
+                        <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-4">
+                            @include('org.profile.partials.contact', ['isOwner' => $isOwner])
+                        </div>
+
+                        <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-4">
+                            @include('org.profile.partials.address', ['isOwner' => $isOwner])
+                        </div>
+
+                    </div>
+
+                    {{-- SKILLS --}}
+                    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-4">
+                        @include('org.profile.partials.skills', ['isOwner' => $isOwner])
+                    </div>
 
                     {{-- MODERATOR --}}
-                    @if($user->isModerator())
-                        @include('org.profile.partials.moderator', ['isOwner' => $isOwner])
-                    @endif
-
-                    {{-- LEADERSHIPS --}}
-                    @include('org.profile.partials.leaderships', ['isOwner' => $isOwner])
-
-                    {{-- TRAININGS --}}
-                    @include('org.profile.partials.trainings', ['isOwner' => $isOwner])
-
-                    {{-- AWARDS --}}
-                    @include('org.profile.partials.awards', ['isOwner' => $isOwner])
-
-                    @include('org.profile.partials.skills', ['isOwner' => $isOwner])
+                    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-4">
+                        @if($user->isModerator())
+                            @include('org.profile.partials.moderator', ['isOwner' => $isOwner])
+                        @else
+                            <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-10 text-center">
+                                <div class="flex flex-col items-center gap-2">
+                                    <div class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+                                        <i data-lucide="user-x" class="w-4 h-4"></i>
+                                    </div>
+                                    <div class="text-xs font-medium text-slate-500">
+                                        No moderator information
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
 
                 </div>
 
+
+                {{-- RIGHT COLUMN --}}
+                <div class="space-y-6">
+
+                    {{-- LEADERSHIPS --}}
+                    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-4">
+                        @include('org.profile.partials.leaderships', ['isOwner' => $isOwner])
+                    </div>
+
+                    {{-- TRAININGS --}}
+                    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-4">
+                        @include('org.profile.partials.trainings', ['isOwner' => $isOwner])
+                    </div>
+
+                    {{-- AWARDS --}}
+                    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-4">
+                        @include('org.profile.partials.awards', ['isOwner' => $isOwner])
+                    </div>
+
+                </div>
+
+            </div>
+
+
             @if($isOwner)
-                {{-- ACTION BAR --}}
-                <div class="flex justify-end mt-6">
-                    <div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 shadow-sm">
+                {{-- FLOATING ACTION BAR --}}
+                <div class="fixed bottom-4 right-4 z-50">
+                    <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-lg">
 
                         <span class="text-[11px] text-slate-500">
-                            Save changes when done
+                            Unsaved changes
                         </span>
 
                         <button type="submit"
-                            class="px-4 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition">
+                            class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition">
                             Save Changes
                         </button>
 

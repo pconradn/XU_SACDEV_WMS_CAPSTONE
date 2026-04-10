@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use App\Models\Traits\FormatsName;
 
 class OfficerEntry extends Model
 {
+    use FormatsName;
     protected $fillable = [
 
         'organization_id',
@@ -51,11 +53,29 @@ class OfficerEntry extends Model
         'current_second_sem_qpi' => 'decimal:2',
     ];
 
+
+
+
+    public function setFirstNameAttribute($value)
+    {
+        $this->attributes['first_name'] = $this->formatName($value);
+    }
+
+    public function setLastNameAttribute($value)
+    {
+        $this->attributes['last_name'] = $this->formatName($value);
+    }
+
+ 
+
+
     /*
     |--------------------------------------------------------------------------
     | Relationships
     |--------------------------------------------------------------------------
     */
+
+
 
     public function organization()
     {

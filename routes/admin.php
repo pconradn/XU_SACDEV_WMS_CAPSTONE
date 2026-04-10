@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\SacdevStrategicPlanController;
 use App\Http\Controllers\Admin\SchoolYearController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Org\ModeratorSubmissionController;
+use App\Http\Controllers\Org\OrgReregDashboardController;
 use App\Http\Controllers\Org\ProfileController;
 use App\Http\Controllers\OrgConstitutionSubmissionController;
 use App\Http\Controllers\SACDEV\SacdevB2PresidentRegistrationController;
@@ -43,6 +44,9 @@ Route::middleware(['auth', 'sacdev_admin', 'must_change_password','nocache'])
 
         Route::get('/rereg/{org}/{sy}/moderator', [ModeratorSubmissionController::class, 'view'])
             ->name('rereg.moderator.view');
+
+        Route::get('/rereg/constitution/{id}/download', [OrgReregDashboardController::class, 'downloadConstitution'])
+            ->name('rereg.constitution.download');
 
         Route::middleware('permission:users.manage')->group(function () {
             Route::resource('users', UserController::class);

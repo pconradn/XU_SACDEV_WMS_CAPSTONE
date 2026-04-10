@@ -1,47 +1,48 @@
-<div x-data="{ openReturn: false, openApprove: false, openRevert: false, loading: false }">
+<div x-data="{ openReturn: false, openApprove: false, loading: false }">
 
     @if($submission->status === 'submitted_to_sacdev')
 
-        <div class="fixed bottom-0 left-0 right-0 z-40 
-                    border-t border-slate-200 
-                    bg-white/95 backdrop-blur
-                    shadow-[0_-4px_16px_rgba(0,0,0,0.06)]
-                    pb-[env(safe-area-inset-bottom)]">
+        <div class="fixed bottom-4 right-0 z-40 flex justify-center pointer-events-none
+                    w-full lg:pl-64">
 
-            <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
+            <div class="pointer-events-auto w-full max-w-4xl mx-auto px-4">
 
-                {{-- LEFT --}}
-                <div class="flex flex-col">
-                    <span class="text-sm font-semibold text-slate-800">
-                        Done reviewing this submission?
-                    </span>
-                    <span class="text-xs text-slate-500">
-                        Choose an action below to proceed.
-                    </span>
-                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white shadow-lg
+                            flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4
+                            px-4 py-3">
 
-                <div class="flex items-center gap-2">
+                    <div class="flex flex-col">
+                        <span class="text-sm font-semibold text-slate-800">
+                            Done reviewing this submission?
+                        </span>
+                        <span class="text-[11px] text-slate-500">
+                            Choose an action to proceed.
+                        </span>
+                    </div>
 
-          
-                    <button type="button"
-                            @click="openReturn = true"
-                            :disabled="loading"
-                            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 
-                                   hover:bg-slate-50 transition
-                                   disabled:opacity-50 disabled:cursor-not-allowed">
-                        Return for Revision
-                    </button>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
 
+                        <button type="button"
+                                @click="openReturn = true"
+                                :disabled="loading"
+                                class="flex-1 sm:flex-none rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 
+                                       hover:bg-slate-50 transition
+                                       disabled:opacity-50 disabled:cursor-not-allowed">
+                            Return
+                        </button>
 
-                    <button type="button"
-                            @click="openApprove = true"
-                            :disabled="loading"
-                            class="inline-flex items-center justify-center gap-2 rounded-lg 
-                                   bg-slate-900 px-5 py-2 text-sm font-semibold text-white 
-                                   hover:bg-slate-800 transition
-                                   disabled:opacity-50 disabled:cursor-not-allowed">
-                        Approve Submission
-                    </button>
+                        <button type="button"
+                                @click="openApprove = true"
+                                :disabled="loading"
+                                class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 rounded-lg 
+                                       bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white 
+                                       hover:bg-emerald-700 transition shadow-sm
+                                       disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                            Approve
+                        </button>
+
+                    </div>
 
                 </div>
 
@@ -51,19 +52,21 @@
 
     @else
 
-        <div class="fixed bottom-0 left-0 right-0 z-40 
-                    border-t border-slate-200 
-                    bg-slate-50
-                    pb-[env(safe-area-inset-bottom)]">
+        <div class="fixed bottom-4 right-0 z-40 flex justify-center pointer-events-none
+                    w-full lg:pl-64">
 
-            <div class="max-w-7xl mx-auto px-6 py-3 text-center">
+            <div class="pointer-events-auto w-full max-w-2xl mx-auto px-4">
 
-                <div class="text-sm font-medium text-slate-700">
-                    No actions available
-                </div>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center shadow-sm">
 
-                <div class="text-xs text-slate-500 mt-1">
-                    This submission is not in a state that allows review actions.
+                    <div class="text-xs font-medium text-slate-700">
+                        No actions available
+                    </div>
+
+                    <div class="text-[10px] text-slate-500 mt-0.5">
+                        This submission cannot be reviewed at this stage.
+                    </div>
+
                 </div>
 
             </div>

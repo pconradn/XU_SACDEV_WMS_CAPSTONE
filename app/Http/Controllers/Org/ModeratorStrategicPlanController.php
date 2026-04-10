@@ -96,10 +96,13 @@ class ModeratorStrategicPlanController extends Controller
         abort_unless((int) $submission->target_school_year_id === (int) $syId, 403);
 
         $request->validate([
-            'moderator_remarks' => ['required', 'string', 'min:5'],
+            'moderator_remarks' => ['required_without:remarks', 'string', 'min:5'],
+            'remarks' => ['nullable', 'string', 'min:5'],
         ]);
 
-        $result = DB::transaction(function () use ($submission, $request, $userId, $orgId, $syId) {
+        $remarks = $request->input('moderator_remarks') ?? $request->input('remarks');
+
+        $result = DB::transaction(function () use ($remarks, $submission, $request, $userId, $orgId, $syId) {
 
             $locked = StrategicPlanSubmission::query()
                 ->whereKey($submission->getKey())
@@ -125,7 +128,7 @@ class ModeratorStrategicPlanController extends Controller
             $locked->status = StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR;
             $locked->moderator_reviewed_by = $userId;
             $locked->moderator_reviewed_at = now();
-            $locked->moderator_remarks = $request->input('moderator_remarks');
+            $locked->moderator_remarks = $remarks;
             $locked->forwarded_to_sacdev_at = null;
 
             $locked->save();
@@ -133,7 +136,7 @@ class ModeratorStrategicPlanController extends Controller
             $locked->timelines()->create([
                 'user_id' => $userId,
                 'action' => 'returned_by_moderator',
-                'remarks' => $request->input('moderator_remarks'),
+                'remarks' => $remarks,
                 'old_status' => $oldStatus,
                 'new_status' => StrategicPlanSubmission::STATUS_RETURNED_BY_MODERATOR,
             ]);
@@ -176,7 +179,7 @@ class ModeratorStrategicPlanController extends Controller
         }
 
         return redirect()
-            ->route('org.moderator.strategic_plans.show', $submission->getKey())
+            ->route('org.rereg.b1.edit', $submission->getKey())
             ->with('success', 'Returned to organization with remarks.');
     }
 
@@ -277,7 +280,7 @@ class ModeratorStrategicPlanController extends Controller
         }
 
         return redirect()
-            ->route('org.moderator.strategic_plans.show', $submission->getKey())
+            ->route('org.rereg.b1.edit', $submission->getKey())
             ->with('success', 'Noted and forwarded to SACDEV.');
     }
 

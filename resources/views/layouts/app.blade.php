@@ -3,6 +3,8 @@
 
 @include('layouts.partials._head')
 
+@livewireStyles
+
 <body class="font-sans antialiased text-slate-900"
       style="background: linear-gradient(to bottom, #f8fafc, #f1f5f9);">
 
@@ -244,5 +246,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 @stack('scripts')
+@livewireScripts
 </body>
 </html>

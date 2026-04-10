@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Traits\FormatsName;
 
 class UserProfile extends Model
 {
@@ -71,6 +72,19 @@ class UserProfile extends Model
         'years_of_service' => 'integer',
         'siblings_count' => 'integer',
     ];
+
+    use FormatsName;
+
+    public function setFirstNameAttribute($value)
+    {
+        $this->attributes['first_name'] = $this->formatName($value);
+    }
+
+    public function setLastNameAttribute($value)
+    {
+        $this->attributes['last_name'] = $this->formatName($value);
+    }
+
 
     public function user(): BelongsTo
     {

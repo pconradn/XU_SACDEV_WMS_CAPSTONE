@@ -42,6 +42,10 @@ class ModeratorSubmissionController extends Controller
 
         $moderatorUser = $submission?->moderatorUser;
 
+        if (!$moderatorUser && $isModerator) {
+            $moderatorUser = $user;
+        }
+
         $profile = $moderatorUser?->profile;
 
         $missingFields = [];
@@ -62,6 +66,9 @@ class ModeratorSubmissionController extends Controller
             ->where('organization_id', $orgId)
             ->where('target_school_year_id', $syId)
             ->first();
+
+
+
 
         return view('org.rereg.moderator_submission', [
             'submission' => $submission,
@@ -135,6 +142,8 @@ class ModeratorSubmissionController extends Controller
             ->first();
 
         $moderatorUser = $submission?->moderatorUser;
+
+
 
         $profile = $moderatorUser?->profile;
 
