@@ -928,14 +928,18 @@
                 ">
 
                     {{-- COLUMN 1 --}}
+                    {{-- COLUMN 1 --}}
                     <div>
                         @foreach(['Finance Office','PTA','OSA-SACDEV','Counterpart'] as $source)
 
-                            @php $amount = $existingFunds[$source] ?? null; @endphp
+                            @php 
+                                $amount = $existingFunds[$source] ?? null; 
+                                $hasValue = !is_null($amount) && $amount > 0;
+                            @endphp
 
                             <div style="margin-bottom:4px;">
-                                {{ $amount !== null ? '☑' : '☐' }} {{ $source }}
-                                @if($amount !== null)
+                                {{ $hasValue ? '☑' : '☐' }} {{ $source }}
+                                @if($hasValue)
                                     — Php {{ number_format($amount, 2) }}
                                 @endif
                             </div>
@@ -948,18 +952,20 @@
                     <div>
                         @foreach(['Solicitation','Ticket-Selling','Others'] as $source)
 
-                            @php $amount = $existingFunds[$source] ?? null; @endphp
+                            @php 
+                                $amount = $existingFunds[$source] ?? null; 
+                                $hasValue = !is_null($amount) && $amount > 0;
+                            @endphp
 
                             <div style="margin-bottom:4px;">
-                                {{ $amount !== null ? '☑' : '☐' }} {{ $source }}
-                                @if($amount !== null)
+                                {{ $hasValue ? '☑' : '☐' }} {{ $source }}
+                                @if($hasValue)
                                     — Php {{ number_format($amount, 2) }}
                                 @endif
                             </div>
 
                         @endforeach
                     </div>
-
 
                     {{-- COLUMN 3 --}}
                     <div>

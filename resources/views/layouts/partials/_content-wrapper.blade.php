@@ -16,7 +16,7 @@
 
 <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
 
-<div class="p-8">
+<div class="p-10">
 
 {{ $slot }}
 

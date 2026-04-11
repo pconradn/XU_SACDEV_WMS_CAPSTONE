@@ -2,6 +2,8 @@
     use Illuminate\Support\Str;
 
     $sources = [
+        'OSA-SACDEV',
+        'Finance Office',
         'PTA',
         'Counterpart',
         'Solicitation',
@@ -10,33 +12,68 @@
     ];
 @endphp
 
-<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm overflow-hidden">
 
-    {{-- ACCENT --}}
-    <div class="h-1 bg-blue-500"></div>
+    <div class="h-1 bg-gradient-to-r from-emerald-500 to-blue-500"></div>
 
-    <div class="p-5 space-y-6">
+    <div class="p-4 space-y-5">
 
-        {{-- ================= HEADER ================= --}}
-        <div>
-            <h3 class="text-sm font-semibold text-slate-900">
-                Funding & Budget Summary
-            </h3>
-            <p class="text-xs text-blue-700">
-                Unified funding inputs (auto-syncs proposal & budget)
-            </p>
+        <div class="flex items-center gap-3">
+            <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600">
+                <i data-lucide="wallet" class="w-4 h-4"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-semibold text-slate-900">
+                    Funding & Budget Summary
+                </h3>
+                <p class="text-[11px] text-slate-500">
+                    Unified funding inputs (auto-syncs proposal & budget)
+                </p>
+            </div>
         </div>
 
-        {{-- ================= CORE FUNDING ================= --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border border-slate-200 rounded-xl p-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-xl border border-slate-200 bg-white p-4">
 
-            {{-- PTA --}}
             <div>
-                <label class="block text-xs font-medium text-slate-700 mb-1">
+                <label class="block text-[11px] font-medium text-slate-700 mb-1">
+                    Finance Office
+                </label>
+                <p class="text-[11px] text-emerald-600 mb-2">
+                    Allocated support from finance unit
+                </p>
+
+                <input type="text"
+                    inputmode="decimal"
+                    data-name="finance_amount"
+                    id="finance_input"
+                    value="0"
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs 
+                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-medium text-slate-700 mb-1">
+                    OSA-SACDEV
+                </label>
+                <p class="text-[11px] text-emerald-600 mb-2">
+                    Institutional funding allocation
+                </p>
+
+                <input type="text"
+                    inputmode="decimal"
+                    data-name="osa_amount"
+                    id="osa_input"
+                    value="0"
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs 
+                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-medium text-slate-700 mb-1">
                     PTA Contribution
                 </label>
-                <p class="text-xs text-blue-700 mb-2">
-                    Direct funding provided by the organization
+                <p class="text-[11px] text-emerald-600 mb-2">
+                    Direct organizational funding support
                 </p>
 
                 <input type="text"
@@ -44,82 +81,68 @@
                     data-name="pta_amount"
                     id="pta_input"
                     value="{{ old('pta_amount', $budget?->pta_amount ?? 0) }}"
-                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
-                           focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs 
+                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
             </div>
 
-            {{-- COUNTERPART --}}
-            <div>
-                <label class="block text-xs font-medium text-slate-700 mb-1">
+            <div class="space-y-2">
+                <label class="block text-[11px] font-medium text-slate-700">
                     Counterpart Funding
                 </label>
-                <p class="text-xs text-blue-700 mb-2">
-                    Amount per participant multiplied by total participants
+                <p class="text-[11px] text-emerald-600">
+                    Amount per participant × total participants
                 </p>
 
                 <div class="grid grid-cols-2 gap-2">
 
-                    {{-- AMOUNT PER PAX --}}
-                    <div>
-                        <label class="block text-[11px] font-medium text-slate-500 mb-1">
-                            Amount (₱)
-                        </label>
+                    <input type="text"
+                        inputmode="decimal"
+                        id="counterpart_amount"
+                        name="counterpart_amount_per_pax"
+                        value="{{ old('counterpart_amount_per_pax', $budget?->counterpart_amount_per_pax ?? 0) }}"
+                        placeholder="Amount"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs 
+                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
 
-                        <input type="text"
-                            inputmode="decimal"
-                            id="counterpart_amount"
-                            name="counterpart_amount_per_pax"
-                            value="{{ old('counterpart_amount_per_pax', $budget?->counterpart_amount_per_pax ?? 0) }}"
-                            placeholder="0.00"
-                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
-                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
-                    </div>
-
-                    {{-- NUMBER OF PEOPLE --}}
-                    <div>
-                        <label class="block text-[11px] font-medium text-slate-500 mb-1">
-                            No. of Participants
-                        </label>
-
-                        <input type="number"
-                            id="counterpart_pax"
-                            name="counterpart_pax"
-                            value="{{ old('counterpart_pax', $budget?->counterpart_pax ?? 0) }}"
-                            placeholder="0"
-                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-center 
-                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
-                    </div>
+                    <input type="number"
+                        id="counterpart_pax"
+                        name="counterpart_pax"
+                        value="{{ old('counterpart_pax', $budget?->counterpart_pax ?? 0) }}"
+                        placeholder="Participants"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-center 
+                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
 
                 </div>
             </div>
 
         </div>
 
-        {{-- ================= RAISED FUNDS ================= --}}
-        <div class="border border-slate-200 rounded-xl p-4">
+        <div class="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
 
-            <div class="mb-3">
-                <h4 class="text-xs font-semibold text-slate-900 uppercase tracking-wide">
+            <div class="flex items-center gap-2">
+                <i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span class="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
                     Raised Funds
-                </h4>
-                <p class="text-xs text-blue-700">
-                    Enter estimated income from fundraising activities
-                </p>
+                </span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <p class="text-[11px] text-emerald-600">
+                Estimated income from fundraising activities
+            </p>
 
-@php
-    $proposalData = $project->proposalDocument?->proposalData;
+            @php
+                $proposalData = $project->proposalDocument?->proposalData;
 
-    $fundSources = $proposalData?->fundSources
-        ? $proposalData->fundSources->pluck('amount', 'source_name')->toArray()
-        : [];
-@endphp
+                $fundSources = $proposalData?->fundSources
+                    ? $proposalData->fundSources->pluck('amount', 'source_name')->toArray()
+                    : [];
+            @endphp
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
 
                 @foreach(['Solicitation','Ticket-Selling','Others'] as $src)
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">
+                        <label class="block text-[11px] font-medium text-slate-700 mb-1">
                             {{ $src }}
                         </label>
 
@@ -127,8 +150,8 @@
                             inputmode="decimal"
                             value="{{ old('fund_sources.'.$src, $fundSources[$src] ?? 0) }}"
                             data-raised="{{ $src }}"
-                            class="raised-input w-full rounded-lg border border-slate-300 px-3 py-2 text-sm 
-                                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
+                            class="raised-input w-full rounded-lg border border-slate-300 px-3 py-2 text-xs 
+                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
                             placeholder="0.00">
                     </div>
                 @endforeach
@@ -137,34 +160,34 @@
 
         </div>
 
-        {{-- ================= TOTAL ================= --}}
-        <div class="border-t pt-4 flex justify-between items-center">
+        <div class="flex items-center justify-between pt-4 border-t border-slate-200">
 
             <div>
-                <div class="text-sm font-medium text-slate-900">
+                <div class="text-sm font-semibold text-slate-900">
                     Total Budget
                 </div>
-                <div class="text-xs text-blue-700">
+                <div class="text-[11px] text-emerald-600">
                     Automatically calculated from all sources
                 </div>
             </div>
-
-            <div class="text-xl font-bold text-emerald-600">
-                ₱ <span id="combined_total_display">0.00</span>
+        <div class="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2">
+            <div class="flex items-center gap-1 text-emerald-700 tabular-nums">
+                <span class="text-xs">₱</span> <span id="combined_total_display">0.00</span>
             </div>
-
+        </div>
         </div>
 
     </div>
 
 </div>
 
-{{-- ================= HIDDEN FIELDS (UNCHANGED) ================= --}}
 <input type="hidden" name="fund_sources[PTA]" id="hidden_pta">
 <input type="hidden" name="fund_sources[Counterpart]" id="hidden_counterpart">
 <input type="hidden" name="fund_sources[Solicitation]" id="hidden_solicitation">
 <input type="hidden" name="fund_sources[Ticket-Selling]" id="hidden_ticket">
 <input type="hidden" name="fund_sources[Others]" id="hidden_others">
+<input type="hidden" name="fund_sources[OSA-SACDEV]" id="hidden_osa-sacdev">
+<input type="hidden" name="fund_sources[Finance Office]" id="hidden_finance">
 
 <input type="hidden" name="total_budget" id="hidden_total_budget">
 
@@ -173,7 +196,6 @@
 <input type="hidden" name="raised_funds" id="hidden_budget_raised">
 <input type="hidden" name="org_total" id="hidden_budget_total">
 
-{{-- ================= SCRIPT (UNCHANGED) ================= --}}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -191,6 +213,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function computeAll() {
 
+        const finance = parseNumber(document.getElementById('finance_input').value);
+        const osa = parseNumber(document.getElementById('osa_input').value);
+
         const pta = parseNumber(document.getElementById('pta_input').value);
 
         const cpAmount = parseNumber(document.getElementById('counterpart_amount').value);
@@ -203,11 +228,13 @@ document.addEventListener('DOMContentLoaded', () => {
             raised += parseNumber(input.value);
         });
 
-        const total = pta + counterpartTotal + raised;
+        const total = pta + finance + osa + counterpartTotal + raised;
 
         document.getElementById('combined_total_display').innerText = formatNumber(total);
-
+        document.getElementById('hidden_finance').value = finance;
+        document.getElementById('hidden_osa-sacdev').value = osa;
         document.getElementById('hidden_pta').value = pta;
+
         document.getElementById('hidden_counterpart').value = counterpartTotal;
 
         document.getElementById('hidden_solicitation').value =
@@ -227,7 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('hidden_budget_total').value = total;
 
     }
-    
 
     function attachFormatting(input) {
 
@@ -241,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }
 
-    document.querySelectorAll('#pta_input, #counterpart_amount, .raised-input')
+    document.querySelectorAll('#pta_input, #finance_input, #osa_input, #counterpart_amount, .raised-input')
         .forEach(input => {
             attachFormatting(input);
 
@@ -251,15 +277,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.value = formatNumber(parseNumber(input.value));
             }
         });
+
     document.querySelector('form').addEventListener('submit', () => {
 
-        // clean ALL numeric inputs
-        document.querySelectorAll('#pta_input, #counterpart_amount, .raised-input')
+        document.querySelectorAll('#pta_input, #finance_input, #osa_input, #counterpart_amount, .raised-input')
             .forEach(input => {
                 input.value = parseNumber(input.value);
             });
 
-        // ensure pax is clean integer
         const cpAmountInput = document.getElementById('counterpart_amount');
         cpAmountInput.value = formatNumber(parseNumber(cpAmountInput.value));
 
@@ -272,11 +297,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('input', () => {
         computeAll();
         setTimeout(checkBudgetMatch, 0);
-
         setTimeout(checkBudgetMatch, 0);
     });
 
-   computeAll();
+    computeAll();
     setTimeout(checkBudgetMatch, 0);
 
 });

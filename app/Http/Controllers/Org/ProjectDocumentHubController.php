@@ -481,7 +481,7 @@ class ProjectDocumentHubController extends Controller
 
             // ================= PROJECT HEAD =================
             if ($isProjectHead) {
-                if (in_array($status, ['draft', 'returned'])) {
+                if (in_array($status, ['returned'])) {
                     $isActionRequired = true;
                 }
             }
@@ -497,18 +497,45 @@ class ProjectDocumentHubController extends Controller
             ]);
         });
 
-        $documentsActionRequired = $documentsMapped->filter(fn ($f) => $f['is_action_required']);
 
-        $documentsCompleted = $documentsMapped->filter(function ($f) {
-            return isset($f['document']) &&
-                $f['document'] &&
-                $f['document']->status === 'approved_by_sacdev';
-        });
 
-        $documentsInProgress = $documentsMapped->filter(function ($f) {
-            return !$f['is_action_required']
-                && (!isset($f['document']) || $f['document']->status !== 'approved_by_sacdev');
-        });
+        $documentsActionRequired = collect();
+        $documentsInProgress = collect();
+        $documentsCompleted = collect();
+
+        foreach ($documentsMapped as $form) {
+
+            $doc = $form['document'] ?? null;
+            $status = $doc?->status;
+            $isRequired = $form['is_required'] ?? false;
+
+           
+            if ($form['is_action_required']) {
+                $documentsActionRequired->push($form);
+                continue;
+            }
+
+           
+            if ($doc && $status === 'approved_by_sacdev') {
+                $documentsCompleted->push($form);
+                continue;
+            }
+
+           
+            if (
+                
+                ($doc && $status === 'submitted')
+
+                ||
+
+       
+                ($isRequired && (!$doc || $status === 'draft'))
+            ) {
+                $documentsInProgress->push($form);
+                continue;
+            }
+
+        }        
 
 
         $phaseOrder = [

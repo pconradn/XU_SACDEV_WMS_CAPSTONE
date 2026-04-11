@@ -94,11 +94,13 @@
                                       d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0m6 0H9"/>
                             </svg>
 
-                            @if($unreadCount > 0)
-                                <span id="notif-count" class="absolute -top-1 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                                    {{ $unreadCount > 99 ? '99+' : $unreadCount }}
-                                </span>
-                            @endif
+                            <span
+                                id="notif-count"
+                                class="absolute -top-1 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white
+                                {{ $unreadCount > 0 ? '' : 'hidden' }}"
+                            >
+                                {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+                            </span>
                         </button>
 
                 {{-- NOTIFICATION DROPDOWN --}}

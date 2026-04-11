@@ -240,7 +240,9 @@
 
                     @include('org.projects.documents.v2.partials.actions')
 
-                    @include('org.projects.documents.v2.partials.clearance-card')
+                    @if($project->requires_clearance)
+                        @include('org.projects.documents.v2.partials.clearance-card')
+                    @endif
 
                     @include('org.projects.documents.v2.partials.packet-placeholder')
 

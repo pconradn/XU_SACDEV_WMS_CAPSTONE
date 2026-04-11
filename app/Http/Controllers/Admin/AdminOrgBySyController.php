@@ -102,7 +102,7 @@ class AdminOrgBySyController extends Controller
 
 
         $routes = [
-            'rereg' => route('rereg.hub', $organization->id),
+            'rereg' => route('admin.rereg.hub', $organization->id),
 
             'officers' => route('sacdev.officers.index', [
                 'organization_id' => $organization->id,

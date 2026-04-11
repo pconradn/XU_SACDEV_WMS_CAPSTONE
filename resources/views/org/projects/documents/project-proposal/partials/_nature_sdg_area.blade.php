@@ -1,26 +1,30 @@
-<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm overflow-hidden">
 
-    {{-- ACCENT LINE --}}
-    <div class="h-1 bg-blue-500"></div>
+    <div class="h-1 bg-gradient-to-r from-blue-500 to-blue-400"></div>
 
-    <div class="p-5 space-y-6">
+    <div class="p-4 space-y-5">
 
-        {{-- ================= SECTION HEADER ================= --}}
-        <div>
-            <h3 class="text-sm font-semibold text-slate-900">
-                Project Classification
-            </h3>
-            <p class="text-xs text-blue-700">
-                Define engagement type, project nature, and alignment areas
-            </p>
+        <div class="flex items-center gap-3">
+            <div class="p-2 rounded-xl bg-blue-50 border border-blue-100 text-blue-600">
+                <i data-lucide="layers" class="w-4 h-4"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-semibold text-slate-900">
+                    Project Classification
+                </h3>
+                <p class="text-[11px] text-slate-500">
+                    Define engagement type, project nature, and alignment areas
+                </p>
+            </div>
         </div>
 
-        {{-- ================= NATURE OF ENGAGEMENT ================= --}}
-        <div class="border border-slate-200 rounded-xl p-4">
+        <div class="rounded-xl border border-slate-200 bg-white p-4 space-y-4">
 
-            {{-- MAIN LABEL --}}
-            <div class="text-xs font-semibold text-slate-900 uppercase tracking-wide mb-3">
-                Nature of Engagement
+            <div class="flex items-center gap-2">
+                <i data-lucide="users" class="w-3.5 h-3.5 text-blue-600"></i>
+                <span class="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
+                    Nature of Engagement
+                </span>
             </div>
 
             @php 
@@ -29,52 +33,51 @@
 
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
 
-                {{-- Radio Choices --}}
-                <div class="md:col-span-7">
-                    <div class="flex flex-wrap gap-4 text-sm text-slate-700">
+                <div class="md:col-span-7 flex flex-wrap gap-2">
 
-                        @foreach (['organizer' => 'Organizer', 'partner' => 'Partner', 'participant' => 'Participant'] as $val => $label)
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio"
-                                       name="engagement_type"
-                                       value="{{ $val }}"
-                                       class="border {{ $errors->has('engagement_type') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
-                                       @checked($eng === $val)>
-                                <span>{{ $label }}</span>
-                            </label>
-                        @endforeach
+                    @foreach (['organizer' => 'Organizer', 'partner' => 'Partner', 'participant' => 'Participant'] as $val => $label)
+                        <label class="flex items-center gap-2 cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs hover:bg-slate-100 transition">
+                            <input type="radio"
+                                   name="engagement_type"
+                                   value="{{ $val }}"
+                                   required
+                                   class="{{ $errors->has('engagement_type') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
+                                   @checked($eng === $val)>
+                            <span>{{ $label }}</span>
+                        </label>
+                    @endforeach
 
-                    </div>
                 </div>
 
-                {{-- Main Organizer --}}
-                <div class="md:col-span-5" id="mainOrganizerWrap">
-                    <label class="block text-xs font-medium text-slate-600 mb-1">
+                <div class="md:col-span-5">
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">
                         If participant, specify main organizer
                     </label>
 
                     <input type="text"
                         name="main_organizer"
                         value="{{ old('main_organizer', $proposal->main_organizer ?? '') }}"
-                        class="w-full rounded-lg border px-3 py-2 text-sm 
-                            {{ $errors->has('main_organizer') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
-                            focus:ring-2 focus:outline-none transition"
+                        class="w-full rounded-lg border px-3 py-2 text-xs 
+                        {{ $errors->has('main_organizer') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
+                        focus:ring-2 focus:outline-none transition"
                         placeholder="Name of main organizer">
                 </div>
 
             </div>
+
         </div>
 
-        {{-- ================= NATURE OF PROJECT ================= --}}
-        <div class="border border-slate-200 rounded-xl p-4">
+        <div id="natureWrapper"
+            class="rounded-xl border border-slate-200 bg-white p-4 space-y-4">
 
-            {{-- MAIN LABEL --}}
-            <div class="text-xs font-semibold text-slate-900 uppercase tracking-wide mb-3">
-                Nature of Project
+            <div class="flex items-center gap-2">
+                <i data-lucide="tag" class="w-3.5 h-3.5 text-blue-600"></i>
+                <span class="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
+                    Nature of Project
+                </span>
             </div>
 
-            {{-- SUBTEXT --}}
-            <div class="text-xs text-blue-700 mb-3">
+            <div class="text-[11px] text-slate-500">
                 Select all that apply
             </div>
 
@@ -97,17 +100,17 @@
                 if (!is_array($nature)) $nature = [];
             @endphp
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-sm text-slate-700">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-xs text-slate-700">
 
                 @foreach($natureOptions as $val => $label)
 
                     @if($val === 'other')
                         <div class="flex items-center gap-2">
-                            <label class="flex items-center gap-2 cursor-pointer">
+                            <label class="flex items-center gap-2 cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 hover:bg-slate-100 transition">
                                 <input type="checkbox"
                                     name="project_nature[]"
                                     value="{{ $val }}"
-                                    class="border {{ $errors->has('project_nature') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
+                                    class="{{ $errors->has('project_nature') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
                                     @checked(in_array($val, $nature, true))>
                                 <span>{{ $label }}</span>
                             </label>
@@ -115,17 +118,17 @@
                             <input type="text"
                                 name="project_nature_other"
                                 value="{{ old('project_nature_other', $proposal->project_nature_other ?? '') }}"
-                                class="rounded-lg border px-2 py-1 text-sm w-32 
-                                    {{ $errors->has('project_nature_other') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
-                                    focus:ring-2 focus:outline-none transition"
+                                class="rounded-lg border px-2 py-1 text-xs w-28 
+                                {{ $errors->has('project_nature_other') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }} 
+                                focus:ring-2 focus:outline-none transition"
                                 placeholder="Specify">
                         </div>
                     @else
-                        <label class="flex items-center gap-2 cursor-pointer">
+                        <label class="flex items-center gap-2 cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 hover:bg-slate-100 transition">
                             <input type="checkbox"
                                 name="project_nature[]"
                                 value="{{ $val }}"
-                                class="border {{ $errors->has('project_nature') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
+                                class="{{ $errors->has('project_nature') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
                                 @checked(in_array($val, $nature, true))>
                             <span>{{ $label }}</span>
                         </label>
@@ -134,40 +137,36 @@
                 @endforeach
 
             </div>
+
         </div>
 
-        {{-- ================= SDG + AREA FOCUS ================= --}}
-        <div class="border border-slate-200 rounded-xl p-4">
+        <div class="rounded-xl border border-slate-200 bg-white p-4">
 
             <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
 
-                {{-- SDG --}}
-                <div class="md:col-span-9">
+                <div id="sdgWrapper"
+                    class="md:col-span-9 space-y-3
+                    {{ $errors->has('sdg') ? 'border border-rose-500 ring-2 ring-rose-300 rounded-xl p-2' : '' }}">
 
-                    <div class="text-xs font-semibold text-slate-900 uppercase tracking-wide mb-3">
-                        Sustainable Development Goals (SDG)
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="globe" class="w-3.5 h-3.5 text-blue-600"></i>
+                        <span class="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
+                            Sustainable Development Goals
+                        </span>
                     </div>
 
-                    <div class="text-xs text-blue-700 mb-3">
+                    <div class="text-[11px] text-slate-500">
                         Select all applicable goals
                     </div>
 
                     @php
                         $sdgs = [
-                            'No Poverty',
-                            'Zero Hunger',
-                            'Quality Education',
-                            'Gender Equality',
-                            'Clean Water and Sanitation',
-                            'Affordable and Clean Energy',
-                            'Decent Work and Economic Growth',
-                            'Industry, Innovation and Infrastructure',
-                            'Reduce Inequalities',
-                            'Sustainable Cities and Communities',
-                            'Responsible Consumption and Production',
-                            'Climate Action',
-                            'Life Below Water',
-                            'Peace and Justice Strong institutions',
+                            'No Poverty','Zero Hunger','Quality Education','Gender Equality',
+                            'Clean Water and Sanitation','Affordable and Clean Energy',
+                            'Decent Work and Economic Growth','Industry, Innovation and Infrastructure',
+                            'Reduce Inequalities','Sustainable Cities and Communities',
+                            'Responsible Consumption and Production','Climate Action',
+                            'Life Below Water','Peace and Justice Strong institutions',
                             'Partnerships for the Goals',
                         ];
 
@@ -178,13 +177,13 @@
                         if (!is_array($sdg)) $sdg = [];
                     @endphp
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-slate-700">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-slate-700">
                         @foreach($sdgs as $s)
-                            <label class="flex items-center gap-2 cursor-pointer">
+                            <label class="flex items-center gap-2 cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 hover:bg-slate-100 transition">
                                 <input type="checkbox"
                                        name="sdg[]"
                                        value="{{ $s }}"
-                                       class="border {{ $errors->has('area_focus') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
+                                       class="{{ $errors->has('area_focus') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
                                        @checked(in_array($s, $sdg, true))>
                                 <span>{{ $s }}</span>
                             </label>
@@ -193,15 +192,13 @@
 
                 </div>
 
-                {{-- AREA FOCUS --}}
-                <div class="md:col-span-3">
-
-                    <div class="text-xs font-semibold text-slate-900 uppercase tracking-wide mb-3">
-                        Area Focus
-                    </div>
-
-                    <div class="text-xs text-blue-700 mb-3">
-                        Select all that apply
+                <div class="md:col-span-3 space-y-3
+                    {{ $errors->has('area_focus') ? 'border border-rose-500 ring-2 ring-rose-300 rounded-xl p-3' : '' }}">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="target" class="w-3.5 h-3.5 text-blue-600"></i>
+                        <span class="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
+                            Area Focus
+                        </span>
                     </div>
 
                     @php
@@ -212,33 +209,35 @@
                         if (!is_array($af)) $af = [];
                     @endphp
 
-                    <div class="space-y-2 text-sm text-slate-700">
-                        <label class="flex items-center gap-2 cursor-pointer">
+                    <div class="space-y-2 text-xs text-slate-700">
+
+                        <label class="flex items-center gap-2 cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 hover:bg-slate-100 transition">
                             <input type="checkbox"
                                    name="area_focus[]"
                                    value="organizational_development"
-                                   class="border {{ $errors->has('area_focus') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
+                                   class="{{ $errors->has('area_focus') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
                                    @checked(in_array('organizational_development', $af, true))>
                             <span>Organizational Development</span>
                         </label>
 
-                        <label class="flex items-center gap-2 cursor-pointer">
+                        <label class="flex items-center gap-2 cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 hover:bg-slate-100 transition">
                             <input type="checkbox"
                                    name="area_focus[]"
                                    value="student_services"
-                                   class="border {{ $errors->has('area_focus') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
+                                   class="{{ $errors->has('area_focus') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
                                    @checked(in_array('student_services', $af, true))>
                             <span>Student Services and Formation</span>
                         </label>
 
-                        <label class="flex items-center gap-2 cursor-pointer">
+                        <label class="flex items-center gap-2 cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 hover:bg-slate-100 transition">
                             <input type="checkbox"
                                    name="area_focus[]"
                                    value="community_involvement"
-                                   class="border {{ $errors->has('area_focus') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
+                                   class="{{ $errors->has('area_focus') ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500' }}"
                                    @checked(in_array('community_involvement', $af, true))>
                             <span>Community Involvement</span>
                         </label>
+
                     </div>
 
                 </div>

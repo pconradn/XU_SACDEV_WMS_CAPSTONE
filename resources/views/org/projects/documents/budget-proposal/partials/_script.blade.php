@@ -40,96 +40,109 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    initializeExistingRows();
-    recalcAllSections();
-    recalcGrandTotal();
-    recalcFunds();
-    checkBudgetMatch(); 
-});
+        initializeExistingRows();
+        recalcAllSections();
+        recalcGrandTotal();
+        recalcFunds();
+        checkBudgetMatch(); 
+    });
 
 
 
-function num(val) {
-    const s = (val ?? '').toString()
-        .replace(/[₱,\s]/g, '')     
-        .replace(/[^0-9.\-]/g, ''); 
-    const n = parseFloat(s);
-    return isNaN(n) ? 0 : n;
-}
-
-function setSpanText(id, value) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value.toFixed(2);
-}
-
-function setHiddenValue(id, value) {
-    const el = document.getElementById(id);
-    if (el) el.value = value.toFixed(2);
-}
-
-
-
-function addBudgetRow(section) {
-    const container = document.getElementById(section + "_container");
-    if (!container) {
-        console.error("Budget container not found:", section);
-        return;
+    function num(val) {
+        const s = (val ?? '').toString()
+            .replace(/[₱,\s]/g, '')     
+            .replace(/[^0-9.\-]/g, ''); 
+        const n = parseFloat(s);
+        return isNaN(n) ? 0 : n;
     }
 
-    const row = document.createElement("div");
-    row.setAttribute('data-budget-row', '1');
-    row.setAttribute('data-section', section);
-    row.className = "grid grid-cols-12 gap-2 items-center";
+    function setSpanText(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value.toFixed(2);
+    }
 
-    row.innerHTML = `
-        <input type="hidden" data-section="${section}">
+    function setHiddenValue(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.value = value.toFixed(2);
+    }
 
-        <div class="col-span-1">
-            <input type="number" step="1"
-                name="${section}[qty][]"
-                class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-center">
-        </div>
 
-        <div class="col-span-2">
-            <input type="text"
-                name="${section}[unit][]"
-                class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-center">
-        </div>
 
-        <div class="col-span-4">
-            <input type="text"
-                name="${section}[particulars][]"
-                class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
-        </div>
+    function addBudgetRow(section) {
+        const container = document.getElementById(section + "_container");
+        if (!container) return;
 
-        <div class="col-span-2">
-            <input type="number" step="0.01"
-                name="${section}[price][]"
-                class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-right">
-        </div>
+        const row = document.createElement("tr");
+        row.setAttribute('data-budget-row', '1');
+        row.setAttribute('data-section', section);
+        row.className = "hover:bg-slate-50 transition";
 
-        <div class="col-span-2 text-right font-semibold tabular-nums">
-            ₱ <span data-amount>0.00</span>
-            <input type="hidden" name="${section}[amount][]" value="0">
-        </div>
+        row.innerHTML = `
+            <td class="px-2 py-2">
+                <input type="number" step="1"
+                    name="${section}[qty][]"
+                    class="w-full rounded-lg border border-slate-300 px-2 py-1 text-xs text-center focus:ring-2 focus:ring-emerald-500">
+            </td>
 
-        <div class="col-span-1 text-center">
-            <button type="button" data-remove-budget
-                class="text-red-500 text-xs hover:underline">
-                Remove
-            </button>
-        </div>
-    `;
+            <td class="px-2 py-2">
+                <input type="text"
+                    name="${section}[unit][]"
+                    class="w-full rounded-lg border border-slate-300 px-2 py-1 text-xs text-center focus:ring-2 focus:ring-emerald-500">
+            </td>
 
-    container.appendChild(row);
+            <td class="px-2 py-2">
+                <input type="text"
+                    name="${section}[particulars][]"
+                    class="w-full rounded-lg border border-slate-300 px-2 py-1 text-xs focus:ring-2 focus:ring-emerald-500">
+            </td>
 
-    calculateRowAmount(row);
-    recalcSection(section);
-    recalcGrandTotal();
-    recalcFunds();
-    checkBudgetMatch(); 
-}
+            <td class="px-2 py-2">
+                <input type="text" inputmode="decimal"
+                    name="${section}[price][]"
+                    class="money-input w-full rounded-lg border border-slate-300 px-2 py-1 text-xs text-right focus:ring-2 focus:ring-emerald-500">
+            </td>
 
+            <td class="px-2 py-2 text-right">
+                <div class="flex items-center justify-end gap-1 font-semibold text-slate-900 tabular-nums text-sm">
+                    <span class="text-[10px] text-slate-400">₱</span>
+                    <span data-amount class="tracking-tight">0.00</span>
+                </div>
+                <input type="hidden" name="${section}[amount][]" value="0">
+            </td>
+
+            <td class="px-2 py-2 text-right">
+                <button type="button" data-remove-budget
+                    class="text-slate-400 hover:text-rose-600 transition">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+            </td>
+        `;
+
+        container.appendChild(row);
+
+        if (window.lucide) lucide.createIcons();
+
+        const moneyInput = row.querySelector('.money-input');
+        if (moneyInput) {
+            moneyInput.addEventListener('focus', () => {
+                moneyInput.value = num(moneyInput.value);
+            });
+
+            moneyInput.addEventListener('blur', () => {
+                moneyInput.value = num(moneyInput.value).toLocaleString('en-PH', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            });
+        }
+
+        calculateRowAmount(row);
+        recalcSection(section);
+        recalcGrandTotal();
+        recalcFunds();
+        checkBudgetMatch();
+    }
     function calculateRowAmount(row) {
         const qty   = row.querySelector('input[name*="[qty]"]');
         const price = row.querySelector('input[name*="[price]"]');
@@ -142,7 +155,10 @@ function addBudgetRow(section) {
         const total = q * p;
 
         if (amtSpan) {
-            amtSpan.textContent = total.toLocaleString(undefined, { minimumFractionDigits: 2 });
+            amtSpan.textContent = total.toLocaleString('en-PH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
         }
 
         if (amtInput) {
@@ -162,7 +178,10 @@ function recalcSection(section) {
         sum += num(input.value);
     });
 
-    totalEl.textContent = sum.toFixed(2);
+    totalEl.textContent = sum.toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
 }
 
 function recalcAllSections() {
@@ -180,7 +199,10 @@ function recalcGrandTotal() {
     });
 
     const grandEl = document.getElementById('grand_total');
-    if (grandEl) grandEl.textContent = grand.toFixed(2);
+    if (grandEl) grandEl.textContent = grand.toLocaleString('en-PH', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
 }
 
 
@@ -244,7 +266,7 @@ function checkBudgetMatch() {
 
         const diff = Math.abs(grandTotal - systemTotal);
 
-        indicator.innerText = `⚠ Difference: ₱ ${diff.toLocaleString(undefined, {
+        indicator.innerText = ` Difference: ₱ ${diff.toLocaleString(undefined, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         })}`;

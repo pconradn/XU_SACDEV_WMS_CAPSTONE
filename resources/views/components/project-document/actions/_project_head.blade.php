@@ -50,8 +50,10 @@ $routeBase = $document?->formType
             Save Draft
         </button>
 
-        <button type="button"
-            onclick="openSubmitModal()"
+        <button type="submit"
+            form="proposalForm"
+            name="action"
+            value="submit"
             class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
             Submit for Approval
         </button>

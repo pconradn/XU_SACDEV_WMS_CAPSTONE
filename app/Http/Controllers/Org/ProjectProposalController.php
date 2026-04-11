@@ -164,7 +164,7 @@ class ProjectProposalController extends BaseProjectDocumentController
             ],
 
             'engagement_type' => [
-                'nullable',
+                'required',
                 'in:organizer,partner,participant'
             ],
 
@@ -459,14 +459,14 @@ class ProjectProposalController extends BaseProjectDocumentController
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
 
             'start_time' => [
-                'nullable',
+                'required',
                 Rule::anyOf([
                     'date_format:H:i',
                     'date_format:H:i:s',
                 ]),
             ],
 
-            'end_time' => [
+            'required' => [
                 'nullable',
                 Rule::anyOf([
                     'date_format:H:i',
@@ -482,11 +482,12 @@ class ProjectProposalController extends BaseProjectDocumentController
 
             'project_nature' => ['required', 'array'],
             'project_nature.*' => ['string', 'max:100',],
+            'project_nature_other' => ['nullable', 'string'],
 
             'sdg' => ['required', 'array'],
             'sdg.*' => ['string', 'max:255',],
 
-            'area_focus' => ['nullable', 'array'],
+            'area_focus' => ['required', 'array'],
             'area_focus.*' => ['string', 'max:100'],
 
             'description' => ['required', 'string'],
@@ -502,8 +503,8 @@ class ProjectProposalController extends BaseProjectDocumentController
             'xu_subtypes.*' => ['string'],
             'audience_details' => ['nullable' , 'string'],
 
-            'expected_xu_participants' => ['nullable', 'integer','regex:/^\d+$/'],
-            'expected_non_xu_participants' => ['nullable', 'integer','regex:/^\d+$/'],
+            'expected_xu_participants' => ['required', 'integer','regex:/^\d+$/'],
+            'expected_non_xu_participants' => ['required', 'integer','regex:/^\d+$/'],
             'has_guest_speakers' => ['nullable', 'boolean'],
 
             'objectives' => ['required', 'array'],
@@ -560,6 +561,7 @@ class ProjectProposalController extends BaseProjectDocumentController
                 'off_campus_venue' => $data['off_campus_venue'] ?? null,
                 'engagement_type' => $data['engagement_type'] ?? null,
                 'main_organizer' => $data['main_organizer'] ?? null,
+                'project_nature_other' => $data['project_nature_other'] ?? null,
                 'project_nature' => implode(', ', $data['project_nature'] ?? []),
                 'sdg' => implode(', ', $data['sdg'] ?? []),
                 'area_focus' => implode(', ', $data['area_focus'] ?? []),
