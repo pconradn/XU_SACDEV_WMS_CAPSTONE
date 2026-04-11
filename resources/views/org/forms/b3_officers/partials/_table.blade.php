@@ -27,8 +27,7 @@
             </div>
         </div>
         <div class="text-[10px] text-slate-500 mb-2">
-    isPresident: {{ $isPresident ? 'true' : 'false' }} |
-    isLocked: {{ $isLocked ? 'true' : 'false' }}
+
 </div>
 
         <button type="button"
@@ -111,13 +110,28 @@
                         </td>
 
                     </tr>
+               
                     @empty
                     <tr id="emptyHint">
-                        <td colspan="5" class="px-4 py-10 text-center text-xs text-slate-500">
-                            No officers yet
+                        <td colspan="5" class="px-4 py-2 text-center">
+
+                            <div class="inline-flex flex-col items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[11px] text-amber-800">
+
+                                <div class="flex items-center gap-1.5 font-semibold">
+                                    <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                                    No officers added in submission yet.
+                                </div>
+
+                                <div class="text-[10px] text-amber-700">
+                                    Add officers above, then click <span class="font-semibold">Save Draft</span> to keep your progress.
+                                </div>
+
+                            </div>
+
                         </td>
                     </tr>
                     @endforelse
+        
 
                 </tbody>
             </table>

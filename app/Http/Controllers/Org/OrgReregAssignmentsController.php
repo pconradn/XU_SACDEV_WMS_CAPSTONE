@@ -118,12 +118,18 @@ class OrgReregAssignmentsController extends Controller
 
         $suggested = $this->suggestedModeratorUser($orgId, $selectedSyId);
 
+        $registered = DB::table('organization_school_years')
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $selectedSyId)
+            ->exists();
+
         return view('org.rereg.assign_moderator', compact(
             'currentSy',
             'selectedSyId',
             'current',
             'suggested',
-            'hasB5ForCurrentModerator'
+            'hasB5ForCurrentModerator',
+            'registered'
         ));
     }
 
@@ -135,6 +141,15 @@ class OrgReregAssignmentsController extends Controller
         $targetSyId = $this->targetSyId($request);
 
         $this->requireTargetSySelected($targetSyId);
+
+        $registered = DB::table('organization_school_years')
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $targetSyId)
+            ->exists();
+
+        if ($registered) {
+            abort(403, 'Moderator cannot be changed after organization is registered.');
+        }
 
 
         $data = $request->validate([
@@ -151,9 +166,18 @@ class OrgReregAssignmentsController extends Controller
             isset($data['middle_initial']) ? $data['middle_initial'] . '.' : null,
             $data['last_name'],
         ])->filter()->implode(' '));
+
+        $currentModerator = OrgMembership::query()
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $targetSyId)
+            ->where('role', 'moderator')
+            ->whereNull('archived_at')
+            ->with('user')
+            ->first();
         
 
-        [$user, $tempPassword, $didResetTemp] = DB::transaction(function () use ($fullName, $data, $orgId, $targetSyId) {
+
+        [$user, $tempPassword, $didResetTemp] = DB::transaction(function () use ($currentModerator, $fullName, $data, $orgId, $targetSyId) {
 
          
             [$user, $tempPassword] = AccountProvisioner::findOrCreateUser($fullName, $data['email']);
@@ -172,6 +196,10 @@ class OrgReregAssignmentsController extends Controller
                 }
             }
 
+
+
+
+
        
             $user->first_name = $data['first_name'];
             $user->middle_initial = $data['middle_initial'] ?? null;
@@ -180,6 +208,15 @@ class OrgReregAssignmentsController extends Controller
             $user->name = $fullName;
             $user->email = $data['email'];
             $user->save();
+
+
+            if ($currentModerator && $currentModerator->user) {
+            ModeratorSubmission::query()
+                ->where('organization_id', $orgId)
+                ->where('target_school_year_id', $targetSyId)
+                ->where('moderator_user_id', $currentModerator->user->id)
+                ->delete();
+        }
        
             OrgMembership::query()
                 ->where('organization_id', $orgId)

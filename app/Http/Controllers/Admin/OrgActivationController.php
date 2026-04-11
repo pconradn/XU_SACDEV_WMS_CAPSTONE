@@ -133,7 +133,7 @@ class OrgActivationController extends Controller
 
                 'status' => 'activated',
 
-                'action_url' => route('org.rereg.index'),
+                'route' => route('org.rereg.index'),
 
                 'send_mail' => true,
 

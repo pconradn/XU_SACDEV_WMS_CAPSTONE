@@ -164,7 +164,7 @@ class ModeratorStrategicPlanController extends Controller
                     'target_sy_id' => $syId,
                     'form'         => 'strategic_plan',
                     'status'       => 'returned_by_moderator',
-                    'action_url'   => route('org.rereg.b1.edit'),
+                    'route'   => route('org.rereg.b1.edit'),
                     'meta'         => ['submission_id' => $submissionId],
                     'send_mail'    => true,
                 ]);
@@ -265,7 +265,7 @@ class ModeratorStrategicPlanController extends Controller
                     'target_sy_id' => $syId,
                     'form'         => 'strategic_plan',
                     'status'       => 'forwarded_to_sacdev',
-                    'action_url'   => route('org.rereg.b1.edit'),
+                    'route'   => route('org.rereg.b1.edit'),
                     'meta'         => ['submission_id' => $submissionId],
                     'send_mail'    => true,
                 ]);

@@ -41,4 +41,38 @@ class NotificationController extends Controller
         $request->user()->unreadNotifications->markAsRead();
         return back()->with('status', 'All notifications marked as read.');
     }
+    
+    public function go($id)
+    {
+        $notification = auth()->user()
+            ->notifications()
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $data = $notification->data;
+
+        if (!empty($data['org_id']) && !empty($data['target_sy_id'])) {
+
+            $allowed = \App\Models\OrgMembership::where('user_id', auth()->id())
+                ->where('organization_id', $data['org_id'])
+                ->where('school_year_id', $data['target_sy_id'])
+                ->whereNull('archived_at')
+                ->exists();
+
+            if (!$allowed) {
+                abort(403);
+            }
+
+            session([
+                'active_org_id' => $data['org_id'],
+                'encode_sy_id' => $data['target_sy_id'],
+            ]);
+        }
+
+        $notification->markAsRead();
+
+        return redirect($data['route'] ?? route('dashboard'));
+    }
+
+
 }

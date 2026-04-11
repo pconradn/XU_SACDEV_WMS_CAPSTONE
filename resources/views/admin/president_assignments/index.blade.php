@@ -480,11 +480,17 @@
                     required
                 >
 
+
+
                 <div class="mt-2 text-xs text-slate-500">
                     Email preview:
                     <span id="modalEmailPreview" class="font-semibold text-blue-600">
                         studentID@my.xu.edu.ph
                     </span>
+                </div>
+
+                <div id="studentIdWarning"
+                    class="mt-2 hidden rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
                 </div>
             </div>
 
@@ -609,16 +615,60 @@
     });
 
     // EMAIL PREVIEW
-    document.getElementById('modalStudentId').addEventListener('input', (e) => {
+    const studentIdInput = document.getElementById('modalStudentId');
+    const warningBox = document.getElementById('studentIdWarning');
+
+    let checkTimeout = null;
+
+    studentIdInput.addEventListener('input', (e) => {
+
         const id = e.target.value.trim();
+
         document.getElementById('modalEmailPreview').textContent =
             id ? `${id}@my.xu.edu.ph` : 'studentID@my.xu.edu.ph';
+
+        warningBox.classList.add('hidden');
+        warningBox.textContent = '';
+
+        clearTimeout(checkTimeout);
+
+        if (id.length !== 11) return;
+
+        checkTimeout = setTimeout(() => {
+
+            fetch(`/president-assignments/check-student-id?student_id_number=${id}`)
+                .then(res => res.json())
+                .then(data => {
+
+                    if (!data.exists) return;
+
+                    const fullName = data.full_name;
+
+                    warningBox.textContent =
+                        `Existing user found: "${fullName}". Fields will match this student.`;
+
+                    warningBox.classList.remove('hidden');
+
+                    // AUTO FILL
+                    const parts = fullName.split(' ');
+
+                    document.getElementById('modalFirstName').value = parts[0] || '';
+                    document.getElementById('modalLastName').value = parts[parts.length - 1] || '';
+
+                    if (parts.length > 2) {
+                        document.getElementById('modalMiddleInitial').value =
+                            parts[1].replace('.', '') || '';
+                    }
+
+                });
+
+        }, 400);
     });
     </script>
 
 
     <script>
-    document.querySelector('form').addEventListener('submit', function(e) {
+    document.querySelector('#assignModal form').addEventListener('submit', function(e) {
 
         const first = document.getElementById('modalFirstName').value.trim();
         const last = document.getElementById('modalLastName').value.trim();

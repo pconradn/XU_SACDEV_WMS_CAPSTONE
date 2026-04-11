@@ -152,9 +152,11 @@ class SacdevStrategicPlanController extends Controller
                         'target_sy_id' => $syId,
                         'form'         => 'strategic_plan',
                         'status'       => 'returned_by_sacdev',
-                        'action_url'   => route('org.rereg.b1.edit', $submissionId),
+                        'route'   => route('org.rereg.b1.edit', $submissionId),
                         'meta'         => ['submission_id' => $submissionId],
                     ]);
+
+                    usleep(400000);
                 }
 
                 
@@ -168,7 +170,7 @@ class SacdevStrategicPlanController extends Controller
                         'target_sy_id' => $syId,
                         'form'         => 'strategic_plan',
                         'status'       => 'returned_by_sacdev',
-                        'action_url'   => route('org.moderator.strategic_plans.show', $submissionId),
+                        'route'   => route('org.rereg.b1.edit', $submissionId),
                         'meta'         => ['submission_id' => $submissionId],
                     ]);
                 }
@@ -331,10 +333,11 @@ class SacdevStrategicPlanController extends Controller
                         'target_sy_id' => $syId,
                         'form'         => 'strategic_plan',
                         'status'       => 'approved_by_sacdev',
-                        'action_url'   => route('org.rereg.b1.edit'),
+                        'route'   => route('org.rereg.b1.edit'),
                         'meta'         => ['submission_id' => $submissionId],
                         'send_mail'    => true,
                     ]);
+                    usleep(400000);
                 }
 
                 if ($moderator) {
@@ -350,7 +353,7 @@ class SacdevStrategicPlanController extends Controller
                         'target_sy_id' => $syId,
                         'form'         => 'strategic_plan',
                         'status'       => 'approved_by_sacdev',
-                        'action_url'   => route('org.moderator.strategic_plans.show', $submissionId),
+                        'route'   => route('org.rereg.b1.edit', $submissionId),
                         'meta'         => ['submission_id' => $submissionId],
                         'send_mail'    => true,
                     ]);
@@ -396,10 +399,10 @@ class SacdevStrategicPlanController extends Controller
                     ->with('error', 'Only approved submissions can be reverted.');
             }
 
-            // 🔥 CAPTURE OLD STATUS
+       
             $oldStatus = $locked->status;
 
-            // 🔥 NEW BEHAVIOR: revert to SACDEV review stage
+       
             $locked->status = StrategicPlanSubmission::STATUS_FORWARDED_TO_SACDEV;
 
             $locked->approved_at = null;
@@ -410,7 +413,7 @@ class SacdevStrategicPlanController extends Controller
 
             $locked->save();
 
-            // 🔥 TIMELINE ENTRY
+        
             $locked->timelines()->create([
                 'user_id' => auth()->id(),
                 'action' => 'approval_reverted',
@@ -434,9 +437,10 @@ class SacdevStrategicPlanController extends Controller
                         'target_sy_id' => $syId,
                         'form'         => 'strategic_plan',
                         'status'       => 'approval_reverted',
-                        'action_url'   => route('org.rereg.b1.edit', $submissionId),
+                        'route'   => route('org.rereg.b1.edit', $submissionId),
                         'meta'         => ['submission_id' => $submissionId],
                     ]);
+                    usleep(400000);
                 }
 
                 if ($moderator) {
@@ -450,7 +454,7 @@ class SacdevStrategicPlanController extends Controller
                         'target_sy_id' => $syId,
                         'form'         => 'strategic_plan',
                         'status'       => 'approval_reverted',
-                        'action_url'   => route('org.moderator.strategic_plans.show', $submissionId),
+                        'route'   => route('org.rereg.b1.edit', $submissionId),
                         'meta'         => ['submission_id' => $submissionId],
                     ]);
                 }

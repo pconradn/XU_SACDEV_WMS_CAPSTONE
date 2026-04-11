@@ -195,6 +195,9 @@ Route::prefix('admin')
 
             Route::post('president-assignments/assign', [OrganizationPresidentController::class, 'assign'])
                 ->name('admin.president_assignments.assign');
+
+            Route::get('/president-assignments/check-student-id', [OrganizationPresidentController::class, 'checkStudentId'])
+                ->name('admin.check-student-id');
         });
 
 

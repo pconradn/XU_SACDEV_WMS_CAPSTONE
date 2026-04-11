@@ -68,8 +68,8 @@
 
         </form>
 
-        {{-- EDIT REQUEST --}}
-        @if($registration && $registration->status === 'returned')
+     
+        @if($registration && $registration->status === 'approved_by_sacdev')
             <div class="rounded-2xl border border-rose-200 bg-gradient-to-b from-rose-50 to-white shadow-sm p-4">
                 @include('org.forms.b3_officers.partials._edit_request', [
                     'registration' => $registration,

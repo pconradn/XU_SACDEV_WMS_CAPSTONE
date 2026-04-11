@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Mail\AccountCredentialsMail;
 use App\Models\OrgMembership;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -21,17 +22,13 @@ class AccountProvisioner
 
         $user->password = Hash::make($tempPassword);
         $user->save();
-
-        Mail::raw(
-            "Hello {$user->name},\n\n" .
-            "You have been assigned a role in the SACDEV Workflow System.\n\n" .
-            "Login email: {$user->email}\n" .
-            "Temporary password: {$tempPassword}\n\n" .
-            "You will be required to change your password on first login.\n\n" .
-            "Thank you.",
-            function ($message) use ($user) {
-                $message->to($user->email)->subject('SACDEV System - Account Credentials (Resent)');
-            }
+        Mail::to($user->email)->queue(
+            new AccountCredentialsMail(
+                $user->name,
+                $user->email,
+                $tempPassword,
+                'SACDEV System - Account Credentials'
+            )
         );
 
         return $tempPassword;
@@ -61,18 +58,14 @@ class AccountProvisioner
             'password_changed_at' => null,
         ]);
 
-        Mail::raw(
-            "Hello {$user->name},\n\n" .
-            "You have been assigned a role in the SACDEV Workflow System.\n\n" .
-            "Login email: {$user->email}\n" .
-            "Temporary password: {$tempPassword}\n\n" .
-            "You will be required to change your password on first login.\n\n" .
-            "Thank you.",
-            function ($message) use ($user) {
-                $message->to($user->email)->subject('SACDEV System - Account Credentials');
-            }
+        Mail::to($user->email)->queue(
+            new AccountCredentialsMail(
+                $user->name,
+                $user->email,
+                $tempPassword,
+                'SACDEV System - Account Credentials'
+            )
         );
-
         return [$user, $tempPassword];
     }
 
@@ -91,16 +84,13 @@ class AccountProvisioner
         $user->password_changed_at = null;
         $user->save();
 
-        Mail::raw(
-            "Hello {$user->name},\n\n" .
-            "Your temporary credentials have been updated for the SACDEV Workflow System.\n\n" .
-            "Login email: {$user->email}\n" .
-            "Temporary password: {$tempPassword}\n\n" .
-            "You will be required to change your password on first login.\n\n" .
-            "Thank you.",
-            function ($message) use ($user) {
-                $message->to($user->email)->subject('SACDEV System - Account Credentials (Updated)');
-            }
+        Mail::to($user->email)->queue(
+            new AccountCredentialsMail(
+                $user->name,
+                $user->email,
+                $tempPassword,
+                'SACDEV System - Account Credentials'
+            )
         );
 
         return $tempPassword;
@@ -180,16 +170,13 @@ class AccountProvisioner
         $user->password_changed_at = null;
         $user->save();
 
-        Mail::raw(
-            "Hello {$user->name},\n\n" .
-            "You have been assigned a role in the SACDEV Workflow System.\n\n" .
-            "Login email: {$user->email}\n" .
-            "Temporary password: {$tempPassword}\n\n" .
-            "You will be required to change your password on first login.\n\n" .
-            "Thank you.",
-            function ($message) use ($user) {
-                $message->to($user->email)->subject('SACDEV System - Account Credentials');
-            }
+        Mail::to($user->email)->queue(
+            new AccountCredentialsMail(
+                $user->name,
+                $user->email,
+                $tempPassword,
+                'SACDEV System - Account Credentials'
+            )
         );
 
         return [$user, $tempPassword];

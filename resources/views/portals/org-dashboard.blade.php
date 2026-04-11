@@ -231,6 +231,23 @@
                                     </span>
                                 </a>
 
+                            @elseif($roles->contains('moderator'))
+
+
+                                                            <a href="{{ route('org.rereg.index') }}"
+                                class="group flex items-center justify-between rounded-lg border border-blue-200 bg-gradient-to-b from-blue-50 to-white px-3 py-2 text-xs font-medium text-blue-800 transition hover:shadow-sm">
+
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-1.5 h-6 rounded-full bg-blue-400"></div>
+                                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-blue-500"></i>
+                                        <span>Re-registration Hub</span>
+                                    </div>
+
+                                    <span class="text-[10px] text-blue-500 group-hover:text-blue-700">
+                                        Open
+                                    </span>
+                                </a>
+
                             @endif
 
 

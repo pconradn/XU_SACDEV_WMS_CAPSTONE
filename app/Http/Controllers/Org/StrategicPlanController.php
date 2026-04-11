@@ -279,7 +279,7 @@ class StrategicPlanController extends Controller
             'target_sy_id' => $targetSyId,
             'form'         => 'strategic_plan',
             'status'       => 'submitted_to_moderator',
-            'action_url'   => route('org.moderator.strategic_plans.show', $submissionId),
+            'route'   => route('org.rereg.b1.edit', $submissionId),
             'meta'         => ['submission_id' => $submissionId],
             'send_mail'    => true,
         ]);

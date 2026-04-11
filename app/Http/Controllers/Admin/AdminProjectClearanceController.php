@@ -96,7 +96,7 @@ class AdminProjectClearanceController extends Controller
         \App\Support\InAppNotifier::notifyOnce($assignment->user, [
             'title' => 'Project Clearance Update',
             'message' => $message,
-            'action_url' => route('org.projects.documents.hub', $project), 
+            'route' => route('org.projects.documents.hub', $project), 
             'dedupe_key' => 'clearance_'.$project->id.'_status_update',
             'meta' => [
                 'project_id' => $project->id,

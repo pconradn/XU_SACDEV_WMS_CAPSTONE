@@ -522,7 +522,7 @@ class AdminProjectDocumentController extends Controller
         $assignment->user->notify(new ReregActionNotification([
             'title' => 'Project Completed',
             'message' => 'Your project "' . $project->title . '" has been marked as completed by SACDEV.',
-            'action_url' => route('org.projects.documents.hub', $project),
+            'route' => route('org.projects.documents.hub', $project),
             'meta' => [
                 'project_id' => $project->id,
                 'type' => 'project_completed'
@@ -1359,7 +1359,7 @@ class AdminProjectDocumentController extends Controller
         InAppNotifier::notifyOnce($assignment->user, [
             'title' => 'Project Document Update',
             'message' => $message,
-            'action_url' => $this->resolveOrgDocumentRoute($document),
+            'route' => $this->resolveOrgDocumentRoute($document),
             'dedupe_key' => 'doc_'.$document->id.'_status_update',
             'meta' => [
                 'document_id' => $document->id,

@@ -155,8 +155,29 @@ $activeOrgId = (int) session('active_org_id');
 $syId = (int) session('encode_sy_id');
 
 if ($user && $activeOrgId && $syId) {
+    $orgSyExists = \App\Models\OrganizationSchoolYear::query()
+        ->where('organization_id', $activeOrgId)
+        ->where('school_year_id', $syId)
+        ->exists();
 
-    if (Route::has('org.organization-info.show')) {
+    $stratApproved = \App\Models\StrategicPlanSubmission::query()
+        ->where('organization_id', $activeOrgId)
+        ->where('target_school_year_id', $syId)
+        ->where('status', 'approved_by_sacdev')
+        ->exists();
+
+    $officersApproved = \App\Models\OfficerSubmission::query()
+        ->where('organization_id', $activeOrgId)
+        ->where('target_school_year_id', $syId)
+        ->where('status', 'approved_by_sacdev')
+        ->exists();
+
+
+    if (
+        Route::has('org.organization-info.show')
+        && $stratApproved
+        && $officersApproved
+    ) {
         $orgLinks[] = $item(
             'Organization',
             route('org.organization-info.show'),
@@ -198,7 +219,7 @@ if ($user && $activeOrgId && $syId) {
 
 
  
-    if ($isPresident) {
+    if ($isModerator && !$orgSyExists) {
 
         $rereg = [];
         $ops = [];
@@ -207,12 +228,25 @@ if ($user && $activeOrgId && $syId) {
             $rereg[] = $item('Re-Registration Hub', route('org.rereg.index'), ['org.rereg.*']);
         }
 
-        if (Route::has('org.provision.next_president.edit')) {
-            $rereg[] = $item('Assign Next SY President', route('org.provision.next_president.edit'), ['org.provision.*']);
+        if ($rereg) {
+            $groups[] = [
+                'title' => 'Re-Registration',
+                'links' => $rereg,
+                'icon' => 'clipboard'
+            ];
         }
 
+    }
+    if ($isPresident){
 
+        $rereg = [];           
+        $ops = [];
 
+        if(!$orgSyExists){
+            if (Route::has('org.rereg.index')) {
+                $rereg[] = $item('Re-Registration Hub', route('org.rereg.index'), ['org.rereg.*']);
+            }
+        }
 
         if (Route::has('org.officers.index')) {
             $ops[] = $item('Officer List', route('org.officers.index'), ['org.officers.*']);

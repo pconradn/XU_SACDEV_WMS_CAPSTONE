@@ -87,6 +87,12 @@
                                     </span>
                                 @endif
 
+                                @if($item->isAuditor())
+                                    <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                        Auditor
+                                    </span>
+                                @endif
+
                                 @if(!empty($conflicts))
                                     <span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
                                         Conflict Detected

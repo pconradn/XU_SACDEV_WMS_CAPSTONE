@@ -5,8 +5,9 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class ReregActionNotification extends Notification
+class ReregActionNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -34,22 +35,23 @@ class ReregActionNotification extends Notification
             'title'      => $this->payload['title'] ?? 'Update',
             'message'    => $this->payload['message'] ?? null,
 
-            'org_id'     => $this->payload['org_id'] ?? null,
-            'target_sy'  => $this->payload['target_sy_id'] ?? null,
+            'org_id'        => $this->payload['org_id'] ?? null,
+            'target_sy_id'  => $this->payload['target_sy_id'] ?? null,
 
-            'form'       => $this->payload['form'] ?? null,
-            'status'     => $this->payload['status'] ?? null,
+            'route' => $this->payload['route'] ?? null,
 
-            'action_url' => $this->payload['action_url'] ?? null,
-            'meta'       => $this->payload['meta'] ?? [],
+            'form'   => $this->payload['form'] ?? null,
+            'status' => $this->payload['status'] ?? null,
+
+            'meta' => $this->payload['meta'] ?? [],
         ];
     }
 
     public function toMail($notifiable): MailMessage
     {
-        $title = $this->payload['title'] ?? 'SAcDev Notification';
+        $title = $this->payload['title'] ?? 'SACDEV Notification';
         $message = $this->payload['message'] ?? '';
-        $url = $this->payload['action_url'] ?? null;
+        $url = $this->payload['route'] ?? null;
 
         $mail = (new MailMessage)
             ->subject($title)
@@ -60,9 +62,8 @@ class ReregActionNotification extends Notification
             $mail->action('Open in System', $url);
         }
 
-        return $mail->line('This is an automated message from the SAcDev system.');
+        return $mail->line('This is an automated message from the SACDEV system.');
     }
-
     private function resolveEmail($notifiable): ?string
     {
         

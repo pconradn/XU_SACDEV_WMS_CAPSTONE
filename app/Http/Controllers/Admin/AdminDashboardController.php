@@ -63,32 +63,6 @@ class AdminDashboardController extends Controller
                     })
             )
             ->merge(
-
-
-
-            
-                PresidentRegistration::query()
-                    ->with('organization')
-                    ->whereIn('target_school_year_id', $targetSyIds)
-                    ->whereIn('status', $actionable)
-                    ->whereHas('organization', function ($q) use ($user) {
-                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
-                    })
-                    ->get()
-                    ->map(function ($r) {
-                        return (object) [
-                            'type' => 'President Registration',
-                            'organization_id' => $r->organization_id,
-                            'school_year_id' => $r->target_school_year_id,
-                            'organization' => $r->organization,
-                            'school_year' => SchoolYear::find($r->target_school_year_id),
-                            'status' => $r->status,
-                            'created_at' => $r->created_at,
-                            'route' => route('admin.b2.president.show', $r->id),
-                        ];
-                    })
-            )
-            ->merge(
                 OfficerSubmission::query()
                     ->with('organization')
                     ->whereIn('target_school_year_id', $targetSyIds)
@@ -138,69 +112,56 @@ class AdminDashboardController extends Controller
                         ];
                     })
             )
-            ->merge(
-                ModeratorSubmission::query()
-                    ->with('organization')
-                    ->whereIn('target_school_year_id', $targetSyIds)
-                    ->whereIn('status', $actionable)
-                    ->whereHas('organization', function ($q) use ($user) {
-                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
-                    })
-                    ->get()
-                    ->map(function ($r) {
-                        return (object) [
-                            'type' => 'Moderator Submission',
-                            'organization_id' => $r->organization_id,
-                            'school_year_id' => $r->target_school_year_id,
-                            'organization' => $r->organization,
-                            'school_year' => SchoolYear::find($r->target_school_year_id),
-                            'status' => $r->status,
-                            'created_at' => $r->created_at,
-                            'route' => route('admin.moderator_submissions.show', $r->id),
-                        ];
-                    })
-            )
             ->sortByDesc('created_at')
             ->values();
 
-        $b1Approved = StrategicPlanSubmission::query()
-            ->whereIn('target_school_year_id', $targetSyIds)
-            ->where('status', $approved)
-            ->get(['organization_id', 'target_school_year_id'])
-            ->map(fn ($r) => (int) $r->organization_id . '|' . (int) $r->target_school_year_id)
-            ->unique()
-            ->values();
+            $readyKeys = Organization::query()
+                ->whereIn('cluster_id', $user->clusters->pluck('id'))
+                ->get()
+                ->filter(function ($org) use ($targetSyIds) {
 
-        $b2Approved = PresidentRegistration::query()
-            ->whereIn('target_school_year_id', $targetSyIds)
-            ->where('status', $approved)
-            ->get(['organization_id', 'target_school_year_id'])
-            ->map(fn ($r) => (int) $r->organization_id . '|' . (int) $r->target_school_year_id)
-            ->unique()
-            ->values();
+                    foreach ($targetSyIds as $syId) {
 
-        $b3Approved = OfficerSubmission::query()
-            ->whereIn('target_school_year_id', $targetSyIds)
-            ->where('status', $approved)
-            ->get(['organization_id', 'target_school_year_id'])
-            ->map(fn ($r) => (int) $r->organization_id . '|' . (int) $r->target_school_year_id)
-            ->unique()
-            ->values();
+                        $b1 = StrategicPlanSubmission::where('organization_id', $org->id)
+                            ->where('target_school_year_id', $syId)
+                            ->latest()->first();
 
-        $b5Approved = ModeratorSubmission::query()
-            ->whereIn('target_school_year_id', $targetSyIds)
-            ->where('status', $approved)
-            ->get(['organization_id', 'target_school_year_id'])
-            ->map(fn ($r) => (int) $r->organization_id . '|' . (int) $r->target_school_year_id)
-            ->unique()
-            ->values();
+                        $b3 = OfficerSubmission::where('organization_id', $org->id)
+                            ->where('target_school_year_id', $syId)
+                            ->latest()->first();
 
-        $readyKeys = collect(array_values(array_intersect(
-            $b1Approved->toArray(),
-            $b2Approved->toArray(),
-            $b3Approved->toArray(),
-            $b5Approved->toArray()
-        )));
+                        $b5 = ModeratorSubmission::where('organization_id', $org->id)
+                            ->where('target_school_year_id', $syId)
+                            ->latest()->first();
+
+                        $b6 = \App\Models\OrgConstitutionSubmission::where('organization_id', $org->id)
+                            ->where('school_year_id', $syId)
+                            ->latest()->first();
+
+                        $presidentUser = \App\Models\OrgMembership::where('organization_id', $org->id)
+                            ->where('school_year_id', $syId)
+                            ->where('role', 'president')
+                            ->whereNull('archived_at')
+                            ->exists();
+
+                        $allApproved =
+                            in_array($b1?->status, ['approved_by_sacdev','approved'], true)
+                            && in_array($b3?->status, ['approved_by_sacdev','approved'], true)
+                            && $b5 !== null
+                            && $presidentUser
+                            && $b6 !== null;
+
+                        if ($allApproved) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                })
+                ->map(function ($org) use ($activeSyId) {
+                    return (int) $org->id . '|' . (int) $activeSyId;
+                })
+                ->values();
 
         $activatedKeys = collect(array_values(array_unique(
             DB::table('organization_school_years')
@@ -222,7 +183,7 @@ class AdminDashboardController extends Controller
                         ->whereIn('cluster_id', $user->clusters->pluck('id'))
                         ->first(),
                     'school_year' => SchoolYear::find($syId),
-                    'route' => route('rereg.hub', $orgId),
+                    'route' => route('admin.rereg.hub', $orgId),
                 ];
             })
             ->values()

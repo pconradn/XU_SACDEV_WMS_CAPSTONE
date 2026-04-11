@@ -42,9 +42,9 @@
             $currentUser = $current?->user;
             $isActivated = $currentUser ? ((int) ($currentUser->must_change_password ?? 0) === 0) : false;
 
-            // LOCK RULE: activated moderator + already has B5 for that SY
+       
             $hasB5 = (bool) ($hasB5ForCurrentModerator ?? false);
-            $isLocked = (bool) ($currentUser && $isActivated && $hasB5);
+            $isLocked = (bool) ($registered ?? false);
 
             $prefillName =
                 old('full_name')
@@ -115,21 +115,25 @@
                 {{ $current ? 'Change moderator for this target SY' : 'Assign moderator for this target SY' }}
             </div>
 
-            @if($isLocked)
-                <div class="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-900">
-                    <div class="font-semibold">Assignment Locked</div>
-                    <div class="mt-1 text-sm">
-                        The currently assigned moderator’s account is already activated, and a B5 submission already exists for this target school year.
-                        For audit and workflow integrity, you can no longer replace the moderator for this school year.
+                @if($isLocked)
+                    <div class="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-900">
+                        <div class="font-semibold">Assignment Locked</div>
+                        <div class="mt-1 text-sm">
+                            Moderator assignment is locked because the organization is already registered for this school year.
+                        </div>
                     </div>
-                </div>
-            @elseif($current)
-                <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 text-sm">
-                    You are about to replace the current moderator for this target SY.
-                    If the new moderator’s account is still <span class="font-semibold">not activated</span>, the system may generate a new temporary password.
-                    If the account is already activated, no new temporary password will be issued.
-                </div>
-            @endif
+                @elseif($current)
+                    <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 text-sm">
+                        You are about to replace the current moderator for this target SY.
+                        Any existing moderator submissions will be permanently deleted.
+                    </div>
+                @endif
+                @if($hasB5 && !$isLocked)
+                    <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-900 text-sm">
+                        Warning: This moderator already has submissions for this school year.
+                        Changing the moderator will delete those records.
+                    </div>
+                @endif
 
             <form method="POST"
                   action="{{ route('org.rereg.assign.moderator.store') }}"

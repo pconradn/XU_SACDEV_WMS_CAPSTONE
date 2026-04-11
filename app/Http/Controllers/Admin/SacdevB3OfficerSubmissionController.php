@@ -166,9 +166,10 @@ class SacdevB3OfficerSubmissionController extends Controller
                     'target_sy_id' => $syId,
                     'form'         => 'b3_officers_list',
                     'status'       => 'returned_by_sacdev',
-                    'action_url'   => route('org.rereg.b3.officers-list.edit'),
+                    'route'   => route('org.rereg.b3.officers-list.edit'),
                     'meta'         => ['submission_id' => $submissionId],
                 ]);
+                
             });
         });
 
@@ -569,7 +570,7 @@ class SacdevB3OfficerSubmissionController extends Controller
                             'form'   => 'b3_officer',
                             'status' => 'approved',
 
-                            'action_url' => route('org.rereg.b3.officers-list.edit'),
+                            'route' => route('org.rereg.b3.officers-list.edit'),
 
                             'send_mail' => true,
 
@@ -650,7 +651,7 @@ class SacdevB3OfficerSubmissionController extends Controller
                     'target_sy_id' => $syId,
                     'form'         => 'b3_officers_list',
                     'status'       => 'edit_granted',
-                    'action_url'   => route('org.rereg.b3.officers-list.edit'),
+                    'route'   => route('org.rereg.b3.officers-list.edit'),
                     'meta'         => ['submission_id' => $submissionId],
                 ]);
             });

@@ -101,6 +101,11 @@ class OfficerSubmissionItem extends Model
         return $this->major_officer_role === 'finance_officer';
     }
 
+    public function isAuditor(): bool
+    {
+        return $this->major_officer_role === 'auditor';
+    }
+
     /*
     |--------------------------------------------------------------------------
     | QPI Evaluation Helpers

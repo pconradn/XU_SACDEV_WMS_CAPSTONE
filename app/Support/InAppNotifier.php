@@ -28,7 +28,7 @@ class InAppNotifier
             ->first();
 
         if ($existing) {
-            // 🔥 UPDATE existing notification instead of skipping
+ 
             $data = is_array($existing->data)
                 ? $existing->data
                 : json_decode($existing->data, true);

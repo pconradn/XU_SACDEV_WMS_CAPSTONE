@@ -43,7 +43,12 @@ class FundsManager extends Component
         ]);
 
         $submission = \App\Models\StrategicPlanSubmission::with('fundSources')
-            ->findOrFail($this->submissionId);
+            ->find($this->submissionId);
+
+        if (! $submission) {
+            session()->flash('error', 'Please save your Strategic Plan first before adding funds.');
+            return;
+        }
 
         $submission->fundSources()->delete();
 
@@ -70,7 +75,8 @@ class FundsManager extends Component
             }
         }
 
-        session()->flash('status', 'Funds saved.');
+        session()->flash('success', 'Funds saved.');
+        return redirect()->to(request()->header('Referer'));
     }
 
 
@@ -200,7 +206,12 @@ class FundsManager extends Component
         ]);
 
         $submission = \App\Models\StrategicPlanSubmission::with('fundSources')
-            ->findOrFail($this->submissionId);
+            ->find($this->submissionId);
+
+        if (! $submission) {
+            session()->flash('error', 'Please save your Strategic Plan first before adding funds.');
+            return;
+        }
 
         $submission->fundSources()->delete();
 
@@ -227,7 +238,8 @@ class FundsManager extends Component
             }
         }
 
-        session()->flash('status', 'Funds saved.');
+        session()->flash('success', 'Funds saved.');
+        return redirect()->to(request()->header('Referer'));
     }
 
 }

@@ -132,6 +132,9 @@ Route::middleware(['auth','nocache'])->group(function () {
 
     Route::get('/notifications/{id}', [\App\Http\Controllers\NotificationController::class, 'show'])
         ->name('notifications.show');
+
+    Route::get('/notifications/{id}/go', [\App\Http\Controllers\NotificationController::class, 'go'])
+        ->name('notifications.go');
 });
 
 Route::get('/test-permission', function () {

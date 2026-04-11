@@ -174,12 +174,122 @@ class OrgDashboardController extends Controller
             ->where('target_school_year_id', $syId)
             ->first();
 
-        /*
-        |--------------------------------------------------------------------------
-        | B1 Strategic Plan
-        |--------------------------------------------------------------------------
-        */
-        if (!$sp || in_array($sp->status, ['draft', 'returned_by_moderator', 'returned_by_sacdev'])) {
+        $constitution = OrgConstitutionSubmission::where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->latest()
+            ->first();
+
+        $moderatorSubmission = ModeratorSubmission::where('organization_id', $orgId)
+            ->where('target_school_year_id', $syId)
+            ->first();
+
+        if ($isModerator && !$moderatorSubmission) {
+            $reregTasks->push((object)[
+                'category' => 'rereg',
+                'state' => 'required',
+                'form_name' => 'Submit Org Moderator Details',
+                'status' => 'not_submitted',
+                'link' => route('org.rereg.moderator.edit'),
+            ]);
+        }
+
+        $hasModerator = OrgMembership::where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->where('role', 'moderator')
+            ->whereNull('archived_at')
+            ->exists();
+
+        $presidentMembership = OrgMembership::where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->where('role', 'president')
+            ->whereNull('archived_at')
+            ->with('user.profile')
+            ->first();
+
+        $presidentUser = $presidentMembership?->user;
+        $presProfile = $presidentUser?->profile;
+
+        $isPresidentProfileComplete =
+            $presProfile
+            && $presProfile->first_name
+            && $presProfile->last_name
+            && $presProfile->birthday
+            && $presProfile->sex
+            && $presProfile->mobile_number
+            && $presProfile->email
+            && $presProfile->home_address
+            && $presProfile->city_address;
+
+        if ($isPresident && !$isPresidentProfileComplete) {
+            $reregTasks->push((object)[
+                'category' => 'rereg',
+                'state' => 'required',
+                'form_name' => 'Complete President Profile',
+                'status' => 'incomplete',
+                'link' => route('org.profile.edit'),
+            ]);
+        }
+
+        if ($isPresident && !$hasModerator) {
+            $reregTasks->push((object)[
+                'category' => 'rereg',
+                'state' => 'required',
+                'form_name' => 'Assign Moderator',
+                'status' => 'not_assigned',
+                'link' => route('org.rereg.assign.moderator.edit'),
+            ]);
+        }
+
+
+
+        if ($isModerator && $sp && $sp->status === 'submitted_to_moderator') {
+            $reregTasks->push((object)[
+                'category' => 'rereg',
+                'state' => 'required',
+                'form_name' => 'Review Strategic Plan',
+                'status' => $sp->status,
+                'link' => route('org.rereg.b1.edit'), 
+            ]);
+        }
+
+
+        $moderatorMembership = OrgMembership::where('organization_id', $orgId)
+                ->where('school_year_id', $syId)
+                ->where('role', 'moderator')
+                ->whereNull('archived_at')
+                ->with('user.profile')
+                ->first();
+
+            $moderatorUser = $moderatorMembership?->user;
+            $modProfile = $moderatorUser?->profile;
+
+            $isModeratorProfileComplete =
+                $modProfile
+                && $modProfile->first_name
+                && $modProfile->last_name
+                && $modProfile->birthday
+                && $modProfile->sex
+                && $modProfile->mobile_number
+                && $modProfile->email
+                && $modProfile->home_address
+                && $modProfile->city_address;
+
+            if ($isModerator && !$isModeratorProfileComplete) {
+                $reregTasks->push((object)[
+                    'category' => 'rereg',
+                    'state' => 'required',
+                    'form_name' => 'Complete Moderator Profile',
+                    'status' => 'incomplete',
+                    'link' => route('org.profile.edit'),
+                ]);
+            }
+                    
+        
+        
+                
+        if ($isPresident && (
+            !$sp || in_array($sp->status, ['draft', 'returned_by_moderator', 'returned_by_sacdev'])
+        ))  {
             $reregTasks->push((object)[
                 'category' => 'rereg',
                 'state' => 'required',
@@ -194,7 +304,9 @@ class OrgDashboardController extends Controller
         | B3 Officers
         |--------------------------------------------------------------------------
         */
-        if (!$officers || in_array($officers->status, ['draft', 'returned'])) {
+        if ($isPresident && (
+            !$officers || in_array($officers->status, ['draft', 'returned'])
+        )) {
             $reregTasks->push((object)[
                 'category' => 'rereg',
                 'state' => 'required',
@@ -204,9 +316,19 @@ class OrgDashboardController extends Controller
             ]);
         }
 
+        if ($isPresident && (
+            !$constitution || in_array($constitution->status, ['returned', 'draft'])
+        )) {
+            $reregTasks->push((object)[
+                'category' => 'rereg',
+                'state' => 'required',
+                'form_name' => 'Organization Constitution',
+                'status' => $constitution->status ?? 'not_started',
+                'link' => route('org.rereg.index'),
+            ]);
+        }
 
-
-        
+                
 
         if ($currentOrg) {
             foreach ($assignedProjects as $project) {
@@ -268,39 +390,7 @@ class OrgDashboardController extends Controller
                 }
             }
         }
-
-
-        if ($currentOrg) {
-
-            $orgId = $currentOrg->id;
-            $syId = $selectedSyId;
-
-            $hasModerator = OrgMembership::where('organization_id', $orgId)
-                ->where('school_year_id', $syId)
-                ->where('role', 'moderator')
-                ->whereNull('archived_at')
-                ->exists();
-
-            $sp = StrategicPlanSubmission::where('organization_id', $orgId)
-                ->where('target_school_year_id', $syId)
-                ->first();
-
-            $officers = OfficerSubmission::where('organization_id', $orgId)
-                ->where('target_school_year_id', $syId)
-                ->first();
-
-            $pres = PresidentRegistration::where('organization_id', $orgId)
-                ->where('target_school_year_id', $syId)
-                ->first();
-
-            $consti = OrgConstitutionSubmission::where('organization_id', $orgId)
-                ->where('school_year_id', $syId)
-                ->first();
-
-   
-
  
-        }      
 
  
         $assignedProjects = $assignedProjects->map(function ($project) use ($resolver) {

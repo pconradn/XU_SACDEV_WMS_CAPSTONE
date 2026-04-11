@@ -24,6 +24,30 @@ use Illuminate\Validation\ValidationException;
 class OrganizationPresidentController extends Controller
 {
 
+    public function checkStudentId(Request $request)
+    {
+        $request->validate([
+            'student_id_number' => ['required', 'string']
+        ]);
+
+        $email = $request->student_id_number . '@my.xu.edu.ph';
+
+        $user = \App\Models\User::query()
+            ->where('email', $email)
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'exists' => false
+            ]);
+        }
+
+        return response()->json([
+            'exists' => true,
+            'full_name' => $user->name
+        ]);
+    }
+
     public function index(Request $request)
     {
         $schoolYears = SchoolYear::query()

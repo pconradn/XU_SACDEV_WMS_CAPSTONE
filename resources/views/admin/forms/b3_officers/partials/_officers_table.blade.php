@@ -60,6 +60,7 @@
         <table class="min-w-full text-[11px] sm:text-xs">
 
             <thead class="bg-slate-50/90">
+                
                 <tr class="border-b border-slate-200 text-left font-semibold uppercase tracking-[0.12em] text-slate-500">
                     <th class="px-4 py-3">Officer</th>
                     <th class="px-4 py-3">Student ID</th>
@@ -69,6 +70,7 @@
                     <th class="px-4 py-3">Prev Inter</th>
                     <th class="px-4 py-3 text-center">Status</th>
                 </tr>
+
             </thead>
 
             <tbody class="divide-y divide-slate-100 bg-white">

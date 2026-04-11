@@ -141,7 +141,7 @@ abstract class BaseProjectDocumentController extends Controller
             'message' => $document->formType->name .
                 ' for project "' . $document->project->title . '" requires your approval.',
 
-            'action_url' => $this->resolveOrgDocumentRoute($document),
+            'route' => $this->resolveOrgDocumentRoute($document),
 
             'dedupe_key' => 'doc_'.$document->id.'_approval_queue',
 
@@ -184,7 +184,7 @@ abstract class BaseProjectDocumentController extends Controller
             'title' => 'Project Document Update',
             'message' => $message,
 
-            'action_url' => $this->resolveOrgDocumentRoute($document),
+            'route' => $this->resolveOrgDocumentRoute($document),
 
             'dedupe_key' => 'doc_'.$document->id.'_status_update',
 
