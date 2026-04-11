@@ -1,4 +1,4 @@
-<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm">
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm overflow-hidden">
 
     <div class="overflow-x-auto md:overflow-visible">
 

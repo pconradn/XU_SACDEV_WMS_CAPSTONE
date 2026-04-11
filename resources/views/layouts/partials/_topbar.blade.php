@@ -95,7 +95,7 @@
                             </svg>
 
                             @if($unreadCount > 0)
-                                <span class="absolute -top-1 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                                <span id="notif-count" class="absolute -top-1 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
                                     {{ $unreadCount > 99 ? '99+' : $unreadCount }}
                                 </span>
                             @endif
@@ -125,7 +125,7 @@
                         </a>
                     </div>
 
-                    <div class="max-h-76 overflow-y-auto">
+                    <div id="notif-list" class="max-h-76 overflow-y-auto">
                         @forelse($recentNotifications as $notification)
                             <a
                                 href="{{ route('notifications.go', $notification->id) }}"
@@ -152,7 +152,7 @@
                                 </div>
                             </a>
                         @empty
-                            <div class="px-4 py-8 text-center">
+                            <div id="notif-empty" class="px-4 py-8 text-center">
                                 <p class="text-xs font-medium text-slate-300">No notifications yet</p>
                                 <p class="mt-1 text-xs text-slate-500">You’re all caught up.</p>
                             </div>

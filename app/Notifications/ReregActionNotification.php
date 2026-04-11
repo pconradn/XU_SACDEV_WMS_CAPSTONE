@@ -3,11 +3,12 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
-class ReregActionNotification extends Notification implements ShouldQueue
+class ReregActionNotification extends Notification implements ShouldQueue, ShouldBroadcast
 {
     use Queueable;
 
@@ -17,9 +18,8 @@ class ReregActionNotification extends Notification implements ShouldQueue
 
     public function via($notifiable): array
     {
-        $channels = ['database'];
+        $channels = ['database', 'broadcast'];
 
-        
         if (!empty($this->payload['send_mail']) && $this->resolveEmail($notifiable)) {
             $channels[] = 'mail';
         }
@@ -90,5 +90,13 @@ class ReregActionNotification extends Notification implements ShouldQueue
         }
 
         return null;
+    }
+    public function toBroadcast($notifiable)
+    {
+        return new \Illuminate\Notifications\Messages\BroadcastMessage([
+            'title' => $this->payload['title'] ?? 'Update',
+            'message' => $this->payload['message'] ?? null,
+            'route' => $this->payload['route'] ?? null,
+        ]);
     }
 }

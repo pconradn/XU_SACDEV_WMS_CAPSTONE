@@ -245,6 +245,76 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    if (!window.Echo) {
+        console.log('Echo not loaded');
+        return;
+    }
+
+    const userId = {{ auth()->id() ?? 'null' }};
+    console.log('User ID:', userId);
+
+    if (!userId) return;
+
+    window.Echo.private(`App.Models.User.${userId}`)
+        .subscribed(() => {
+            console.log('Subscribed to private channel');
+        })
+        .error((err) => {
+            console.error('Channel error:', err);
+        })
+        .notification((notification) => {
+
+            console.log('REALTIME HIT:', notification);
+
+            const badge = document.getElementById('notif-count');
+
+            if (badge) {
+                let current = badge.innerText === '99+' ? 99 : parseInt(badge.innerText || 0);
+                badge.innerText = (current + 1) > 99 ? '99+' : current + 1;
+            }
+
+            const list = document.getElementById('notif-list');
+
+            if (list) {
+                const item = document.createElement('a');
+                item.className = "block border-b border-slate-800 px-4 py-3 hover:bg-slate-800/70 transition";
+
+                item.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <div class="mt-0.5 h-2.5 w-2.5 rounded-full bg-blue-400"></div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-medium text-slate-100">
+                                ${notification.title ?? 'Notification'}
+                            </p>
+                            ${notification.message ? `
+                                <p class="mt-1 text-xs text-slate-400">
+                                    ${notification.message}
+                                </p>
+                            ` : ''}
+                            <p class="mt-1 text-[10px] text-slate-500">
+                                just now
+                            </p>
+                        </div>
+                    </div>
+                `;
+
+                const empty = document.getElementById('notif-empty');
+                if (empty) empty.remove();
+
+                list.prepend(item);
+            }
+
+        });
+
+});
+</script>
+
 @stack('scripts')
 @livewireScripts
 </body>

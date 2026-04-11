@@ -16,11 +16,18 @@ class ClusterSeeder extends Seeder
             'Food and Agriculture',
             'Governance and Policy-Making',
             'Media and Arts',
-            'Natural Sciences, Engineering, and Technology',
+            'Engineering',
+            'BIOPHILIC',
+            'CHEMSOC',
+            'GDCS',
+            'AISSA',
+            'EXCEL',
+            'XCITES',
             'Program-based',
             'Service-learning',
             'Socio-cultural',
             'Sports and Recreation',
+            'Professional Organizations'
         ];
 
         $created = [];
