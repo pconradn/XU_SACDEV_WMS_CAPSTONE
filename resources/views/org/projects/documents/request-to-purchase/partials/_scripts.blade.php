@@ -24,60 +24,64 @@ function addPurchaseItemRow() {
     const index = table.querySelectorAll('tr').length;
 
     const row = `
-<tr>
+        <tr class="hover:bg-slate-50 transition">
 
-<td class="px-3 py-2">
-<input type="number"
-    name="items[${index}][quantity]"
-    oninput="updateAmount(this)"
-    class="w-full rounded border border-slate-200 px-2 py-1 text-sm">
-</td>
+            <td class="px-2 py-2">
+                <input type="number"
+                    name="items[${index}][quantity]"
+                    oninput="updateAmount(this)"
+                    placeholder="0"
+                    class="w-full rounded-lg px-2 py-1 text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+            </td>
 
-<td class="px-3 py-2">
-<input type="text"
-    name="items[${index}][unit]"
-    class="w-full rounded border border-slate-200 px-2 py-1 text-sm">
-</td>
+            <td class="px-2 py-2">
+                <input type="text"
+                    name="items[${index}][unit]"
+                    placeholder="pcs"
+                    class="w-full rounded-lg px-2 py-1 text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+            </td>
 
-<td class="px-3 py-2">
-<input type="text"
-    name="items[${index}][particulars]"
-    class="w-full rounded border border-slate-200 px-2 py-1 text-sm">
-</td>
+            <td class="px-2 py-2">
+                <input type="text"
+                    name="items[${index}][particulars]"
+                    placeholder="Item description"
+                    class="w-full rounded-lg px-2 py-1 text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+            </td>
 
-<td class="px-3 py-2">
-<input type="text"
-    name="items[${index}][unit_price]"
-    oninput="formatCurrencyInput(this); updateAmount(this)"
-    class="w-full rounded border border-slate-200 px-2 py-1 text-sm">
-</td>
+            <td class="px-2 py-2">
+                <input type="text"
+                    name="items[${index}][unit_price]"
+                    inputmode="decimal"
+                    oninput="formatCurrencyInput(this); updateAmount(this)"
+                    placeholder="0.00"
+                    class="w-full rounded-lg px-2 py-1 text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+            </td>
 
-<td class="px-3 py-2 bg-slate-50">
-<input type="text" readonly
-    class="w-full rounded border border-slate-200 px-2 py-1 text-sm amount-field">
-</td>
+            <td class="px-2 py-2">
+                <input type="text" readonly
+                    class="w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-sm amount-field font-medium">
+            </td>
 
-<td class="px-3 py-2">
-<input type="text"
-    name="items[${index}][vendor]"
-    class="w-full rounded border border-slate-200 px-2 py-1 text-sm">
-</td>
+            <td class="px-2 py-2">
+                <input type="text"
+                    name="items[${index}][vendor]"
+                    placeholder="Optional"
+                    class="w-full rounded-lg px-2 py-1 text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </td>
 
-<td class="px-3 py-2 text-center">
-<button type="button"
-    onclick="removePurchaseRow(this)"
-    class="text-rose-600 hover:text-rose-800 text-xs">
-    Remove
-</button>
-</td>
+            <td class="px-2 py-2 text-center">
+                <button type="button"
+                    onclick="removePurchaseRow(this)"
+                    class="text-rose-600 hover:text-rose-800 text-xs">
+                    Remove
+                </button>
+            </td>
 
-</tr>
-`;
+        </tr>
+    `;
 
     table.insertAdjacentHTML('beforeend', row);
 }
-
-
 // ================= REMOVE ROW =================
 function removePurchaseRow(button) {
 

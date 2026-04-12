@@ -97,11 +97,25 @@ class RequestToPurchaseController extends BaseProjectDocumentController
         $request->merge([
             'items' => $items->toArray(),
 
-            'xu_finance_amount' => str_replace(',', '', $request->xu_finance_amount),
-            'membership_fee_amount' => str_replace(',', '', $request->membership_fee_amount),
-            'pta_amount' => str_replace(',', '', $request->pta_amount),
-            'solicitations_amount' => str_replace(',', '', $request->solicitations_amount),
-            'others_amount' => str_replace(',', '', $request->others_amount),
+            'xu_finance_amount' => $request->xu_finance_amount !== null && $request->xu_finance_amount !== ''
+                ? (float) str_replace(',', '', $request->xu_finance_amount)
+                : 0,
+
+            'membership_fee_amount' => $request->membership_fee_amount !== null && $request->membership_fee_amount !== ''
+                ? (float) str_replace(',', '', $request->membership_fee_amount)
+                : 0,
+
+            'pta_amount' => $request->pta_amount !== null && $request->pta_amount !== ''
+                ? (float) str_replace(',', '', $request->pta_amount)
+                : 0,
+
+            'solicitations_amount' => $request->solicitations_amount !== null && $request->solicitations_amount !== ''
+                ? (float) str_replace(',', '', $request->solicitations_amount)
+                : 0,
+
+            'others_amount' => $request->others_amount !== null && $request->others_amount !== ''
+                ? (float) str_replace(',', '', $request->others_amount)
+                : 0,
         ]);
 
 
