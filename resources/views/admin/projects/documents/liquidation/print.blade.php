@@ -639,8 +639,8 @@ $report = $document->liquidationData
             ">
                  <span style="font-weight: 600">Balance</span>
                 <span style="font-size: 6px">
-                (Negative balance should be returned to the organization; 
-                if balance is positive, only up to 10% of the over-all budget is reimbursable): 
+                (Positive balance should be returned to the organization; 
+                if balance is negative, only up to 10% of the over-all budget is reimbursable): 
                 </span>
             </div>
 

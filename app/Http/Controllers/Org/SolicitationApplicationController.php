@@ -43,7 +43,7 @@ class SolicitationApplicationController extends BaseProjectDocumentController
         $currentSignature = $this->getCurrentSignature($document, $user->id);
 
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
-
+        $formCode = 'SOLICITATION_APPLICATION';
         return view('org.projects.documents.solicitation.create', [
             'project'          => $project,
             'document'         => $document,
@@ -51,6 +51,7 @@ class SolicitationApplicationController extends BaseProjectDocumentController
             'currentSignature' => $currentSignature,
             'isReadOnly'       => $isReadOnly,
             'isProjectHead'    => $isProjectHead,
+            'formCode' => $formCode,
             ...$roles
         ]);
     }

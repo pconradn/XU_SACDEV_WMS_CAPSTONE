@@ -60,7 +60,7 @@ class ProjectProposalController extends BaseProjectDocumentController
             'sourceStrategicPlanProject.deliverables',
             'sourceStrategicPlanProject.beneficiaries',
         ]);
-
+        $formCode = 'PROJECT_PROPOSAL';
         return view('org.projects.documents.project-proposal.create', [
             'project'          => $project,
             'document'         => $document,
@@ -69,6 +69,7 @@ class ProjectProposalController extends BaseProjectDocumentController
             'isReadOnly'       => $isReadOnly,
             'isProjectHead'    => $isProjectHead,
             'isAdmin'          => $isAdmin,
+            'formCode' => $formCode,
             ...$roles
         ]);
     }

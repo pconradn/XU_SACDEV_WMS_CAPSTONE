@@ -9,37 +9,57 @@ $colorMap = [
 @endphp
 
 
-<div class="">
+<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
 
-    {{-- SECTION HEADER --}}
-    <div class="px-5 py-3 flex items-center justify-between border-b border-slate-100 {{ $colorMap[$color] }}">
+    {{-- HEADER --}}
+    <div class="px-4 py-3 flex items-center justify-between border-b {{ $colorMap[$color] }}">
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 min-w-0">
 
-            <i data-lucide="{{ $icon }}" class="w-4 h-4"></i>
+            <div class="flex items-center justify-center w-7 h-7 rounded-lg border bg-white/60">
+                <i data-lucide="{{ $icon }}" class="w-3.5 h-3.5"></i>
+            </div>
 
-            <span class="text-xs font-semibold uppercase tracking-wide">
-                {{ $title }}
-            </span>
+            <div class="flex items-center gap-2 min-w-0">
 
-            <span class="text-[10px] bg-white/60 px-2 py-0.5 rounded-full">
-                {{ $items->count() }}
-            </span>
+                <span class="text-xs font-semibold uppercase tracking-wide">
+                    {{ $title }}
+                </span>
+
+                <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/70 border border-white/60 text-slate-600">
+                    {{ $items->count() }}
+                </span>
+
+            </div>
 
         </div>
 
     </div>
 
 
-    {{-- ROWS --}}
-    <div class="divide-y">
+    {{-- TABLE --}}
+    <div class="divide-y divide-slate-100">
 
-        @foreach($items as $form)
+        @forelse($items as $form)
             @include('admin.projects.documents.partials._documents-table-row', [
                 'form' => $form,
                 'color' => $color
             ])
-        @endforeach
+        @empty
+
+            <div class="px-4 py-6 text-center">
+
+                <div class="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                    <i data-lucide="inbox" class="w-4 h-4"></i>
+                </div>
+
+                <div class="text-xs font-medium text-slate-600">
+                    No records found
+                </div>
+
+            </div>
+
+        @endforelse
 
     </div>
 

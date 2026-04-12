@@ -603,8 +603,7 @@
                     </div>
 
                     <div style="font-size:11px; line-height:1.2;">
-                        Signature Over Printed Name<br>
-                        of Project Head
+                        Project Head
                     </div>
 
                     {{-- CONTACT --}}
@@ -648,7 +647,7 @@
 
                     {{-- TITLE --}}
                     <div style="font-size:11px; line-height:1.2;">
-                        COA Officer
+                        SACDEV Commission on Audit Officer
                     </div>
 
 

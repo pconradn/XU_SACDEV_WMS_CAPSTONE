@@ -30,11 +30,13 @@ class CombinedProposalController extends Controller
     {
         $proposalView = $this->proposalController->create($request, $project);
         $budgetView   = $this->budgetController->create($project);
+        $formCode = 'PROJECT_PROPOSAL';
 
         return view('org.projects.documents.combined.create', [
             'project'      => $project,
             'proposalData' => $proposalView->getData(),
             'budgetData'   => $budgetView->getData(),
+            'formCode' => $formCode,
         ]);
     }
 

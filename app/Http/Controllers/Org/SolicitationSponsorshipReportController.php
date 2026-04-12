@@ -56,7 +56,7 @@ class SolicitationSponsorshipReportController extends BaseProjectDocumentControl
         $currentSignature = $this->getCurrentSignature($document, $user->id);
 
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
-
+        $formCode = 'SOLICITATION_SPONSORSHIP_REPORT';
         return view(
             'org.projects.documents.solicitation-sponsorship-report.create',
             [
@@ -68,6 +68,7 @@ class SolicitationSponsorshipReportController extends BaseProjectDocumentControl
                 'isReadOnly' => $isReadOnly,
                 'isProjectHead' => $isProjectHead,
                 'isAdmin' => $isAdmin,
+                'formCode' => $formCode,
 
                 ...$roles
             ]

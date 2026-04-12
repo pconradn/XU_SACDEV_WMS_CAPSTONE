@@ -81,6 +81,77 @@
         {{-- RIGHT SIDE --}}
         <div class="flex shrink-0 items-center gap-2 sm:gap-3">
 
+
+
+
+            {{-- ADMIN SEARCH --}}
+            @if($isAdmin)
+            <div x-data="{ open: false }" class="relative shrink-0">
+
+                <button
+                    @click="open = !open"
+                    type="button"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-800/80 text-slate-300 transition hover:bg-slate-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-4.35-4.35m1.85-4.65a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+
+                <div
+                    x-show="open"
+                    x-transition.opacity
+                    @click.outside="open = false"
+                    class="fixed inset-x-0 top-0 z-[9999]"
+                    style="display: none;"
+                >
+                    <div class="bg-slate-950/80 backdrop-blur-md border-b border-slate-800 shadow-2xl">
+
+                        <form method="GET" action="{{ route('search.index') }}" class="max-w-3xl mx-auto px-4 py-4">
+
+                            <div class="flex items-center gap-3 rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 shadow-lg">
+
+                                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-4.35-4.35m1.85-4.65a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+
+                                <input
+                                    type="text"
+                                    name="q"
+                                    autofocus
+                                    placeholder="Search projects"
+                                    class="w-full bg-transparent text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none"
+                                >
+
+                                <button
+                                    type="submit"
+                                    class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 transition"
+                                >
+                                    Search
+                                </button>
+
+                                <button
+                                    type="button"
+                                    @click="open = false"
+                                    class="text-slate-500 hover:text-white transition"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+            @endif
+
             @auth
                 @if(!$isAdmin)
                     <div x-data="{ open: false }" class="relative shrink-0">

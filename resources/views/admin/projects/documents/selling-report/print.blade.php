@@ -522,8 +522,7 @@
                     </div>
 
                     <div style="font-size:11px; line-height:1.2;">
-                        Signature Over Printed Name<br>
-                        of Project Head
+                        Project Head
                     </div>
 
                     {{-- CONTACT --}}
@@ -552,8 +551,7 @@
                     </div>
 
                     <div style="font-size:11px; line-height:1.2;">
-                        Signature Over Printed Name<br>
-                        of President
+                        President
                     </div>
 
                 </div>
@@ -577,8 +575,7 @@
                     </div>
 
                     <div style="font-size:11px; line-height:1.2;">
-                        Signature Over Printed Name<br>
-                        of Moderator
+                        Moderator
                     </div>
 
                 </div>
@@ -626,7 +623,7 @@
 
                     {{-- TITLE --}}
                     <div style="font-size:11px; line-height:1.2;">
-                        Student Activities and Leadership Development Head
+                        SACDEV Commission on Audit Officer
                     </div>
 
                 </div>

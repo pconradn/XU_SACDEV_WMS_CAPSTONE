@@ -53,7 +53,7 @@ class TicketSellingReportController extends BaseProjectDocumentController
         $currentSignature = $this->getCurrentSignature($document, $user->id);
 
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
-
+        $formCode = 'TICKET_SELLING_REPORT';
         return view('org.projects.documents.ticket-selling-report.create', [
 
             'project' => $project,
@@ -64,6 +64,7 @@ class TicketSellingReportController extends BaseProjectDocumentController
             'isReadOnly' => $isReadOnly,
             'isProjectHead' => $isProjectHead,
             'isAdmin' => $isAdmin,
+            'formCode' => $formCode,
 
             ...$roles
 

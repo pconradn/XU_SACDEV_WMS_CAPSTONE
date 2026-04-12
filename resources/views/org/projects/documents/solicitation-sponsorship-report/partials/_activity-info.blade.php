@@ -1,19 +1,24 @@
-<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm overflow-hidden">
 
     <div class="h-1 bg-blue-500"></div>
 
-    <div class="p-5 space-y-6">
+    <div class="p-4 space-y-6">
 
-        <div>
-            <h3 class="text-sm font-semibold text-slate-900">
-                Solicitation Activity Information
-            </h3>
-            <p class="text-xs text-blue-700">
-                Provide details about the activity where solicitation was conducted, including purpose, duration, and financial summary.
-            </p>
+        {{-- HEADER --}}
+        <div class="flex items-start gap-3">
+            <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center">
+                <i data-lucide="file-text" class="w-4 h-4 text-blue-600"></i>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-semibold text-slate-900 tracking-wide">
+                    Solicitation Activity Information
+                </h3>
+                <p class="text-xs text-blue-700 mt-1">
+                    Provide details about the activity where solicitation was conducted, including purpose, duration, and financial summary.
+                </p>
+            </div>
         </div>
-
-
 
         @php
             $application = $project->documents?->where('form_type_id', 4)->first()->solicitationData;
@@ -24,12 +29,14 @@
             $letters = old('approved_letters_distributed', $data->approved_letters_distributed ?? '');
         @endphp
 
-        <div class="border border-slate-200 rounded-xl p-4 space-y-5">
+        {{-- CONTENT --}}
+        <div class="rounded-xl border border-slate-200 bg-white p-4 space-y-5 hover:bg-slate-50 transition">
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
+                {{-- NAME --}}
                 <div class="md:col-span-2">
-                    <label class="block text-xs font-medium text-slate-600 mb-1">
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">
                         Name of Activity
                     </label>
 
@@ -38,31 +45,33 @@
                         name="activity_name"
                         value="{{ $activityName }}"
                         placeholder="Enter activity name"
-                        class="w-full rounded-lg px-3 py-2 text-sm
+                        class="w-full rounded-lg px-3 py-2 text-xs
                             {{ $errors->has('activity_name')
                                 ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500'
                                 : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
                             focus:ring-2 focus:outline-none transition">
                 </div>
 
+                {{-- PURPOSE --}}
                 <div class="md:col-span-2">
-                    <label class="block text-xs font-medium text-slate-600 mb-1">
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">
                         Purpose of Solicitation
                     </label>
 
                     <textarea
                         name="purpose"
-                        rows="4"
+                        rows="3"
                         placeholder="Explain purpose (e.g., fundraising, support for project expenses)"
-                        class="w-full rounded-lg px-3 py-2 text-sm
+                        class="w-full rounded-lg px-3 py-2 text-xs
                             {{ $errors->has('purpose')
                                 ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500'
                                 : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
                             focus:ring-2 focus:outline-none transition">{{ $purpose }}</textarea>
                 </div>
 
+                {{-- DATES --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">
                         Solicitation From
                     </label>
 
@@ -70,7 +79,7 @@
                         type="date"
                         name="solicitation_from"
                         value="{{ $from }}"
-                        class="w-full rounded-lg px-3 py-2 text-sm
+                        class="w-full rounded-lg px-3 py-2 text-xs
                             {{ $errors->has('solicitation_from')
                                 ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500'
                                 : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
@@ -78,7 +87,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">
                         Solicitation To
                     </label>
 
@@ -86,15 +95,16 @@
                         type="date"
                         name="solicitation_to"
                         value="{{ $to }}"
-                        class="w-full rounded-lg px-3 py-2 text-sm
+                        class="w-full rounded-lg px-3 py-2 text-xs
                             {{ $errors->has('solicitation_to')
                                 ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500'
                                 : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
                             focus:ring-2 focus:outline-none transition">
                 </div>
 
+                {{-- LETTERS --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">
                         Approved Letters Distributed
                     </label>
 
@@ -103,15 +113,16 @@
                         name="approved_letters_distributed"
                         value="{{ $letters }}"
                         placeholder="Enter number"
-                        class="w-full rounded-lg px-3 py-2 text-sm
+                        class="w-full rounded-lg px-3 py-2 text-xs
                             {{ $errors->has('approved_letters_distributed')
                                 ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500'
                                 : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
                             focus:ring-2 focus:outline-none transition">
                 </div>
 
+                {{-- TOTAL --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">
                         Total Amount Raised (₱)
                     </label>
 
@@ -119,7 +130,7 @@
                         type="text"
                         id="totalAmountRaised"
                         readonly
-                        class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium">
+                        class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-right">
                 </div>
 
             </div>

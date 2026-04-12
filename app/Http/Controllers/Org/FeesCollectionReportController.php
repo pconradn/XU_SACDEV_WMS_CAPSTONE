@@ -52,7 +52,7 @@ class FeesCollectionReportController extends BaseProjectDocumentController
         $currentSignature = $this->getCurrentSignature($document, $user->id);
 
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
-
+        $formCode = 'FEES_COLLECTION_REPORT';
         return view('org.projects.documents.fees-collection.create', [
 
             'project' => $project,
@@ -63,6 +63,7 @@ class FeesCollectionReportController extends BaseProjectDocumentController
             'isReadOnly' => $isReadOnly,
             'isProjectHead' => $isProjectHead,
             'isAdmin' => $isAdmin,
+            'formCode' => $formCode,
 
             ...$roles
 

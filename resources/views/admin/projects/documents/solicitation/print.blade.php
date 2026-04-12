@@ -738,8 +738,7 @@
                     </div>
 
                     <div style="font-size:11px; line-height:1.2;">
-                        Signature Over Printed Name<br>
-                        of Project Head
+                        Project Head
                     </div>
 
                     {{-- CONTACT --}}
@@ -765,8 +764,7 @@
                     </div>
 
                     <div style="font-size:11px; line-height:1.2;">
-                        Signature Over Printed Name<br>
-                        of President
+                        President
                     </div>
 
                 </div>
@@ -787,8 +785,7 @@
                     </div>
 
                     <div style="font-size:11px; line-height:1.2;">
-                        Signature Over Printed Name<br>
-                        of Moderator
+                        Moderator
                     </div>
 
                 </div>

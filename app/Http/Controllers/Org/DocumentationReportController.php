@@ -24,7 +24,7 @@ class DocumentationReportController extends BaseProjectDocumentController
     public function create(Request $request, Project $project)
     {
         $document = $this->getDocument($project, 'DOCUMENTATION_REPORT');
-
+        $formCode = 'DOCUMENTATION_REPORT';
         if ($document) {
             $document->load([
                 'documentationReport.objectives',
@@ -32,6 +32,7 @@ class DocumentationReportController extends BaseProjectDocumentController
                 'documentationReport.partners',
                 'documentationReport.attendees',
                 'signatures',
+                
             ]);
         }
 
@@ -65,6 +66,7 @@ class DocumentationReportController extends BaseProjectDocumentController
             'currentSignature' => $currentSignature,
             'isReadOnly' => $isReadOnly,
             'isProjectHead' => $isProjectHead,
+            'formCode' => $formCode,
             ...$roles
         ]);
     }

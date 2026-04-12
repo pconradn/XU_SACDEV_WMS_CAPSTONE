@@ -39,6 +39,7 @@ class ActivityNoticeController extends BaseProjectDocumentController
             'form_type_id' => $formType->id,
             'created_by_user_id' => auth()->id(),
             'status' => 'draft'
+            
         ]);
 
         return redirect()->route(

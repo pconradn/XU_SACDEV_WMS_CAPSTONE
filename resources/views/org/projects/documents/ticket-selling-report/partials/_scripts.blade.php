@@ -38,65 +38,73 @@ function getNextIndex() {
 // ================= ADD ROW =================
 function addTicketRow() {
 
-    const table = getTicketTable();
+    const table = document.getElementById('ticketItemsTable');
     if (!table) return;
 
-    const index = getNextIndex();
+    const index = table.querySelectorAll('tr').length;
+
+    const isReadOnly = @json($isReadOnly);
 
     const row = `
-<tr class="border-b border-slate-300 hover:bg-slate-50 transition">
+        <tr class="hover:bg-slate-50 transition">
 
-<td class="border border-slate-300 px-2 py-2">
-<input type="number"
-    name="items[${index}][quantity]"
-    placeholder="0"
-    oninput="updateTicketAmount(this)"
-    class="w-full px-2 py-1 text-sm text-center border-0 bg-transparent">
-</td>
+            <td class="px-2 py-2 border">
+                <input type="number"
+                    name="items[${index}][quantity]"
+                    placeholder="0"
+                    oninput="updateTicketAmount(this)"
+                    class="w-full text-center text-xs border-0 bg-transparent focus:ring-0"
+                    ${isReadOnly ? 'disabled' : ''}>
+            </td>
 
-<td class="border border-slate-300 px-2 py-2">
-<input type="text"
-    name="items[${index}][series_control_numbers]"
-    placeholder="e.g. 001–100"
-    class="w-full px-2 py-1 text-sm border-0 bg-transparent">
-</td>
+            <td class="px-2 py-2 border">
+                <input type="text"
+                    name="items[${index}][series_control_numbers]"
+                    placeholder="e.g. 001–100"
+                    class="w-full text-xs border-0 bg-transparent focus:ring-0"
+                    ${isReadOnly ? 'disabled' : ''}>
+            </td>
 
-<td class="border border-slate-300 px-2 py-2">
-<input type="text"
-    name="items[${index}][price_per_ticket]"
-    placeholder="0.00"
-    oninput="formatCurrencyInput(this); updateTicketAmount(this)"
-    class="w-full px-2 py-1 text-sm text-right border-0 bg-transparent">
-</td>
+            <td class="px-2 py-2 border">
+                <input type="text"
+                    name="items[${index}][price_per_ticket]"
+                    placeholder="0.00"
+                    oninput="formatCurrencyInput(this); updateTicketAmount(this)"
+                    class="w-full text-right text-xs border-0 bg-transparent focus:ring-0"
+                    ${isReadOnly ? 'disabled' : ''}>
+            </td>
 
-<td class="border border-slate-300 px-2 py-2 bg-slate-50">
-<input type="text"
-    readonly
-    class="w-full px-2 py-1 text-sm text-right font-semibold border-0 bg-transparent ticket-amount-field">
-</td>
+            <td class="px-2 py-2 border bg-slate-50">
+                <input type="text"
+                    readonly
+                    class="w-full text-right text-xs font-semibold border-0 bg-transparent ticket-amount-field">
+            </td>
 
-<td class="border border-slate-300 px-2 py-2">
-<input type="text"
-    name="items[${index}][remarks]"
-    placeholder="Optional"
-    class="w-full px-2 py-1 text-sm border-0 bg-transparent">
-</td>
+            <td class="px-2 py-2 border">
+                <input type="text"
+                    name="items[${index}][remarks]"
+                    placeholder="Optional"
+                    class="w-full text-xs border-0 bg-transparent focus:ring-0"
+                    ${isReadOnly ? 'disabled' : ''}>
+            </td>
 
-<td class="border border-slate-300 px-2 py-2 text-center">
-<button type="button"
-    onclick="removeTicketRow(this)"
-    class="text-xs text-rose-600 hover:text-rose-800 font-medium">
-    Remove
-</button>
-</td>
+            ${!isReadOnly ? `
+            <td class="px-2 py-2 border text-center">
+                <button type="button"
+                    onclick="this.closest('tr').remove(); updateTicketTotal();"
+                    class="text-rose-600 hover:text-rose-800 transition text-xs">
+                    Remove
+                </button>
+            </td>
+            ` : ''}
 
-</tr>
-`;
+        </tr>
+    `;
 
     table.insertAdjacentHTML('beforeend', row);
 
+    updateTicketTotal();
 }
-
 
 // ================= REMOVE ROW =================
 function removeTicketRow(button) {

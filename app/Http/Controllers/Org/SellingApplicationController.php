@@ -57,7 +57,7 @@ class SellingApplicationController extends BaseProjectDocumentController
         $currentSignature = $this->getCurrentSignature($document, $user->id);
 
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
-
+        $formCode = 'SELLING_APPLICATION';
         return view('org.projects.documents.selling.create', [
 
             'project' => $project,
@@ -68,6 +68,7 @@ class SellingApplicationController extends BaseProjectDocumentController
             'isReadOnly' => $isReadOnly,
             'isProjectHead' => $isProjectHead,
             'isAdmin' => $isAdmin,
+            'formCode' => $formCode,
 
             ...$roles
 

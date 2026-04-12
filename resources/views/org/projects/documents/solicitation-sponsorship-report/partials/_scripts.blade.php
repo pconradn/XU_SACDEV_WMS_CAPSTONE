@@ -43,51 +43,55 @@ function addSolicitationRow() {
     const index = getNextIndex();
 
     const row = `
-<tr class="hover:bg-slate-50">
+        <tr class="hover:bg-slate-50 transition">
 
-<td class="px-3 py-2">
-<input type="text"
-    name="items[${index}][control_number]"
-    value="${generateControlNumber(index)}"
-    class="w-full rounded-md border border-slate-300 px-2 py-1 text-sm">
-</td>
+        <td class="px-2 py-2">
+        <input type="text"
+            name="items[${index}][control_number]"
+            value="${generateControlNumber(index)}"
+            placeholder="SOL-001"
+            class="w-full rounded-lg px-2 py-1 text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+        </td>
 
-<td class="px-3 py-2">
-<input type="text"
-    name="items[${index}][person_in_charge]"
-    class="w-full rounded-md border border-slate-300 px-2 py-1 text-sm">
-</td>
+        <td class="px-2 py-2">
+        <input type="text"
+            name="items[${index}][person_in_charge]"
+            placeholder="Assigned officer"
+            class="w-full rounded-lg px-2 py-1 text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+        </td>
 
-<td class="px-3 py-2">
-<input type="text"
-    name="items[${index}][recipient]"
-    class="w-full rounded-md border border-slate-300 px-2 py-1 text-sm">
-</td>
+        <td class="px-2 py-2">
+        <input type="text"
+            name="items[${index}][recipient]"
+            placeholder="Sponsor / Donor"
+            class="w-full rounded-lg px-2 py-1 text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+        </td>
 
-<td class="px-3 py-2">
-<input type="text"
-    name="items[${index}][amount_given]"
-    placeholder="0.00"
-    oninput="formatCurrencyInput(this); updateTotalRaised()"
-    class="w-full text-right rounded-md border border-slate-300 px-2 py-1 text-sm">
-</td>
+        <td class="px-2 py-2">
+        <input type="text"
+            name="items[${index}][amount_given]"
+            placeholder="0.00"
+            oninput="formatCurrencyInput(this); updateTotalRaised()"
+            class="w-full text-right rounded-lg px-2 py-1 text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+        </td>
 
-<td class="px-3 py-2">
-<input type="text"
-    name="items[${index}][remarks]"
-    class="w-full rounded-md border border-slate-300 px-2 py-1 text-sm">
-</td>
+        <td class="px-2 py-2">
+        <input type="text"
+            name="items[${index}][remarks]"
+            placeholder="Optional"
+            class="w-full rounded-lg px-2 py-1 text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </td>
 
-<td class="px-3 py-2 text-center">
-<button type="button"
-    onclick="removeSolicitationRow(this)"
-    class="text-rose-600 hover:text-rose-800 text-xs font-medium">
-    Remove
-</button>
-</td>
+        <td class="px-2 py-2 text-center">
+        <button type="button"
+            onclick="removeSolicitationRow(this)"
+            class="text-rose-600 hover:text-rose-800 text-xs font-medium">
+            Remove
+        </button>
+        </td>
 
-</tr>
-`;
+        </tr>
+        `;
 
     table.insertAdjacentHTML('beforeend', row);
 

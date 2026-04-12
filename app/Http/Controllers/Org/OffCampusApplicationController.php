@@ -56,7 +56,7 @@ class OffCampusApplicationController extends BaseProjectDocumentController
         $currentSignature = $this->getCurrentSignature($document, $user->id);
 
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
-
+        $formCode = 'OFF_CAMPUS_APPLICATION';
         return view('org.projects.documents.off-campus.create', [
             'project'          => $project,
             'document'         => $document,
@@ -65,6 +65,7 @@ class OffCampusApplicationController extends BaseProjectDocumentController
             'currentSignature' => $currentSignature,
             'isReadOnly'       => $isReadOnly,
             'isProjectHead'    => $isProjectHead,
+            'formCode' => $formCode,
             ...$roles
         ]);
     }

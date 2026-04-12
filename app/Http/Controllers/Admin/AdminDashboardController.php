@@ -19,7 +19,11 @@ class AdminDashboardController extends Controller
     public function index()
     {
         $user = auth()->user();
+        
         $user->load('clusters');
+        $isCoa = (bool) $user->is_coa_officer;
+        $clusterIds = $user->clusters->pluck('id');
+        $hasCluster = $user->clusters->isNotEmpty() || $user->cluster_id !== null;
         
         $activeSy = SchoolYear::activeYear();
         $activeSyId = $activeSy?->id;
@@ -45,8 +49,18 @@ class AdminDashboardController extends Controller
                     ->with('organization')
                     ->whereIn('target_school_year_id', $targetSyIds)
                     ->whereIn('status', $actionable)
-                    ->whereHas('organization', function ($q) use ($user) {
-                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    ->whereHas('organization', function ($q) use ($user, $isCoa, $clusterIds, $hasCluster) {
+                        $q->when(!$isCoa, function ($q) use ($clusterIds, $user, $hasCluster) {
+
+                        if ($clusterIds->isNotEmpty()) {
+                            $q->whereIn('cluster_id', $clusterIds);
+                        } elseif ($user->cluster_id) {
+                            $q->where('cluster_id', $user->cluster_id);
+                        } else {
+                            $q->whereRaw('1 = 0'); // return EMPTY safely
+                        }
+
+                    });
                     })
                     ->get()
                     ->map(function ($r) {
@@ -67,8 +81,18 @@ class AdminDashboardController extends Controller
                     ->with('organization')
                     ->whereIn('target_school_year_id', $targetSyIds)
                     ->whereIn('status', $actionable)
-                    ->whereHas('organization', function ($q) use ($user) {
-                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    ->whereHas('organization', function ($q) use ($user, $isCoa, $clusterIds, $hasCluster) {
+                        $q->when(!$isCoa, function ($q) use ($clusterIds, $user, $hasCluster) {
+
+                            if ($clusterIds->isNotEmpty()) {
+                                $q->whereIn('cluster_id', $clusterIds);
+                            } elseif ($user->cluster_id) {
+                                $q->where('cluster_id', $user->cluster_id);
+                            } else {
+                                $q->whereRaw('1 = 0'); // return EMPTY safely
+                            }
+
+                        });
                     })
                     ->get()
                     ->map(function ($r) {
@@ -89,8 +113,18 @@ class AdminDashboardController extends Controller
                     ->with('organization')
                     ->whereIn('target_school_year_id', $targetSyIds)
                     ->where('edit_requested', true)
-                    ->whereHas('organization', function ($q) use ($user) {
-                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    ->whereHas('organization', function ($q) use ($user, $isCoa, $clusterIds, $hasCluster) {
+                        $q->when(!$isCoa, function ($q) use ($clusterIds, $user, $hasCluster) {
+
+                            if ($clusterIds->isNotEmpty()) {
+                                $q->whereIn('cluster_id', $clusterIds);
+                            } elseif ($user->cluster_id) {
+                                $q->where('cluster_id', $user->cluster_id);
+                            } else {
+                                $q->whereRaw('1 = 0'); // return EMPTY safely
+                            }
+
+                        });
                     })
                     ->get()
                     ->map(function ($r) {
@@ -116,7 +150,17 @@ class AdminDashboardController extends Controller
             ->values();
 
             $readyKeys = Organization::query()
-                ->whereIn('cluster_id', $user->clusters->pluck('id'))
+                ->when(!$isCoa, function ($q) use ($clusterIds, $user, $hasCluster) {
+
+                        if ($clusterIds->isNotEmpty()) {
+                            $q->whereIn('cluster_id', $clusterIds);
+                        } elseif ($user->cluster_id) {
+                            $q->where('cluster_id', $user->cluster_id);
+                        } else {
+                            $q->whereRaw('1 = 0'); // return EMPTY safely
+                        }
+
+                    })
                 ->get()
                 ->filter(function ($org) use ($targetSyIds) {
 
@@ -171,8 +215,8 @@ class AdminDashboardController extends Controller
         )));
 
             $readyForActivation = $readyKeys
-                ->diff($activatedKeys)
-                ->map(function ($key) use ($user) {
+                ->filter(fn ($key) => !$activatedKeys->contains($key))
+                ->map(function ($key) use ($user, $isCoa, $clusterIds) {
                 
                 [$orgId, $syId] = explode('|', $key);
 
@@ -180,7 +224,17 @@ class AdminDashboardController extends Controller
                     'organization_id' => (int) $orgId,
                     'school_year_id' => (int) $syId,
                     'organization' => Organization::where('id', $orgId)
-                        ->whereIn('cluster_id', $user->clusters->pluck('id'))
+                        ->when(!$isCoa, function ($q) use ($clusterIds, $user) {
+
+                            if ($clusterIds->isNotEmpty()) {
+                                $q->whereIn('cluster_id', $clusterIds);
+                            } elseif ($user->cluster_id) {
+                                $q->where('cluster_id', $user->cluster_id);
+                            } else {
+                                $q->whereRaw('1 = 0'); // return EMPTY safely
+                            }
+
+                        })
                         ->first(),
                     'school_year' => SchoolYear::find($syId),
                     'route' => route('admin.rereg.hub', $orgId),
@@ -197,18 +251,30 @@ class AdminDashboardController extends Controller
                     'formType',
                     'signatures',
                 ])
-                ->whereHas('project', function ($q) use ($activeSyId, $user) {
+                ->whereHas('project', function ($q) use ($activeSyId, $user, $isCoa, $clusterIds) {
+
                     if ($activeSyId) {
                         $q->where('school_year_id', $activeSyId);
                     }
 
                     $q->where('workflow_status', '!=', 'cancelled');
 
-                    $q->whereHas('organization', function ($org) use ($user) {
-                        if ($user->clusters->isNotEmpty()) {
-                            $org->whereIn('cluster_id', $user->clusters->pluck('id'));
-                        }
+                    $q->whereHas('organization', function ($org) use ($user, $isCoa, $clusterIds) {
+
+                        $org->when(!$isCoa, function ($q) use ($clusterIds, $user) {
+
+                            if ($clusterIds->isNotEmpty()) {
+                                $q->whereIn('cluster_id', $clusterIds);
+                            } elseif ($user->cluster_id) {
+                                $q->where('cluster_id', $user->cluster_id);
+                            } else {
+                                $q->whereRaw('1 = 0');
+                            }
+
+                        });
+
                     });
+
                 })
                 ->get()
                 //->tap(fn($docs) => dd($docs->count()))
@@ -258,14 +324,24 @@ class AdminDashboardController extends Controller
 
             $resolver = app(ProjectFormRequirementResolver::class);
 
-        $projectsReadyForCompletion = Project::with([
-                'documents.formType'
-            ])
-            ->where('school_year_id', $activeSyId)
-            ->where('workflow_status', '!=', 'completed')
-            ->where('workflow_status', '!=', 'cancelled')
-            ->whereHas('organization', function ($q) use ($user) {
-                $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+            $projectsReadyForCompletion = Project::with([
+                    'documents.formType'
+                ])
+                ->where('school_year_id', $activeSyId)
+                ->where('workflow_status', '!=', 'completed')
+                ->where('workflow_status', '!=', 'cancelled')
+                ->whereHas('organization', function ($q) use ($user, $isCoa, $clusterIds, $hasCluster) {
+                    $q->when(!$isCoa, function ($q) use ($clusterIds, $user, $hasCluster) {
+
+                        if ($clusterIds->isNotEmpty()) {
+                            $q->whereIn('cluster_id', $clusterIds);
+                        } elseif ($user->cluster_id) {
+                            $q->where('cluster_id', $user->cluster_id);
+                        } else {
+                            $q->whereRaw('1 = 0'); // return EMPTY safely
+                        }
+
+                    });
             })
             ->get()
             ->filter(function ($project) use ($resolver, &$debug) {
@@ -310,12 +386,49 @@ class AdminDashboardController extends Controller
             })
             ->values();
 
+            if ($isCoa) {
+                return view('admin.dashboard', [
+                    'activeSy' => $activeSy,
+
+                    'projectApprovals' => $projectApprovals,
+                    'projectApprovalsCount' => $projectApprovals->count(),
+
+                    'pendingCases' => collect(),
+                    'pendingCaseCount' => 0,
+
+                    'readyForActivation' => collect(),
+                    'readyForActivationCount' => 0,
+
+                    'projectsReadyForCompletion' => collect(),
+                    'projectsReadyForCompletionCount' => 0,
+
+                    'calendarProjects' => collect(),
+
+                    'preImplementationCompleteCount' => 0,
+                    'upcomingProjectsCount' => 0,
+                    'offCampusProjectsCount' => 0,
+                    'activatedOrgCount' => 0,
+                    'completedProjectsCount' => 0,
+                ]);
+            }
+
+
 
             $projectsForClearanceReview = Project::with('organization')
                     ->where('school_year_id', $activeSyId)
                     ->where('clearance_status', 'uploaded')
-                    ->whereHas('organization', function ($q) use ($user) {
-                        $q->whereIn('cluster_id', $user->clusters->pluck('id'));
+                    ->whereHas('organization', function ($q) use ($user, $isCoa, $clusterIds, $hasCluster) {
+                        $q->when(!$isCoa, function ($q) use ($clusterIds, $user, $hasCluster) {
+
+                            if ($clusterIds->isNotEmpty()) {
+                                $q->whereIn('cluster_id', $clusterIds);
+                            } elseif ($user->cluster_id) {
+                                $q->where('cluster_id', $user->cluster_id);
+                            } else {
+                                $q->whereRaw('1 = 0'); // return EMPTY safely
+                            }
+
+                        });
                     })
                     ->get()
                     ->map(function ($project) {
@@ -346,6 +459,8 @@ class AdminDashboardController extends Controller
                 ->merge(collect($projectsForClearanceReview))
                 ->sortByDesc(fn ($item) => $item->project->updated_at ?? now())
                 ->values();
+
+
 
 
             $calendarProjects = Project::query()
@@ -411,7 +526,6 @@ class AdminDashboardController extends Controller
                 ->sortByDesc('created_at')
                 ->values();
 
-
             return view('admin.dashboard', [
                 'activeSy' => $activeSy,
                 'orgCount' => Organization::count(),
@@ -425,6 +539,8 @@ class AdminDashboardController extends Controller
 
                 'readyForActivation' => $readyForActivation,
                 'projectApprovals' => $projectApprovals,
+
+                
                 'calendarProjects' => $calendarProjects,
 
                 'preImplementationCompleteCount' => $preImplementationCompleteCount,
@@ -433,19 +549,7 @@ class AdminDashboardController extends Controller
                 'activatedOrgCount' => $activatedOrgCount,
                 'completedProjectsCount' => $completedProjectsCount,
 
-
-
-
         ]);
-
-
-
-
-
-
-
-
-
 
     }
 

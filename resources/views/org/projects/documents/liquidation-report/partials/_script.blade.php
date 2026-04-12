@@ -267,11 +267,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     particulars: inputs[0]?.value || '',
                     amount: inputs[1]?.value || '',
                     section: inputs[2]?.value || 'Others'
+                    
                 });
             });
 
             receipts.push({
-                type: receiptType.value || '',
+                type: receiptType.value ? receiptType.value : null,
                 ref: receiptRef.value || '',
                 desc: receiptDesc.value || '',
                 date: receiptDate.value || '',
@@ -301,6 +302,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!receipt) return;
 
                 receiptType.value = receipt.type || '';
+
+                    if (receipt.type && receiptType.value !== receipt.type) {
+                        const option = [...receiptType.options].find(opt => opt.value === receipt.type);
+                        if (option) {
+                            option.selected = true;
+                        }
+                    }
                 receiptRef.value = receipt.ref || '';
                 receiptDesc.value = receipt.desc || '';
                 receiptDate.value = receipt.date || '';

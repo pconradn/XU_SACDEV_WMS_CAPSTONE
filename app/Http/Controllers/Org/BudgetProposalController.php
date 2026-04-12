@@ -44,6 +44,7 @@ class BudgetProposalController extends BaseProjectDocumentController
 
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
 
+        $formCode = 'BUDGET_PROPOSAL';
         $document = ProjectDocument::with('signatures.user')
             ->where('project_id', $project->id)
             ->where('form_type_id', 2)
@@ -57,6 +58,7 @@ class BudgetProposalController extends BaseProjectDocumentController
             'isReadOnly'       => $isReadOnly,
             'isProjectHead'    => $isProjectHead,
             'isAdmin' => false,
+            'formCode' => $formCode,
             ...$roles
         ]);
     }

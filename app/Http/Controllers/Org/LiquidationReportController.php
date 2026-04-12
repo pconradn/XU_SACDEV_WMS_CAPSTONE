@@ -31,7 +31,7 @@ class LiquidationReportController extends BaseProjectDocumentController
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
 
         $isAdmin = 'false';
-
+        $formCode = 'LIQUIDATION_REPORT';
         return view('org.projects.documents.liquidation-report.create', [
             'project' => $project,
             'document' => $document,
@@ -40,6 +40,7 @@ class LiquidationReportController extends BaseProjectDocumentController
             'isReadOnly' => $isReadOnly,
             'isProjectHead' => $isProjectHead,
             'isAdmin' => $isAdmin,
+            'formCode' => $formCode,
         ]);
     }
 

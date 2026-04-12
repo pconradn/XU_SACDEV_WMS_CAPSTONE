@@ -31,44 +31,61 @@
     }
 @endphp
 
-<div class="rounded-2xl border border-blue-200 bg-blue-50 shadow-sm p-5 space-y-4">
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-blue-50 to-white shadow-sm overflow-hidden">
 
-    <div class="text-sm font-semibold text-blue-900">
-        Fundraising Summary from Submitted Reports
-    </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
 
-        <div class="rounded-xl border border-blue-100 bg-white/70 px-3 py-3">
-            <div class="text-xs text-slate-500">Solicitation</div>
-            <div class="text-sm font-semibold text-slate-900">₱ {{ peso($solicitationTotal) }}</div>
+    <div class="p-4 space-y-5">
+
+        <div class="flex items-start gap-3">
+            <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center">
+                <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-600"></i>
+            </div>
+
+            <div>
+                <div class="text-sm font-semibold text-slate-900">
+                    Fundraising Summary from Submitted Reports
+                </div>
+                <p class="text-xs text-blue-700 mt-1">
+                    Auto-calculated totals based on submitted project reports.
+                </p>
+            </div>
         </div>
 
-        <div class="rounded-xl border border-blue-100 bg-white/70 px-3 py-3">
-            <div class="text-xs text-slate-500">Counterpart</div>
-            <div class="text-sm font-semibold text-slate-900">₱ {{ peso($counterpartTotal) }}</div>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
+
+            <div class="rounded-xl border border-slate-200 bg-white px-3 py-3">
+                <div class="text-[11px] text-slate-500">Solicitation</div>
+                <div class="text-sm font-semibold text-slate-900">₱ {{ peso($solicitationTotal) }}</div>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-white px-3 py-3">
+                <div class="text-[11px] text-slate-500">Counterpart</div>
+                <div class="text-sm font-semibold text-slate-900">₱ {{ peso($counterpartTotal) }}</div>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-white px-3 py-3">
+                <div class="text-[11px] text-slate-500">Ticket Selling</div>
+                <div class="text-sm font-semibold text-slate-900">₱ {{ peso($ticketTotal) }}</div>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-white px-3 py-3">
+                <div class="text-[11px] text-slate-500">Selling</div>
+                <div class="text-sm font-semibold text-slate-900">₱ {{ peso($sellingTotal) }}</div>
+            </div>
+
+            <div class="rounded-xl border border-blue-200 bg-blue-50 px-3 py-3">
+                <div class="text-[11px] text-blue-700 font-semibold">Fundraising Total</div>
+                <div class="text-base font-bold text-blue-900">₱ {{ peso($fundraisingTotal) }}</div>
+            </div>
+
         </div>
 
-        <div class="rounded-xl border border-blue-100 bg-white/70 px-3 py-3">
-            <div class="text-xs text-slate-500">Ticket Selling</div>
-            <div class="text-sm font-semibold text-slate-900">₱ {{ peso($ticketTotal) }}</div>
+        <div class="border-t border-slate-200 pt-3 text-center">
+            <div class="text-xs text-slate-500">Proposed Project Budget</div>
+            <div class="text-base font-bold text-slate-900">₱ {{ peso($proposalBudget) }}</div>
         </div>
 
-        <div class="rounded-xl border border-blue-100 bg-white/70 px-3 py-3">
-            <div class="text-xs text-slate-500">Selling</div>
-            <div class="text-sm font-semibold text-slate-900">₱ {{ peso($sellingTotal) }}</div>Balance
-        </div>
-
-        <div class="rounded-xl border border-blue-200 bg-white px-3 py-3">
-            <div class="text-xs text-blue-700 font-semibold">Fundraising Total</div>
-            <div class="text-base font-bold text-blue-900">₱ {{ peso($fundraisingTotal) }}</div>
-        </div>
-
-    </div>
-
-    <div class="border-t border-blue-200 pt-3 text-center">
-        <div class="text-xs text-slate-500">Proposed Project Budget</div>
-        <div class="text-lg font-bold text-slate-900">₱ {{ peso($proposalBudget) }}</div>
     </div>
 
 </div>
@@ -109,7 +126,7 @@
                                 type="text"
                                 name="finance_amount"
                                 data-money
-                                value="{{ $financeAmount }}"
+                                value="{{ $financeAmount !== '' ? number_format((float)$financeAmount, 2) : '' }}"
                                 placeholder="0.00"
                                 class="w-full rounded-lg border border-slate-300 pl-7 pr-3 py-2 text-sm
                                     {{ $errors->has('finance_amount') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'focus:ring-2 focus:ring-blue-500 focus:border-blue-500' }}"
@@ -141,8 +158,13 @@
                                 name="fund_raising_amount"
                                 id="fundRaisingAmount"
                                 data-money
-                                value="{{ old('fund_raising_amount', $hasExisting ? number_format($hasExisting, 2) : '') }}"
-                                placeholder="{{ !$hasExisting ? number_format($suggested, 2) : '0.00' }}"
+                                value="{{ old(
+                                    'fund_raising_amount',
+                                    $hasExisting !== null
+                                        ? number_format($hasExisting, 2)
+                                        : number_format($suggested, 2)
+                                ) }}"
+                                placeholder="0.00"
                                 data-suggested="{{ $suggested }}"
                                 class="w-full rounded-lg border border-slate-300 pl-7 pr-3 py-2 text-sm
                                     {{ $hasExisting ? 'bg-white text-slate-900' : 'bg-blue-50 text-blue-900 font-semibold' }}"
@@ -172,7 +194,7 @@
                                 type="text"
                                 name="sacdev_amount"
                                 data-money
-                                value="{{ $sacdevAmount }}"
+                                value="{{ $sacdevAmount !== '' ? number_format((float)$sacdevAmount, 2) : '' }}"
                                 placeholder="0.00"
                                 class="w-full rounded-lg border border-slate-300 pl-7 pr-3 py-2 text-sm
                                     {{ $errors->has('sacdev_amount') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'focus:ring-2 focus:ring-blue-500 focus:border-blue-500' }}"
@@ -205,7 +227,7 @@
                             type="text"
                             name="pta_amount"
                             data-money
-                            value="{{ $ptaAmount }}"
+                            value="{{ $ptaAmount !== '' ? number_format((float)$ptaAmount, 2) : '' }}"
                             placeholder="0.00"
                             class="w-full rounded-lg border border-slate-300 pl-7 pr-3 py-2 text-sm
                                 {{ $errors->has('pta_amount') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' : 'focus:ring-2 focus:ring-blue-500 focus:border-blue-500' }}"
@@ -227,29 +249,60 @@
                 Fundraising Breakdown
             </div>
 
-            <div class="flex flex-wrap gap-3">
+            @php
+                $autoSources = [];
 
-                <label class="flex items-center gap-2 text-sm border border-slate-200 rounded-lg px-3 py-2 bg-slate-50">
-                    <input type="checkbox" disabled {{ $solicitationTotal > 0 ? 'checked' : '' }}>
-                    Solicitation
-                </label>
+                if ($solicitationTotal > 0) $autoSources[] = 'solicitation';
+                if ($counterpartTotal > 0) $autoSources[] = 'counterpart';
+                if ($ticketTotal > 0) $autoSources[] = 'ticket_selling';
+                if ($sellingTotal > 0) $autoSources[] = 'selling';
 
-                <label class="flex items-center gap-2 text-sm border border-slate-200 rounded-lg px-3 py-2 bg-slate-50">
-                    <input type="checkbox" disabled {{ $counterpartTotal > 0 ? 'checked' : '' }}>
-                    Counterpart
-                </label>
+                $selected = old('fundraising_types', $report->fundraising_types ?? $autoSources);
+            @endphp
 
-                <label class="flex items-center gap-2 text-sm border border-slate-200 rounded-lg px-3 py-2 bg-slate-50">
-                    <input type="checkbox" disabled {{ $ticketTotal > 0 ? 'checked' : '' }}>
-                    Ticket Selling
-                </label>
+<div class="flex flex-wrap gap-3">
 
-                <label class="flex items-center gap-2 text-sm border border-slate-200 rounded-lg px-3 py-2 bg-slate-50">
-                    <input type="checkbox" disabled {{ $sellingTotal > 0 ? 'checked' : '' }}>
-                    Selling
-                </label>
+    <label class="flex items-center gap-2 text-sm border border-slate-200 rounded-lg px-3 py-2 bg-slate-50">
+        @if($solicitationTotal > 0)
+            <input type="checkbox" checked disabled>
+            <input type="hidden" name="fundraising_types[]" value="solicitation">
+        @else
+            <input type="checkbox" disabled>
+        @endif
+        Solicitation
+    </label>
 
-            </div>
+    <label class="flex items-center gap-2 text-sm border border-slate-200 rounded-lg px-3 py-2 bg-slate-50">
+        @if($counterpartTotal > 0)
+            <input type="checkbox" checked disabled>
+            <input type="hidden" name="fundraising_types[]" value="counterpart">
+        @else
+            <input type="checkbox" disabled>
+        @endif
+        Counterpart
+    </label>
+
+    <label class="flex items-center gap-2 text-sm border border-slate-200 rounded-lg px-3 py-2 bg-slate-50">
+        @if($ticketTotal > 0)
+            <input type="checkbox" checked disabled>
+            <input type="hidden" name="fundraising_types[]" value="ticket_selling">
+        @else
+            <input type="checkbox" disabled>
+        @endif
+        Ticket Selling
+    </label>
+
+    <label class="flex items-center gap-2 text-sm border border-slate-200 rounded-lg px-3 py-2 bg-slate-50">
+        @if($sellingTotal > 0)
+            <input type="checkbox" checked disabled>
+            <input type="hidden" name="fundraising_types[]" value="selling">
+        @else
+            <input type="checkbox" disabled>
+        @endif
+        Selling
+    </label>
+
+</div>
 
         </div>
 
@@ -257,3 +310,25 @@
 
 </div>
 
+<script>
+document.querySelectorAll('[data-money]').forEach(input => {
+
+    const format = (value) => {
+        if (!value) return '';
+        value = value.replace(/,/g, '');
+        if (isNaN(value)) return '';
+        return Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    input.addEventListener('input', e => {
+        let raw = e.target.value.replace(/,/g, '');
+        if (isNaN(raw)) return;
+        e.target.value = format(raw);
+    });
+
+    input.addEventListener('blur', e => {
+        e.target.value = format(e.target.value);
+    });
+
+});
+</script>

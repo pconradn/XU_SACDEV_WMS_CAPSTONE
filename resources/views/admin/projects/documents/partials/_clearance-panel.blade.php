@@ -11,15 +11,14 @@
 
 @php
     $isCoa = auth()->user()?->is_coa_officer ?? false;
-
     $status = $project->clearance_status;
 
     $cardStyles = match(true) {
-        !$project->requires_clearance => 'border-slate-200 bg-white',
-        $status === 'uploaded' => 'border-purple-300 border-l-4 border-l-purple-400 bg-gradient-to-br from-purple-50 to-white',
-        $status === 'approved' => 'border-emerald-300 bg-gradient-to-br from-emerald-50 to-white',
-        $status === 'rejected' => 'border-rose-300 bg-gradient-to-br from-rose-50 to-white',
-        default => 'border-slate-200 bg-white'
+        !$project->requires_clearance => 'border-slate-200',
+        $status === 'uploaded' => 'border-purple-200',
+        $status === 'approved' => 'border-emerald-200',
+        $status === 'rejected' => 'border-rose-200',
+        default => 'border-slate-200'
     };
 
     $statusLabel = match($status) {
@@ -32,76 +31,77 @@
 @endphp
 
 
-<div class="rounded-2xl border shadow-sm p-4 space-y-4 {{ $cardStyles }}">
+<div class="rounded-2xl border {{ $cardStyles }} bg-gradient-to-b from-slate-50 to-white shadow-sm">
 
-    {{-- HEADER --}}
-    <div class="flex items-start justify-between gap-4">
+    <div class="p-4 space-y-4">
 
-        <div>
-            <div class="text-[10px] uppercase tracking-wide text-slate-500">
-                Off-Campus Clearance
+        {{-- HEADER --}}
+        <div class="flex items-start justify-between gap-3">
+
+            <div class="space-y-1">
+                <div class="text-[10px] uppercase tracking-wide text-slate-500">
+                    Off-Campus Clearance
+                </div>
+
+                <div class="text-sm font-semibold text-slate-900">
+                    @if(!$project->requires_clearance)
+                        Not Required
+                    @else
+                        <span class="text-slate-500">Reference:</span>
+                        <span class="font-mono text-purple-700">
+                            {{ $project->clearance_reference }}
+                        </span>
+                    @endif
+                </div>
             </div>
 
-            <div class="mt-1 text-sm font-semibold text-slate-900">
-                @if(!$project->requires_clearance)
-                    Not Required
+            {{-- ACTION --}}
+            <div class="flex items-center gap-2">
+
+                @if(!$project->requires_clearance && !$isCoa)
+
+                    <button
+                        @click="showRequireModal = true"
+                        class="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-lg
+                            border border-purple-200 bg-purple-50 text-purple-700
+                            hover:bg-purple-100 transition">
+                        <i data-lucide="shield-plus" class="w-3 h-3"></i>
+                        Require Clearance
+                    </button>
+
+                @elseif($project->requires_clearance && !$isCoa)
+
+                    <button
+                        @click="showRetractModal = true"
+                        class="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-lg
+                            border border-rose-200 bg-rose-50 text-rose-700
+                            hover:bg-rose-100 transition">
+                        <i data-lucide="undo-2" class="w-3 h-3"></i>
+                        Remove Requirement
+                    </button>
+
                 @else
-                    Reference:
-                    <span class="font-mono text-purple-700">
-                        {{ $project->clearance_reference }}
-                    </span>
+
+                    <button disabled
+                        class="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-lg
+                            border border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed">
+                        <i data-lucide="lock" class="w-3 h-3"></i>
+                        Restricted
+                    </button>
+
                 @endif
+
             </div>
-        </div>
-
-
-        {{-- ACTION --}}
-        <div class="flex items-center gap-2">
-
-            {{-- REQUIRE --}}
-            @if(!$project->requires_clearance && !$isCoa)
-
-                <button
-                    @click="showRequireModal = true"
-                    class="px-3 py-2 text-xs font-semibold rounded-xl 
-                           bg-gradient-to-r from-purple-600 to-purple-500 text-white 
-                           hover:from-purple-700 hover:to-purple-600 transition shadow-sm">
-                    Require Clearance
-                </button>
-
-            {{-- RETRACT --}}
-            @elseif($project->requires_clearance && !$isCoa)
-
-                <button
-                    @click="showRetractModal = true"
-                    class="px-3 py-2 text-xs font-semibold rounded-xl 
-                           bg-gradient-to-r from-rose-600 to-rose-500 text-white 
-                           hover:from-rose-700 hover:to-rose-600 transition shadow-sm">
-                    Undo Requirement
-                </button>
-
-            {{-- COA BLOCK --}}
-            @else
-
-                <button disabled
-                        class="px-3 py-2 text-xs font-semibold rounded-xl 
-                               bg-slate-200 text-slate-500 cursor-not-allowed">
-                    Restricted
-                </button>
-
-            @endif
 
         </div>
 
-    </div>
 
+        {{-- STATUS --}}
+        @if($project->requires_clearance)
 
-    {{-- STATUS --}}
-    @if($project->requires_clearance)
-
-        <div class="flex items-center justify-between border-t border-slate-100 pt-3">
+        <div class="flex items-center justify-between pt-2 border-t border-slate-200">
             <div class="text-[11px] text-slate-500">
-                Status
+                Clearance Status
             </div>
 
             <span class="px-2.5 py-1 text-[10px] font-semibold rounded-full {{ $statusLabel[1] }}">
@@ -109,41 +109,60 @@
             </span>
         </div>
 
-    @endif
+        @endif
 
 
-    {{-- ACTIONS --}}
-    @if($project->requires_clearance && $status === 'uploaded' && !$isCoa)
+        {{-- ACTION GROUP --}}
+        @if($project->requires_clearance && $status === 'uploaded')
 
-        <div class="flex gap-2">
+        <div class="pt-2 border-t border-purple-200">
 
-            <button
-                type="button"
-                @click="showVerifyModal = true"
-                class="flex-1 w-full px-3 py-2 text-xs font-semibold rounded-xl 
-                    bg-gradient-to-r from-emerald-600 to-emerald-500 text-white
-                    hover:from-emerald-700 hover:to-emerald-600 transition shadow-sm">
-                Verify Clearance
-            </button>
+            <div class="flex flex-wrap gap-2">
 
-            <button
-                type="button"
-                @click="showReturnModal = true"
-                class="flex-1 w-full px-3 py-2 text-xs font-semibold rounded-xl 
-                    bg-gradient-to-r from-rose-600 to-rose-500 text-white
-                    hover:from-rose-700 hover:to-rose-600 transition shadow-sm">
-                Return
-            </button>
+                @if($project->clearance_file_path)
+                <a href="{{ asset('storage/' . $project->clearance_file_path) }}"
+                target="_blank"
+                class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg
+                        border border-slate-200 bg-white text-slate-700
+                        hover:bg-slate-50 transition">
+                    <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                    View
+                </a>
+                @endif
+
+                @if(!$isCoa)
+                <button
+                    type="button"
+                    @click="showVerifyModal = true"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg
+                        border border-emerald-200 bg-emerald-50 text-emerald-700
+                        hover:bg-emerald-100 transition">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                    Approve
+                </button>
+
+                <button
+                    type="button"
+                    @click="showReturnModal = true"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg
+                        border border-rose-200 bg-rose-50 text-rose-700
+                        hover:bg-rose-100 transition">
+                    <i data-lucide="corner-up-left" class="w-3.5 h-3.5"></i>
+                    Return
+                </button>
+                @endif
+
+            </div>
 
         </div>
 
-    @endif
+        @endif
 
 
-    {{-- HINT --}}
-    @if($project->requires_clearance)
+        {{-- HINT --}}
+        @if($project->requires_clearance)
 
-        <div class="text-[10px] border-t pt-2
+        <div class="text-[10px] pt-2 border-t
             @if($status === 'uploaded') text-purple-600 border-purple-200
             @elseif($status === 'approved') text-emerald-600 border-emerald-200
             @elseif($status === 'rejected') text-rose-600 border-rose-200
@@ -153,50 +172,45 @@
             @if($status === 'uploaded')
                 Review the uploaded clearance before approval
             @elseif($status === 'approved')
-                Clearance has been successfully approved
+                Clearance approved and verified
             @elseif($status === 'rejected')
-                Clearance was returned and needs revision
+                Clearance returned for revision
             @else
-                Waiting for project head to upload clearance
+                Waiting for clearance upload
             @endif
         </div>
 
-    @endif
+        @endif
+
+    </div>
 
 </div>
 
 
-{{-- ========================= --}}
 {{-- REQUIRE MODAL --}}
-{{-- ========================= --}}
-<div x-show="showRequireModal"
-     x-cloak
-     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+<div x-show="showRequireModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
 
-    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl border p-6 space-y-4">
+    <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
 
-        <div class="flex items-start gap-3">
-            <i data-lucide="alert-circle" class="w-5 h-5 text-amber-600 mt-1"></i>
-
+        <div class="flex gap-3">
+            <i data-lucide="alert-circle" class="w-5 h-5 text-amber-600 mt-0.5"></i>
             <div>
-                <div class="text-sm font-semibold text-slate-900">
-                    Require Clearance
-                </div>
+                <div class="text-sm font-semibold text-slate-900">Require Clearance</div>
                 <p class="text-xs text-slate-500 mt-1">
-                    This will require the project head to submit an off-campus clearance document before proceeding.
+                    Require project head to submit clearance before proceeding.
                 </p>
             </div>
         </div>
 
         <div class="flex justify-end gap-2">
             <button @click="showRequireModal = false"
-                    class="px-3 py-1.5 text-xs border rounded-lg">
+                class="px-3 py-1.5 text-xs rounded-lg border border-slate-200 hover:bg-slate-50">
                 Cancel
             </button>
 
             <form method="POST" action="{{ route('admin.projects.require-clearance', $project) }}">
                 @csrf
-                <button class="px-3 py-1.5 text-xs bg-amber-600 text-white rounded-lg">
+                <button class="px-3 py-1.5 text-xs rounded-lg bg-amber-600 text-white hover:bg-amber-700">
                     Confirm
                 </button>
             </form>
@@ -206,38 +220,30 @@
 </div>
 
 
-{{-- ========================= --}}
 {{-- RETRACT MODAL --}}
-{{-- ========================= --}}
-<div x-show="showRetractModal"
-     x-cloak
-     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+<div x-show="showRetractModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
 
-    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl border p-6 space-y-4">
+    <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
 
-        <div class="flex items-start gap-3">
-            <i data-lucide="undo-2" class="w-5 h-5 text-rose-600 mt-1"></i>
-
+        <div class="flex gap-3">
+            <i data-lucide="undo-2" class="w-5 h-5 text-rose-600 mt-0.5"></i>
             <div>
-                <div class="text-sm font-semibold text-slate-900">
-                    Undo Clearance Requirement
-                </div>
+                <div class="text-sm font-semibold text-slate-900">Undo Requirement</div>
                 <p class="text-xs text-slate-500 mt-1">
-                    This will remove the current clearance requirement and any submitted clearance.
-                    If enabled again, the project head will need to submit a new clearance.
+                    Removes requirement and any uploaded clearance.
                 </p>
             </div>
         </div>
 
         <div class="flex justify-end gap-2">
             <button @click="showRetractModal = false"
-                    class="px-3 py-1.5 text-xs border rounded-lg">
+                class="px-3 py-1.5 text-xs rounded-lg border border-slate-200 hover:bg-slate-50">
                 Cancel
             </button>
 
             <form method="POST" action="{{ route('admin.projects.retract-clearance', $project) }}">
                 @csrf
-                <button class="px-3 py-1.5 text-xs bg-rose-600 text-white rounded-lg">
+                <button class="px-3 py-1.5 text-xs rounded-lg bg-rose-600 text-white hover:bg-rose-700">
                     Confirm
                 </button>
             </form>
@@ -246,36 +252,32 @@
     </div>
 </div>
 
-<div x-show="showVerifyModal"
-     x-cloak
-     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
 
-    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl border p-6 space-y-4">
+{{-- VERIFY MODAL --}}
+<div x-show="showVerifyModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
 
-        <div class="flex items-start gap-3">
-            <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600 mt-1"></i>
+    <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
 
+        <div class="flex gap-3">
+            <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600 mt-0.5"></i>
             <div>
-                <div class="text-sm font-semibold text-slate-900">
-                    Verify Clearance
-                </div>
+                <div class="text-sm font-semibold text-slate-900">Approve Clearance</div>
                 <p class="text-xs text-slate-500 mt-1">
-                    You are about to approve this uploaded off-campus clearance. This action cannot be undone through this page.
+                    This action cannot be undone.
                 </p>
             </div>
         </div>
 
         <div class="flex justify-end gap-2">
             <button @click="showVerifyModal = false"
-                    type="button"
-                    class="px-3 py-1.5 text-xs border rounded-lg">
+                class="px-3 py-1.5 text-xs rounded-lg border border-slate-200 hover:bg-slate-50">
                 Cancel
             </button>
 
             <form method="POST" action="{{ route('admin.projects.clearance.verify', $project) }}">
                 @csrf
-                <button class="px-3 py-1.5 text-xs bg-emerald-600 text-white rounded-lg">
-                    Confirm Approval
+                <button class="px-3 py-1.5 text-xs rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
+                    Confirm
                 </button>
             </form>
         </div>
@@ -283,21 +285,18 @@
     </div>
 </div>
 
-<div x-show="showReturnModal"
-     x-cloak
-     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
 
-    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl border p-6 space-y-4">
+{{-- RETURN MODAL --}}
+<div x-show="showReturnModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
 
-        <div class="flex items-start gap-3">
-            <i data-lucide="corner-up-left" class="w-5 h-5 text-rose-600 mt-1"></i>
+    <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
 
+        <div class="flex gap-3">
+            <i data-lucide="corner-up-left" class="w-5 h-5 text-rose-600 mt-0.5"></i>
             <div>
-                <div class="text-sm font-semibold text-slate-900">
-                    Return Clearance
-                </div>
+                <div class="text-sm font-semibold text-slate-900">Return Clearance</div>
                 <p class="text-xs text-slate-500 mt-1">
-                    Add remarks for the project head before returning this clearance. These remarks are required.
+                    Remarks are required.
                 </p>
             </div>
         </div>
@@ -305,34 +304,29 @@
         <form method="POST" action="{{ route('admin.projects.clearance.return', $project) }}" class="space-y-4">
             @csrf
 
-            <div>
-                <label class="block text-xs font-medium text-slate-700 mb-1">
-                    Remarks
-                </label>
-                <textarea
-                    name="remarks"
-                    x-model="returnRemarks"
-                    rows="4"
-                    required
-                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-rose-500 focus:ring focus:ring-rose-100"
-                    placeholder="Enter return remarks"></textarea>
-            </div>
+            <textarea
+                name="remarks"
+                x-model="returnRemarks"
+                rows="4"
+                required
+                class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-rose-500 focus:ring focus:ring-rose-100"
+                placeholder="Enter remarks"></textarea>
 
             <div class="flex justify-end gap-2">
-                <button @click="showReturnModal = false"
-                        type="button"
-                        class="px-3 py-1.5 text-xs border rounded-lg">
+                <button @click="showReturnModal = false" type="button"
+                    class="px-3 py-1.5 text-xs rounded-lg border border-slate-200 hover:bg-slate-50">
                     Cancel
                 </button>
 
                 <button
                     type="submit"
-                    class="px-3 py-1.5 text-xs bg-rose-600 text-white rounded-lg"
                     :disabled="!returnRemarks.trim()"
-                    :class="{ 'opacity-50 cursor-not-allowed': !returnRemarks.trim() }">
-                    Confirm Return
+                    :class="{'opacity-50 cursor-not-allowed': !returnRemarks.trim()}"
+                    class="px-3 py-1.5 text-xs rounded-lg bg-rose-600 text-white hover:bg-rose-700">
+                    Confirm
                 </button>
             </div>
+
         </form>
 
     </div>

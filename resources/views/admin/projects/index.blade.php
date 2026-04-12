@@ -1,102 +1,136 @@
 <x-app-layout>
 
-<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-5">
+<div class="bg-slate-50 py-6">
+<div class="max-w-7xl mx-auto px-4 space-y-6">
 
-    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    {{-- HEADER --}}
+    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm">
 
-        {{-- LEFT --}}
-        <div>
-            <h2 class="text-lg font-semibold text-slate-900">
-                {{ $organization->name }} — Projects
-            </h2>
+        <div class="px-5 py-5 flex items-center justify-between">
 
-            <p class="text-xs text-slate-500 mt-1">
-                School Year: {{ $schoolYear->name }}
-            </p>
-        </div>
+            <div>
+                <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">
+                    Projects
+                </div>
 
-        {{-- RIGHT ACTION --}}
-        <div class="flex items-center gap-2">
+                <h1 class="text-lg font-semibold text-slate-900">
+                    {{ $organization->name }}
+                </h1>
+
+                <div class="text-[11px] text-slate-500 mt-1">
+                    {{ $schoolYear->name }}
+                </div>
+            </div>
 
             <a href="{{ route('admin.orgs_by_sy.show', [$organization->id, $schoolYear->id]) }}"
-               class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
-
-                ← Back
-
+               class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                Back
             </a>
 
         </div>
 
     </div>
 
-</div>
 
+    {{-- TABLE --}}
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
 
-<div class="py-8">
-<div class="max-w-6xl mx-auto sm:px-6 lg:px-8 space-y-6">
+        {{-- TABLE HEADER --}}
+        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
 
-    {{-- ================= CONTAINER ================= --}}
-    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm">
-
-        <div class="px-6 py-4 border-b border-slate-200">
-            <div class="text-sm font-semibold text-slate-800">
-                Project List
+            <div>
+                <div class="text-sm font-semibold text-slate-900">
+                    Project Tracker
+                </div>
+                <div class="text-xs text-slate-500">
+                    Implementation, ownership, document progress, and budget
+                </div>
             </div>
-            <div class="text-xs text-slate-500">
-                View and manage project documents and workflow status.
-            </div>
+
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border">
+                {{ $projects->count() }}
+            </span>
+
         </div>
 
-        {{-- ================= TABLE ================= --}}
+
         <div class="overflow-x-auto">
 
-        <table class="min-w-[800px] w-full text-sm">
+        <table class="min-w-[1100px] w-full text-sm">
 
             {{-- HEADER --}}
-            <thead class="bg-white border-b border-slate-200">
-                <tr class="text-left text-[11px] uppercase tracking-wide text-slate-500 whitespace-nowrap">
-                    <th class="px-6 py-4">Project</th>
-                    <th class="px-6 py-4 w-[180px]">Workflow</th>
-                    <th class="px-6 py-4 w-[220px]">Documents</th>
+            <thead class="bg-slate-50 border-b border-slate-200">
+                <tr class="text-left text-[11px] uppercase tracking-wide text-slate-500">
+
+                    <th class="px-5 py-3">Project</th>
+                    <th class="px-5 py-3">Implementation</th>
+                    <th class="px-5 py-3">Project Head</th>
+                    <th class="px-5 py-3">Progress</th>
+                    <th class="px-5 py-3">Budget</th>
+                    <th class="px-5 py-3 text-right">Action</th>
+
                 </tr>
             </thead>
 
+
             {{-- BODY --}}
-            <tbody class="divide-y divide-slate-200 bg-white">
+            <tbody class="divide-y divide-slate-100 bg-white">
 
             @forelse ($projects as $p)
 
                 @php
-                    $workflow = $p->workflow_status ?? 'draft';
+                    $projectHead = $p->assignments
+                        ->first(fn($a) =>
+                            ($a->role === 'project_head' || $a->assignment_role === 'project_head')
+                            && is_null($a->archived_at)
+                        )?->user?->name;
 
-                    $workflowMap = [
-                        'draft' => ['label' => 'Draft', 'color' => 'slate'],
-                        'pending' => ['label' => 'Pending', 'color' => 'amber'],
-                        'approved' => ['label' => 'Approved', 'color' => 'emerald'],
-                        'completed' => ['label' => 'Completed', 'color' => 'emerald'],
-                        'cancelled' => ['label' => 'Cancelled', 'color' => 'rose'],
-                    ];
+                    $docs = $p->documents->where('is_active', 1);
+                    $approvedDocs = $docs->where('status', 'approved_by_sacdev')->count();
+                    $totalDocs = $docs->count();
 
-                    $wf = $workflowMap[$workflow] ?? ['label' => ucfirst($workflow), 'color' => 'slate'];
+                    $proposalDoc = $p->documents
+                        ->first(fn($d) =>
+                            $d->formType?->code === 'PROJECT_PROPOSAL'
+                            && $d->is_active
+                        );
+
+                    $proposalBudget = optional($proposalDoc?->proposalData)->total_budget;
                 @endphp
 
-                <tr class="hover:bg-slate-50 transition whitespace-nowrap">
+                <tr class="hover:bg-slate-50 transition">
 
                     {{-- PROJECT --}}
-                    <td class="px-6 py-5 min-w-[260px]">
+                    <td class="px-5 py-4">
 
-                        <div class="flex flex-col gap-1">
+                        <div class="space-y-1 max-w-[260px]">
 
-                            <div class="font-semibold text-slate-900 truncate max-w-[260px]">
+                            <div class="font-semibold text-slate-900 truncate">
                                 {{ $p->title }}
                             </div>
 
-                            <div class="text-xs text-slate-500">
-                                @if($p->target_date)
-                                    Target: {{ \Carbon\Carbon::parse($p->target_date)->format('M d, Y') }}
-                                @else
-                                    No target date set
-                                @endif
+                            @php
+                                $workflowMap = [
+                                    'planning' => ['label' => 'Planning', 'class' => 'bg-slate-100 text-slate-700'],
+                                    'drafting' => ['label' => 'Drafting', 'class' => 'bg-slate-100 text-slate-700'],
+                                    'pre_implementation' => ['label' => 'Pre-Implementation', 'class' => 'bg-blue-100 text-blue-700'],
+                                    'post_implementation' => ['label' => 'Post-Implementation', 'class' => 'bg-indigo-100 text-indigo-700'],
+                                    'postponed' => ['label' => 'Postponed', 'class' => 'bg-amber-100 text-amber-700'],
+                                    'cancelled' => ['label' => 'Cancelled', 'class' => 'bg-rose-100 text-rose-700'],
+                                    'completed' => ['label' => 'Completed', 'class' => 'bg-emerald-100 text-emerald-700'],
+                                ];
+
+                                $wf = $workflowMap[$p->workflow_status] ?? [
+                                    'label' => ucfirst(str_replace('_',' ', $p->workflow_status ?? '—')),
+                                    'class' => 'bg-slate-100 text-slate-600'
+                                ];
+                            @endphp
+
+                            <div class="mt-1">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full {{ $wf['class'] }}">
+                                    ● {{ $wf['label'] }}
+                                </span>
                             </div>
 
                         </div>
@@ -104,43 +138,95 @@
                     </td>
 
 
-                    {{-- WORKFLOW --}}
-                    <td class="px-6 py-5 min-w-[180px]">
+                    {{-- IMPLEMENTATION --}}
+                    <td class="px-5 py-4 text-[11px] text-slate-600">
 
-                        <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md
-                            @if($wf['color'] === 'emerald') bg-emerald-50 text-emerald-700
-                            @elseif($wf['color'] === 'amber') bg-amber-50 text-amber-700
-                            @elseif($wf['color'] === 'rose') bg-rose-50 text-rose-700
-                            @else bg-slate-100 text-slate-600
-                            @endif
-                        ">
-                            ● {{ $wf['label'] }}
-                        </span>
-
-                        <div class="text-[10px] text-slate-400 mt-1">
-                            {{ ucfirst(str_replace('_', ' ', $workflow)) }}
-                        </div>
+                        @if($p->implementation_start_date)
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="calendar" class="w-3 h-3 text-slate-400"></i>
+                                {{ \Carbon\Carbon::parse($p->implementation_start_date)->format('M d') }}
+                                –
+                                {{ \Carbon\Carbon::parse($p->implementation_end_date ?? $p->implementation_start_date)->format('M d, Y') }}
+                            </div>
+                        @else
+                            —
+                        @endif
 
                     </td>
 
 
-                    {{-- DOCUMENTS --}}
-                    <td class="px-6 py-5 min-w-[220px]">
+                    {{-- PROJECT HEAD --}}
+                    <td class="px-5 py-4 text-[11px] text-slate-700">
 
-                        <div class="flex flex-col gap-2">
-
-                            <a href="{{ route('admin.projects.documents.hub', $p) }}"
-                               class="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition">
-
-                                View Documents
-
-                            </a>
-
-                            <div class="text-[10px] text-slate-400">
-                                Open project document hub
+                        @if($projectHead)
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="user" class="w-3 h-3 text-slate-400"></i>
+                                {{ $projectHead }}
                             </div>
+                        @else
+                            <span class="text-slate-400">—</span>
+                        @endif
 
-                        </div>
+                    </td>
+
+
+                    {{-- PROGRESS --}}
+                    <td class="px-5 py-4">
+
+                        @if($totalDocs > 0)
+                            <div class="space-y-1">
+
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="text-slate-600">
+                                        {{ $approvedDocs }} / {{ $totalDocs }}
+                                    </span>
+
+                                    <span class="text-slate-400">
+                                        {{ round(($approvedDocs / $totalDocs) * 100) }}%
+                                    </span>
+                                </div>
+
+                                <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500"
+                                         style="width: {{ ($approvedDocs / $totalDocs) * 100 }}%">
+                                    </div>
+                                </div>
+
+                            </div>
+                        @else
+                            <span class="text-slate-400 text-xs">No documents</span>
+                        @endif
+
+                    </td>
+
+
+                    {{-- BUDGET --}}
+                    <td class="px-5 py-4 text-[11px]">
+
+                        @if($proposalBudget)
+                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full
+                                         bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
+                                ₱ {{ number_format($proposalBudget, 2) }}
+                            </span>
+                        @else
+                            <span class="text-slate-400">—</span>
+                        @endif
+
+                    </td>
+
+
+                    {{-- ACTION --}}
+                    <td class="px-5 py-4 text-right">
+
+                        <a href="{{ route('admin.projects.documents.hub', $p) }}"
+                           class="inline-flex items-center gap-1 px-3 py-1.5 text-[11px] font-medium rounded-lg
+                                  border border-slate-200 bg-white text-slate-700
+                                  hover:bg-slate-100 transition">
+
+                            Open
+                            <i data-lucide="arrow-right" class="w-3 h-3"></i>
+
+                        </a>
 
                     </td>
 
@@ -149,9 +235,8 @@
             @empty
 
                 <tr>
-                    <td colspan="3"
-                        class="px-6 py-12 text-center text-slate-500 text-sm">
-                        No projects found for this organization and school year.
+                    <td colspan="6" class="px-5 py-12 text-center text-sm text-slate-500">
+                        No projects found
                     </td>
                 </tr>
 

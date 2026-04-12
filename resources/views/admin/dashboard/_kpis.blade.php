@@ -48,11 +48,9 @@
     </div>
 
 
-    {{-- =========================
-        LEFT: MAIN ACTION
-    ========================== --}}
+    @if(($pendingCaseCount ?? 0) > 0)
     <a href="{{ route('admin.rereg.index') }}"
-       class="lg:col-span-2 rounded-2xl border border-rose-200 bg-gradient-to-b from-rose-50 to-white px-4 py-3 shadow-sm hover:bg-rose-50 transition">
+    class="lg:col-span-2 rounded-2xl border border-rose-200 bg-gradient-to-b from-rose-50 to-white px-4 py-3 shadow-sm hover:bg-rose-50 transition">
 
         <div class="flex items-center justify-between">
 
@@ -66,31 +64,17 @@
             </div>
 
             <div class="text-lg font-bold text-rose-800">
-                {{ $pendingCaseCount ?? 0 }}
+                {{ $pendingCaseCount }}
             </div>
+
         </div>
 
-        @if(($pendingCaseCount ?? 0) > 0)
-            <div class="mt-2 text-[10px] inline-block px-2 py-0.5 rounded-full bg-white text-rose-700 border border-rose-200 font-semibold">
-                Needs review
-            </div>
-        @endif
+        <div class="mt-2 text-[10px] inline-block px-2 py-0.5 rounded-full bg-white text-rose-700 border border-rose-200 font-semibold">
+            Needs review
+        </div>
+
     </a>
+    @endif
 
-
-    {{-- =========================
-        RIGHT: CONTEXT
-    ========================== --}}
-    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white px-4 py-3 shadow-sm flex items-center justify-between">
-
-        <div class="text-[10px] text-slate-500 font-semibold uppercase">
-            Active SY
-        </div>
-
-        <div class="text-sm font-semibold text-slate-900">
-            {{ $activeSy?->name ?? 'None' }}
-        </div>
-
-    </div>
 
 </div>

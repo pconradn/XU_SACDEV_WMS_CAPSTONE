@@ -62,15 +62,15 @@
 
 
 
-        @include('org.projects.documents.liquidation-report.partials._funds')
+    @include('org.projects.documents.liquidation-report.partials._funds')
 
 
 
-        @include('org.projects.documents.liquidation-report.partials._expenses')
+    @include('org.projects.documents.liquidation-report.partials._expenses')
 
     {{-- SUMMARY --}}
 
-        @include('org.projects.documents.liquidation-report.partials._summary')
+    @include('org.projects.documents.liquidation-report.partials._summary')
 
 </div>
 

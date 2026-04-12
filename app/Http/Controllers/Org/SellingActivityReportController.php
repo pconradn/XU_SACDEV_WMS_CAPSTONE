@@ -18,7 +18,7 @@ class SellingActivityReportController extends BaseProjectDocumentController
 
     public function create(Project $project)
     {
-
+        $formCode = 'SELLING_ACTIVITY_REPORT';
         $document = $this->getDocument($project, 'SELLING_ACTIVITY_REPORT');
 
         $data = null;
@@ -53,7 +53,7 @@ class SellingActivityReportController extends BaseProjectDocumentController
         $currentSignature = $this->getCurrentSignature($document, $user->id);
 
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
-
+        $formCode = 'SELLING_ACTIVITY_REPORT';
         return view('org.projects.documents.selling-activity-report.create', [
 
             'project' => $project,
@@ -64,6 +64,7 @@ class SellingActivityReportController extends BaseProjectDocumentController
             'isReadOnly' => $isReadOnly,
             'isProjectHead' => $isProjectHead,
             'isAdmin' => $isAdmin,
+            'formCode' => $formCode,
 
             ...$roles
 

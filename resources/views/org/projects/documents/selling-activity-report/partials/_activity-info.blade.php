@@ -1,16 +1,24 @@
-<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm overflow-hidden">
 
+    {{-- ACCENT --}}
     <div class="h-1 bg-blue-500"></div>
 
-    <div class="p-5 space-y-6">
+    <div class="p-4 space-y-6">
 
-        <div>
-            <h3 class="text-sm font-semibold text-slate-900 tracking-wide">
-                Selling Activity Information
-            </h3>
-            <p class="text-xs text-blue-700 mt-1">
-                Provide key details about the selling activity including schedule and overall sales performance.
-            </p>
+        {{-- HEADER --}}
+        <div class="flex items-start gap-3">
+            <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center">
+                <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-600"></i>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-semibold text-slate-900 tracking-wide">
+                    Selling Activity Information
+                </h3>
+                <p class="text-xs text-blue-700 mt-1">
+                    Provide key details about the selling activity including schedule and overall sales performance.
+                </p>
+            </div>
         </div>
 
         @php
@@ -20,12 +28,14 @@
             $sellingTo = old('selling_to', $data->selling_to ?? $sellingApplication->duration_to ?? '');
         @endphp
 
-        <div class="border border-slate-200 rounded-xl p-4 space-y-5">
+        {{-- CONTENT --}}
+        <div class="rounded-xl border border-slate-200 bg-white p-4 space-y-5 hover:bg-slate-50 transition">
 
             <div class="grid grid-cols-1 gap-5">
 
+                {{-- ACTIVITY NAME --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">
                         Name of Selling Activity
                     </label>
 
@@ -34,7 +44,7 @@
                         name="activity_name"
                         value="{{ $activityName }}"
                         placeholder="Enter official selling activity name"
-                        class="w-full rounded-lg px-3 py-2 text-sm
+                        class="w-full rounded-lg px-3 py-2 text-xs
                             {{ $errors->has('activity_name')
                                 ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500'
                                 : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
@@ -46,10 +56,12 @@
                     @enderror
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {{-- DATES + TOTAL --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
+                    {{-- FROM --}}
                     <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">
+                        <label class="block text-[11px] font-medium text-slate-600 mb-1">
                             Selling From
                         </label>
 
@@ -57,7 +69,7 @@
                             type="date"
                             name="selling_from"
                             value="{{ $sellingFrom }}"
-                            class="w-full rounded-lg px-3 py-2 text-sm
+                            class="w-full rounded-lg px-3 py-2 text-xs
                                 {{ $errors->has('selling_from')
                                     ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500'
                                     : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
@@ -69,8 +81,9 @@
                         @enderror
                     </div>
 
+                    {{-- TO --}}
                     <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">
+                        <label class="block text-[11px] font-medium text-slate-600 mb-1">
                             Selling To
                         </label>
 
@@ -78,7 +91,7 @@
                             type="date"
                             name="selling_to"
                             value="{{ $sellingTo }}"
-                            class="w-full rounded-lg px-3 py-2 text-sm
+                            class="w-full rounded-lg px-3 py-2 text-xs
                                 {{ $errors->has('selling_to')
                                     ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500'
                                     : 'border-slate-300 focus:ring-blue-500 focus:border-blue-500' }}
@@ -90,17 +103,20 @@
                         @enderror
                     </div>
 
+                    {{-- TOTAL SALES --}}
                     <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">
+                        <label class="block text-[11px] font-medium text-slate-600 mb-1">
                             Total Sales (₱)
                         </label>
 
-                        <input
-                            type="text"
-                            id="totalSalesDisplay"
-                            readonly
-                            value="0.00"
-                            class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-right">
+                        <div class="relative">
+                            <input
+                                type="text"
+                                id="totalSalesDisplay"
+                                readonly
+                                value="0.00"
+                                class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-right text-slate-800">
+                        </div>
                     </div>
 
                 </div>

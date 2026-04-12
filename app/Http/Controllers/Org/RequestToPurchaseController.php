@@ -58,7 +58,7 @@ class RequestToPurchaseController extends BaseProjectDocumentController
         $currentSignature = $this->getCurrentSignature($document, $user->id);
 
         $isReadOnly = $this->computeReadOnly($document, $isProjectHead);
-
+        $formCode = 'REQUEST_TO_PURCHASE';
         return view('org.projects.documents.request-to-purchase.create', [
 
             'project' => $project,
@@ -69,6 +69,7 @@ class RequestToPurchaseController extends BaseProjectDocumentController
             'isReadOnly' => $isReadOnly,
             'isProjectHead' => $isProjectHead,
             'isAdmin' => $isAdmin,
+            'formCode' => $formCode,
 
             ...$roles
 

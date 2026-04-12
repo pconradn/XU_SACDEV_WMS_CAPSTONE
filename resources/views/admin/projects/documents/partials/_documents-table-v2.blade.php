@@ -1,21 +1,35 @@
-<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm overflow-hidden">
 
     {{-- HEADER --}}
-    <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h2 class="text-sm font-semibold text-slate-800">
-            Documents Overview
-        </h2>
+    <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
 
-        <span class="text-[11px] text-slate-400">
-            Organized by priority
+        <div class="flex items-center gap-3">
+
+            <div class="flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-600">
+                <i data-lucide="files" class="w-4 h-4"></i>
+            </div>
+
+            <div>
+                <div class="text-sm font-semibold text-slate-900">
+                    Documents Overview
+                </div>
+                <div class="text-[11px] text-slate-500">
+                    Organized by priority
+                </div>
+            </div>
+
+        </div>
+
+        <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+            {{ collect($documentsGrouped)->flatten()->count() }}
         </span>
+
     </div>
 
 
-    {{-- TABLE --}}
-    <div class="divide-y">
+    {{-- SECTIONS --}}
+    <div class="space-y-3 p-3">
 
-        {{-- ACTION REQUIRED --}}
         @if($documentsGrouped['action_required']->isNotEmpty())
             @include('admin.projects.documents.partials._documents-table-section', [
                 'title' => 'Action Required',
@@ -25,8 +39,6 @@
             ])
         @endif
 
-
-        {{-- REQUIRED --}}
         @if($documentsGrouped['required']->isNotEmpty())
             @include('admin.projects.documents.partials._documents-table-section', [
                 'title' => 'Required Documents',
@@ -36,8 +48,6 @@
             ])
         @endif
 
-
-        {{-- SUBMITTED OPTIONAL --}}
         @if($documentsGrouped['submitted_optional']->isNotEmpty())
             @include('admin.projects.documents.partials._documents-table-section', [
                 'title' => 'Submitted (Optional)',
@@ -47,8 +57,6 @@
             ])
         @endif
 
-
-        {{-- APPROVED --}}
         @if($documentsGrouped['approved']->isNotEmpty())
             @include('admin.projects.documents.partials._documents-table-section', [
                 'title' => 'Approved',
@@ -58,8 +66,6 @@
             ])
         @endif
 
-
-        {{-- OTHERS --}}
         @if($documentsGrouped['others']->isNotEmpty())
             @include('admin.projects.documents.partials._documents-table-section', [
                 'title' => 'Other Documents',
