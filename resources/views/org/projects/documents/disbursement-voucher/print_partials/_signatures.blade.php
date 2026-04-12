@@ -17,17 +17,23 @@
             <strong>Requested by:</strong>
 
             <div style="margin-top:0px; text-align:center;">
-                ________________________________________________
+                <div style="border-bottom:1px solid #000; display:inline-block; min-width:260px; font-weight:600;">
+                    {{ $sigs['project_head']->user->name ?? ' ' }}
+                </div>
                 <div style="margin-top:4px;">Project Head</div>
             </div>
 
             <div style="margin-top:9px; text-align:center;">
-                ________________________________________________
+                <div style="border-bottom:1px solid #000; display:inline-block; min-width:260px; font-weight:600;">
+                    {{ $sigs['treasurer']->user->name ?? ' ' }}
+                </div>
                 <div style="margin-top:4px;">Treasurer</div>
             </div>
 
             <div style="margin-top:9px; text-align:center;">
-                ________________________________________________
+                <div style="border-bottom:1px solid #000; display:inline-block; min-width:260px; font-weight:600;">
+                    {{ $sigs['president']->user->name ?? ' ' }}
+                </div>
                 <div style="margin-top:4px;">President</div>
             </div>
 

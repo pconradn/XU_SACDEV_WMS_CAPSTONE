@@ -80,7 +80,7 @@
                                     Date:
                                 </td>
 
-                                <td style="border:0px solid #ccc; border-bottom:1px solid black;">
+                                <td style="border:0px solid #ccc; border-bottom:1px transparent black;">
                                     {{ \Carbon\Carbon::parse($dvDate)->format('F d, Y') }}
                                 </td>
                             </tr>
@@ -136,8 +136,7 @@
                         text-align:center;
                         margin-left:72px;
                         font-size:10px;
-                        border:0px solid #ccc;
-                        border-top:0px
+                        margin-top:-10px
                     ">
                         Project Head
                     </span>

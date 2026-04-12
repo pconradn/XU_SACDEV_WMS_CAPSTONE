@@ -6,7 +6,7 @@
             Select Budget Items
         </h3>
         <p class="text-xs text-slate-500 mt-1">
-            Choose which approved budget items to include in this disbursement voucher. You may adjust the amount if needed.
+            Choose which approved budget items to include in this disbursement voucher. 
         </p>
     </div>
 

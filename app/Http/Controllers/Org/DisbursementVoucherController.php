@@ -106,6 +106,20 @@ class DisbursementVoucherController extends Controller
             ->where('assignment_role', 'project_head')
             ->whereNull('archived_at')
             ->first()?->user;
+            
+        $budgetDocument = \App\Models\ProjectDocument::with(['signatures.user'])
+            ->where('project_id', $project->id)
+            ->whereHas('formType', function ($q) {
+                $q->where('code', 'BUDGET_PROPOSAL');
+            })
+            ->first();
+
+        $sigs = $budgetDocument?->signatures?->keyBy('role') ?? collect();
+
+        $projectHeadOfficer = \App\Models\OfficerEntry::where('user_id', $projectHead?->id)
+            ->where('organization_id', $project->organization_id)
+            ->where('school_year_id', $project->school_year_id)
+            ->first();
 
 
         return view(
@@ -126,6 +140,8 @@ class DisbursementVoucherController extends Controller
                 'subtotal' => $subtotal,
                 'tax' => $tax,
                 'total' => $total,
+                'sigs' => $sigs,
+                'projectHeadOfficer' => $projectHeadOfficer,
 
             ]
         );

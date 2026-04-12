@@ -115,14 +115,30 @@ margin:0;
     ">
 
         {{-- HEADER --}}
-        <div style="border-bottom:1px solid #000;">
-            <strong>Organization:</strong>
-        </div>
+        <div style="
+            grid-column: span 3;
+            display:grid;
+            grid-template-columns: 2fr 1fr;
+        ">
 
-        <div style="border-bottom:1px solid #000; border-right:1px solid #000;"></div>
+            {{-- ORGANIZATION --}}
+            <div style="border-bottom:1px solid #000;">
+                <strong>Organization:</strong>
+                <span style="margin-left:6px;">
+                    {{ $project->organization->name ?? ' ' }}
+                </span>
+            </div>
 
-        <div style="border-bottom:1px solid #000; text-align:left;">
-            <strong>Contact #</strong>
+            {{-- CONTACT --}}
+            <div style="border-bottom:1px solid #000; text-align:left;">
+                <strong>Contact #:</strong>
+                <span style="margin-left:6px;">
+                    {{ $projectHeadOfficer?->mobile_number 
+                        ?? $projectHead?->profile?->mobile_number 
+                        ?? ' ' }}
+                </span>
+            </div>
+
         </div>
 
 
