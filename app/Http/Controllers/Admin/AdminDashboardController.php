@@ -215,9 +215,9 @@ class AdminDashboardController extends Controller
                 ->filter(function ($doc) {
                     $userId = auth()->id();
 
-                    if ($doc->edit_requested) {
-                        return $doc->edit_requested_by === $userId;
-                    }
+                if ($doc->edit_requested) {
+                    return $doc->project && $doc->project->organization;
+                }
 
                     $pending = $doc->currentPendingSignature();
              

@@ -29,14 +29,47 @@
                 </div>
 
                 <div class="px-5 py-5 space-y-4 text-sm text-slate-700 max-h-[75vh] overflow-y-auto">
-                    @if(($document->formType->code ?? null) === 'LIQUIDATION_REPORT')
-                        @include('components.project-document.help.content._liquidation')
+                    @if(($document->formType->code ?? null) === 'PROJECT_PROPOSAL')
+                        @include('components.project-document.help.content._project-proposal')
+
+                    @elseif(($document->formType->code ?? null) === 'BUDGET_PROPOSAL')
+                        @include('components.project-document.help.content._budget-proposal')
+
+                    @elseif(($document->formType->code ?? null) === 'OFF_CAMPUS_APPLICATION')
+                        @include('components.project-document.help.content._off-campus')
+
+                    @elseif(($document->formType->code ?? null) === 'SOLICITATION_APPLICATION')
+                        @include('components.project-document.help.content._solicitation')
+
+                    @elseif(($document->formType->code ?? null) === 'SELLING_APPLICATION')
+                        @include('components.project-document.help.content._selling')
+
+                    @elseif(($document->formType->code ?? null) === 'REQUEST_TO_PURCHASE')
+                        @include('components.project-document.help.content._request-to-purchase')
+
+                    @elseif(($document->formType->code ?? null) === 'SOLICITATION_SPONSORSHIP_REPORT')
+                        @include('components.project-document.help.content._solicitation-sponsorship-report')
+
+                    @elseif(($document->formType->code ?? null) === 'TICKET_SELLING_REPORT')
+                        @include('components.project-document.help.content._ticket-selling-report')
 
                     @elseif(($document->formType->code ?? null) === 'SELLING_ACTIVITY_REPORT')
                         @include('components.project-document.help.content._selling-activity')
 
                     @elseif(($document->formType->code ?? null) === 'FEES_COLLECTION_REPORT')
                         @include('components.project-document.help.content._fees-collection')
+
+                    @elseif(($document->formType->code ?? null) === 'DOCUMENTATION_REPORT')
+                        @include('components.project-document.help.content._documentation-report')
+
+                    @elseif(($document->formType->code ?? null) === 'LIQUIDATION_REPORT')
+                        @include('components.project-document.help.content._liquidation')
+
+                    @elseif(($document->formType->code ?? null) === 'POSTPONEMENT_NOTICE')
+                        @include('components.project-document.help.content._postponement-notice')
+
+                    @elseif(($document->formType->code ?? null) === 'CANCELLATION_NOTICE')
+                        @include('components.project-document.help.content._cancellation-notice')
 
                     @else
                         <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">

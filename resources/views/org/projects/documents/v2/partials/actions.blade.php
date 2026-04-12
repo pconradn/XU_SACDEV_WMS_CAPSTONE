@@ -125,7 +125,7 @@
 
                 <div class="flex items-center gap-2 text-blue-700">
                     <i data-lucide="plane" class="w-4 h-4"></i>
-                    <span class="text-xs font-medium">Travel Consent</span>
+                    <span class="text-xs font-medium">Student Travel Agreement</span>
                 </div>
 
                 <span class="text-[10px] font-semibold text-blue-700">

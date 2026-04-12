@@ -72,31 +72,17 @@ class OffCampusApplicationController extends BaseProjectDocumentController
 
     public function store(Request $request, Project $project)
     {
-
         $validator = \Validator::make($request->all(), [
             'activity_name' => ['required','string','max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
             'inclusive_dates' => ['required','string','max:255'],
             'venue_destination' => ['required','string','max:255','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
             'remarks' => ['nullable','string'],
-            'participants.*.student_name' => ['nullable','string','max:255',],
-            'participants.*.course_year' => ['nullable','string','max:255',],
-            'participants.*.student_mobile' => ['nullable','string','max:30'],
-            'participants.*.parent_name' => ['nullable','string','max:255',],
-            'participants.*.parent_mobile' => ['nullable','string','max:30',],
+            'participants.*.student_name' => ['nullable','string','max:255'],
+            'participants.*.course_year' => ['required','string','max:255'],
+            'participants.*.student_mobile' => ['required','string','max:30'],
+            'participants.*.parent_name' => ['required','string','max:255'],
+            'participants.*.parent_mobile' => ['required','string','max:30'],
         ]);
-
-        if ($validator->fails()) {
-
-            $this->getOrCreateDocument($project, 'OFF_CAMPUS_APPLICATION');
-
-            return back()
-                ->with('warning', 'Form has errors. Saved as draft instead.')
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        
-
 
         $document = $this->getOrCreateDocument($project, 'OFF_CAMPUS_APPLICATION');
 
@@ -119,11 +105,18 @@ class OffCampusApplicationController extends BaseProjectDocumentController
             );
 
             $this->saveParticipants($activity, $request->participants ?? []);
-
-            if (!$document->edit_mode) {
-                $this->resetApprovalsAfterEdit($document);
-            }
         });
+
+        if ($validator->fails()) {
+            return back()
+                ->with('warning', 'Form has errors. Saved as draft instead.')
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        if (!$document->edit_mode) {
+            $this->resetApprovalsAfterEdit($document);
+        }
 
         $action = $request->input('action');
 
@@ -135,7 +128,7 @@ class OffCampusApplicationController extends BaseProjectDocumentController
             return $this->submit($project);
         }
 
-        return back()->with('success', 'Off-campus form submitted successfully.');
+        return back()->with('success', 'Saved as draft.');
     }
 
     public function submit(Project $project)

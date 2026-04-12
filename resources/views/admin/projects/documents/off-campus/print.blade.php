@@ -475,15 +475,16 @@
                 grid-template-columns: 1fr 2% 1fr 2% 1fr 2% 1fr 2% 1fr;
                 width:100%;
                 align-items:center;
-                font-size:11px;
+                font-size:9px;
             ">
 
                 {{-- COL 1 --}}
                 <div style="
                     border-bottom:1px solid #2f6fb3;
                     padding:2px 4px;
-                    white-space:nowrap;
-                    overflow:hidden;
+                    white-space:normal;
+                    word-break:break-word;
+                    overflow-wrap:break-word;
                     
                 ">
                     {{ $index + 1 }}. {{ $p->student_name ?? '' }}
@@ -495,8 +496,9 @@
                 <div style="
                     border-bottom:1px solid #2f6fb3;
                     text-align:center;
-                    white-space:nowrap;
-                    overflow:hidden;
+                    white-space:normal;
+                    word-break:break-word;
+                    overflow-wrap:break-word;
                     
                 ">
                     {{ $p->course_year ?? '' }}
@@ -508,8 +510,9 @@
                 <div style="
                     border-bottom:1px solid #2f6fb3;
                     text-align:center;
-                    white-space:nowrap;
-                    overflow:hidden;
+                    white-space:normal;
+                    word-break:break-word;
+                    overflow-wrap:break-word;
                     
                 ">
                     {{ $p->student_mobile ?? '' }}
@@ -521,8 +524,9 @@
                 <div style="
                     border-bottom:1px solid #2f6fb3;
                     text-align:center;
-                    white-space:nowrap;
-                    overflow:hidden;
+                    white-space:normal;
+                    word-break:break-word;
+                    overflow-wrap:break-word;
                     
                 ">
                     {{ $p->parent_name ?? '' }}
@@ -534,8 +538,9 @@
                 <div style="
                     border-bottom:1px solid #2f6fb3;
                     text-align:center;
-                    white-space:nowrap;
-                    overflow:hidden;
+                    white-space:normal;
+                    word-break:break-word;
+                    overflow-wrap:break-word;
                     
                 ">
                     {{ $p->parent_mobile ?? '' }}

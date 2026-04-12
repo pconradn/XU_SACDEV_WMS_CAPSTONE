@@ -28,19 +28,11 @@ class InAppNotifier
             ->first();
 
         if ($existing) {
- 
-            $data = is_array($existing->data)
-                ? $existing->data
-                : json_decode($existing->data, true);
-
-            $existing->update([
-                'data' => array_merge($data ?? [], $payload),
-                'read_at' => null, 
-                'updated_at' => now(),
-            ]);
-
-            return;
+            $existing->delete();
         }
+
+        $user->notify(new ReregActionNotification($payload));
+        return;
 
         $user->notify(new ReregActionNotification($payload));
     }

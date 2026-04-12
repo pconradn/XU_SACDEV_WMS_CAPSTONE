@@ -13,7 +13,7 @@ $isEditable = $isProjectHead && (
     || ($status === 'approved_by_sacdev' && $document->edit_mode)
 );
 
-if (in_array($status, ['approved','approved_by_sacdev'])) {
+if (in_array($status, ['approved','approved_by_sacdev']) && !$document->edit_mode) {
     $isEditable = false;
 }
 
@@ -37,54 +37,33 @@ $currentApprover = $document?->signatures
 @endphp
 
 
-{{-- ================= STATUS CARD ================= --}}
+{{-- STATUS --}}
 @include('components.document.status-bar', ['document' => $document])
 
 
-
+{{-- HEADER --}}
 @include('org.projects.documents.off-campus.partials._header')
 
 
-
-{{-- ================= FORM ================= --}}
+{{-- FORM --}}
 <form id="proposalForm"
       method="POST"
-      action="{{ route('org.projects.documents.off-campus.store', $project) }}">
+      action="{{ route('org.projects.documents.off-campus.store', $project) }}"
+      class="space-y-6">
 
 @csrf
 <input type="hidden" name="action" id="formAction" value="draft">
+
 @if($isReadOnly)
 <fieldset disabled class="space-y-6">
 @endif
 
 
-<div class="grid gap-6">
+<div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-4 space-y-6">
 
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    @include('org.projects.documents.off-campus.partials._activity-info')
 
-    {{-- ACCENT LINE --}}
-    
-    <div class="h-1 bg-blue-500"></div>
-    
-    <div class=" border border-slate-200 bg-white shadow-sm p-5">
-        
-        
-        @include('org.projects.documents.off-campus.partials._activity-info')
-    </div>
-
-    </div>
-
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-
-    {{-- ACCENT LINE --}}
-    
-    <div class="h-1 bg-blue-500"></div>
-    
-    <div class=" border border-slate-200 bg-white shadow-sm p-5">
-        @include('org.projects.documents.off-campus.partials._participants')
-    </div>
-
-    </div>
+    @include('org.projects.documents.off-campus.partials._participants')
 
 </div>
 
@@ -96,11 +75,11 @@ $currentApprover = $document?->signatures
 </form>
 
 
-{{-- ================= SIGNATURES ================= --}}
+{{-- SIGNATURES --}}
 @include('org.projects.documents.project-proposal.partials._signatures')
 
 
-{{-- ================= ACTIONS ================= --}}
+{{-- ACTIONS --}}
 @include('components.project-document.actions._actions', [
     'project' => $project,
     'document' => $document,
@@ -112,7 +91,7 @@ $currentApprover = $document?->signatures
 ])
 
 
-{{-- ================= SCRIPTS ================= --}}
+{{-- SCRIPTS --}}
 @include('org.projects.documents.off-campus.partials._scripts')
 
 

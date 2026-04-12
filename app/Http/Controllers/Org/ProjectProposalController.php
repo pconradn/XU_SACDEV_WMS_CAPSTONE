@@ -466,6 +466,14 @@ class ProjectProposalController extends BaseProjectDocumentController
                 ]),
             ],
 
+            'end_time' => [
+                'required',
+                Rule::anyOf([
+                    'date_format:H:i',
+                    'date_format:H:i:s',
+                ]),
+            ],
+
             'required' => [
                 'nullable',
                 Rule::anyOf([
