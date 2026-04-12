@@ -176,6 +176,7 @@ class Project extends Model
             'cancelled' => 'Cancelled',
             'post_implementation' => 'Post-Implementation',
             'completed' => 'Completed',
+            'pre_implementation' => 'Pre-Implementation',
             default => 'Unknown',
         };
     }
@@ -191,7 +192,8 @@ class Project extends Model
             'postponed' => 'bg-yellow-100 text-yellow-700 ring-yellow-200',
             'cancelled' => 'bg-rose-100 text-rose-700 ring-rose-200',
             'post_implementation' => 'bg-indigo-100 text-indigo-700 ring-indigo-200',
-            'completed' => 'bg-purple-100 text-purple-700 ring-purple-200',
+            'completed' => 'bg-emerald-100 text-emerald-700 ring-emerald-200',
+            'pre_implementation' => 'bg-indigo-100 text-indigo-700 ring-indigo-200',
             default => 'bg-slate-100 text-slate-700 ring-slate-200',
         };
     }

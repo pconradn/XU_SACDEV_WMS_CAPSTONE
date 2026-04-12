@@ -63,7 +63,7 @@ $sections = [
 
                 <tr data-budget-row data-section="{{ $code }}" class="hover:bg-slate-50 transition">
 
-                    <td class="px-2 py-2">
+                    <td class="px-1 py-2">
                         <input type="number" step="1" value="{{ $item->qty }}"
                             name="{{ $code }}[qty][]"
                             class="w-full rounded-lg border border-slate-300 px-2 py-1 text-xs text-center focus:ring-2 focus:ring-emerald-500">

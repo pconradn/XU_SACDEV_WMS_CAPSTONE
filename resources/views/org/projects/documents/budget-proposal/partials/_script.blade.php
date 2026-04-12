@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
         row.className = "hover:bg-slate-50 transition";
 
         row.innerHTML = `
-            <td class="px-2 py-2">
+            <td class="px-1 py-2">
                 <input type="number" step="1"
                     name="${section}[qty][]"
                     class="w-full rounded-lg border border-slate-300 px-2 py-1 text-xs text-center focus:ring-2 focus:ring-emerald-500">

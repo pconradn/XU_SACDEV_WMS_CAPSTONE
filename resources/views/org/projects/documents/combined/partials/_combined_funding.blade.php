@@ -12,6 +12,14 @@
     ];
 @endphp
 
+@php
+    $proposalData = $project->proposalDocument?->proposalData;
+
+    $fundSources = $proposalData?->fundSources
+        ? $proposalData->fundSources->pluck('amount', 'source_name')->toArray()
+        : [];
+@endphp
+
 <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm overflow-hidden">
 
     <div class="h-1 bg-gradient-to-r from-emerald-500 to-blue-500"></div>
@@ -46,7 +54,7 @@
                     inputmode="decimal"
                     data-name="finance_amount"
                     id="finance_input"
-                    value="0"
+                    value="{{ old('fund_sources.Finance Office', $fundSources['Finance Office'] ?? 0) }}"
                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs 
                     focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
             </div>
@@ -63,7 +71,7 @@
                     inputmode="decimal"
                     data-name="osa_amount"
                     id="osa_input"
-                    value="0"
+                    value="{{ old('fund_sources.OSA-SACDEV', $fundSources['OSA-SACDEV'] ?? 0) }}"
                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs 
                     focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
             </div>
@@ -130,13 +138,7 @@
                 Estimated income from fundraising activities
             </p>
 
-            @php
-                $proposalData = $project->proposalDocument?->proposalData;
 
-                $fundSources = $proposalData?->fundSources
-                    ? $proposalData->fundSources->pluck('amount', 'source_name')->toArray()
-                    : [];
-            @endphp
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
 
@@ -186,7 +188,7 @@
 <input type="hidden" name="fund_sources[Solicitation]" id="hidden_solicitation">
 <input type="hidden" name="fund_sources[Ticket-Selling]" id="hidden_ticket">
 <input type="hidden" name="fund_sources[Others]" id="hidden_others">
-<input type="hidden" name="fund_sources[OSA-SACDEV]" id="hidden_osa-sacdev">
+<input type="hidden" name="fund_sources[OSA-SACDEV]" id="hidden_osa_sacdev">
 <input type="hidden" name="fund_sources[Finance Office]" id="hidden_finance">
 
 <input type="hidden" name="total_budget" id="hidden_total_budget">
@@ -232,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('combined_total_display').innerText = formatNumber(total);
         document.getElementById('hidden_finance').value = finance;
-        document.getElementById('hidden_osa-sacdev').value = osa;
+        document.getElementById('hidden_osa_sacdev').value = osa;
         document.getElementById('hidden_pta').value = pta;
 
         document.getElementById('hidden_counterpart').value = counterpartTotal;

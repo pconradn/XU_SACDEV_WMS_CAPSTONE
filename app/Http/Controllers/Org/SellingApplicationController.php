@@ -80,6 +80,14 @@ class SellingApplicationController extends BaseProjectDocumentController
     public function store(Request $request, Project $project)
     {
 
+        $request->merge([
+            'projected_sales' => str_replace(',', '', $request->projected_sales),
+            'items' => collect($request->items)->map(function ($item) {
+                $item['selling_price'] = str_replace(',', '', $item['selling_price'] ?? 0);
+                return $item;
+            })->toArray(),
+        ]);
+        
         $validator = \Validator::make($request->all(), [
 
             'activity_name' => ['required','string','max:255'],
