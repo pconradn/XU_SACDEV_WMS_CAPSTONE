@@ -75,4 +75,24 @@ class NotificationController extends Controller
     }
 
 
+
+    public function partial()
+    {
+        $user = auth()->user();
+
+        $unreadCount = $user->unreadNotifications()->count();
+
+        $recentNotifications = $user->notifications()
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('partials.notifications', compact(
+            'unreadCount',
+            'recentNotifications'
+        ));
+    }
+
+
+
 }

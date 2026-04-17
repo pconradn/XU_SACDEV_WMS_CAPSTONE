@@ -80,7 +80,7 @@ class ProjectProposalFormSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
-        | Additional "Other" Phase Forms
+        | Additional "post_implementation" Phase Forms
         |--------------------------------------------------------------------------
         */
 
@@ -88,7 +88,7 @@ class ProjectProposalFormSeeder extends Seeder
             ['code' => 'SOLICITATION_SPONSORSHIP_REPORT'],
             [
                 'name' => 'Solicitation/Sponsorship Report',
-                'phase' => 'other',
+                'phase' => 'post_implementation',
                 'description' => 'Report summarizing all funds collected from solicitation or sponsorship activities.',
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -99,7 +99,7 @@ class ProjectProposalFormSeeder extends Seeder
             ['code' => 'TICKET_SELLING_REPORT'],
             [
                 'name' => 'Ticket Selling Report',
-                'phase' => 'other',
+                'phase' => 'post_implementation',
                 'description' => 'Report documenting ticket sales and total collections from ticket-based activities.',
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -110,7 +110,7 @@ class ProjectProposalFormSeeder extends Seeder
             ['code' => 'SELLING_ACTIVITY_REPORT'],
             [
                 'name' => 'Selling Activity Report',
-                'phase' => 'other',
+                'phase' => 'post_implementation',
                 'description' => 'Summary report of goods sold during student organization selling activities.',
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -121,7 +121,7 @@ class ProjectProposalFormSeeder extends Seeder
             ['code' => 'FEES_COLLECTION_REPORT'],
             [
                 'name' => 'Fees Collection Report',
-                'phase' => 'other',
+                'phase' => 'post_implementation',
                 'description' => 'Report detailing collections from membership fees or other organizational fees.',
                 'created_at' => $now,
                 'updated_at' => $now,

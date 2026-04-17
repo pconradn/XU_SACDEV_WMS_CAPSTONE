@@ -97,15 +97,14 @@ class ProfileController extends Controller
             'sex' => ['nullable','string','max:20'],
             'religion' => ['nullable','string','max:100'],
 
-            'mobile_number' => ['required','string','max:20'],
+            'mobile_number' => ['required','regex:/^09\d{9}$/'],
             'email' => ['nullable','email','max:255'],
-            'landline' => ['nullable','string','max:20'],
+            'landline' => ['nullable','regex:/^\d{7,10}$/'],
             'facebook_url' => ['nullable','url'],
 
             'home_address' => ['required','string'],
             'city_address' => ['nullable','string'],
 
-            'skills_and_interests' => ['nullable','string'],
 
             'university_designation' => [$isModerator ? 'required' : 'nullable','string','max:255'],
             'unit_department' => [$isModerator ? 'required' : 'nullable','string','max:255'],
@@ -134,6 +133,16 @@ class ProfileController extends Controller
             'awards.*.conferred_by' => ['nullable','string'],
             'awards.*.date_received' => ['nullable','date'],
         ]);
+
+        foreach ($request->input('trainings', []) as $index => $training) {
+            if (!empty($training['date_from']) && !empty($training['date_to'])) {
+                if (strtotime($training['date_to']) < strtotime($training['date_from'])) {
+                    return back()
+                        ->withErrors(["trainings.$index.date_to" => 'End date must not be before start date'])
+                        ->withInput();
+                }
+            }
+        }  
         
         if ($request->hasFile('photo_id')) {
             $path = $request->file('photo_id')->store('profile_ids', 'public');

@@ -1,13 +1,17 @@
 <?php
 
+use App\Http\Controllers\ClearanceController as Clearance;
 use App\Http\Controllers\ContextController;
 use App\Http\Controllers\ForcedPasswordController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Org\ClearanceController;
-use App\Http\Controllers\ClearanceController as Clearance;
 use App\Models\OrgMembership;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/notifications/partial', [NotificationController::class, 'partial'])
+    ->name('notifications.partial');
 
 
 Route::get('/verify/{token}', [\App\Http\Controllers\VerificationController::class, 'show'])

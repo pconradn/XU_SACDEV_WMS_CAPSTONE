@@ -553,10 +553,92 @@ class AdminDashboardController extends Controller
 
     }
 
+        
+    public function projectApprovalsPartial()
+    {
+        $user = auth()->user();
 
-    
-    
-    
+        $user->load('clusters');
+        $isCoa = (bool) $user->is_coa_officer;
+        $clusterIds = $user->clusters->pluck('id');
+
+        $activeSy = \App\Models\SchoolYear::activeYear();
+        $activeSyId = $activeSy?->id;
+
+        $projectApprovals = \App\Models\ProjectDocument::with([
+                'project.organization',
+                'formType',
+                'signatures',
+            ])
+            ->whereHas('project', function ($q) use ($activeSyId, $user, $isCoa, $clusterIds) {
+
+                if ($activeSyId) {
+                    $q->where('school_year_id', $activeSyId);
+                }
+
+                $q->where('workflow_status', '!=', 'cancelled');
+
+                $q->whereHas('organization', function ($org) use ($user, $isCoa, $clusterIds) {
+
+                    $org->when(!$isCoa, function ($q) use ($clusterIds, $user) {
+
+                        if ($clusterIds->isNotEmpty()) {
+                            $q->whereIn('cluster_id', $clusterIds);
+                        } elseif ($user->cluster_id) {
+                            $q->where('cluster_id', $user->cluster_id);
+                        } else {
+                            $q->whereRaw('1 = 0');
+                        }
+
+                    });
+
+                });
+
+            })
+            ->get()
+            ->filter(function ($doc) {
+                $userId = auth()->id();
+
+                if ($doc->edit_requested) {
+                    return $doc->project && $doc->project->organization;
+                }
+
+                $pending = $doc->currentPendingSignature();
+
+                return $pending && $pending->user_id === $userId;
+            })
+            ->map(function ($doc) {
+                return (object) [
+                    'project' => $doc->project,
+                    'organization' => $doc->project->organization ?? null,
+
+                    'forms' => collect([
+                        [
+                            'name' => $doc->edit_requested
+                                ? ($doc->formType->name ?? 'Form') . ' (Edit Requested)'
+                                : ($doc->formType->name ?? 'Form'),
+                            'code' => $doc->formType->code ?? null,
+                            'phase' => $doc->formType->phase ?? 'default',
+                        ]
+                    ]),
+                    'edit_request_remarks' => $doc->edit_requested ? $doc->edit_request_remarks : null,
+                    'status' => $doc->edit_requested ? 'edit_requested' : $doc->status,
+                    'route' => route('admin.projects.documents.hub', $doc->project_id),
+                    'form_route' => in_array($doc->formType->code, ['PROJECT_PROPOSAL', 'BUDGET_PROPOSAL'])
+                        ? route('admin.projects.documents.combined-proposal.open', $doc->project_id)
+                        : route('admin.projects.documents.open', [
+                            $doc->project_id,
+                            $doc->formType->code
+                        ]),
+                    'count' => 1,
+                    'is_completion' => false,
+                ];
+            })
+            ->values();
+
+        return view('admin.dashboard._project-approvals', compact('projectApprovals'));
+    } 
+        
     
     protected function resolveOrgDocumentRoute(ProjectDocument $document): string
     {

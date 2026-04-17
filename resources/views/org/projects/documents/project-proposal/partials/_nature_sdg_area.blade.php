@@ -170,11 +170,11 @@
                             'Partnerships for the Goals',
                         ];
 
-                        $sdg = old('sdg');
-                        if (is_null($sdg) && isset($proposal->sdg)) {
-                            $sdg = explode(', ', $proposal->sdg);
-                        }
-                        if (!is_array($sdg)) $sdg = [];
+                    $sdg = old('sdg');
+                    if (is_null($sdg) && isset($proposal->sdg)) {
+                        $sdg = explode('|', $proposal->sdg);
+                    }
+                    if (!is_array($sdg)) $sdg = [];
                     @endphp
 
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-slate-700">

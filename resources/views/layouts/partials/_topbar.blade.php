@@ -154,7 +154,23 @@
 
             @auth
                 @if(!$isAdmin)
-                    <div x-data="{ open: false }" class="relative shrink-0">
+                    <div id="notif-wrapper"
+                        x-data="{
+                            open: false,
+                            load() {
+                                fetch('{{ route('notifications.partial') }}')
+                                    .then(res => res.text())
+                                    .then(html => {
+                                        let wrapper = document.getElementById('notif-wrapper')
+                                        if (wrapper) {
+                                            wrapper.innerHTML = html
+                                        }
+                                    })
+                            }
+                        }"
+                        x-init="load(); setInterval(() => load(), 10000)"
+                        class="relative shrink-0"
+                    >
                         <button
                             @click="open = !open"
                             type="button"

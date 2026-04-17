@@ -61,6 +61,14 @@ class ModeratorSubmissionController extends Controller
         if (!$profile?->years_of_service) $missingFields[] = 'Years of Service';
 
         $isProfileComplete = empty($missingFields);
+        $isSubmissionComplete = $submission 
+            && in_array($submission->status, [
+                'submitted',
+                'submitted_to_moderator',
+                'submitted_to_sacdev',
+                'approved',
+                'approved_by_sacdev'
+            ]);
 
         $submission = ModeratorSubmission::query()
             ->where('organization_id', $orgId)
@@ -77,6 +85,7 @@ class ModeratorSubmissionController extends Controller
             'isModerator' => $isModerator,
             'isProfileComplete' => $isProfileComplete,
             'missingFields' => $missingFields,
+            'isSubmissionComplete' => $isSubmissionComplete,
         ]);
     }
 
@@ -139,10 +148,21 @@ class ModeratorSubmissionController extends Controller
         $submission = ModeratorSubmission::query()
             ->where('organization_id', $orgId)
             ->where('target_school_year_id', $syId)
+            ->latest('id')
             ->first();
 
-        $moderatorUser = $submission?->moderatorUser;
+        if (!$submission) {
+            $moderatorUser = OrgMembership::query()
+                ->where('organization_id', $orgId)
+                ->where('school_year_id', $syId)
+                ->where('role', 'moderator')
+                ->with('user.profile')
+                ->first()?->user;
+        } else {
+            $moderatorUser = $submission->moderatorUser;
+        }
 
+        
 
 
         $profile = $moderatorUser?->profile;
@@ -160,6 +180,14 @@ class ModeratorSubmissionController extends Controller
         if (!$profile?->years_of_service) $missingFields[] = 'Years of Service';
 
         $isProfileComplete = empty($missingFields);
+        $isSubmissionComplete = $submission 
+            && in_array($submission->status, [
+                'submitted',
+                'submitted_to_moderator',
+                'submitted_to_sacdev',
+                'approved',
+                'approved_by_sacdev'
+            ]);
 
         return view('org.rereg.moderator_submission', [
             'submission' => $submission,
@@ -169,6 +197,7 @@ class ModeratorSubmissionController extends Controller
             'isProfileComplete' => $isProfileComplete,
             'missingFields' => $missingFields,
             'isAdminView' => true,
+            'isSubmissionComplete' => $isSubmissionComplete,
         ]);
     }
 

@@ -240,35 +240,33 @@ class AdminProjectDocumentController extends Controller
             $isSubmitted = $doc !== null;
             $isApproved = $doc && $doc->status === 'approved_by_sacdev';
 
-            $isActionRequired =
-                $form['is_pending'] &&
-                $form['waiting_for'] === 'sacdev_admin';
+            $isActionRequired = $form['is_pending_for_me'];
 
-            // 🔴 ACTION REQUIRED
+
             if ($isActionRequired || ($doc && $doc->status === 'returned')) {
                 $documentsGrouped['action_required']->push($form);
                 continue;
             }
 
-            // 🟢 APPROVED
+    
             if ($isApproved) {
                 $documentsGrouped['approved']->push($form);
                 continue;
             }
 
-            // 🟡 REQUIRED
+        
             if ($isRequired && !$isSubmitted) {
                 $documentsGrouped['required']->push($form);
                 continue;
             }
 
-            // 🔵 SUBMITTED OPTIONAL
+         
             if (!$isRequired && $isSubmitted) {
                 $documentsGrouped['submitted_optional']->push($form);
                 continue;
             }
 
-            // ⚪ OTHERS
+          
             $documentsGrouped['others']->push($form);
         }
 

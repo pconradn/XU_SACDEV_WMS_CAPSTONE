@@ -68,7 +68,29 @@
             {{-- LEFT --}}
             <div class="lg:col-span-2 space-y-3">
                 @include('admin.dashboard._pending-cases')
-                @include('admin.dashboard._project-approvals')
+
+
+                
+                <div
+                    x-data="{
+                        load() {
+                            fetch('{{ route('admin.dashboard.project-approvals.partial') }}')
+                                .then(res => res.text())
+                                .then(html => {
+                                    this.$refs.container.innerHTML = html
+                                })
+                        }
+                    }"
+                    x-init="setInterval(() => load(), 30000)"
+                >
+                    <div x-ref="container">
+                        @include('admin.dashboard._project-approvals')
+                    </div>
+                </div>
+
+
+
+
             </div>
 
             {{-- RIGHT --}}

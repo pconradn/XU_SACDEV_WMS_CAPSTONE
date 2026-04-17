@@ -33,18 +33,20 @@
             {{-- LEFT --}}
             <div class="flex flex-col gap-1">
                 <div class="text-sm font-semibold text-slate-900 capitalize">
-                    @php
-                        $role = $sig->role;
+                @php
+                    $role = $sig->role;
+                    $user = $sig->user;
 
-                        if (str_contains($role, 'sacdev')) {
-                            $roleLabel = strtoupper(str_replace('_', ' ', $role));
-                        }
-                        elseif (str_contains($role, 'coa_officer')) {
-                        $roleLabel = strtoupper(str_replace('_', ' ', $role));
-                        } else {
-                            $roleLabel = ucwords(str_replace('_', ' ', $role));
-                        }
-                    @endphp
+                    if (
+                        $user &&
+                        $user->role &&
+                        in_array($role, ['sacdev_admin', 'coa_officer'])
+                    ) {
+                        $roleLabel = $user->role->label;
+                    } else {
+                        $roleLabel = str_replace('_', ' ', $role);
+                    }
+                @endphp
 
                     {{ $roleLabel }}
                 </div>

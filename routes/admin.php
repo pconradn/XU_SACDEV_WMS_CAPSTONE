@@ -109,7 +109,8 @@ Route::prefix('admin')
 
     });
 
-
+Route::get('/admin/dashboard/project-approvals-partial', [AdminDashboardController::class, 'projectApprovalsPartial'])
+    ->name('admin.dashboard.project-approvals.partial');
 
 Route::get('/admin/organizations/{organization}/open', [OrganizationController::class, 'open'])
     ->middleware(['auth', 'sacdev_admin', 'must_change_password', 'permission:projects.view'])

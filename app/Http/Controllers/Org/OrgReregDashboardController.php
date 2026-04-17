@@ -30,6 +30,8 @@ class OrgReregDashboardController extends Controller
         ];
     }
 
+    
+
 
     private function b5Badge($b5, bool $isModerator, bool $isProfileComplete): array
     {
@@ -287,6 +289,11 @@ class OrgReregDashboardController extends Controller
             && $presidentUser                 // President assigned
             && $b6 !== null;                  // Constitution exists
 
+        $moderatorDone =
+            $b5 &&
+            $b5->was_moderator_before !== null &&
+            $b5->served_nominating_org_before !== null;
+
         return view('org.rereg.index', [
             'schoolYears' => $schoolYears,
             'encodeSyId'  => $syId,
@@ -302,6 +309,7 @@ class OrgReregDashboardController extends Controller
             'isPresidentProfileComplete' => $isPresidentProfileComplete,
             'isAdminReregHub' => false,
             'isPresident' => $isPresident,
+            'moderatorDone' => $moderatorDone,
         ]);
     }
 

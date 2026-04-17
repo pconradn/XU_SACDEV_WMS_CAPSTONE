@@ -12,6 +12,13 @@
     } else {
         $profileRoute = route('org.profile.edit', ['user' => $profile->user_id]);
     }
+    
+
+    
+@endphp
+
+@php
+
 @endphp
 
 <style>
@@ -370,9 +377,9 @@
                     </div>
 
                     <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
-                        <div class="text-[11px] text-slate-500">Profile Requirement</div>
-                        <div class="mt-1 text-sm font-medium {{ $isProfileComplete ? 'text-emerald-700' : 'text-rose-700' }}">
-                            {{ $isProfileComplete ? 'Completed' : 'Incomplete' }}
+                        <div class="text-[11px] text-slate-500">Submission Requirement</div>
+                        <div class="mt-1 text-sm font-medium {{ $isSubmissionComplete ? 'text-emerald-700' : 'text-rose-700' }}">
+                            {{ $isSubmissionComplete ? 'Completed' : 'Required' }}
                         </div>
                     </div>
 

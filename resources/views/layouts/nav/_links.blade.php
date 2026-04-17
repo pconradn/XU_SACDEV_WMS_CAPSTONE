@@ -82,18 +82,19 @@ if ($user && $isAdmin) {
 
 
     //admin.organizations.assign-president
+    if (Route::has('admin.orgs_by_sy.index') && $can('projects.view')) {
+        $orgTools[] = $item('Manage Organizations', route('admin.orgs_by_sy.index'), ['admin.orgs_by_sy.*']);
+    }
+
 
     if (Route::has('admin.packets.receive') && $can('documents.manage')) {
-        $orgTools[] = $item('Org Packet Receiving', route('admin.packets.receive'), ['admin.packets.*']);
+        $orgTools[] = $item('Receive Org Packet', route('admin.packets.receive'), ['admin.packets.*']);
     }
 
     if (Route::has('admin.external-packets.receive') && $can('documents.manage')) {
-        $orgTools[] = $item('External Packet Receiving', route('admin.external-packets.receive'), ['admin.external-packets.*']);
+        $orgTools[] = $item('Receive External Packet', route('admin.external-packets.receive'), ['admin.external-packets.*']);
     }
 
-    if (Route::has('admin.orgs_by_sy.index') && $can('projects.view')) {
-        $orgTools[] = $item('Organizations', route('admin.orgs_by_sy.index'), ['admin.orgs_by_sy.*']);
-    }
 
 
     if (Route::has('student-clearance.index')) {
@@ -102,13 +103,20 @@ if ($user && $isAdmin) {
 
 
 
+    if (Route::has('admin.president_assignments.index') && $can('context.manage')) {
+        $system[] = $item('Assign President', route('admin.president_assignments.index'), ['admin.president_assignments.*']);
+    }
+
+    if (Route::has('admin.organizations.index') && $can('context.manage')) {
+        $system[] = $item('Add Organization', route('admin.organizations.index'), ['admin.organizations.*']);
+    }
 
     if (Route::has('admin.school-years.index') && $can('context.manage')) {
-        $system[] = $item('School Years', route('admin.school-years.index'), ['admin.school-years.*']);
+        $system[] = $item('Manage School Year', route('admin.school-years.index'), ['admin.school-years.*']);
     }
 
     if (Route::has('admin.users.index') && $can('users.manage')) {
-        $system[] = $item('Admin Users', route('admin.users.index'), ['admin.users.*']);
+        $system[] = $item('Manage Admin Users', route('admin.users.index'), ['admin.users.*']);
     }
 
     if (Route::has('admin.coa.index') && $can('users.manage')) {
@@ -119,16 +127,8 @@ if ($user && $isAdmin) {
         $system[] = $item('Manage Roles', route('admin.roles.index'), ['admin.roles.*']);
     }
 
-    if (Route::has('admin.organizations.index') && $can('context.manage')) {
-        $system[] = $item('Organization Settings', route('admin.organizations.index'), ['admin.organizations.*']);
-    }
-
-    if (Route::has('admin.president_assignments.index') && $can('context.manage')) {
-        $system[] = $item('President Assignments', route('admin.president_assignments.index'), ['admin.president_assignments.*']);
-    }
-
     if (Route::has('admin.audit-logs.index') && $can('projects.view')) {
-        $system[] = $item('Audit Logs', route('admin.audit-logs.index'), ['admin.audit-logs.*']);
+        $system[] = $item('View Audit Logs', route('admin.audit-logs.index'), ['admin.audit-logs.*']);
     }
 
 
@@ -248,27 +248,22 @@ if ($user && $activeOrgId && $syId) {
             }
         }
 
-        if (Route::has('org.officers.index')) {
-            $ops[] = $item('Officer List', route('org.officers.index'), ['org.officers.*']);
-        }
 
         if (Route::has('org.projects.index')) {
-            $ops[] = $item('Projects', route('org.projects.index'), ['org.projects.*']);
+            $ops[] = $item('Manage Projects', route('org.projects.index'), ['org.projects.*']);
         }
 
-
-
-        if (Route::has('org.activation-status.index')) {
-            $ops[] = $item('Activation Status', route('org.activation-status.index'), ['org.activation-status.*']);
+        if (Route::has('org.officers.index')) {
+            $ops[] = $item('View Officer List', route('org.officers.index'), ['org.officers.*']);
         }
-
 
         if (Route::has('org.assign-project-heads.index')) {
             $ops[] = $item('Assign Project Head', route('org.assign-project-heads.index'), ['org.assign-project-heads.*']);
         }
 
-
-
+        if (Route::has('org.activation-status.index')) {
+            $ops[] = $item('View Accounts Status', route('org.activation-status.index'), ['org.activation-status.*']);
+        }
 
 
 

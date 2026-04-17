@@ -95,7 +95,22 @@
       
                 <div class="lg:col-span-2 space-y-5">
 
-                    @include('portals.partials._org_dashboard_pending_tasks')
+                    <div
+                        x-data="{
+                            load() {
+                                fetch('{{ route('org.dashboard.pending-tasks.partial') }}')
+                                    .then(res => res.text())
+                                    .then(html => {
+                                        this.$refs.container.innerHTML = html
+                                    })
+                            }
+                        }"
+                        x-init="setInterval(() => load(), 30000)"
+                    >
+                        <div x-ref="container">
+                            @include('portals.partials._org_dashboard_pending_tasks')
+                        </div>
+                    </div>
 
 
                   

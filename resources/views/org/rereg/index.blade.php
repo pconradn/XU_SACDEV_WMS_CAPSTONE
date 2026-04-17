@@ -49,22 +49,41 @@
                     </span>
                 </button>
 
-            
                 @if($isActivated)
+
                     <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
                         <i data-lucide="check-circle-2" class="h-3.5 w-3.5"></i>
                         Registered
                     </span>
+
+                @elseif($isModerator && $moderatorDone)
+
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                        <i data-lucide="check-circle" class="h-3.5 w-3.5"></i>
+                        Moderator Done
+                    </span>
+
+                @elseif($isModerator && !$moderatorDone)
+
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                        <i data-lucide="clock-3" class="h-3.5 w-3.5"></i>
+                        Re-Registration In Progress
+                    </span>
+
                 @elseif($allApproved)
+
                     <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
                         <i data-lucide="sparkles" class="h-3.5 w-3.5"></i>
                         Ready
                     </span>
+
                 @else
+
                     <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
                         <i data-lucide="clock-3" class="h-3.5 w-3.5"></i>
                         In Progress
                     </span>
+
                 @endif
 
             </div>
@@ -201,6 +220,18 @@
                                     <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
                                     Register Organization
                                 </button>
+
+                            @elseif($isModerator && $moderatorDone)
+
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                                    Moderator Done
+                                </span>
+
+                            @elseif($isModerator && !$moderatorDone)
+
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                                    In Progress
+                                </span>
 
                             @else
 

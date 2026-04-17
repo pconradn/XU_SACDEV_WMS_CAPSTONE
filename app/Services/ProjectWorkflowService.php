@@ -13,7 +13,7 @@ class ProjectWorkflowService
 
         if (!$project) return;
 
-        // 🔹 DRAFTING (proposal saved as draft)
+        
         if (
             $document->formType->code === 'PROJECT_PROPOSAL' &&
             $document->status === 'draft'
@@ -22,22 +22,20 @@ class ProjectWorkflowService
             return;
         }
 
-        // 🔹 PRE-IMPLEMENTATION (COMBINED LOGIC)
+       
         if ($this->isPreImplementationReady($project)) {
             $project->update(['workflow_status' => 'pre_implementation']);
             return;
         }
 
-        // 🔹 POST-IMPLEMENTATION
+     
         if ($this->hasApprovedPostImplementation($project)) {
             $project->update(['workflow_status' => 'post_implementation']);
             return;
         }
     }
 
-    /**
-     * Combined Proposal + Budget must BOTH be approved
-     */
+
     protected function isPreImplementationReady(Project $project): bool
     {
         $proposal = $project->documents()
@@ -56,9 +54,7 @@ class ProjectWorkflowService
             $budget && method_exists($budget, 'isApprovedBySacdev') && $budget->isApprovedBySacdev();
             }
 
-    /**
-     * Any post-implementation form approved
-     */
+
     protected function hasApprovedPostImplementation(Project $project): bool
     {
         return $project->documents()

@@ -15,7 +15,7 @@ class Sprint1Seeder extends Seeder
 {
     public function run(): void
     {
-        $password = Hash::make('paul1234');
+        $password = Hash::make('paulconrad');
 
         SchoolYear::query()->update(['is_active' => false]);
 
@@ -30,9 +30,9 @@ class Sprint1Seeder extends Seeder
 
 
         $adminA = User::query()->updateOrCreate(
-            ['email' => 'badaya@xu.eud.ph'],
+            ['email' => 'pcnavidad@gmail.com'],
             [
-                'name' => 'Engr. Billy Jhones A. Adaya',
+                'name' => 'IT_GUY',
                 'password' => $password,
                 'system_role' => 'sacdev_admin',
                 'must_change_password' => false,
@@ -40,29 +40,7 @@ class Sprint1Seeder extends Seeder
             ]
         );
 
-        
-        $adminB = User::query()->updateOrCreate(
-            ['email' => 'cmulat@xu.edu.ph'],
-            [
-                'name' => 'Mr Carl Ed A Mulat, LPT',
-                'password' => $password,
-                'system_role' => 'sacdev_admin',
-                'must_change_password' => false,
-                'password_changed_at' => now(),
-            ]
-        );
 
-        
-        $adminC = User::query()->updateOrCreate(
-            ['email' => 'ncinco@xu.edu.ph'],
-            [
-                'name' => 'Ms Noemi Marla C Cinco',
-                'password' => $password,
-                'system_role' => 'sacdev_admin',
-                'must_change_password' => false,
-                'password_changed_at' => now(),
-            ]
-        );
 
 
     }

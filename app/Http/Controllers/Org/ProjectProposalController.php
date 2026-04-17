@@ -572,7 +572,7 @@ class ProjectProposalController extends BaseProjectDocumentController
                 'main_organizer' => $data['main_organizer'] ?? null,
                 'project_nature_other' => $data['project_nature_other'] ?? null,
                 'project_nature' => implode(', ', $data['project_nature'] ?? []),
-                'sdg' => implode(', ', $data['sdg'] ?? []),
+                'sdg' => implode('|', $data['sdg'] ?? []),
                 'area_focus' => implode(', ', $data['area_focus'] ?? []),
                 'description' => $data['description'] ?? null,
                 'org_link' => $data['org_link'] ?? null,

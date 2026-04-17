@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Org\OrganizationInfoController;
 use App\Http\Controllers\Org\OrganizationMemberRecordController;
+use App\Http\Controllers\Org\OrgDashboardController;
 use App\Http\Controllers\Org\OrgReregDashboardController;
 use App\Http\Controllers\Org\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -11,6 +12,9 @@ Route::prefix('org')
     ->group(function () {
 
         require __DIR__.'/org/context.php';
+
+
+
 
         /*
         |--------------------------------------------------------------------------
@@ -93,6 +97,9 @@ Route::prefix('org')
 
         Route::get('/rereg/constitution/{id}/download', [OrgReregDashboardController::class, 'downloadConstitution'])
             ->name('org.rereg.constitution.download');
+
+        Route::get('/dashboard/pending-tasks-partial', [OrgDashboardController::class, 'pendingTasksPartial'])
+            ->name('org.dashboard.pending-tasks.partial');
 
 
     });

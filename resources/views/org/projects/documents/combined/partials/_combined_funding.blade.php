@@ -44,24 +44,24 @@
 
             <div>
                 <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                    Finance Office
+                    Finance Office (₱)
                 </label>
                 <p class="text-[11px] text-emerald-600 mb-2">
                     Allocated support from finance unit
                 </p>
 
-                <input type="text"
-                    inputmode="decimal"
-                    data-name="finance_amount"
-                    id="finance_input"
-                    value="{{ old('fund_sources.Finance Office', $fundSources['Finance Office'] ?? 0) }}"
-                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs 
-                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
+            <input type="text"
+                inputmode="decimal"
+                data-name="finance_amount"
+                id="finance_input"
+                value="{{ old('fund_sources.Finance Office', $fundSources['Finance Office'] ?? 0) }}"
+                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs 
+                focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition">
             </div>
 
             <div>
                 <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                    OSA-SACDEV
+                    OSA-SACDEV (₱)
                 </label>
                 <p class="text-[11px] text-emerald-600 mb-2">
                     Institutional funding allocation
@@ -78,7 +78,7 @@
 
             <div>
                 <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                    PTA Contribution
+                    PTA Contribution (₱)
                 </label>
                 <p class="text-[11px] text-emerald-600 mb-2">
                     Direct organizational funding support
@@ -95,7 +95,7 @@
 
             <div class="space-y-2">
                 <label class="block text-[11px] font-medium text-slate-700">
-                    Counterpart Funding
+                    Counterpart Funding (₱)
                 </label>
                 <p class="text-[11px] text-emerald-600">
                     Amount per participant × total participants
@@ -130,7 +130,7 @@
             <div class="flex items-center gap-2">
                 <i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-600"></i>
                 <span class="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
-                    Raised Funds
+                    Raised Funds 
                 </span>
             </div>
 
@@ -145,7 +145,7 @@
                 @foreach(['Solicitation','Ticket-Selling','Others'] as $src)
                     <div>
                         <label class="block text-[11px] font-medium text-slate-700 mb-1">
-                            {{ $src }}
+                            {{ $src }} (₱)
                         </label>
 
                         <input type="text"

@@ -92,7 +92,7 @@ class OrganizationPresidentController extends Controller
             'middle_initial' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z]+(?:\s[A-Za-z]+)*$/'],
             'last_name'      => ['required', 'string', 'max:100', 'regex:/^[A-Za-z]+(?:[ \-][A-Za-z]+)*$/'],
             'prefix'         => ['nullable', 'string', 'max:20', 'regex:/^[A-Za-z\.]+$/'],
-            'student_id_number' => ['required', 'string', 'max:50', 'regex:/^[0-9]{11}$/'],
+            'student_id_number' => ['required', 'string', 'max:50'],
         ]);
 
     
@@ -224,7 +224,11 @@ class OrganizationPresidentController extends Controller
                 if (!$user) {
                     [$user, $tempPassword] = AccountProvisioner::findOrCreateUser(
                         $fullName,
-                        $email
+                        $email,
+                        $data['first_name'],
+                        $data['middle_initial'] ?? null,
+                        $data['last_name'],
+                        $data['prefix'] ?? null
                     );
 
                 

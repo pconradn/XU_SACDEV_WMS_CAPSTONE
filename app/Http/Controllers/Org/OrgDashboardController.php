@@ -26,6 +26,148 @@ class OrgDashboardController extends Controller
         return $encodeSyId > 0 ? $encodeSyId : SchoolYear::activeId();
     }
 
+    public function pendingTasksPartial(Request $request)
+    {
+        $user = $request->user();
+
+        $selectedSyId = $this->selectedSyId($request);
+
+        $memberships = OrgMembership::query()
+            ->where('user_id', $user->id)
+            ->where('school_year_id', $selectedSyId)
+            ->whereNull('archived_at')
+            ->get();
+
+        $currentOrgId = (int) $request->session()->get('active_org_id', 0);
+
+        $currentMembership = $memberships->firstWhere('organization_id', $currentOrgId)
+            ?? $memberships->first();
+
+        $currentOrg = $currentMembership?->organization;
+
+        $roles = $currentOrg
+            ? $memberships->where('organization_id', $currentOrg->id)->pluck('role')->unique()->values()
+            : collect();
+
+        $resolver = app(ProjectFormRequirementResolver::class);
+
+        $approvalTasks = collect();
+
+        if ($currentOrg) {
+
+            $approvalTasks = ProjectDocument::with([
+                    'project',
+                    'formType',
+                    'signatures.user',
+                ])
+                ->whereHas('project', function ($q) use ($selectedSyId, $currentOrg) {
+                    $q->where('school_year_id', $selectedSyId)
+                        ->where('organization_id', $currentOrg->id);
+                })
+                ->get()
+                ->filter(function ($doc) use ($user) {
+                    $pending = $doc->currentPendingSignature();
+
+                    return $pending
+                        && $pending->user_id === $user->id
+                        && $pending->role !== 'project_head';
+                })
+                ->map(function ($task) {
+                    $task->category = 'approval';
+                    return $task;
+                })
+                ->values();
+        }
+
+        $assignedProjects = collect();
+
+        if ($currentOrg) {
+            $assignedProjects = ProjectAssignment::query()
+                ->with([
+                    'project.documents.formType',
+                    'project.documents.signatures.user',
+                ])
+                ->where('user_id', $user->id)
+                ->whereNull('archived_at')
+                ->where('assignment_role', 'project_head')
+                ->whereHas('project', function ($q) use ($selectedSyId, $currentOrg) {
+                    $q->where('school_year_id', $selectedSyId)
+                        ->where('organization_id', $currentOrg->id);
+                })
+                ->get()
+                ->pluck('project')
+                ->unique('id')
+                ->values();
+        }
+
+        $reregTasks = collect();
+        $projectHeadTasks = collect();
+
+        if ($currentOrg) {
+            foreach ($assignedProjects as $project) {
+
+                $requiredForms = $resolver->resolve($project);
+
+                foreach ($requiredForms as $req) {
+
+                    $doc = $this->findDocument($project, $req);
+
+                    if (!$doc || $doc->status !== 'approved_by_sacdev') {
+
+                        $status = $doc?->status ?? 'not_started';
+
+                        $type = $status === 'returned' ? 'revision' : 'required';
+
+                        $projectHeadTasks->push((object) [
+                            'category' => 'project_head',
+                            'state' => $type,
+                            'phase' => $req->phase ?? 'other',
+                            'form_name' => $req->name ?? $req->code,
+                            'project' => $project,
+                            'status' => $status,
+                            'form_type_id' => $req->id,
+                            'form_code' => $req->code,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        $pendingTasks = collect()
+            ->merge($approvalTasks)
+            ->merge($projectHeadTasks)
+            ->merge($reregTasks)
+            ->values();
+
+        $pendingTasks = $pendingTasks->map(function ($task) {
+
+            if (!isset($task->link)) {
+
+                $code = $task->formType->code ?? $task->form_code ?? null;
+
+                if (!$code) return $task;
+
+                if ($code === 'PROJECT_PROPOSAL') {
+                    $task->link = route('org.projects.documents.combined-proposal.create', [
+                        'project' => $task->project->id,
+                    ]);
+                } else {
+                    $task->link = ProjectFormRouteResolver::resolve($task);
+                }
+            }
+
+            return $task;
+        });
+
+        $pendingCount = $pendingTasks->count();
+
+        return view('portals.partials._org_dashboard_pending_tasks', compact(
+            'pendingTasks',
+            'pendingCount',
+            'roles'
+        ));
+    }
+
     private function findDocument($project, $req)
     {
         if (!empty($req->id)) {

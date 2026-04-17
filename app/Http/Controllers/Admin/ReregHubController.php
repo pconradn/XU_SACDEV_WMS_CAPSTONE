@@ -152,8 +152,7 @@ class ReregHubController extends Controller
             ->where('organization_id', $organization->id)
             ->where('school_year_id', $encodeSyId)
             ->exists();
-
-
+        $isSubmissionComplete = $b5 && $b5->status !== 'draft';
         return view('admin.rereg.hub', [
 
             'organization' => $organization,
@@ -164,6 +163,7 @@ class ReregHubController extends Controller
 
             'allApproved' => $allApproved,
             'alreadyActivated' => $alreadyActivated,
+            'isSubmissionComplete' => $isSubmissionComplete,
 
         ]);
     }

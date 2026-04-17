@@ -35,15 +35,41 @@ class AccountProvisioner
     }
 
  
-    public static function findOrCreateUser(string $name, string $email): array
+    public static function findOrCreateUser(
+        string $name,
+        string $email,
+        ?string $first_name = null,
+        ?string $middle_initial = null,
+        ?string $last_name = null,
+        ?string $prefix = null
+    ): array
     {
         $user = User::query()->where('email', $email)->first();
 
         if ($user) {
             if (!$user->name || $user->name !== $name) {
                 $user->name = $name;
-                $user->save();
             }
+
+            
+            if (!$user->first_name && $first_name) {
+                $user->first_name = $first_name;
+            }
+
+            if (!$user->middle_initial && $middle_initial) {
+                $user->middle_initial = $middle_initial;
+            }
+
+            if (!$user->last_name && $last_name) {
+                $user->last_name = $last_name;
+            }
+
+            if (!$user->prefix && $prefix) {
+                $user->prefix = $prefix;
+            }
+
+            $user->save();
+
             return [$user, null];
         }
 
@@ -52,6 +78,13 @@ class AccountProvisioner
         $user = User::create([
             'name' => $name,
             'email' => $email,
+
+      
+            'first_name' => $first_name,
+            'middle_initial' => $middle_initial,
+            'last_name' => $last_name,
+            'prefix' => $prefix,
+
             'password' => Hash::make($tempPassword),
             'system_role' => null,
             'must_change_password' => true,

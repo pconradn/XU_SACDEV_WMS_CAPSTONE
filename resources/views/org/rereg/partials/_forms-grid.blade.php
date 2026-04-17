@@ -293,18 +293,20 @@
                 </div>
 
                 <div class="shrink-0">
-                    @if($mod && $mod->user && $mod->user->profile)
-                        @if(!$modProfileComplete)
-                            <span class="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-medium text-rose-700">
-                                <i data-lucide="alert-circle" class="h-3.5 w-3.5"></i>
-                                Incomplete
-                            </span>
-                        @else
-                            <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
-                                <i data-lucide="check-circle-2" class="h-3.5 w-3.5"></i>
-                                Complete
-                            </span>
-                        @endif
+                    @if(!$submission)
+
+                        <span class="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-medium text-rose-700">
+                            <i data-lucide="alert-circle" class="h-3.5 w-3.5"></i>
+                            Submission Required
+                        </span>
+
+                    @else
+
+                        <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
+                            <i data-lucide="check-circle-2" class="h-3.5 w-3.5"></i>
+                            Complete
+                        </span>
+
                     @endif
                 </div>
             </div>
