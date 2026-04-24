@@ -22,18 +22,54 @@
 
         <div class="px-6 py-6 space-y-6">
 
-            {{-- NAME --}}
-            <div>
-                <label class="text-sm font-semibold text-slate-700">
-                    Full Name
-                </label>
-                <input type="text" name="name"
-                       value="{{ old('name', $user->name) }}"
-                       class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100">
+       
+            {{-- NAME FIELDS --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                @error('name')
-                    <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
-                @enderror
+                {{-- PREFIX --}}
+                <div>
+                    <label class="text-sm font-semibold text-slate-700">Prefix</label>
+                    <input type="text" name="prefix"
+                        value="{{ old('prefix', $user->prefix) }}"
+                        class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100">
+                    @error('prefix')
+                        <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- FIRST NAME --}}
+                <div>
+                    <label class="text-sm font-semibold text-slate-700">First Name</label>
+                    <input type="text" name="first_name"
+                        value="{{ old('first_name', $user->first_name) }}"
+                        class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100">
+                    @error('first_name')
+                        <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- MIDDLE INITIAL --}}
+                <div>
+                    <label class="text-sm font-semibold text-slate-700">Middle Initial</label>
+                    <input type="text" name="middle_initial"
+                        value="{{ old('middle_initial', $user->middle_initial) }}"
+                        class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100">
+                    @error('middle_initial')
+                        <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- LAST NAME --}}
+                <div>
+                    <label class="text-sm font-semibold text-slate-700">Last Name</label>
+                    <input type="text" name="last_name"
+                        value="{{ old('last_name', $user->last_name) }}"
+                        class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100">
+                    @error('last_name')
+                        <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
             </div>
 
             {{-- EMAIL --}}
@@ -49,6 +85,35 @@
                     <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
                 @enderror
             </div>
+
+
+            {{-- PASSWORD --}}
+            <div>
+                <label class="text-sm font-semibold text-slate-700">
+                    New Password
+                </label>
+
+                <div class="mt-2 relative">
+                    <input type="password" name="password" id="passwordInput"
+                        autocomplete="new-password"
+                        class="w-full rounded-xl border border-slate-300 px-4 py-2 pr-10 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100">
+
+                    <button type="button"
+                            onclick="togglePassword()"
+                            class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-700">
+                        <i id="eyeIcon" data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <p class="mt-1 text-xs text-slate-400">
+                    Leave blank if no change. If set, this becomes a temporary password and the user will be required to change it on next login.
+                </p>
+
+                @error('password')
+                    <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+                @enderror
+            </div>
+
 
             {{-- ROLE --}}
             <div>
@@ -205,6 +270,25 @@ document.addEventListener('DOMContentLoaded', () => {
     coa.addEventListener('change', sync);
     sync();
 });
+</script>
+
+<script>
+function togglePassword() {
+    const input = document.getElementById('passwordInput');
+    const icon = document.getElementById('eyeIcon');
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.setAttribute('data-lucide', 'eye-off');
+    } else {
+        input.type = 'password';
+        icon.setAttribute('data-lucide', 'eye');
+    }
+
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+}
 </script>
 
 

@@ -21,27 +21,64 @@
 
         <div class="px-6 py-6 space-y-6">
 
-            {{-- NAME --}}
-            <div>
-                <label class="text-sm font-semibold text-slate-700">
-                    Full Name
-                </label>
-                <input type="text" name="name"
-                       value="{{ old('name') }}"
-                       class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100">
+    {{-- NAME FIELDS --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                @error('name')
-                    <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
-                @enderror
-            </div>
+        {{-- PREFIX --}}
+        <div>
+            <label class="text-sm font-semibold text-slate-700">Prefix</label>
+            <input type="text" name="prefix"
+                value="{{ old('prefix') }}"
+                placeholder="Mr. / Ms."
+                class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100">
+            @error('prefix')
+                <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        {{-- FIRST NAME --}}
+        <div>
+            <label class="text-sm font-semibold text-slate-700">First Name</label>
+            <input type="text" name="first_name"
+                value="{{ old('first_name') }}"
+                class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100">
+            @error('first_name')
+                <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        {{-- MIDDLE INITIAL --}}
+        <div>
+            <label class="text-sm font-semibold text-slate-700">Middle Initial</label>
+            <input type="text" name="middle_initial"
+                value="{{ old('middle_initial') }}"
+                placeholder="A"
+                class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100">
+            @error('middle_initial')
+                <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        {{-- LAST NAME --}}
+        <div>
+            <label class="text-sm font-semibold text-slate-700">Last Name</label>
+            <input type="text" name="last_name"
+                value="{{ old('last_name') }}"
+                class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100">
+            @error('last_name')
+                <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+    </div>
 
             {{-- EMAIL --}}
             <div>
                 <label class="text-sm font-semibold text-slate-700">
                     Email Address
                 </label>
-                <input type="email" name="email"
-                       value="{{ old('email') }}"
+                <input type="email" name="email" autocomplete="off"
+                       value=""
                        class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100">
 
                 @error('email')
@@ -54,8 +91,17 @@
                 <label class="text-sm font-semibold text-slate-700">
                     Password
                 </label>
-                <input type="password" name="password"
-                       class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100">
+
+                <div class="mt-2 relative">
+                    <input type="password" name="password" id="passwordInput" autocomplete="off"
+                        class="w-full rounded-xl border border-slate-300 px-4 py-2 pr-10 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100">
+
+                    <button type="button"
+                            onclick="togglePassword()"
+                            class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-700">
+                        <i id="eyeIcon" data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+                </div>
 
                 <p class="mt-1 text-xs text-slate-400">
                     Minimum 6 characters.
@@ -223,4 +269,24 @@ document.addEventListener('DOMContentLoaded', () => {
     sync();
 });
 </script>
+<script>
+function togglePassword() {
+    const input = document.getElementById('passwordInput');
+    const icon = document.getElementById('eyeIcon');
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.setAttribute('data-lucide', 'eye-off');
+    } else {
+        input.type = 'password';
+        icon.setAttribute('data-lucide', 'eye');
+    }
+
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+}
+</script>
+
+
 </x-app-layout>

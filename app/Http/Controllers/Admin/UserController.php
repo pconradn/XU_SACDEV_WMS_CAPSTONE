@@ -33,7 +33,11 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z]+(?:\s[A-Za-z]+)*$/'],
+            'middle_initial' => ['nullable', 'string', 'max:10', 'regex:/^[A-Za-z]+$/'],
+            'last_name' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z]+(?:[ \-][A-Za-z]+)*$/'],
+            'prefix' => ['nullable', 'string', 'max:20', 'regex:/^[A-Za-z\.]+$/'],
+
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
             'role_id' => 'required|exists:roles,id',
@@ -43,6 +47,13 @@ class UserController extends Controller
             'is_default_coa' => 'nullable|boolean',
         ]);
 
+        $fullName = trim(collect([
+            $data['prefix'] ?? null,
+            $data['first_name'],
+            isset($data['middle_initial']) ? $data['middle_initial'] . '.' : null,
+            $data['last_name'],
+        ])->filter()->implode(' '));
+
         if ($request->boolean('is_default_coa') && !$request->boolean('is_coa_officer')) {
             return back()->withErrors([
                 'is_default_coa' => 'Default COA must also be a COA officer.'
@@ -50,7 +61,12 @@ class UserController extends Controller
         }
 
         $user = User::create([
-            'name' => $data['name'],
+            'name' => $fullName,
+            'first_name' => $data['first_name'],
+            'middle_initial' => $data['middle_initial'] ?? null,
+            'last_name' => $data['last_name'],
+            'prefix' => $data['prefix'] ?? null,
+
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'role_id' => $data['role_id'],
@@ -58,6 +74,7 @@ class UserController extends Controller
 
             'is_coa_officer' => $request->boolean('is_coa_officer'),
             'is_default_coa' => $request->boolean('is_default_coa'),
+
         ]);
 
 
@@ -95,11 +112,13 @@ class UserController extends Controller
     {
 
         $data = $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z]+(?:\s[A-Za-z]+)*$/'],
+            'middle_initial' => ['nullable', 'string', 'max:10', 'regex:/^[A-Za-z]+$/'],
+            'last_name' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z]+(?:[ \-][A-Za-z]+)*$/'],
+            'prefix' => ['nullable', 'string', 'max:20', 'regex:/^[A-Za-z\.]+$/'],
+
             'email' => "required|email|unique:users,email,{$user->id}",
-            'password' => !empty($data['password'])
-                ? Hash::make($data['password'])
-                : $user->password,
+            'password' => 'nullable|string|min:6',
             'role_id' => 'required|exists:roles,id',
             'clusters' => 'nullable|array',
             'clusters.*' => 'exists:clusters,id',
@@ -108,6 +127,13 @@ class UserController extends Controller
             'is_default_coa' => 'nullable|boolean',
         ]);
 
+        $fullName = trim(collect([
+            $data['prefix'] ?? null,
+            $data['first_name'],
+            isset($data['middle_initial']) ? $data['middle_initial'] . '.' : null,
+            $data['last_name'],
+        ])->filter()->implode(' '));
+
         if ($request->boolean('is_default_coa') && !$request->boolean('is_coa_officer')) {
             return back()->withErrors([
                 'is_default_coa' => 'Default COA must also be a COA officer.'
@@ -115,7 +141,12 @@ class UserController extends Controller
         }
 
         $user->update([
-            'name' => $data['name'],
+            'name' => $fullName,
+            'first_name' => $data['first_name'],
+            'middle_initial' => $data['middle_initial'] ?? null,
+            'last_name' => $data['last_name'],
+            'prefix' => $data['prefix'] ?? null,
+
             'email' => $data['email'],
             'role_id' => $data['role_id'],
             'system_role' => 'sacdev_admin',
@@ -123,6 +154,14 @@ class UserController extends Controller
             'is_coa_officer' => $request->boolean('is_coa_officer'),
             'is_default_coa' => $request->boolean('is_default_coa'),
         ]);
+
+        if (!empty($data['password'])) {
+            $user->update([
+                'password' => Hash::make($data['password']),
+                'must_change_password' => true,
+                'password_changed_at' => null,
+            ]);
+        }
 
         if ($user->is_default_coa) {
             User::where('id', '!=', $user->id)
