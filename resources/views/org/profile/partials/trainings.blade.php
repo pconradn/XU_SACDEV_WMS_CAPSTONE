@@ -1,5 +1,4 @@
 <div x-data="{
-    editing: {{ $errors->any() ? 'true' : 'false' }},
     items: {{ json_encode(old('trainings', $profile->trainings->map(fn($t) => [
         'seminar_title' => $t->seminar_title,
         'organizer' => $t->organizer,
@@ -7,6 +6,7 @@
         'date_from' => optional($t->date_from)->format('Y-m-d'),
         'date_to' => optional($t->date_to)->format('Y-m-d'),
     ]))) }},
+
     add() {
         this.items.push({
             seminar_title: '',
@@ -15,9 +15,12 @@
             date_from: '',
             date_to: ''
         });
+        $dispatch('mark-dirty', 'trainings');
     },
+
     remove(index) {
         this.items.splice(index, 1);
+        $dispatch('mark-dirty', 'trainings');
     }
 }" class="space-y-5">
 
@@ -35,17 +38,7 @@
                 Professional development and attended programs
             </div>
         </div>
-
-        @if($isOwner)
-            <button type="button"
-                    @click="editing = !editing"
-                    class="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition">
-                <span x-show="!editing">Edit</span>
-                <span x-show="editing">Cancel</span>
-            </button>
-        @endif
     </div>
-
 
     @if($errors->any())
         <div class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700">
@@ -53,9 +46,7 @@
         </div>
     @endif
 
-
-    {{-- VIEW MODE --}}
-    <div x-show="!editing" class="space-y-3">
+    <div x-show="!editingAll" class="space-y-3">
 
         @forelse($profile->trainings as $t)
             <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition">
@@ -84,10 +75,8 @@
 
     </div>
 
-
-    {{-- EDIT MODE --}}
     @if($isOwner)
-    <div x-show="editing" class="space-y-4">
+    <div x-show="editingAll" class="space-y-4">
 
         <template x-for="(item, index) in items" :key="index">
             <div class="p-4 rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 space-y-3">
@@ -108,6 +97,7 @@
                     <input type="text"
                            :name="`trainings[${index}][seminar_title]`"
                            x-model="item.seminar_title"
+                           @input="$dispatch('mark-dirty', 'trainings')"
                            placeholder="Seminar Title"
                            class="w-full rounded-lg border border-slate-200 text-sm px-2 py-1.5 focus:ring-1 focus:ring-indigo-500">
 
@@ -116,12 +106,14 @@
                         <input type="text"
                                :name="`trainings[${index}][organizer]`"
                                x-model="item.organizer"
+                               @input="$dispatch('mark-dirty', 'trainings')"
                                placeholder="Organizer"
                                class="w-full rounded-lg border border-slate-200 text-sm px-2 py-1.5 focus:ring-1 focus:ring-indigo-500">
 
                         <input type="text"
                                :name="`trainings[${index}][venue]`"
                                x-model="item.venue"
+                               @input="$dispatch('mark-dirty', 'trainings')"
                                placeholder="Venue"
                                class="w-full rounded-lg border border-slate-200 text-sm px-2 py-1.5 focus:ring-1 focus:ring-indigo-500">
 
@@ -134,6 +126,7 @@
                             <input type="date"
                                    :name="`trainings[${index}][date_from]`"
                                    x-model="item.date_from"
+                                   @input="$dispatch('mark-dirty', 'trainings')"
                                    class="w-full rounded-lg border border-slate-200 text-sm px-2 py-1.5 focus:ring-1 focus:ring-indigo-500">
                         </div>
 
@@ -142,6 +135,7 @@
                             <input type="date"
                                    :name="`trainings[${index}][date_to]`"
                                    x-model="item.date_to"
+                                   @input="$dispatch('mark-dirty', 'trainings')"
                                    class="w-full rounded-lg border border-slate-200 text-sm px-2 py-1.5 focus:ring-1 focus:ring-indigo-500">
                         </div>
 
@@ -151,7 +145,6 @@
 
             </div>
         </template>
-
 
         <button type="button"
                 @click="add()"

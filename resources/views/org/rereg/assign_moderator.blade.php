@@ -207,7 +207,7 @@
 
                     <a href="{{ route('org.rereg.index') }}"
                        class="inline-flex justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                        Back to Re-registration
+                        Cancel
                     </a>
                 </div>
 

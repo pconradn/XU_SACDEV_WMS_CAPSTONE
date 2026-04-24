@@ -1,4 +1,4 @@
-<div x-data="{ editing: {{ $errors->any() ? 'true' : 'false' }} }" class="space-y-5">
+<div class="space-y-5">
 
     <div class="flex items-start justify-between">
         <div>
@@ -14,24 +14,13 @@
                 Academic and institutional details for moderator role
             </div>
         </div>
-
-        @if($isOwner)
-            <button type="button"
-                    @click="editing = !editing"
-                    class="text-xs font-medium text-purple-600 hover:text-purple-700 transition">
-                <span x-show="!editing">Edit</span>
-                <span x-show="editing">Cancel</span>
-            </button>
-        @endif
     </div>
-
 
     @if($errors->any())
         <div class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700">
             Please review moderator details.
         </div>
     @endif
-
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
@@ -45,12 +34,12 @@
                    name="university_designation"
                    value="{{ old('university_designation', $profile->university_designation) }}"
                    placeholder="e.g. Instructor, Professor"
-                   :readonly="!editing"
+                   :readonly="!editingAll"
+                   @input="$dispatch('mark-dirty', 'moderator')"
                    class="w-full rounded-lg border text-sm px-2 py-1.5 transition
                           {{ $errors->has('university_designation') ? 'border-rose-300' : 'border-slate-200' }}"
-                   :class="editing ? 'bg-white focus:ring-1 focus:ring-purple-500' : 'bg-slate-50 text-slate-700'">
+                   :class="editingAll ? 'bg-white focus:ring-1 focus:ring-purple-500' : 'bg-slate-50 text-slate-700'">
         </div>
-
 
         <div class="space-y-1">
             <div class="flex items-center gap-1 text-[11px] text-slate-500">
@@ -62,12 +51,12 @@
                    name="unit_department"
                    value="{{ old('unit_department', $profile->unit_department) }}"
                    placeholder="Department or unit"
-                   :readonly="!editing"
+                   :readonly="!editingAll"
+                   @input="$dispatch('mark-dirty', 'moderator')"
                    class="w-full rounded-lg border text-sm px-2 py-1.5 transition
                           {{ $errors->has('unit_department') ? 'border-rose-300' : 'border-slate-200' }}"
-                   :class="editing ? 'bg-white focus:ring-1 focus:ring-purple-500' : 'bg-slate-50 text-slate-700'">
+                   :class="editingAll ? 'bg-white focus:ring-1 focus:ring-purple-500' : 'bg-slate-50 text-slate-700'">
         </div>
-
 
         <div class="space-y-1">
             <div class="flex items-center gap-1 text-[11px] text-slate-500">
@@ -79,12 +68,12 @@
                    name="employment_status"
                    value="{{ old('employment_status', $profile->employment_status) }}"
                    placeholder="Full-time / Part-time"
-                   :readonly="!editing"
+                   :readonly="!editingAll"
+                   @input="$dispatch('mark-dirty', 'moderator')"
                    class="w-full rounded-lg border text-sm px-2 py-1.5 transition
                           {{ $errors->has('employment_status') ? 'border-rose-300' : 'border-slate-200' }}"
-                   :class="editing ? 'bg-white focus:ring-1 focus:ring-purple-500' : 'bg-slate-50 text-slate-700'">
+                   :class="editingAll ? 'bg-white focus:ring-1 focus:ring-purple-500' : 'bg-slate-50 text-slate-700'">
         </div>
-
 
         <div class="space-y-1">
             <div class="flex items-center gap-1 text-[11px] text-slate-500">
@@ -96,10 +85,11 @@
                    name="years_of_service"
                    value="{{ old('years_of_service', $profile->years_of_service) }}"
                    placeholder="Years"
-                   :readonly="!editing"
+                   :readonly="!editingAll"
+                   @input="$dispatch('mark-dirty', 'moderator')"
                    class="w-full rounded-lg border text-sm px-2 py-1.5 transition
                           {{ $errors->has('years_of_service') ? 'border-rose-300' : 'border-slate-200' }}"
-                   :class="editing ? 'bg-white focus:ring-1 focus:ring-purple-500' : 'bg-slate-50 text-slate-700'">
+                   :class="editingAll ? 'bg-white focus:ring-1 focus:ring-purple-500' : 'bg-slate-50 text-slate-700'">
         </div>
 
     </div>

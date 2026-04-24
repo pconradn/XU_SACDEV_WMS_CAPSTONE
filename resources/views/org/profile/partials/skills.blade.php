@@ -1,4 +1,4 @@
-<div x-data="{ editing: {{ $errors->any() ? 'true' : 'false' }} }" class="space-y-5">
+<div class="space-y-5">
 
     <div class="flex items-start justify-between">
         <div>
@@ -14,24 +14,13 @@
                 Areas of expertise, passions, and personal strengths
             </div>
         </div>
-
-        @if($isOwner)
-            <button type="button"
-                    @click="editing = !editing"
-                    class="text-xs font-medium text-blue-600 hover:text-blue-700 transition">
-                <span x-show="!editing">Edit</span>
-                <span x-show="editing">Cancel</span>
-            </button>
-        @endif
     </div>
-
 
     @if($errors->any())
         <div class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700">
             Please review your skills and interests.
         </div>
     @endif
-
 
     <div class="space-y-2">
 
@@ -44,10 +33,12 @@
             name="skills_and_interests"
             rows="4"
             placeholder="Enter skills, interests, or areas of expertise..."
-            :readonly="!editing"
+            :readonly="!editingAll"
+            @input="$dispatch('mark-dirty', 'skills')"
             class="w-full rounded-lg border text-sm px-2 py-2 transition resize-none leading-relaxed
                    {{ $errors->has('skills_and_interests') ? 'border-rose-300' : 'border-slate-200' }}"
-            :class="editing ? 'bg-white focus:ring-1 focus:ring-blue-500' : 'bg-slate-50 text-slate-700'">{{ old('skills_and_interests', $profile->skills_and_interests) }}</textarea>
+            :class="editingAll ? 'bg-white focus:ring-1 focus:ring-blue-500' : 'bg-slate-50 text-slate-700'"
+        >{{ old('skills_and_interests', $profile->skills_and_interests) }}</textarea>
 
     </div>
 

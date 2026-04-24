@@ -1,4 +1,4 @@
-<div x-data="{ editing: {{ $errors->any() ? 'true' : 'false' }} }" class="space-y-5">
+<div class="space-y-5">
 
     <div class="flex items-start justify-between">
         <div>
@@ -14,24 +14,13 @@
                 Permanent and current location details
             </div>
         </div>
-
-        @if($isOwner)
-            <button type="button"
-                    @click="editing = !editing"
-                    class="text-xs font-medium text-blue-600 hover:text-blue-700 transition">
-                <span x-show="!editing">Edit</span>
-                <span x-show="editing">Cancel</span>
-            </button>
-        @endif
     </div>
-
 
     @if($errors->any())
         <div class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700">
             Please check your address details.
         </div>
     @endif
-
 
     <div class="space-y-4">
 
@@ -45,12 +34,13 @@
                 name="home_address"
                 rows="2"
                 placeholder="Enter full home address"
-                :readonly="!editing"
+                :readonly="!editingAll"
+                @input="$dispatch('mark-dirty', 'address')"
                 class="w-full rounded-lg border text-sm px-2 py-1.5 transition resize-none
                        {{ $errors->has('home_address') ? 'border-rose-300' : 'border-slate-200' }}"
-                :class="editing ? 'bg-white focus:ring-1 focus:ring-blue-500' : 'bg-slate-50 text-slate-700'">{{ old('home_address', $profile->home_address) }}</textarea>
+                :class="editingAll ? 'bg-white focus:ring-1 focus:ring-blue-500' : 'bg-slate-50 text-slate-700'"
+            >{{ old('home_address', $profile->home_address) }}</textarea>
         </div>
-
 
         <div class="space-y-1">
             <div class="flex items-center gap-1 text-[11px] text-slate-500">
@@ -62,10 +52,12 @@
                 name="city_address"
                 rows="2"
                 placeholder="Enter current city address"
-                :readonly="!editing"
+                :readonly="!editingAll"
+                @input="$dispatch('mark-dirty', 'address')"
                 class="w-full rounded-lg border text-sm px-2 py-1.5 transition resize-none
                        {{ $errors->has('city_address') ? 'border-rose-300' : 'border-slate-200' }}"
-                :class="editing ? 'bg-white focus:ring-1 focus:ring-blue-500' : 'bg-slate-50 text-slate-700'">{{ old('city_address', $profile->city_address) }}</textarea>
+                :class="editingAll ? 'bg-white focus:ring-1 focus:ring-blue-500' : 'bg-slate-50 text-slate-700'"
+            >{{ old('city_address', $profile->city_address) }}</textarea>
         </div>
 
     </div>

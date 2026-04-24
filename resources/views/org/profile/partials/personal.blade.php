@@ -1,7 +1,4 @@
-<div x-data="{
-    editing: {{ $errors->any() ? 'true' : 'false' }},
-    preview: null
-}" class="space-y-5">
+<div x-data="{ preview: null }" class="space-y-5">
 
     {{-- HEADER --}}
     <div class="flex items-start justify-between">
@@ -18,18 +15,10 @@
                 Basic identity and personal details
             </div>
         </div>
-
-        @if($isOwner)
-            <button type="button"
-                    @click="editing = !editing"
-                    class="text-xs font-medium text-blue-600 hover:text-blue-700 transition">
-                <span x-show="!editing">Edit</span>
-                <span x-show="editing">Cancel</span>
-            </button>
-        @endif
     </div>
 
 
+    {{-- PHOTO --}}
     <div class="flex items-center gap-4">
 
         <div class="w-20 h-20 rounded-xl border border-slate-200 overflow-hidden bg-slate-100 flex items-center justify-center">
@@ -49,11 +38,11 @@
         </div>
 
         @if($isOwner)
-            <div x-show="editing" class="flex-1 space-y-1">
+            <div x-show="editingAll" class="flex-1 space-y-1">
                 <input type="file"
                        name="photo_id"
                        accept="image/*"
-                       @change="preview = URL.createObjectURL($event.target.files[0])"
+                       @change="preview = URL.createObjectURL($event.target.files[0]); $dispatch('mark-dirty', 'personal')"
                        class="text-xs">
 
                 <div class="text-[10px] text-slate-500">
@@ -65,6 +54,7 @@
     </div>
 
 
+    {{-- FULL NAME --}}
     <div class="space-y-2">
 
         <div class="flex items-center gap-2 text-[11px] text-slate-500">
@@ -78,45 +68,48 @@
                    name="prefix"
                    value="{{ old('prefix', $profile->prefix) }}"
                    placeholder="Prefix"
-                   :readonly="!editing"
-                   class="col-span-3 rounded-lg border text-sm px-2 py-1.5 bg-white focus:ring-1 focus:ring-blue-500 transition
-                          {{ $errors->has('prefix') ? 'border-rose-300' : 'border-slate-200' }}
-                          "
-                   :class="editing ? 'bg-white' : 'bg-slate-50 text-slate-700'">
+                   :readonly="!editingAll"
+                   @input="$dispatch('mark-dirty', 'personal')"
+                   class="col-span-3 rounded-lg border text-sm px-2 py-1.5
+                          {{ $errors->has('prefix') ? 'border-rose-300' : 'border-slate-200' }}"
+                   :class="editingAll ? 'bg-white' : 'bg-slate-50 text-slate-700'">
 
             <input type="text"
                    name="first_name"
                    value="{{ old('first_name', $profile->first_name) }}"
                    placeholder="First Name"
-                   :readonly="!editing"
-                   class="col-span-4 rounded-lg border text-sm px-2 py-1.5 focus:ring-1 focus:ring-blue-500 transition
+                   :readonly="!editingAll"
+                   @input="$dispatch('mark-dirty', 'personal')"
+                   class="col-span-4 rounded-lg border text-sm px-2 py-1.5
                           {{ $errors->has('first_name') ? 'border-rose-300' : 'border-slate-200' }}"
-                   :class="editing ? 'bg-white' : 'bg-slate-50 text-slate-700'">
+                   :class="editingAll ? 'bg-white' : 'bg-slate-50 text-slate-700'">
 
             <input type="text"
                    name="middle_initial"
                    value="{{ old('middle_initial', $profile->middle_initial) }}"
                    placeholder="M.I."
-                   :readonly="!editing"
-                   class="col-span-2 rounded-lg border text-sm px-2 py-1.5 text-center transition
+                   :readonly="!editingAll"
+                   @input="$dispatch('mark-dirty', 'personal')"
+                   class="col-span-2 rounded-lg border text-sm px-2 py-1.5 text-center
                           {{ $errors->has('middle_initial') ? 'border-rose-300' : 'border-slate-200' }}"
-                   :class="editing ? 'bg-white' : 'bg-slate-50 text-slate-700'">
+                   :class="editingAll ? 'bg-white' : 'bg-slate-50 text-slate-700'">
 
             <input type="text"
                    name="last_name"
                    value="{{ old('last_name', $profile->last_name) }}"
                    placeholder="Last Name"
-                   :readonly="!editing"
-                   class="col-span-3 rounded-lg border text-sm px-2 py-1.5 transition
+                   :readonly="!editingAll"
+                   @input="$dispatch('mark-dirty', 'personal')"
+                   class="col-span-3 rounded-lg border text-sm px-2 py-1.5
                           {{ $errors->has('last_name') ? 'border-rose-300' : 'border-slate-200' }}"
-                   :class="editing ? 'bg-white' : 'bg-slate-50 text-slate-700'">
+                   :class="editingAll ? 'bg-white' : 'bg-slate-50 text-slate-700'">
 
         </div>
 
     </div>
 
 
-
+    {{-- OTHER DETAILS --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
         <div class="space-y-1">
@@ -124,9 +117,10 @@
             <input type="date"
                    name="birthday"
                    value="{{ old('birthday', optional($profile->birthday)->format('Y-m-d')) }}"
-                   :readonly="!editing"
-                   class="w-full rounded-lg border border-slate-200 text-sm px-2 py-1.5 transition"
-                   :class="editing ? 'bg-white' : 'bg-slate-50 text-slate-700'">
+                   :readonly="!editingAll"
+                   @input="$dispatch('mark-dirty', 'personal')"
+                   class="w-full rounded-lg border border-slate-200 text-sm px-2 py-1.5"
+                   :class="editingAll ? 'bg-white' : 'bg-slate-50 text-slate-700'">
         </div>
 
         <div class="space-y-1">
@@ -134,9 +128,10 @@
             <input type="text"
                    name="sex"
                    value="{{ old('sex', $profile->sex) }}"
-                   :readonly="!editing"
-                   class="w-full rounded-lg border border-slate-200 text-sm px-2 py-1.5 transition"
-                   :class="editing ? 'bg-white' : 'bg-slate-50 text-slate-700'">
+                   :readonly="!editingAll"
+                   @input="$dispatch('mark-dirty', 'personal')"
+                   class="w-full rounded-lg border border-slate-200 text-sm px-2 py-1.5"
+                   :class="editingAll ? 'bg-white' : 'bg-slate-50 text-slate-700'">
         </div>
 
         <div class="sm:col-span-2 space-y-1">
@@ -144,9 +139,10 @@
             <input type="text"
                    name="religion"
                    value="{{ old('religion', $profile->religion) }}"
-                   :readonly="!editing"
-                   class="w-full rounded-lg border border-slate-200 text-sm px-2 py-1.5 transition"
-                   :class="editing ? 'bg-white' : 'bg-slate-50 text-slate-700'">
+                   :readonly="!editingAll"
+                   @input="$dispatch('mark-dirty', 'personal')"
+                   class="w-full rounded-lg border border-slate-200 text-sm px-2 py-1.5"
+                   :class="editingAll ? 'bg-white' : 'bg-slate-50 text-slate-700'">
         </div>
 
     </div>

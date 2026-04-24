@@ -52,13 +52,6 @@
     {{-- FULL WIDTH INSIDE FRAME --}}
     <div class="px-3 sm:px-4 lg:px-5 py-3 space-y-3">
 
-        {{-- STATUS --}}
-        @if (session('status'))
-            <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 shadow-sm">
-                {{ session('status') }}
-            </div>
-        @endif
-
         {{-- KPI --}}
         @include('admin.dashboard._kpis')
 

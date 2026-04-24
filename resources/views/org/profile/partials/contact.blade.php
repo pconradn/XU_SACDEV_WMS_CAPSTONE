@@ -1,4 +1,4 @@
-<div x-data="{ editing: {{ $errors->any() ? 'true' : 'false' }} }" class="space-y-5">
+<div class="space-y-5">
 
     <div class="flex items-start justify-between">
         <div>
@@ -14,24 +14,13 @@
                 Reachable contact details and links
             </div>
         </div>
-
-        @if($isOwner)
-            <button type="button"
-                    @click="editing = !editing"
-                    class="text-xs font-medium text-blue-600 hover:text-blue-700 transition">
-                <span x-show="!editing">Edit</span>
-                <span x-show="editing">Cancel</span>
-            </button>
-        @endif
     </div>
-
 
     @if($errors->any())
         <div class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700">
             Please check your contact details.
         </div>
     @endif
-
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
@@ -45,12 +34,12 @@
                    name="mobile_number"
                    value="{{ old('mobile_number', $profile->mobile_number) }}"
                    placeholder="09XXXXXXXXX"
-                   :readonly="!editing"
+                   :readonly="!editingAll"
+                   @input="$dispatch('mark-dirty', 'contact')"
                    class="w-full rounded-lg border text-sm px-2 py-1.5 transition
                           {{ $errors->has('mobile_number') ? 'border-rose-300' : 'border-slate-200' }}"
-                   :class="editing ? 'bg-white focus:ring-1 focus:ring-blue-500' : 'bg-slate-50 text-slate-700'">
+                   :class="editingAll ? 'bg-white focus:ring-1 focus:ring-blue-500' : 'bg-slate-50 text-slate-700'">
         </div>
-
 
         <div class="space-y-1">
             <div class="flex items-center gap-1 text-[11px] text-slate-500">
@@ -62,12 +51,12 @@
                    name="email"
                    value="{{ old('email', $profile->email) }}"
                    placeholder="example@email.com"
-                   :readonly="!editing"
+                   :readonly="!editingAll"
+                   @input="$dispatch('mark-dirty', 'contact')"
                    class="w-full rounded-lg border text-sm px-2 py-1.5 transition
                           {{ $errors->has('email') ? 'border-rose-300' : 'border-slate-200' }}"
-                   :class="editing ? 'bg-white focus:ring-1 focus:ring-blue-500' : 'bg-slate-50 text-slate-700'">
+                   :class="editingAll ? 'bg-white focus:ring-1 focus:ring-blue-500' : 'bg-slate-50 text-slate-700'">
         </div>
-
 
         <div class="space-y-1">
             <div class="flex items-center gap-1 text-[11px] text-slate-500">
@@ -79,12 +68,12 @@
                    name="landline"
                    value="{{ old('landline', $profile->landline) }}"
                    placeholder="Optional"
-                   :readonly="!editing"
+                   :readonly="!editingAll"
+                   @input="$dispatch('mark-dirty', 'contact')"
                    class="w-full rounded-lg border text-sm px-2 py-1.5 transition
                           {{ $errors->has('landline') ? 'border-rose-300' : 'border-slate-200' }}"
-                   :class="editing ? 'bg-white focus:ring-1 focus:ring-blue-500' : 'bg-slate-50 text-slate-700'">
+                   :class="editingAll ? 'bg-white focus:ring-1 focus:ring-blue-500' : 'bg-slate-50 text-slate-700'">
         </div>
-
 
         <div class="space-y-1">
             <div class="flex items-center gap-1 text-[11px] text-slate-500">
@@ -96,10 +85,11 @@
                    name="facebook_url"
                    value="{{ old('facebook_url', $profile->facebook_url) }}"
                    placeholder="https://facebook.com/..."
-                   :readonly="!editing"
+                   :readonly="!editingAll"
+                   @input="$dispatch('mark-dirty', 'contact')"
                    class="w-full rounded-lg border text-sm px-2 py-1.5 transition
                           {{ $errors->has('facebook_url') ? 'border-rose-300' : 'border-slate-200' }}"
-                   :class="editing ? 'bg-white focus:ring-1 focus:ring-blue-500' : 'bg-slate-50 text-slate-700'">
+                   :class="editingAll ? 'bg-white focus:ring-1 focus:ring-blue-500' : 'bg-slate-50 text-slate-700'">
         </div>
 
     </div>

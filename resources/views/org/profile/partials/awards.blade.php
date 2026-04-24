@@ -1,11 +1,11 @@
 <div x-data="{ 
-    editing: {{ $errors->any() ? 'true' : 'false' }},
     items: {{ json_encode(old('awards', $profile->awards->map(fn($a) => [
         'award_name' => $a->award_name,
         'award_description' => $a->award_description,
         'conferred_by' => $a->conferred_by,
         'date_received' => optional($a->date_received)->format('Y-m-d'),
     ]))) }},
+
     add() {
         this.items.push({
             award_name: '',
@@ -13,9 +13,12 @@
             conferred_by: '',
             date_received: ''
         });
+        $dispatch('mark-dirty', 'awards');
     },
+
     remove(index) {
         this.items.splice(index, 1);
+        $dispatch('mark-dirty', 'awards');
     }
 }" class="space-y-5">
 
@@ -33,17 +36,7 @@
                 Honors, achievements, and recognitions received
             </div>
         </div>
-
-        @if($isOwner)
-            <button type="button"
-                    @click="editing = !editing"
-                    class="text-xs font-medium text-amber-600 hover:text-amber-700 transition">
-                <span x-show="!editing">Edit</span>
-                <span x-show="editing">Cancel</span>
-            </button>
-        @endif
     </div>
-
 
     @if($errors->any())
         <div class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700">
@@ -51,9 +44,7 @@
         </div>
     @endif
 
-
-    {{-- VIEW MODE --}}
-    <div x-show="!editing" class="space-y-3">
+    <div x-show="!editingAll" class="space-y-3">
 
         @forelse($profile->awards as $a)
             <div class="p-3 rounded-xl bg-amber-50/40 border border-amber-100 hover:bg-amber-50 transition">
@@ -84,10 +75,8 @@
 
     </div>
 
-
-    {{-- EDIT MODE --}}
     @if($isOwner)
-    <div x-show="editing" class="space-y-4">
+    <div x-show="editingAll" class="space-y-4">
 
         <template x-for="(item, index) in items" :key="index">
             <div class="p-4 rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 space-y-3">
@@ -108,6 +97,7 @@
                     <input type="text"
                            :name="`awards[${index}][award_name]`"
                            x-model="item.award_name"
+                           @input="$dispatch('mark-dirty', 'awards')"
                            placeholder="Award Name"
                            class="w-full rounded-lg border border-slate-200 text-sm px-2 py-1.5 focus:ring-1 focus:ring-amber-500">
 
@@ -116,6 +106,7 @@
                         <input type="text"
                                :name="`awards[${index}][conferred_by]`"
                                x-model="item.conferred_by"
+                               @input="$dispatch('mark-dirty', 'awards')"
                                placeholder="Conferred By"
                                class="w-full rounded-lg border border-slate-200 text-sm px-2 py-1.5 focus:ring-1 focus:ring-amber-500">
 
@@ -124,6 +115,7 @@
                             <input type="date"
                                    :name="`awards[${index}][date_received]`"
                                    x-model="item.date_received"
+                                   @input="$dispatch('mark-dirty', 'awards')"
                                    class="w-full rounded-lg border border-slate-200 text-sm px-2 py-1.5 focus:ring-1 focus:ring-amber-500">
                         </div>
 
@@ -132,6 +124,7 @@
                     <textarea
                         :name="`awards[${index}][award_description]`"
                         x-model="item.award_description"
+                        @input="$dispatch('mark-dirty', 'awards')"
                         rows="2"
                         placeholder="Description (optional)"
                         class="w-full rounded-lg border border-slate-200 text-sm px-2 py-2 focus:ring-1 focus:ring-amber-500 resize-none"></textarea>
@@ -140,7 +133,6 @@
 
             </div>
         </template>
-
 
         <button type="button"
                 @click="add()"

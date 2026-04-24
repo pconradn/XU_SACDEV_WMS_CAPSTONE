@@ -26,13 +26,23 @@
                     {{ $organization->acronym }}
                 </div>
 
-                <div class="mt-3 text-sm text-slate-600 leading-relaxed">
-                    {{ $organization->mission ?? 'No mission provided.' }}
+
+
+                <div class="mt-3 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+                    {!! $organization->mission ? nl2br(e($organization->mission)) : 'No mission provided.' !!}
                 </div>
 
-                <div class="mt-2 text-xs text-slate-400">
-                    Vision: {{ $organization->vision ?? 'Not set' }}
+                <div class="mt-4">
+                    <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                        Vision
+                    </div>
+
+                    <div class="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+                        {!! $organization->vision ? nl2br(e($organization->vision)) : 'No vision provided.' !!}
+                    </div>
                 </div>
+
+
             </div>
 
         </div>
