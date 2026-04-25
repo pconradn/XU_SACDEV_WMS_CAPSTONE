@@ -84,10 +84,6 @@
                             </span>
                         </div>
 
-                        <a href="{{ route('org.rereg.index') }}"
-                           class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50 transition">
-                            Back to Re-Registration
-                        </a>
 
                     </div>
 

@@ -159,63 +159,118 @@ class B3OfficerListController extends Controller
 
             $registration->items()->delete();
 
-        $sort = 1;
+            $items = $request->input('items', []);
 
-        foreach (($request->input('items') ?? []) as $i => $row) {
+            $presidentRow = $items['president'] ?? null;
+            unset($items['president']);
 
-            if (!is_array($row) || $this->rowEmpty($row)) {
-                continue;
+            $sort = 1;
+            $seenStudentIds = [];
+
+            if (is_array($presidentRow) && !$this->rowEmpty($presidentRow)) {
+
+                $prefix = trim($presidentRow['prefix'] ?? '');
+                $first  = trim($presidentRow['first_name'] ?? '');
+                $mi = strtoupper(trim($presidentRow['middle_initial'] ?? ''));
+                $mi = rtrim($mi, '.');
+                $last   = trim($presidentRow['last_name'] ?? '');
+
+                $officerName = trim(
+                    ($prefix ? $prefix . ' ' : '') .
+                    $first .
+                    ($mi ? ' ' . $mi . '.' : '') .
+                    ' ' . $last
+                );
+
+                $studentId = $presidentRow['student_id_number'] ?? null;
+
+                if ($studentId) {
+                    $seenStudentIds[] = $studentId;
+                }
+
+                $registration->items()->create([
+                    'position' => $presidentRow['position'] ?? 'President',
+
+                    'prefix' => $prefix,
+                    'first_name' => $first,
+                    'middle_initial' => $mi,
+                    'last_name' => $last,
+
+                    'officer_name' => $officerName,
+
+                    'student_id_number' => $studentId ?? '',
+
+                    'course_and_year' => $presidentRow['course_and_year'] ?? '',
+
+                    'first_sem_qpi' => $presidentRow['first_sem_qpi'] ?? null,
+                    'second_sem_qpi' => $presidentRow['second_sem_qpi'] ?? null,
+                    'intersession_qpi' => $presidentRow['intersession_qpi'] ?? null,
+                    'latest_qpi' => $presidentRow['second_sem_qpi'] ?? $presidentRow['latest_qpi'] ?? null,
+
+                    'mobile_number' => $presidentRow['mobile_number'] ?? '',
+
+                    'sort_order' => 0,
+
+                    'propagated_to_memberships' => false,
+                ]);
             }
 
-            $isMajorOfficer = !empty($row['major_officer_role']);
-            $majorRole = $row['major_officer_role'] ?? null;
+            foreach ($items as $row) {
 
-            $prefix = trim($row['prefix'] ?? '');
-            $first  = trim($row['first_name'] ?? '');
-            $mi = strtoupper(trim($row['middle_initial'] ?? ''));
-            $mi = rtrim($mi, '.');
-            $last   = trim($row['last_name'] ?? '');
+                if (!is_array($row) || $this->rowEmpty($row)) {
+                    continue;
+                }
 
-            $officerName = trim(
-                ($prefix ? $prefix . ' ' : '') .
-                $first .
-                ($mi ? ' ' . $mi . '.' : '') .
-                ' ' . $last
-            );
+                $studentId = $row['student_id_number'] ?? null;
 
-            $registration->items()->create([
+                if ($studentId && in_array($studentId, $seenStudentIds)) {
+                    continue;
+                }
 
-                'position' => $row['position'] ?? '',
+                if ($studentId) {
+                    $seenStudentIds[] = $studentId;
+                }
 
-                'prefix'         => $prefix,
-                'first_name'     => $first,
-                'middle_initial' => $mi,
-                'last_name'      => $last,
+                $prefix = trim($row['prefix'] ?? '');
+                $first  = trim($row['first_name'] ?? '');
+                $mi = strtoupper(trim($row['middle_initial'] ?? ''));
+                $mi = rtrim($mi, '.');
+                $last   = trim($row['last_name'] ?? '');
 
-                'officer_name'   => $officerName,
+                $officerName = trim(
+                    ($prefix ? $prefix . ' ' : '') .
+                    $first .
+                    ($mi ? ' ' . $mi . '.' : '') .
+                    ' ' . $last
+                );
 
-                'student_id_number' => $row['student_id_number'] ?? '',
+                $registration->items()->create([
 
-                'course_and_year' => $row['course_and_year'] ?? '',
+                    'position' => $row['position'] ?? '',
 
-                'first_sem_qpi' => $row['first_sem_qpi'] ?? null,
-                'second_sem_qpi' => $row['second_sem_qpi'] ?? null,
-                'intersession_qpi' => $row['intersession_qpi'] ?? null,
-                'latest_qpi' => $row['second_sem_qpi'] ?? $row['latest_qpi'] ?? null,
+                    'prefix'         => $prefix,
+                    'first_name'     => $first,
+                    'middle_initial' => $mi,
+                    'last_name'      => $last,
 
-                'mobile_number' => $row['mobile_number'] ?? '',
+                    'officer_name'   => $officerName,
 
-                'sort_order' => $sort++,
+                    'student_id_number' => $studentId ?? '',
 
-                'is_major_officer' => $isMajorOfficer,
-                'major_officer_role' => $isMajorOfficer ? $majorRole : null,
+                    'course_and_year' => $row['course_and_year'] ?? '',
 
-                'propagated_to_memberships' => false,
-            ]);
-        }
+                    'first_sem_qpi' => $row['first_sem_qpi'] ?? null,
+                    'second_sem_qpi' => $row['second_sem_qpi'] ?? null,
+                    'intersession_qpi' => $row['intersession_qpi'] ?? null,
+                    'latest_qpi' => $row['second_sem_qpi'] ?? $row['latest_qpi'] ?? null,
 
+                    'mobile_number' => $row['mobile_number'] ?? '',
 
+                    'sort_order' => $sort++,
 
+                    'propagated_to_memberships' => false,
+                ]);
+            }
         });
     }
 
@@ -254,10 +309,6 @@ class B3OfficerListController extends Controller
             'items.*.second_sem_qpi' => ['nullable', 'numeric', 'min:0', 'max:4'],
             'items.*.intersession_qpi' => ['nullable', 'numeric', 'min:0', 'max:4'],
 
-            'items.*.major_officer_role' => [
-                'nullable',
-                Rule::in(['president', 'auditor', 'treasurer', 'finance_officer'])
-            ],
 
         ]);
 
@@ -340,11 +391,6 @@ class B3OfficerListController extends Controller
             'items.*.first_sem_qpi' => ['nullable', 'numeric', 'min:0', 'max:4','regex:/^\d+(\.\d{1,2})?$/'],
             'items.*.second_sem_qpi' => ['nullable', 'numeric', 'min:0', 'max:4','regex:/^\d+(\.\d{1,2})?$/'],
             'items.*.intersession_qpi' => ['nullable', 'numeric', 'min:0', 'max:4','regex:/^\d+(\.\d{1,2})?$/'],
-
-            'items.*.major_officer_role' => [
-                'nullable',
-                Rule::in(['president', 'auditor', 'treasurer', 'finance_officer'])
-            ],
 
 
         ]);

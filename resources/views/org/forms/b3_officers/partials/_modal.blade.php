@@ -9,7 +9,7 @@
                     Add Officer
                 </h2>
                 <p class="mt-1 text-xs text-slate-500">
-                    Fill in the officer details below
+                    Fill in the officer details below.
                 </p>
             </div>
 
@@ -21,16 +21,22 @@
         </div>
 
         <div class="max-h-[80vh] overflow-y-auto px-6 py-5">
-            <div class="space-y-6">
+            <div class="space-y-5">
 
-                <div>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                    <div class="mb-3">
+                        <div class="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                            Officer Position
+                        </div>
+                    </div>
+
                     <label for="modal_position" class="block text-xs font-medium text-slate-600">
                         Position
                     </label>
                     <input id="modal_position"
                            type="text"
                            placeholder="Ex: Committee Head"
-                           class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                           class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
                 </div>
 
                 <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
@@ -38,9 +44,6 @@
                         <div class="text-xs font-semibold uppercase tracking-wide text-slate-600">
                             Officer Name
                         </div>
-                        <p class="mt-1 text-[11px] text-slate-500">
-                            Enter the name by parts. The full name preview updates automatically.
-                        </p>
                     </div>
 
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -85,88 +88,101 @@
                                    class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
                         </div>
                     </div>
+                </div>
 
-                    <div class="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2">
-                        <div class="text-[11px] font-medium uppercase tracking-wide text-blue-700">
-                            Full Name Preview
+                <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                    <div class="mb-3">
+                        <div class="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                            Student Information
                         </div>
-                        <div id="modal_full_preview" class="mt-1 text-sm font-semibold text-blue-900">
-                            —
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                            <label for="modal_student_id" class="block text-xs font-medium text-slate-600">
+                                Student ID
+                            </label>
+                            <input id="modal_student_id"
+                                   type="text"
+                                   placeholder="Ex: 202112345"
+                                   class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                        </div>
+
+                        <div>
+                            <label for="modal_course" class="block text-xs font-medium text-slate-600">
+                                Course &amp; Year
+                            </label>
+                            <input id="modal_course"
+                                   type="text"
+                                   placeholder="Ex: BSIT 3"
+                                   class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div>
-                        <label for="modal_student_id" class="block text-xs font-medium text-slate-600">
-                            Student ID
-                        </label>
-                        <input id="modal_student_id"
-                               type="text"
-                               placeholder="Ex: 202112345"
-                               class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                    <div class="mb-3">
+                        <div class="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                            Academic Performance
+                        </div>
                     </div>
 
-                    <div>
-                        <label for="modal_course" class="block text-xs font-medium text-slate-600">
-                            Course &amp; Year
-                        </label>
-                        <input id="modal_course"
-                               type="text"
-                               placeholder="Ex: BSIT 3"
-                               class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
-                    </div>
-                </div>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div>
+                            <label for="modal_first_qpi" class="block text-xs font-medium text-slate-600">
+                                1st Sem QPI
+                            </label>
+                            <input id="modal_first_qpi"
+                                   type="number"
+                                   step="0.01"
+                                   min="0"
+                                   max="4"
+                                   placeholder="0.00"
+                                   class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                        </div>
 
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div>
-                        <label for="modal_first_qpi" class="block text-xs font-medium text-slate-600">
-                            1st Sem QPI
-                        </label>
-                        <input id="modal_first_qpi"
-                               type="number"
-                               step="0.01"
-                               min="0"
-                               max="4"
-                               placeholder="0.00"
-                               class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
-                    </div>
+                        <div>
+                            <label for="modal_second_qpi" class="block text-xs font-medium text-slate-600">
+                                2nd Sem QPI
+                            </label>
+                            <input id="modal_second_qpi"
+                                   type="number"
+                                   step="0.01"
+                                   min="0"
+                                   max="4"
+                                   placeholder="0.00"
+                                   class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                        </div>
 
-                    <div>
-                        <label for="modal_second_qpi" class="block text-xs font-medium text-slate-600">
-                            2nd Sem QPI
-                        </label>
-                        <input id="modal_second_qpi"
-                               type="number"
-                               step="0.01"
-                               min="0"
-                               max="4"
-                               placeholder="0.00"
-                               class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
-                    </div>
-
-                    <div>
-                        <label for="modal_inter_qpi" class="block text-xs font-medium text-slate-600">
-                            Intersession QPI
-                        </label>
-                        <input id="modal_inter_qpi"
-                               type="number"
-                               step="0.01"
-                               min="0"
-                               max="4"
-                               placeholder="0.00"
-                               class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                        <div>
+                            <label for="modal_inter_qpi" class="block text-xs font-medium text-slate-600">
+                                Intersession QPI
+                            </label>
+                            <input id="modal_inter_qpi"
+                                   type="number"
+                                   step="0.01"
+                                   min="0"
+                                   max="4"
+                                   placeholder="0.00"
+                                   class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                        </div>
                     </div>
                 </div>
 
-                <div>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                    <div class="mb-3">
+                        <div class="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                            Contact Information
+                        </div>
+                    </div>
+
                     <label for="modal_mobile" class="block text-xs font-medium text-slate-600">
                         Mobile Number
                     </label>
                     <input id="modal_mobile"
                            type="text"
                            placeholder="Ex: 09123456789"
-                           class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                           class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
                 </div>
 
             </div>
@@ -187,7 +203,6 @@
         </div>
 
     </div>
-
 </div>
 
 <script>
@@ -198,12 +213,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const cancelTop = document.getElementById('cancelOfficerBtn');
     const cancelBottom = document.getElementById('cancelOfficerBtnFooter');
 
-    const prefixInput = document.getElementById('modal_prefix');
-    const firstInput = document.getElementById('modal_first');
-    const miInput = document.getElementById('modal_mi');
-    const lastInput = document.getElementById('modal_last');
-    const preview = document.getElementById('modal_full_preview');
-
     function closeModal() {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
@@ -212,41 +221,11 @@ document.addEventListener('DOMContentLoaded', function () {
     function openModal() {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+
         setTimeout(() => {
             document.getElementById('modal_position')?.focus();
         }, 0);
     }
-
-    function updateFullNamePreview() {
-        const prefix = (prefixInput?.value || '').trim();
-        const first = (firstInput?.value || '').trim();
-        let mi = (miInput?.value || '').trim();
-        const last = (lastInput?.value || '').trim();
-
-        mi = mi.replace(/\./g, '').toUpperCase();
-
-        const parts = [];
-        if (prefix) parts.push(prefix);
-        if (first) parts.push(first);
-
-        let middlePart = '';
-        if (mi) middlePart = mi + '.';
-
-        let fullName = parts.join(' ');
-        if (middlePart) fullName += (fullName ? ' ' : '') + middlePart;
-        if (last) fullName += (fullName ? ' ' : '') + last;
-
-        preview.textContent = fullName || '—';
-    }
-
-    [prefixInput, firstInput, miInput, lastInput].forEach((input) => {
-        input?.addEventListener('input', updateFullNamePreview);
-    });
-
-    miInput?.addEventListener('input', function () {
-        this.value = this.value.replace(/[^A-Za-z]/g, '').slice(0, 1).toUpperCase();
-        updateFullNamePreview();
-    });
 
     cancelTop?.addEventListener('click', closeModal);
     cancelBottom?.addEventListener('click', closeModal);
@@ -265,7 +244,5 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.openOfficerModal = openModal;
     window.closeOfficerModal = closeModal;
-
-    updateFullNamePreview();
 });
 </script>

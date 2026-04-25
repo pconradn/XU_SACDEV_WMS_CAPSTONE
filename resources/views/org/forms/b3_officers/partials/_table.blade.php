@@ -1,20 +1,37 @@
 <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
 
     @php
-        
-
         $oldItems = old('items');
 
         $items = is_array($oldItems)
             ? $oldItems
             : ($registration->items?->map(fn($i) => $i->toArray())->toArray() ?? []);
 
+        $presidentStudentId = optional(
+            \App\Models\OrgMembership::where('organization_id', $registration->organization_id)
+                ->where('school_year_id', $registration->target_school_year_id)
+                ->where('role', 'president')
+                ->whereNull('archived_at')
+                ->with('user')
+                ->first()
+        )->user?->email
+            ? explode('@', optional(
+                \App\Models\OrgMembership::where('organization_id', $registration->organization_id)
+                    ->where('school_year_id', $registration->target_school_year_id)
+                    ->where('role', 'president')
+                    ->whereNull('archived_at')
+                    ->with('user')
+                    ->first()
+            )->user->email)[0]
+            : null;
+
         $items = collect($items)
-            ->filter(fn($item) => empty($item['major_officer_role']))
+            ->filter(fn($item) =>
+                ($item['student_id_number'] ?? null) !== $presidentStudentId
+            )
             ->values()
             ->toArray();
     @endphp
-
     {{-- HEADER --}}
     <div class="flex items-start justify-between gap-4 mb-4">
         <div>
@@ -28,7 +45,7 @@
         </div>
         <div class="text-[10px] text-slate-500 mb-2">
 
-</div>
+    </div>
 
         <button type="button"
                 id="addOfficerBtn"
@@ -240,6 +257,13 @@ document.addEventListener('DOMContentLoaded', function () {
             rowsContainer.querySelector(`[data-row-index="${editingIndex}"]`)
                 .outerHTML = render(editingIndex, data);
         } else {
+
+            const emptyRow = document.getElementById('emptyHint');
+
+            if (emptyRow) {
+                emptyRow.remove(); 
+            }
+
             rowsContainer.insertAdjacentHTML('beforeend', render(getIndex(), data));
         }
 

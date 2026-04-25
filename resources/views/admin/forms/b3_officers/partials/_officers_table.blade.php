@@ -36,10 +36,10 @@
                 </div>
 
                 @if($conflictCount > 0)
-                    <div class="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-amber-700 shadow-sm">
-                        <i data-lucide="alert-triangle" class="h-3.5 w-3.5"></i>
+                    <div class="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-blue-700 shadow-sm">
+                        <i data-lucide="info" class="h-3.5 w-3.5"></i>
                         <span class="font-medium">{{ $conflictCount }}</span>
-                        <span>Conflict{{ $conflictCount > 1 ? 's' : '' }}</span>
+                        <span>Also in Other Org{{ $conflictCount > 1 ? 's' : '' }}</span>
                     </div>
                 @endif
 
@@ -152,7 +152,7 @@
                                         class="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-700 hover:bg-amber-100 transition shadow-sm"
                                     >
                                         <i data-lucide="alert-triangle" class="h-3.5 w-3.5"></i>
-                                        Conflict
+                                        Also Listed
                                     </button>
                                 @endif
 
@@ -190,15 +190,15 @@
                                         <div class="space-y-1">
                                             <div class="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-700">
                                                 <i data-lucide="alert-triangle" class="h-3.5 w-3.5"></i>
-                                                Conflict Detected
+                                                Additional Officer Information
                                             </div>
 
                                             <div class="text-sm font-semibold text-slate-900">
-                                                Major Officer Conflict
+                                                Possible Major Officer Conflict
                                             </div>
 
                                             <div class="text-[11px] text-slate-500">
-                                                This student is already assigned as a major officer in another organization.
+                                                This student is also listed as an officer in another organization for this school year.
                                             </div>
                                         </div>
 
@@ -227,7 +227,7 @@
 
                                     <div class="space-y-2">
                                         <div class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                                            Existing Major Officer Assignments
+                                            Existing Officer Assignments
                                         </div>
 
                                         @foreach($conflicts as $conflict)
@@ -243,7 +243,7 @@
                                                     </div>
 
                                                     <span class="inline-flex rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                                                        Conflict
+                                                        Other Org
                                                     </span>
                                                 </div>
                                             </div>

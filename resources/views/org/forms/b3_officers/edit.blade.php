@@ -1,6 +1,26 @@
 <x-app-layout>
     <div class="mx-auto max-w-6xl px-4 py-6 space-y-4">
 
+
+    <nav class="px-5 sm:px-6 pt-4 mb-2 text-xs text-slate-500">
+        <ol class="flex items-center gap-1">
+            <li>
+                <a href="{{ route('org.rereg.index') }}"
+                class="hover:text-slate-700 transition">
+                    Re-Registration
+                </a>
+            </li>
+
+            <li class="text-slate-400">/</li>
+
+            <li class="text-slate-700 font-medium">
+                Officers List
+            </li>
+        </ol>
+    </nav>
+
+
+
         {{-- HEADER --}}
         @include('org.forms.b3_officers.partials._header', [
             'targetSyId' => $targetSyId,
