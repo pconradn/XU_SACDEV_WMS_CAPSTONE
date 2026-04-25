@@ -173,7 +173,7 @@
 
                                             @if($project->partners->count())
                                                 <span class="px-2 py-1 rounded-md bg-amber-50 text-amber-700 border border-amber-100">
-                                                    {{ $project->partners->count() }} Par
+                                                    {{ $project->partners->count() }} Partners
                                                 </span>
                                             @endif
 

@@ -258,7 +258,7 @@
                         </div>
 
                         <p class="text-[11px] text-slate-400">
-                            Funds should match the total project budget.
+                           
                         </p>
 
                     </div>

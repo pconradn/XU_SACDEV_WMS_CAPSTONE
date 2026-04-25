@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+
+
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 @include('layouts.partials._head')
@@ -93,6 +95,7 @@ $activeSy = \App\Models\SchoolYear::activeYear();
 @include('layouts.partials._flash')
 
 
+
 <div x-data="{ sidebarOpen: false }" class="flex h-screen overflow-hidden">
 
     {{-- SIDEBAR --}}
@@ -103,7 +106,6 @@ $activeSy = \App\Models\SchoolYear::activeYear();
 
         {{-- TOPBAR --}}
         @include('layouts.partials._topbar')
-
 
 
 

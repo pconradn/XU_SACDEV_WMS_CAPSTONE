@@ -94,13 +94,6 @@
                             <span class="font-semibold text-slate-700">{{ $schoolYear->name }}</span>
                         </div>
 
-                        <a href="{{ $isAdmin 
-                                ? route('admin.rereg.hub', ['organization' => $organization->id]) 
-                                : route('org.rereg.index') }}"
-                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white/80 backdrop-blur px-3 py-2 font-semibold text-slate-700 transition hover:bg-white">
-                            
-                            To Re-Registration Hub
-                        </a>
                     </div>
                 </div>
 

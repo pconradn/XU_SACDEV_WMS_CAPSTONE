@@ -15,6 +15,26 @@
 
 <div x-data="moderatorActions()" x-init="init()" class="space-y-6">
 
+    <nav class="px-5 sm:px-6 pt-4 mb-2 text-xs text-slate-500">
+        <ol class="flex items-center gap-1">
+            <li>
+                <a href="{{ $isAdmin 
+                        ? route('admin.rereg.hub', ['organization' => $organization->id]) 
+                        : route('org.rereg.index') }}"
+                class="hover:text-slate-700 transition">
+                    {{ $isAdmin ? 'Re-Registration Hub' : 'Re-Registration' }}
+                </a>
+            </li>
+
+            <li class="text-slate-400">/</li>
+
+            <li class="text-slate-700 font-medium">
+                Strategic Plan
+            </li>
+        </ol>
+    </nav>
+
+
     @include('org.strategic_plan._header', ['submission' => $submission, 'schoolYear' => $schoolYear])
 
 

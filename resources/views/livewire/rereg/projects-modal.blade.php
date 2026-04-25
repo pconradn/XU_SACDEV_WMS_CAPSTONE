@@ -143,10 +143,14 @@
 
                             @foreach($objectives as $i => $obj)
                                 <div class="flex gap-2">
-                                    <input name="objectives[]"
-                                           wire:model="objectives.{{ $i }}"
-                                           class="w-full rounded-lg border-slate-200 text-sm"
-                                           @disabled($viewMode)>
+                         
+                                    <textarea
+                                        name="objectives[]"
+                                        wire:model="objectives.{{ $i }}"
+                                        rows="2"
+                                        class="w-full rounded-lg border-slate-200 text-sm leading-relaxed resize-y break-words"
+                                        @disabled($viewMode)>
+                                    </textarea>
 
                                     @if(!$viewMode)
                                         <button type="button"
@@ -182,10 +186,13 @@
 
                             @foreach($beneficiaries as $i => $item)
                                 <div class="flex gap-2">
-                                    <input name="beneficiaries[]"
-                                           wire:model="beneficiaries.{{ $i }}"
-                                           class="w-full rounded-lg border-slate-200 text-sm"
-                                           @disabled($viewMode)>
+                                <textarea
+                                    name="beneficiaries[]"
+                                    wire:model="beneficiaries.{{ $i }}"
+                                    rows="2"
+                                    class="w-full rounded-lg border-slate-200 text-sm leading-relaxed resize-y break-words"
+                                    @disabled($viewMode)>
+                                </textarea>
 
                                     @if(!$viewMode)
                                         <button type="button"
@@ -221,10 +228,13 @@
 
                             @foreach($deliverables as $i => $item)
                                 <div class="flex gap-2">
-                                    <input name="deliverables[]"
-                                           wire:model="deliverables.{{ $i }}"
-                                           class="w-full rounded-lg border-slate-200 text-sm"
-                                           @disabled($viewMode)>
+                                    <textarea
+                                        name="deliverables[]"
+                                        wire:model="deliverables.{{ $i }}"
+                                        rows="2"
+                                        class="w-full rounded-lg border-slate-200 text-sm leading-relaxed resize-y break-words"
+                                        @disabled($viewMode)>
+                                    </textarea>
 
                                     @if(!$viewMode)
                                         <button type="button"
@@ -260,10 +270,13 @@
 
                             @foreach($partners as $i => $item)
                                 <div class="flex gap-2">
-                                    <input name="partners[]"
-                                           wire:model="partners.{{ $i }}"
-                                           class="w-full rounded-lg border-slate-200 text-sm"
-                                           @disabled($viewMode)>
+                                    <textarea
+                                        name="partners[]"
+                                        wire:model="partners.{{ $i }}"
+                                        rows="2"
+                                        class="w-full rounded-lg border-slate-200 text-sm leading-relaxed resize-y break-words"
+                                        @disabled($viewMode)>
+                                    </textarea>
 
                                     @if(!$viewMode)
                                         <button type="button"
