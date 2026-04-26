@@ -237,10 +237,10 @@
 
                     <div class="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3">
                         <div class="text-[11px] uppercase tracking-wide text-slate-500 mb-1">
-                            President Confirmation
+                            Moderator
                         </div>
                         <div class="text-sm font-semibold text-slate-900">
-                            {{ $orgMeta['president_confirmed_at'] ? $orgMeta['president_confirmed_at']->format('M d, Y') : 'Not yet confirmed' }}
+                            {{ $orgMeta['moderator_name'] ?? '—' }}
                         </div>
                     </div>
 
@@ -249,7 +249,7 @@
                             Cluster
                         </div>
                         <div class="text-sm font-semibold text-slate-900">
-                            {{ $orgInfo['cluster_id'] ?? '—' }}
+                            {{ $orgInfo['cluster_name'] ?? '—' }}
                         </div>
                     </div>
 
@@ -310,10 +310,10 @@
 
                 <div class="px-5 py-4 border-b border-slate-200 bg-slate-50/70">
                     <div class="text-sm font-semibold text-slate-900">
-                        Major Officers
+                        System Approver Roles
                     </div>
                     <div class="text-xs text-slate-500">
-                        Assign and manage key organization roles
+                        Assign system roles used for approvals 
                     </div>
                 </div>
 
@@ -328,7 +328,7 @@
 
                     @if(!$canEditMajor)
                         <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                            Major officers can only be managed in the active school year.
+                            System approver roles can only be managed in the active school year.
                         </div>
                     @endif
 

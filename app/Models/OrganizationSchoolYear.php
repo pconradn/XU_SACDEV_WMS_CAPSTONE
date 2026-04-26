@@ -32,4 +32,6 @@ class OrganizationSchoolYear extends Model
     {
         return $this->belongsTo(User::class, 'president_user_id');
     }
+
+    
 }

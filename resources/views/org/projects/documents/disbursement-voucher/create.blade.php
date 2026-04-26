@@ -2,6 +2,47 @@
 
 <div class="max-w-6xl mx-auto space-y-6">
 
+<nav class="text-xs text-slate-500">
+    <ol class="flex items-center gap-1.5">
+
+        {{-- Organization --}}
+        <li>
+            <a href="{{ route('org.organization-info.show') }}"
+               class="font-medium text-slate-600 hover:text-slate-900 transition">
+                Organization
+            </a>
+        </li>
+
+        <li class="text-slate-300">/</li>
+
+        {{-- Projects --}}
+        <li>
+            <a href="{{ route('org.projects.index') }}"
+               class="font-medium text-slate-600 hover:text-slate-900 transition">
+                Projects
+            </a>
+        </li>
+
+        <li class="text-slate-300">/</li>
+
+        {{-- Document Hub --}}
+        <li>
+            <a href="{{ route('org.projects.documents.hub', $project) }}"
+               class="font-medium text-slate-600 hover:text-slate-900 transition">
+                Document Hub
+            </a>
+        </li>
+
+        <li class="text-slate-300">/</li>
+
+        {{-- CURRENT --}}
+        <li class="text-slate-400">
+            Generate DV
+        </li>
+
+    </ol>
+</nav>
+
 {{-- ================= PAGE HEADER ================= --}}
 <div x-data="{ openGuide: false }"
      class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-5">

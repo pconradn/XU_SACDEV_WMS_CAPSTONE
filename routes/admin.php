@@ -30,6 +30,7 @@ use App\Http\Controllers\Org\ProfileController;
 use App\Http\Controllers\OrgConstitutionSubmissionController;
 use App\Http\Controllers\SACDEV\SacdevB2PresidentRegistrationController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SubmissionPacketController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -358,7 +359,7 @@ Route::prefix('admin')
 
             Route::get(
                 '/projects/{project}/packets',
-                [AdminPacketController::class, 'projectPackets']
+                [SubmissionPacketController::class, 'projectPackets']
             )->name('admin.projects.packets.index');
 
 
@@ -478,43 +479,29 @@ Route::prefix('admin')
         });
 
 
-        Route::prefix('packets')->name('admin.packets.')->middleware('permission:documents.manage')->group(function () {
+        Route::prefix('packets')
+            ->name('admin.packets.')
+            ->middleware('permission:documents.manage')
+            ->group(function () {
 
-            Route::get('/receive', [AdminPacketController::class, 'receivePage'])->name('receive');
+                Route::get('/receive', [SubmissionPacketController::class, 'receivePage'])
+                    ->name('receive');
 
-            Route::post('/{packet}/mark-received', [AdminPacketController::class, 'markReceived'])->name('mark_received');
+                Route::post('/lookup', [SubmissionPacketController::class, 'lookup'])
+                    ->name('lookup');
 
-            Route::get('/packets/lookup', [AdminPacketController::class, 'lookup'])->name('admin.packets.lookup');
-        });
+                Route::post('/{packet}/receive', [SubmissionPacketController::class, 'receive'])
+                    ->name('receive.store');
 
+                Route::post('/{packet}/review', [SubmissionPacketController::class, 'saveReview'])
+                    ->name('review');
 
-        Route::middleware('permission:projects.view')->group(function () {
+                Route::post('/{packet}/mark-ready', [SubmissionPacketController::class, 'markReady'])
+                    ->name('mark_ready');
 
-            Route::get(
-                '/projects/{project}/packets',[AdminPacketController::class, 'projectPackets'])->name('admin.projects.packets.index');
-        });
+                Route::post('/{packet}/revert', [SubmissionPacketController::class, 'revertToUnderReview'])
+                    ->name('revert');
 
-        Route::middleware('permission:projects.approve')->group(function () {
-
-            Route::post('/packets/{packet}/approve', [AdminPacketController::class, 'approve'])
-                ->name('admin.packets.approve');
-
-            Route::post('/packets/{packet}/forward-to-finance', [AdminPacketController::class, 'forwardToFinance'])
-                ->name('admin.packets.forward_finance');
-
-            Route::post('/packets/{packet}/verify', [AdminPacketController::class, 'verify'])
-                ->name('admin.packets.verify');
-        });
-
-        Route::middleware('permission:projects.return')->group(function () {
-
-            Route::post('/packets/{packet}/return', [AdminPacketController::class, 'return'])
-                ->name('admin.packets.return');
-
-            Route::post('/packets/{packet}/revert-to-received', [AdminPacketController::class, 'revertToReceived'])
-                ->name('admin.packets.revert_received');
-
-            Route::post('/packets/{packet}/revert-from-finance', [AdminPacketController::class, 'revertFromFinance'])
-                ->name('admin.packets.revert_finance');
-        });
-
+                Route::post('/{packet}/claim-items', [SubmissionPacketController::class, 'claimItems'])
+                    ->name('claim_items');
+            });

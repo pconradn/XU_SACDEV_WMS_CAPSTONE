@@ -136,7 +136,7 @@ class AdminOrgBySyController extends Controller
             'logo_original_name' => $organization->logo_original_name,
             'logo_size_bytes' => $organization->logo_size_bytes,
 
-            'cluster_id' => $organization->cluster_id,
+            'cluster_name' => optional($organization->cluster)->name,
 
             'created_at' => $organization->created_at,
             'updated_at' => $organization->updated_at,
@@ -146,7 +146,16 @@ class AdminOrgBySyController extends Controller
 
         $orgMeta = [
             'president_name' => optional($orgSy->president)->name,
-            'president_confirmed_at' => $orgSy->president_confirmed_at,
+
+            'moderator_name' => optional(
+                \App\Models\OrgMembership::query()
+                    ->with('officerEntry')
+                    ->where('organization_id', $organization->id)
+                    ->where('school_year_id', $syId)
+                    ->where('role', 'moderator')
+                    ->whereNull('archived_at')
+                    ->first()
+            )?->user?->name,
 
             'isActiveSy' => $activeSy && $selectedSy
                 ? (int)$activeSy->id === (int)$selectedSy->id

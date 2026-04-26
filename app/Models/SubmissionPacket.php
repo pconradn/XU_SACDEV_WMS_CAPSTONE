@@ -2,27 +2,20 @@
 
 namespace App\Models;
 
-use App\Models\SubmissionPacketReceipt;
 use Illuminate\Database\Eloquent\Model;
 
 class SubmissionPacket extends Model
 {
     protected $table = 'submission_packets';
 
-
     protected $fillable = [
-
         'packet_code',
         'project_id',
         'project_document_id',
 
-        'has_solicitation_letter',
-        'has_disbursement_voucher',
-        'has_collection_report',
-        'has_certificates',
-        'has_receipts',
-
         'status',
+        'remarks',
+        'return_remarks',
 
         'generated_by',
         'generated_at',
@@ -32,24 +25,20 @@ class SubmissionPacket extends Model
         'received_by',
         'received_at',
 
-        'verified_by',
-        'verified_at',
-
-        'forwarded_at',
-
-        'return_remarks',
         'returned_by',
         'returned_at',
 
-        'other_items'
-
+        'reviewed_at',
+        'ready_for_claiming_at',
     ];
-
-
 
     protected $casts = [
         'generated_at' => 'datetime',
+        'submitted_at' => 'datetime',
         'received_at' => 'datetime',
+        'returned_at' => 'datetime',
+        'reviewed_at' => 'datetime',
+        'ready_for_claiming_at' => 'datetime',
     ];
 
     /*
@@ -71,18 +60,10 @@ class SubmissionPacket extends Model
         );
     }
 
-    public function receipts()
+    public function items()
     {
         return $this->hasMany(
-            SubmissionPacketReceipt::class,
-            'packet_id'
-        );
-    }
-
-    public function dvs()
-    {
-        return $this->hasMany(
-            SubmissionPacketDv::class,
+            SubmissionPacketItem::class,
             'packet_id'
         );
     }
@@ -103,25 +84,11 @@ class SubmissionPacket extends Model
         );
     }
 
-    public function verifiedBy()
+    public function returnedBy()
     {
         return $this->belongsTo(
             User::class,
-            'verified_by'
+            'returned_by'
         );
     }
-
-
-    public function letters()
-    {
-        return $this->hasMany(SubmissionPacketLetter::class,'packet_id');
-    }
-
-    public function returnedBy()
-    {
-        return $this->belongsTo(User::class,'returned_by');
-    }
-
-
-
 }

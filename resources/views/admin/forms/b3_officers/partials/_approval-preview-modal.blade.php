@@ -16,7 +16,7 @@
                 </div>
 
                 <p class="text-[11px] text-slate-500">
-                    Review changes before applying to the organization.
+                    This will sync the submitted officers with the organization records.
                 </p>
             </div>
 
@@ -29,15 +29,15 @@
 
         <div class="p-5 space-y-4 max-h-[420px] overflow-y-auto text-[11px]">
 
-            <div class="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">
-                <i data-lucide="check-circle" class="w-4 h-4 mt-0.5"></i>
+            <div class="flex items-start gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-blue-700">
+                <i data-lucide="info" class="w-4 h-4 mt-0.5"></i>
                 <span>
-                    This will update officer records and provision required system roles.
+                    Existing officers will be updated, new ones will be added, and removed ones will be archived.
                 </span>
             </div>
 
             <div class="font-semibold text-slate-800 text-xs">
-                The following actions will occur:
+                The following changes will be applied:
             </div>
 
             <ul class="space-y-2">
@@ -75,27 +75,9 @@
 
                             <div class="flex flex-wrap gap-2 text-[10px]">
 
-                                @if($item->isTreasurer())
-                                    <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                        Treasurer Account
-                                    </span>
-                                @endif
-
-                                @if($item->isFinance_Officer())
-                                    <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                        Finance Officer Account
-                                    </span>
-                                @endif
-
-                                @if($item->isAuditor())
-                                    <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                        Auditor
-                                    </span>
-                                @endif
-
                                 @if(!empty($conflicts))
                                     <span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
-                                        Conflict Detected
+                                        Also officer in another organization
                                     </span>
                                 @endif
 
@@ -114,6 +96,7 @@
         <div class="border-t border-slate-200 px-5 py-4 flex justify-end gap-2 bg-white">
 
             <button @click="openApprove = false"
+                    type="button"
                     class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 hover:bg-slate-50 transition">
                 Cancel
             </button>

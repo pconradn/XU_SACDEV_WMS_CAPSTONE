@@ -1,16 +1,23 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div class="font-semibold text-lg text-slate-800">
-                Major Officer Roles — {{ $organization->name }}
+    <div class="max-w-5xl mx-auto pt-6 px-4">
+        <div class="flex items-center justify-between mb-4">
+
+            <div>
+                <div class="text-lg font-semibold text-slate-800">
+                    System Approver Roles — {{ $organization->name }}
+                </div>
+                <div class="text-xs text-slate-500">
+                    Assign system roles for approval workflows
+                </div>
             </div>
 
             <a href="{{ route('admin.orgs_by_sy.show', $organization) }}"
-               class="text-sm font-semibold text-blue-700 hover:underline">
+            class="text-sm font-semibold text-blue-700 hover:underline">
                 Back to Org
             </a>
+
         </div>
-    </x-slot>
+    </div>
 
     <div class="max-w-5xl mx-auto py-6 px-4">
 
@@ -32,18 +39,16 @@
 
         @if(!$canEdit)
             <div class="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
-                Major officers can only be edited for the <b>Active School Year</b>.
+               System approver roles can only be edited for the <b>Active School Year</b>.
             </div>
         @endif
 
         @php
             $roles = [
-                'president' => 'President',
-                'vice_president' => 'Vice President',
-                'treasurer' => 'Treasurer',
-                'finance_officer' => 'finance_officer',
+                'president' => 'President Approver',
+                'treasurer' => 'Treasurer Approver',
+                'finance_officer' => 'Finance Officer Approver',
             ];
-
             $officerOptions = $officers;
 
 
@@ -90,8 +95,17 @@
                 <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
                     <div class="flex items-start justify-between gap-3">
                         <div>
-                            <div class="text-sm text-slate-500">Major Officer</div>
+
+
+
+                            <div class="text-sm text-slate-500">System Approver Role</div>
                             <div class="text-lg font-semibold text-slate-900">{{ $roleLabel }}</div>
+
+                            <div class="text-[11px] text-slate-400 mt-1">
+                                This is a system role used for approvals, not the actual organization position.
+                            </div>
+
+                            
                         </div>
 
                         <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold {{ $badgeClass }}">
@@ -140,7 +154,7 @@
                         @csrf
 
                         <label class="block text-sm font-semibold text-slate-700 mb-2">
-                            Assign / Replace
+                            Assign System Role
                         </label>
 
                         <select name="officer_entry_id"
@@ -189,7 +203,7 @@
                                     class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                                     {{ !$canEdit ? 'disabled' : '' }}
                             >
-                                Save {{ $roleLabel }}
+                                Save Role Assignment
                             </button>
                         </div>
                     </form>

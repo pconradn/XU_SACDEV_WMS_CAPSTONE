@@ -77,25 +77,30 @@ class SacdevB3OfficerSubmissionController extends Controller
 
         foreach ($submission->items as $item)
         {
-            if (!$item->student_id_number) continue;
+            $studentId = $item->student_id_number;
+            if (!$studentId) continue;
 
-            $conflicts = OfficerEntry::query()
-                ->with('organization')
-                ->where('student_id_number', $item->student_id_number)
+            $conflicts = \App\Models\OrgMembership::query()
+                ->with(['organization', 'officerEntry'])
                 ->where('school_year_id', $syId)
                 ->where('organization_id', '!=', $orgId)
+                ->whereHas('officerEntry', function ($q) use ($studentId) {
+                    $q->where('student_id_number', $studentId);
+                })
                 ->get();
 
             if ($conflicts->isNotEmpty())
             {
                 $conflictsByItemId[$item->id] =
-                    $conflicts->map(function ($entry)
-                    {
+                    $conflicts->map(function ($m) {
+                        $entry = $m->officerEntry;
+
                         return [
-                            'organization_id' => $entry->organization_id,
-                            'organization_name' => $entry->organization->name ?? 'Unknown Org',
-                            'position' => $entry->position,
-                            'full_name' => $entry->full_name,
+                            'organization_id'   => $m->organization_id,
+                            'organization_name' => $m->organization->name ?? 'Unknown Org',
+                            'position'          => $entry->position ?? null,
+                            'full_name'         => $entry->full_name ?? null,
+                            'role'              => $m->role,
                         ];
                     })->values()->toArray();
             }
@@ -314,6 +319,38 @@ class SacdevB3OfficerSubmissionController extends Controller
 
                 $entry->save();
 
+
+                $isPresidentItem = OrgMembership::query()
+                    ->where('organization_id', $orgId)
+                    ->where('school_year_id', $syId)
+                    ->where('role', 'president')
+                    ->where(function ($q) use ($entry, $studentId) {
+                        $q->where('officer_entry_id', $entry->id)
+                        ->orWhereHas('user', function ($uq) use ($studentId) {
+                            $uq->where('email', $studentId . '@my.xu.edu.ph');
+                        });
+                    })
+                    ->exists();
+
+                if ($isPresidentItem) {
+                    $presidentMembership = OrgMembership::query()
+                        ->where('organization_id', $orgId)
+                        ->where('school_year_id', $syId)
+                        ->where('role', 'president')
+                        ->first();
+
+                    if ($presidentMembership && !$presidentMembership->officer_entry_id) {
+                        $presidentMembership->officer_entry_id = $entry->id;
+                        $presidentMembership->save();
+                    }
+
+                    $item->propagated_to_memberships = true;
+                    $item->propagated_at = now();
+                    $item->save();
+
+                    continue;
+                }
+
                 logger()->info('ENTRY SAVED', [
                     'entry_id' => $entry->id,
                 ]);
@@ -429,6 +466,17 @@ class SacdevB3OfficerSubmissionController extends Controller
 
                 if (!in_array($studentId, $submittedIds)) {
 
+                    $isPresidentEntry = OrgMembership::query()
+                        ->where('organization_id', $orgId)
+                        ->where('school_year_id', $syId)
+                        ->where('role', 'president')
+                        ->where('officer_entry_id', $entry->id)
+                        ->exists();
+
+                    if ($isPresidentEntry) {
+                        continue;
+                    }
+
                     OrgMembership::where('organization_id', $orgId)
                         ->where('school_year_id', $syId)
                         ->where('officer_entry_id', $entry->id)
@@ -436,11 +484,6 @@ class SacdevB3OfficerSubmissionController extends Controller
                         ->update([
                             'archived_at' => now(),
                         ]);
-                    
-                    logger()->error('REMOVING OFFICER ENTRY', [
-                        'student_id' => $studentId,
-                        'entry_id' => $entry->id,
-                    ]);
 
                     $entry->delete();
                 }

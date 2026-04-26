@@ -382,6 +382,7 @@ Route::prefix('projects/{project}')
         Route::prefix('packets')
             ->name('packets.')
             ->group(function () {
+
                 Route::get('/', [SubmissionPacketController::class, 'index'])
                     ->name('index');
 
@@ -392,40 +393,23 @@ Route::prefix('projects/{project}')
                 Route::get('{packet}', [SubmissionPacketController::class, 'show'])
                     ->name('show');
 
-                Route::post('{packet}/update', [SubmissionPacketController::class, 'update'])
+                Route::get('{packet}/print', [SubmissionPacketController::class, 'print'])
+                    ->name('print');
+
+                Route::post('{packet}/items', [SubmissionPacketController::class, 'addItem'])
                     ->middleware('project.role:project_head')
-                    ->name('update');
+                    ->name('items.store');
+
+                Route::delete('{packet}/items/{item}', [SubmissionPacketController::class, 'removeItem'])
+                    ->middleware('project.role:project_head')
+                    ->name('items.destroy');
+
+                Route::post('{packet}/claim-items', [SubmissionPacketController::class, 'claimItems'])
+                    ->name('items.claim');
 
                 Route::delete('{packet}', [SubmissionPacketController::class, 'destroy'])
                     ->middleware('project.role:project_head')
                     ->name('destroy');
-
-                Route::get('{packet}/print', [SubmissionPacketController::class, 'print'])
-                    ->name('print');
-
-                Route::post('{packet}/letters', [SubmissionPacketController::class, 'addLetter'])
-                    ->middleware('project.role:project_head')
-                    ->name('letters.store');
-
-                Route::delete('{packet}/letters/{letter}', [SubmissionPacketController::class, 'removeLetter'])
-                    ->middleware('project.role:project_head')
-                    ->name('letters.destroy');
-
-                Route::post('{packet}/dvs', [SubmissionPacketController::class, 'addDv'])
-                    ->middleware('project.role:project_head')
-                    ->name('dvs.store');
-
-                Route::delete('{packet}/dvs/{dv}', [SubmissionPacketController::class, 'removeDv'])
-                    ->middleware('project.role:project_head')
-                    ->name('dvs.destroy');
-
-                Route::post('{packet}/receipts', [SubmissionPacketController::class, 'addReceipt'])
-                    ->middleware('project.role:project_head')
-                    ->name('receipts.store');
-
-                Route::delete('{packet}/receipts/{receipt}', [SubmissionPacketController::class, 'removeReceipt'])
-                    ->middleware('project.role:project_head')
-                    ->name('receipts.destroy');
             });
 
         /*

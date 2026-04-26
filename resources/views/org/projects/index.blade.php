@@ -1,4 +1,5 @@
 <x-app-layout>
+
 @php
     $user = auth()->user();
 
@@ -18,10 +19,9 @@
         })
         ->exists();
 
-    $effectiveRole = $orgRole;
-    if ($orgRole === 'member') {
-        $effectiveRole = $isProjectHead ? 'project_head' : 'member';
-    }
+    $effectiveRole = $orgRole === 'member'
+        ? ($isProjectHead ? 'project_head' : 'member')
+        : $orgRole;
 
     $isPresident = $orgRole === 'president';
     $isModerator = $orgRole === 'moderator';
@@ -37,25 +37,52 @@
     openAssignHeadModal: false,
     showHelpModal: false,
     selectedProject: null
-}" class="py-8">
+}" class="py-6">
 
-<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
-    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
+    {{-- ================= BREADCRUMB ================= --}}
+    <nav class="text-xs text-slate-500">
+        <ol class="flex items-center gap-1.5">
+            <li>
+                <a href="{{ route('org.organization-info.show') }}"
+                   class="font-medium text-slate-600 hover:text-slate-900 transition">
+                    Organization
+                </a>
+            </li>
+            <li class="text-slate-300">/</li>
+            <li class="text-slate-400">Projects</li>
+        </ol>
+    </nav>
+
+    {{-- ================= HEADER ================= --}}
+    <div class="rounded-2xl border border-slate-200 bg-gradient-to-br from-amber-50 via-white to-slate-50 shadow-sm p-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+
+        <div class="space-y-1">
             <h2 class="text-xl font-semibold text-slate-900 flex items-center gap-2">
-                <i data-lucide="folder-kanban" class="w-5 h-5 text-slate-700"></i>
+                <i data-lucide="folder-kanban" class="w-5 h-5 text-amber-600"></i>
                 Project Management
             </h2>
-            <p class="mt-1 text-xs text-slate-500">
-                Create, manage, and track organization projects.
+
+            <p class="text-xs text-slate-500 max-w-xl">
+                Manage organization projects, handle document workflows, assign responsibilities, and track project progress from planning to completion.
             </p>
         </div>
 
         <div class="flex items-center gap-2">
+
+            @if($isPresident)
+                <button
+                    @click="openCreateModal = true"
+                    class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Create Project
+                </button>
+            @endif
+
             <button
                 @click="showHelpModal = true"
-                class="w-8 h-8 flex items-center justify-center rounded-full border border-slate-300 hover:bg-slate-100">
+                class="w-8 h-8 flex items-center justify-center rounded-xl border border-slate-300 hover:bg-slate-100 transition">
                 <i data-lucide="help-circle" class="w-4 h-4 text-slate-600"></i>
             </button>
 
@@ -65,9 +92,95 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 ">
+    {{-- ================= INSTRUCTIONS ================= --}}
+    <div class="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-slate-50 p-5 shadow-sm">
 
+        <div class="flex items-start gap-3">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                <i data-lucide="info" class="w-4 h-4"></i>
+            </div>
+
+            <div class="space-y-3">
+
+                <div>
+                    <div class="text-sm font-semibold text-slate-900">
+                        How to Use Projects Module
+                    </div>
+
+                    <p class="mt-1 text-xs text-slate-600 leading-relaxed">
+                        These are the projects based on your submitted strategic plan. You can also create additional projects as needed for new or unplanned activities. Each project serves as the main container for documents, approvals, and workflow tracking.
+                    </p>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-3">
+
+                    {{-- CREATE PROJECT --}}
+                    <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-3
+                        {{ !$isPresident ? 'opacity-50' : '' }}">
+
+                        <div class="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                            Create Project
+                        </div>
+
+                        <p class="text-[11px] text-slate-500 mt-1">
+                            Add new projects for upcoming activities.
+                        </p>
+
+                        @if(!$isPresident)
+                            <div class="text-[10px] text-slate-400 mt-1">
+                                President only
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- MANAGE DOCUMENTS --}}
+                    <div class="rounded-xl border border-blue-100 bg-white/80 p-3">
+
+                        <div class="text-xs font-semibold text-blue-700 flex items-center gap-1">
+                            <i data-lucide="file-check" class="w-3.5 h-3.5"></i>
+                            Manage Documents
+                        </div>
+
+                        <p class="text-[11px] text-slate-500 mt-1">
+                            Open a project to handle required documents, submissions, and approval workflow.
+                        </p>
+                    </div>
+                {{-- VIEW / TRACK --}}
+                <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+
+                    <div class="text-xs font-semibold text-emerald-700 flex items-center gap-1">
+                        <i data-lucide="activity" class="w-3.5 h-3.5"></i>
+                        Track Workflow
+                    </div>
+
+                    <p class="text-[11px] text-slate-500 mt-1">
+                        Monitor project status from drafting to completion.
+                    </p>
+
+                </div>
+
+                </div>
+
+                <div class="text-[11px] text-slate-500">
+                    Your role:
+                    <span class="font-semibold text-slate-700">
+                        {{ ucfirst(str_replace('_',' ', $effectiveRole ?? 'none')) }}
+                    </span>
+                    — determines available actions.
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    {{-- ================= MAIN CONTENT ================= --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {{-- TABLE --}}
         <div class="lg:col-span-2 space-y-6">
+
             @if($canViewProjects)
                 @include('org.projects.partials._table', [
                     'projects' => $projects,
@@ -80,49 +193,26 @@
                     </p>
                 </div>
             @endif
+
         </div>
 
+        {{-- SIDE --}}
         <div class="space-y-6">
 
-            @if($isPresident)
-            <div class="rounded-2xl border border-emerald-200 bg-gradient-to-b from-emerald-50 to-white shadow-sm p-4 space-y-3">
-                <div class="text-xs font-semibold text-emerald-700 uppercase tracking-wide">
-                    Quick Actions
-                </div>
-
-                <div class="space-y-2 text-xs text-slate-600">
-                    <button
-                        @click="openCreateModal = true"
-                        class="w-full text-left px-3 py-2 rounded-lg border border-emerald-200 hover:bg-emerald-50 transition">
-                        Create New Project
-                    </button>
-
-                    <div class="px-3 py-2 rounded-lg border border-slate-200 bg-white">
-                        Select a project below
-                    </div>
-                </div>
-            </div>
-            @endif
-
-            <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-4 space-y-3">
+            <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm p-4 space-y-2">
                 <div class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                    Your Role
+                    Role Information
                 </div>
 
                 <div class="text-xs text-slate-700">
-                    @if($orgRole)
-                        You are
-                        <span class="font-medium text-slate-900">
-                            {{ ucfirst(str_replace('_', ' ', $effectiveRole)) }}
-                        </span>
-                        in this organization.
-                    @else
-                        No active role assigned.
-                    @endif
+                    You are 
+                    <span class="font-semibold text-slate-900">
+                        {{ ucfirst(str_replace('_',' ', $effectiveRole ?? 'none')) }}
+                    </span>
                 </div>
 
                 <div class="text-[11px] text-slate-500">
-                    Your permissions depend on your role.
+                    Access to features depends on your assigned role.
                 </div>
             </div>
 
@@ -130,73 +220,12 @@
 
     </div>
 
-    <div
-        x-show="showHelpModal"
-        x-transition
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-        style="display: none;"
-    >
-        <div @click.outside="showHelpModal = false"
-            class="w-full max-w-md rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm">
-
-            <div class="px-5 py-4 border-b border-slate-200 flex items-start gap-3">
-                <div class="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600">
-                    <i data-lucide="info" class="w-4 h-4"></i>
-                </div>
-
-                <div class="space-y-1">
-                    <h2 class="text-sm font-semibold text-slate-900">
-                        Project Workflow Guide
-                    </h2>
-                    <p class="text-[11px] text-slate-500">
-                        Overview of how project management and approvals work.
-                    </p>
-                </div>
-            </div>
-
-            <div class="p-4 space-y-3 text-xs text-slate-700">
-
-                <div class="space-y-2">
-
-                    <div class="flex items-start gap-2">
-                        <span class="mt-1 h-1.5 w-1.5 rounded-full bg-blue-500"></span>
-                        <span>Create or manage a project</span>
-                    </div>
-
-                    <div class="flex items-start gap-2">
-                        <span class="mt-1 h-1.5 w-1.5 rounded-full bg-blue-500"></span>
-                        <span>Assign a project head to handle submissions</span>
-                    </div>
-
-                    <div class="flex items-start gap-2">
-                        <span class="mt-1 h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-                        <span>Required documents go through approval workflow</span>
-                    </div>
-
-                    <div class="flex items-start gap-2">
-                        <span class="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                        <span>Track progress and complete post-implementation reports</span>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="px-5 py-3 border-t border-slate-200 flex items-center justify-end">
-                <button
-                    @click="showHelpModal = false"
-                    class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition">
-                    Close
-                </button>
-            </div>
-
-        </div>
-    </div>
-
+    {{-- KEEP MODALS --}}
     @include('org.projects.partials._create_modal')
     @include('org.projects.partials._edit_modal')
     @include('org.projects.partials._assign_head_modal')
 
 </div>
 </div>
+
 </x-app-layout>

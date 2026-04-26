@@ -34,12 +34,18 @@ class ProjectHeadAssignmentController extends Controller
             ->get()
             ->keyBy('project_id');
 
-        $officers = OfficerEntry::query()
+        $officers = \App\Models\OrgMembership::query()
+            ->with('officerEntry')
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
-            ->where('is_major_officer', 0)
-            ->orderBy('full_name')
-            ->get();
+            ->whereNull('archived_at')
+            ->whereNotNull('officer_entry_id')
+            ->whereNotIn('role', ['president', 'treasurer', 'finance_officer'])
+            ->get()
+            ->pluck('officerEntry')
+            ->filter()
+            ->sortBy('full_name')
+            ->values();
 
         $members = OrganizationMemberRecord::query()
             ->where('organization_id', $orgId)
@@ -55,13 +61,28 @@ class ProjectHeadAssignmentController extends Controller
             ->get();
 
 
+        $hasApprovers = \App\Models\OrgMembership::query()
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->whereIn('role', ['treasurer', 'finance_officer'])
+            ->whereNull('archived_at')
+            ->pluck('role')
+            ->unique();
+
+        $missingRoles = collect(['treasurer', 'finance_officer'])
+            ->diff($hasApprovers);            
+
+
         return view('org.assignments.project-heads-index', compact(
+            
             'projects',
             'heads',
             'syId',
             'officers',
             'members',
-            'departments'
+            'departments',
+            'missingRoles',
+
         ));
     }
 
@@ -72,10 +93,12 @@ class ProjectHeadAssignmentController extends Controller
 
         abort_unless($project->organization_id === $orgId && $project->school_year_id === $syId, 404);
 
-        $officers = OfficerEntry::query()
+        $officers = \App\Models\OrgMembership::query()
+            ->with('officerEntry')
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
-            ->orderBy('full_name')
+            ->whereNull('archived_at')
+            ->whereNotNull('officer_entry_id')
             ->get();
 
         $currentHead = ProjectAssignment::query()
@@ -88,6 +111,24 @@ class ProjectHeadAssignmentController extends Controller
 
     public function update(Request $request, $project)
     {
+        $orgId = (int) $request->session()->get('active_org_id');
+        $syId  = (int) $request->session()->get('encode_sy_id');
+
+        $requiredRoles = ['treasurer', 'finance_officer'];
+
+        $existingRoles = \App\Models\OrgMembership::query()
+            ->where('organization_id', $orgId)
+            ->where('school_year_id', $syId)
+            ->whereIn('role', $requiredRoles)
+            ->whereNull('archived_at')
+            ->pluck('role')
+            ->unique();
+
+        if (collect($requiredRoles)->diff($existingRoles)->isNotEmpty()) {
+            return back()->with('error', 'Assign all approver roles before assigning project heads.');
+        }
+
+
         if (!$project instanceof \App\Models\Project) {
             $project = \App\Models\Project::findOrFail($project);
         }

@@ -130,13 +130,7 @@
                                 class="text-[11px] px-3 py-1 rounded-md border border-slate-300 hover:bg-slate-50">
                                 Edit
                             </button>
-                            {{--
-                            <button
-                                @click="selectedProject = { id: {{ $p->id }} }; openAssignHeadModal = true"
-                                class="text-[11px] px-3 py-1 rounded-md bg-slate-800 text-white hover:bg-slate-700">
-                                Assign
-                            </button>
-                            --}}
+
                         </div>
                     </td>
                     @endif

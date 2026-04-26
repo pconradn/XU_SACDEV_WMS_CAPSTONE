@@ -27,6 +27,26 @@
     }
 </style>
 
+<nav class="px-5 sm:px-6 pt-4 text-xs text-slate-500">
+    <ol class="flex items-center gap-1">
+        <li>
+            <a href="{{ $isAdminView 
+                    ? route('admin.rereg.hub', ['organization' => $organization->id]) 
+                    : route('org.rereg.index') }}"
+               class="hover:text-slate-700 transition">
+                {{ $isAdminView ? 'Re-Registration Hub' : 'Re-Registration' }}
+            </a>
+        </li>
+
+        <li class="text-slate-400">/</li>
+
+        <li class="text-slate-700 font-medium">
+            Moderator Submission
+        </li>
+    </ol>
+</nav>
+
+
 <div class="page-container mx-auto px-4 py-6 space-y-6">
 
     <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white shadow-sm px-5 py-4">
@@ -232,7 +252,16 @@
             <form method="POST" action="{{ route('org.rereg.moderator.update') }}">
                 @csrf
 
-                <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
+                @php
+                    $hasSubmission = $submission && (
+                        $submission->was_moderator_before !== null ||
+                        $submission->moderated_org_name ||
+                        $submission->served_nominating_org_before !== null ||
+                        $submission->served_nominating_org_years
+                    );
+                @endphp
+
+                <div class="rounded-2xl border {{ ($isEditable && !$hasSubmission) ? 'border-amber-300 bg-amber-50/40' : 'border-slate-200 bg-gradient-to-b from-slate-50 to-white' }} p-4 shadow-sm">
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <div class="flex items-center gap-2">
@@ -248,7 +277,12 @@
                             </p>
                         </div>
 
-                        @if($isEditable)
+                        @if($isEditable && !$hasSubmission)
+                            <span class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-[11px] font-semibold text-amber-800">
+                                <i data-lucide="alert-triangle" class="h-3.5 w-3.5"></i>
+                                Action Required
+                            </span>
+                        @elseif($isEditable)
                             <span class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
                                 <i data-lucide="pencil-line" class="h-3.5 w-3.5"></i>
                                 Editable
@@ -261,6 +295,15 @@
                         @endif
                     </div>
 
+                    @if($isEditable && !$hasSubmission)
+                        <div class="mt-3 rounded-xl border border-amber-200 bg-amber-100 px-3 py-2 text-[12px] text-amber-900 flex items-start gap-2">
+                            <i data-lucide="info" class="h-4 w-4 mt-[1px]"></i>
+                            <div>
+                                This section still needs to be filled out. Please complete all required fields before saving your submission.
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
 
                         <div class="rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
@@ -270,7 +313,7 @@
                             </label>
 
                             <select name="was_moderator_before"
-                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-100"
                                     @disabled(!$isEditable)>
                                 <option value="">Select</option>
                                 <option value="1" @selected(old('was_moderator_before', $submission?->was_moderator_before) == 1)>Yes</option>
@@ -282,7 +325,6 @@
                             @enderror
                         </div>
 
-
                         <div class="rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
                             <label class="mb-1.5 flex items-center gap-1 text-xs font-medium text-slate-600">
                                 <i data-lucide="building-2" class="h-3.5 w-3.5 text-slate-400"></i>
@@ -290,16 +332,15 @@
                             </label>
 
                             <input type="text"
-                                   name="moderated_org_name"
-                                   value="{{ old('moderated_org_name', $submission?->moderated_org_name) }}"
-                                   class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-100"
-                                   @disabled(!$isEditable)>
+                                name="moderated_org_name"
+                                value="{{ old('moderated_org_name', $submission?->moderated_org_name) }}"
+                                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-100"
+                                @disabled(!$isEditable)>
 
                             @error('moderated_org_name')
                                 <div class="mt-1 text-[11px] text-rose-600">{{ $message }}</div>
                             @enderror
                         </div>
-
 
                         <div class="rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
                             <label class="mb-1.5 flex items-center gap-1 text-xs font-medium text-slate-600">
@@ -308,7 +349,7 @@
                             </label>
 
                             <select name="served_nominating_org_before"
-                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-100"
                                     @disabled(!$isEditable)>
                                 <option value="">Select</option>
                                 <option value="1" @selected(old('served_nominating_org_before', $submission?->served_nominating_org_before) == 1)>Yes</option>
@@ -320,7 +361,6 @@
                             @enderror
                         </div>
 
-
                         <div class="rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
                             <label class="mb-1.5 flex items-center gap-1 text-xs font-medium text-slate-600">
                                 <i data-lucide="calendar-range" class="h-3.5 w-3.5 text-slate-400"></i>
@@ -328,10 +368,10 @@
                             </label>
 
                             <input type="number"
-                                   name="served_nominating_org_years"
-                                   value="{{ old('served_nominating_org_years', $submission?->served_nominating_org_years) }}"
-                                   class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-100"
-                                   @disabled(!$isEditable)>
+                                name="served_nominating_org_years"
+                                value="{{ old('served_nominating_org_years', $submission?->served_nominating_org_years) }}"
+                                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-100"
+                                @disabled(!$isEditable)>
 
                             @error('served_nominating_org_years')
                                 <div class="mt-1 text-[11px] text-rose-600">{{ $message }}</div>
@@ -356,69 +396,87 @@
         </div>
 
 
-        <div class="space-y-6">
+@php
+    $hasSubmission = $submission && (
+        $submission->was_moderator_before !== null ||
+        $submission->moderated_org_name ||
+        $submission->served_nominating_org_before !== null ||
+        $submission->served_nominating_org_years
+    );
+@endphp
 
-            <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
-                <div class="flex items-center gap-2">
-                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                        <i data-lucide="info" class="h-4 w-4"></i>
-                    </div>
-                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-600">
-                        Submission Status
-                    </div>
+<div class="space-y-6">
+
+    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
+        <div class="flex items-center gap-2">
+            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                <i data-lucide="list-checks" class="h-4 w-4"></i>
+            </div>
+            <div class="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                Progress Checklist
+            </div>
+        </div>
+
+        <div class="mt-4 space-y-3">
+
+            <div class="flex items-center justify-between rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
+                <div class="flex items-center gap-2 text-sm font-medium text-slate-800">
+                    @if($isProfileComplete)
+                        <i data-lucide="check-circle-2" class="h-4 w-4 text-emerald-600"></i>
+                    @else
+                        <i data-lucide="circle" class="h-4 w-4 text-slate-300"></i>
+                    @endif
+                    Profile Completed
                 </div>
-
-                <div class="mt-4 space-y-3">
-                    <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
-                        <div class="text-[11px] text-slate-500">Viewing Mode</div>
-                        <div class="mt-1 text-sm font-medium text-slate-900">
-                            {{ $isAdminView ? 'Admin Read-Only' : ($isModerator ? 'Moderator Editable View' : 'Organization Read-Only View') }}
-                        </div>
-                    </div>
-
-                    <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
-                        <div class="text-[11px] text-slate-500">Submission Requirement</div>
-                        <div class="mt-1 text-sm font-medium {{ $isSubmissionComplete ? 'text-emerald-700' : 'text-rose-700' }}">
-                            {{ $isSubmissionComplete ? 'Completed' : 'Required' }}
-                        </div>
-                    </div>
-
-                    <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
-                        <div class="text-[11px] text-slate-500">Submission Access</div>
-                        <div class="mt-1 text-sm font-medium text-slate-900">
-                            {{ $isEditable ? 'Can Edit and Save' : 'Locked' }}
-                        </div>
-                    </div>
-                </div>
+                <span class="text-[11px] font-medium {{ $isProfileComplete ? 'text-emerald-700' : 'text-slate-400' }}">
+                    {{ $isProfileComplete ? 'Done' : 'Pending' }}
+                </span>
             </div>
 
-
-            <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
-                <div class="flex items-center gap-2">
-                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-                        <i data-lucide="clipboard-list" class="h-4 w-4"></i>
-                    </div>
-                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-600">
-                        Guidance
-                    </div>
+            <div class="flex items-center justify-between rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
+                <div class="flex items-center gap-2 text-sm font-medium text-slate-800">
+                    @if($hasSubmission)
+                        <i data-lucide="check-circle-2" class="h-4 w-4 text-emerald-600"></i>
+                    @else
+                        <i data-lucide="circle" class="h-4 w-4 text-slate-300"></i>
+                    @endif
+                    Submission Created
                 </div>
-
-                <div class="mt-4 space-y-3 text-xs text-slate-600">
-                    <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
-                        Complete the moderator profile first before filling out the submission details.
-                    </div>
-
-                    <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
-                        Only the assigned moderator can update this submission when profile requirements are complete.
-                    </div>
-
-                    <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
-                        Admin view is intended for review and verification only.
-                    </div>
-                </div>
+                <span class="text-[11px] font-medium {{ $hasSubmission ? 'text-emerald-700' : 'text-slate-400' }}">
+                    {{ $hasSubmission ? 'Done' : 'Pending' }}
+                </span>
             </div>
 
         </div>
+    </div>
+
+
+    <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
+        <div class="flex items-center gap-2">
+            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                <i data-lucide="clipboard-list" class="h-4 w-4"></i>
+            </div>
+            <div class="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                Guidance
+            </div>
+        </div>
+
+        <div class="mt-4 space-y-3 text-xs text-slate-600">
+            <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
+                Complete the moderator profile first before filling out the submission details.
+            </div>
+
+            <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
+                Only the assigned moderator can update this submission when profile requirements are complete.
+            </div>
+
+            <div class="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
+                Admin view is intended for review and verification only.
+            </div>
+        </div>
+    </div>
+
+</div>
 
     </div>
 

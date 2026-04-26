@@ -100,9 +100,13 @@
                             load() {
                                 fetch('{{ route('org.dashboard.pending-tasks.partial') }}')
                                     .then(res => res.text())
-                                    .then(html => {
-                                        this.$refs.container.innerHTML = html
-                                    })
+                                .then(html => {
+                                    this.$refs.container.innerHTML = html
+
+                                    if (window.lucide) {
+                                        window.lucide.createIcons()
+                                    }
+                                })
                             }
                         }"
                         x-init="setInterval(() => load(), 30000)"
@@ -173,7 +177,7 @@
                                 </div>
                             </div>
 
-                            <a href="{{ route('org.projects.index') }}"
+                            <a href="{{ route('org.assign-project-heads.index') }}"
                                class="w-full text-center rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 transition">
                                 Manage Projects
                             </a>

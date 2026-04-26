@@ -5,6 +5,18 @@
     $user = auth()->user();
 @endphp
 
+
+
+
+<nav class="px-5 sm:px-6 pt-4 text-xs text-slate-500">
+    <ol class="flex items-center gap-1">
+
+        <li class="text-slate-700 font-medium">
+            Re-registration
+        </li>
+    </ol>
+</nav>
+
 <div class="mx-auto max-w-6xl px-4 py-6 space-y-6">
 
     

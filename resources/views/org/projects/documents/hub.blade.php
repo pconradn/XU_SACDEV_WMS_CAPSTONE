@@ -17,6 +17,35 @@
     {{-- ================= CONTAINER ================= --}}
     <div class="max-w-7xl mx-auto px-4 py-6 space-y-4">
 
+
+        <nav class="text-xs text-slate-500">
+            <ol class="flex items-center gap-1.5">
+                
+                <li>
+                    <a href="{{ route('org.organization-info.show') }}"
+                    class="font-medium text-slate-600 hover:text-slate-900 transition">
+                        Organization
+                    </a>
+                </li>
+
+                <li class="text-slate-300">/</li>
+
+                <li>
+                    <a href="{{ route('org.projects.index') }}"
+                    class="font-medium text-slate-600 hover:text-slate-900 transition">
+                        Projects
+                    </a>
+                </li>
+
+                <li class="text-slate-300">/</li>
+
+                <li class="text-slate-400">
+                    Document Hub
+                </li>
+
+            </ol>
+        </nav>
+
         {{-- ================= CLEARANCE WORKFLOW BANNER ================= --}}
         @if($clearance['required'])
             <div class="rounded-2xl border shadow-sm px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between

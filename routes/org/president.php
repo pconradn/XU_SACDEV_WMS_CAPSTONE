@@ -30,6 +30,13 @@ Route::post(
 Route::resource('projects', ProjectController::class)
     ->except(['show', 'index'])
     ->names('org.projects');
+    
+
+Route::get('/approver-assignments', [\App\Http\Controllers\Org\ApproverAssignmentController::class, 'edit'])
+    ->name('org.approver-assignments.edit');
+
+Route::post('/approver-assignments', [\App\Http\Controllers\Org\ApproverAssignmentController::class, 'update'])
+    ->name('org.approver-assignments.update');
 
 
 

@@ -50,7 +50,7 @@
 
                 <div>
                     <div class="text-xs font-semibold text-slate-900">
-                        Re-Registration Hub
+                        Re-Registration Submissions
                     </div>
                     <div class="text-[10px] text-slate-500">
                         Review organization submissions
@@ -80,7 +80,7 @@
 
                 <div>
                     <div class="text-xs font-semibold text-slate-900">
-                        Organizations by SY
+                        Manage Organizations
                     </div>
                     <div class="text-[10px] text-slate-500">
                         Manage activations & organization data

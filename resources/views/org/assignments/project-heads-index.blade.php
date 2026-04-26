@@ -1,5 +1,7 @@
 <x-app-layout>
 
+    <div x-data="{ openApproverModal: false }">
+
     <div class="mx-auto max-w-7xl px-4 py-6 space-y-6">
 
         {{-- PAGE HEADER --}}
@@ -159,7 +161,14 @@
                                 >
                                     <button
                                         type="button"
-                                        @click="open = true"
+
+                                        @click="
+                                            @if(isset($missingRoles) && $missingRoles->isNotEmpty())
+                                                openApproverModal = true
+                                            @else
+                                                open = true
+                                            @endif
+                                        "
                                         class="inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold shadow-sm transition
                                             {{ $assignedHead
                                                 ? 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
@@ -535,6 +544,84 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+
+
+
+        <div x-show="openApproverModal"
+            x-cloak
+            x-transition.opacity
+            class="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-950/50 backdrop-blur-sm px-4">
+
+            <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
+
+                {{-- HEADER --}}
+                <div class="px-5 py-4 border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
+                            <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                        </div>
+
+                        <div>
+                            <h3 class="text-sm font-semibold text-slate-900">
+                                Approvers Required
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-1">
+                                Required roles must be assigned before continuing.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- BODY --}}
+                <div class="px-5 py-5 space-y-4 text-xs text-slate-600">
+
+                    <div class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700">
+                        <i data-lucide="info" class="w-4 h-4 mt-0.5"></i>
+                        <span>
+                            You must assign all approver roles before assigning project heads.
+                        </span>
+                    </div>
+
+                    <div>
+                        <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                            Missing Roles
+                        </div>
+
+                        <div class="flex flex-wrap gap-2">
+                            @foreach($missingRoles ?? [] as $role)
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-[11px]">
+                                    <i data-lucide="user-x" class="w-3.5 h-3.5 text-rose-500"></i>
+                                    {{ str_replace('_',' ', $role) }}
+                                </span>
+                            @endforeach
+                        </div>
+                    </div>
+
+                </div>
+
+                {{-- FOOTER --}}
+                <div class="px-5 py-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
+
+                    <button
+                        @click="openApproverModal = false"
+                        class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        Cancel
+                    </button>
+
+                    <a href="{{ route('org.approver-assignments.edit') }}"
+                    class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-sm">
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                        Assign Now
+                    </a>
+
                 </div>
 
             </div>
