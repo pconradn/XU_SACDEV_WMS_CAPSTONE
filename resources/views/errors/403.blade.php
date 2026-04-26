@@ -11,11 +11,11 @@
     <div class="text-center max-w-md">
 
         <h1 class="text-2xl font-semibold text-slate-900">
-            Access Denied
+            Access Denied — Try logging in to access this page
         </h1>
-
         <p class="mt-2 text-sm text-slate-500">
-            {{ $exception->getMessage() ?? 'You are not allowed to perform this action.' }}
+            {{ class_basename($exception) }} — 
+            {{ $exception->getMessage() ?: 'You are not allowed to perform this action.' }}
         </p>
 
         <div class="mt-6">

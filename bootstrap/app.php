@@ -47,6 +47,14 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Handle AuthorizationException (policies, gates, middleware)
         $exceptions->render(function (AuthorizationException $e, $request) {
+
+            // if NOT logged in → redirect to login
+            if (!auth()->check()) {
+                return redirect()->route('login')
+                    ->with('error', 'Please log in to access that page.');
+            }
+
+            // if logged in → real 403
             return response()->view('errors.403', [
                 'exception' => $e
             ], 403);
@@ -54,12 +62,24 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Handle abort(403)
         $exceptions->render(function (HttpException $e, $request) {
+
+            if ($e->getStatusCode() === 401) {
+
+                if (!$request->expectsJson()) {
+                    return redirect()->guest(route('login'));
+                }
+
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+
+            // 403 → forbidden → show page
             if ($e->getStatusCode() === 403) {
                 return response()->view('errors.403', [
                     'exception' => $e
                 ], 403);
             }
-            
+
+            // 419 → session expired
             if ($e->getStatusCode() === 419) {
                 return redirect()->route('login');
             }

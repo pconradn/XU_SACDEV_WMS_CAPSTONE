@@ -44,7 +44,14 @@
 
 
         {{-- RIGHT PANEL --}}
-        <div class="p-6 sm:p-8 lg:p-10">
+        <div class="relative p-6 sm:p-8 lg:p-10">
+
+            {{-- FLOATING UPDATE BUTTON --}}
+            <div class="absolute top-4 right-4">
+
+                @include('auth.partials._system_updates_modal')
+
+            </div>
 
             <div class="max-w-md mx-auto w-full">
 
@@ -138,6 +145,10 @@
                             <span class="text-[10px] text-slate-400">or</span>
                             <div class="flex-1 h-px bg-slate-200"></div>
                         </div>
+
+
+      
+
 
                         {{-- CLEARANCE CHECK --}}
                         <a href="{{ route('clearance.public.index') }}"

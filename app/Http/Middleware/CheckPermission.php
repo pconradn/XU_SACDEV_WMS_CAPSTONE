@@ -12,9 +12,8 @@ class CheckPermission
     {
         // must be logged in
         if (!auth()->check()) {
-            abort(403, 'Unauthorized.');
+            return redirect()->guest(route('login'));
         }
-
         $user = auth()->user();
 
 
