@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 
 class ProjectController extends Controller
 {
-    //IDENTIFY CONTEXT
+  
     private function ctx(Request $request): array
     {
         return [
@@ -60,26 +60,31 @@ class ProjectController extends Controller
 
         if (!$isPrivileged) {
 
-            if ($isProjectHead) {
+            $isDraftee = \App\Models\ProjectAssignment::query()
+                ->where('user_id', $user->id)
+                ->where('assignment_role', 'draftee')
+                ->whereNull('archived_at')
+                ->exists();
+
+            if ($isProjectHead || $isDraftee) {
                 $query->whereHas('assignments', function ($q) use ($user) {
                     $q->where('user_id', $user->id)
-                    ->where('assignment_role', 'project_head')
+                    ->whereIn('assignment_role', ['project_head', 'draftee'])
                     ->whereNull('archived_at');
                 });
             } else {
-               
-                $query->whereRaw('0 = 1'); 
+                $query->whereRaw('0 = 1');
             }
         }
 
         $projects = $query
             ->with([
                 'documents',
-                'assignments' => function ($q) {
-                    $q->where('assignment_role', 'project_head')
-                    ->whereNull('archived_at')
-                    ->with('officerEntry');
-                },
+                    'assignments' => function ($q) use ($user) {
+                        $q->where('user_id', $user->id)
+                        ->whereIn('assignment_role', ['project_head', 'draftee'])
+                        ->whereNull('archived_at');
+                    },
                 'documents.signatures',
             ])
             ->withCount('documents')

@@ -113,6 +113,14 @@ class Project extends Model
         return $this->belongsTo(StrategicPlanProject::class, 'source_strategic_plan_project_id');
     }
 
+    public function draftees()
+    {
+        return $this->hasMany(ProjectAssignment::class)
+            ->where('assignment_role', 'draftee')
+            ->whereNull('archived_at');
+    }
+
+
     public function getImplementationDateDisplayAttribute(): ?string
     {
         if (!$this->implementation_start_date) {

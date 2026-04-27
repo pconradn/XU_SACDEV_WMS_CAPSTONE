@@ -6,6 +6,15 @@
         ->first();
 
     $isProjectHead = optional($projectHeadAssignment)->user_id === auth()->id();
+
+    $orgRole = \App\Models\OrgMembership::where('user_id', auth()->id())
+    ->where('organization_id', $project->organization_id)
+    ->where('school_year_id', $project->school_year_id)
+    ->whereNull('archived_at')
+    ->value('role');
+
+    $isPresident = $orgRole === 'president';
+    
 @endphp
 
 <div x-data="{ openPostpone:false, openCancel:false }"
@@ -89,6 +98,27 @@
             </span>
 
         </a>
+
+        @if($isProjectHead || $isPresident)
+        <a href="{{ route('org.projects.assign-draftees.edit', $project) }}"
+        class="flex items-center justify-between px-4 py-3 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-white hover:from-indigo-100 hover:to-white transition shadow-sm">
+
+            <div class="flex items-center gap-2">
+                <i data-lucide="users" class="w-4 h-4 text-indigo-600"></i>
+                <span class="text-xs font-semibold text-slate-800">
+                    Assign Draftees
+                </span>
+            </div>
+
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                Manage
+            </span>
+        </a>
+
+        @endif
+
+
+
 
     </div>
 

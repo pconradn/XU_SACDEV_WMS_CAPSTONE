@@ -64,7 +64,9 @@ class RequireProjectRole
             
 
         if (!($hasProjectAssignment || $hasOrgRole)) {
-            abort(403, 'Not allowed for this project.');
+            return redirect()
+                ->route('org.projects.documents.hub', $project)
+                ->with('error', 'You are not allowed to perform this action.');
         }
 
         return $next($request);

@@ -64,7 +64,14 @@ class EnsureUserCanAccessProject
 
         $isProjectHead = (bool) $projectHeadAssignment;
 
-        if (!$hasOrgRoleAccess && !$isProjectHead) {
+        $isDraftee = ProjectAssignment::query()
+            ->where('project_id', $project->id)
+            ->where('user_id', $user->id)
+            ->where('assignment_role', 'draftee')
+            ->whereNull('archived_at')
+            ->exists();
+
+        if (!$hasOrgRoleAccess && !$isProjectHead && !$isDraftee) {
             abort(403, 'You are not authorized to access this project.');
         }
 

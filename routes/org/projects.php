@@ -24,7 +24,7 @@ use App\Http\Controllers\Org\TicketSellingReportController;
 use App\Http\Controllers\ProjectAgreementController;
 use App\Http\Controllers\SubmissionPacketController;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Org\ProjectDrafteeAssignmentController;
 
 
 
@@ -37,11 +37,16 @@ use Illuminate\Support\Facades\Route;
 Route::get('projects', [ProjectController::class, 'index'])
     ->name('org.projects.index');
 
+
+
+
+
 /*
 |--------------------------------------------------------------------------
 | Project-scoped routes
 |--------------------------------------------------------------------------
 */
+
 Route::prefix('projects/{project}')
     ->middleware('project.access')
     ->name('org.projects.')
@@ -56,15 +61,18 @@ Route::prefix('projects/{project}')
             ->name('documents.hub');
 
         Route::post('agreement/accept', [ProjectAgreementController::class, 'accept'])
+            ->middleware('project.role:project_head')
             ->name('agreement.accept');
 
         Route::get('clearance/print', [ClearanceController::class, 'print'])
             ->name('clearance.print');
 
         Route::post('clearance/upload', [ClearanceController::class, 'upload'])
+            ->middleware('project.role:project_head')
             ->name('clearance.upload');
 
         Route::post('clearance/reissue', [ClearanceController::class, 'reissue'])
+            ->middleware('project.role:project_head')
             ->name('clearance.reissue');
 
    
@@ -121,7 +129,7 @@ Route::prefix('projects/{project}')
             prefix: 'project-proposal',
             name: 'project-proposal',
             controller: ProjectProposalController::class,
-            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator,draftee',
             approveRoles: 'treasurer,finance_officer,president,moderator'
         );
 
@@ -129,7 +137,7 @@ Route::prefix('projects/{project}')
             prefix: 'budget-proposal',
             name: 'budget-proposal',
             controller: BudgetProposalController::class,
-            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator,draftee',
             approveRoles: 'treasurer,finance_officer,president,moderator'
         );
 
@@ -137,7 +145,7 @@ Route::prefix('projects/{project}')
             prefix: 'solicitation',
             name: 'solicitation',
             controller: SolicitationApplicationController::class,
-            createRoles: 'project_head,president,moderator',
+            createRoles: 'project_head,president,moderator,draftee',
             approveRoles: 'president,moderator'
         );
 
@@ -145,7 +153,7 @@ Route::prefix('projects/{project}')
             prefix: 'selling',
             name: 'selling',
             controller: SellingApplicationController::class,
-            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator,draftee',
             approveRoles: 'president,moderator'
         );
 
@@ -153,7 +161,7 @@ Route::prefix('projects/{project}')
             prefix: 'request-to-purchase',
             name: 'request-to-purchase',
             controller: RequestToPurchaseController::class,
-            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator,draftee',
             approveRoles: 'president,moderator,treasurer,finance_officer'
         );
 
@@ -161,7 +169,7 @@ Route::prefix('projects/{project}')
             prefix: 'fees-collection',
             name: 'fees-collection',
             controller: FeesCollectionReportController::class,
-            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator,draftee',
             approveRoles: 'president,moderator'
         );
 
@@ -169,7 +177,7 @@ Route::prefix('projects/{project}')
             prefix: 'selling-activity-report',
             name: 'selling-activity-report',
             controller: SellingActivityReportController::class,
-            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator,draftee',
             approveRoles: 'president,moderator',
             createUsesCreateSuffix: false
         );
@@ -178,7 +186,7 @@ Route::prefix('projects/{project}')
             prefix: 'solicitation-sponsorship-report',
             name: 'solicitation-sponsorship-report',
             controller: SolicitationSponsorshipReportController::class,
-            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator,draftee',
             approveRoles: 'president,moderator',
             createUsesCreateSuffix: false
         );
@@ -187,7 +195,7 @@ Route::prefix('projects/{project}')
             prefix: 'ticket-selling-report',
             name: 'ticket-selling-report',
             controller: TicketSellingReportController::class,
-            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator,draftee',
             approveRoles: 'sacdev_admin',
             createUsesCreateSuffix: false
         );
@@ -196,7 +204,7 @@ Route::prefix('projects/{project}')
             prefix: 'documentation-report',
             name: 'documentation-report',
             controller: DocumentationReportController::class,
-            createRoles: 'project_head,treasurer,finance_officer,president,moderator',
+            createRoles: 'project_head,treasurer,finance_officer,president,moderator,draftee',
             approveRoles: 'president,moderator,sacdev_admin',
             createUsesCreateSuffix: false
         );
@@ -205,7 +213,7 @@ Route::prefix('projects/{project}')
             prefix: 'liquidation-report',
             name: 'liquidation-report',
             controller: LiquidationReportController::class,
-            createRoles: 'project_head,president,moderator,treasurer,finance_officer',
+            createRoles: 'project_head,president,moderator,treasurer,finance_officer,draftee',
             approveRoles: 'president,moderator,sacdev_admin,treasurer,finance_officer',
             createUsesCreateSuffix: false
         );
@@ -218,11 +226,11 @@ Route::prefix('projects/{project}')
 
         Route::prefix('combined-proposal')->name('documents.combined-proposal.')->group(function () {
             Route::get('/', [CombinedProposalController::class, 'create'])
-                ->middleware('org.role:project_head,treasurer,finance_officer,president,moderator')
+                ->middleware('org.role:project_head,treasurer,finance_officer,president,moderator,draftee')
                 ->name('create');
 
             Route::post('/', [CombinedProposalController::class, 'store'])
-                ->middleware('project.role:project_head')
+                ->middleware('project.role:project_head,draftee')
                 ->name('store');
 
             Route::post('approve', [CombinedProposalController::class, 'approve'])
@@ -259,11 +267,11 @@ Route::prefix('projects/{project}')
                     ->name('acknowledge');
 
                 Route::get('create', [OffCampusApplicationController::class, 'create'])
-                    ->middleware('org.role:project_head,president,moderator')
+                    ->middleware('org.role:project_head,president,moderator,draftee')
                     ->name('create');
 
                 Route::post('/', [OffCampusApplicationController::class, 'store'])
-                    ->middleware('project.role:project_head')
+                    ->middleware('project.role:project_head,draftee')
                     ->name('store');
 
                 Route::post('approve', [OffCampusApplicationController::class, 'approve'])
@@ -285,6 +293,20 @@ Route::prefix('projects/{project}')
 
             });
 
+
+        Route::prefix('assign-draftees')
+            ->name('assign-draftees.')
+            ->group(function () {
+
+                Route::get('edit', [ProjectDrafteeAssignmentController::class, 'edit'])
+                    ->name('edit');
+
+                Route::post('/', [ProjectDrafteeAssignmentController::class, 'update'])
+                    ->name('update');
+
+            });
+
+
         /*
         |--------------------------------------------------------------------------
         | Activity notices
@@ -298,7 +320,7 @@ Route::prefix('projects/{project}')
                     ->name('postponement.')
                     ->group(function () {
                         Route::get('create', [ActivityNoticeController::class, 'createPostponement'])
-                            ->middleware('org.role:project_head,president,moderator')
+                            ->middleware('org.role:project_head,president,moderator,draftee')
                             ->name('create');
 
                         Route::get('{document}', [ActivityNoticeController::class, 'editPostponement'])
@@ -307,7 +329,7 @@ Route::prefix('projects/{project}')
 
                         Route::post('{document}', [ActivityNoticeController::class, 'storePostponement'])
                             ->middleware([
-                                'project.role:project_head',
+                                'project.role:project_head,draftee',
                                 'document.type:POSTPONEMENT_NOTICE',
                             ])->name('store');
 
@@ -328,7 +350,7 @@ Route::prefix('projects/{project}')
                     ->name('cancellation.')
                     ->group(function () {
                         Route::get('create', [ActivityNoticeController::class, 'createCancellation'])
-                            ->middleware('org.role:project_head,president,moderator')
+                            ->middleware('org.role:project_head,president,moderator,draftee')
                             ->name('create');
 
                         Route::get('{document}', [ActivityNoticeController::class, 'editCancellation'])
@@ -337,7 +359,7 @@ Route::prefix('projects/{project}')
 
                         Route::post('{document}', [ActivityNoticeController::class, 'storeCancellation'])
                             ->middleware([
-                                'project.role:project_head',
+                                'project.role:project_head,draftee',
                                 'document.type:CANCELLATION_NOTICE',
                             ])->name('store');
 
@@ -355,7 +377,7 @@ Route::prefix('projects/{project}')
                     });
 
                 Route::delete('notices/{document}', [ActivityNoticeController::class, 'archive'])
-                    ->middleware('project.role:project_head')
+                    ->middleware('project.role:project_head,draftee')
                     ->name('notices.archive');
             });
 

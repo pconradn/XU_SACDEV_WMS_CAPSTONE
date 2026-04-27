@@ -35,6 +35,12 @@ class ProjectAssignment extends Model
         return $this->hasOne(\App\Models\OrgMembership::class, 'user_id', 'user_id');
     }
 
+    public function scopeDraftees($query)
+    {
+        return $query->where('assignment_role', 'draftee')
+                    ->whereNull('archived_at');
+    }
+
 
     public function officerEntry()
     {

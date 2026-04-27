@@ -178,7 +178,7 @@ class OrgDashboardController extends Controller
                 ])
                 ->where('user_id', $user->id)
                 ->whereNull('archived_at')
-                ->where('assignment_role', 'project_head')
+                ->whereIn('assignment_role', ['project_head', 'draftee'])
                 ->whereHas('project', function ($q) use ($selectedSyId, $currentOrg) {
                     $q->where('school_year_id', $selectedSyId)
                     ->where('organization_id', $currentOrg->id);

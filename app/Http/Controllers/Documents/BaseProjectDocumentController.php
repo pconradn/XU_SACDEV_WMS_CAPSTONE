@@ -71,7 +71,15 @@ abstract class BaseProjectDocumentController extends Controller
             ->exists();
     }
 
-
+    protected function isDraftee(Project $project, int $userId): bool
+    {
+        return ProjectAssignment::query()
+            ->where('project_id', $project->id)
+            ->where('user_id', $userId)
+            ->where('assignment_role', 'draftee')
+            ->whereNull('archived_at')
+            ->exists();
+    }
    
     protected function getCurrentSignature(?ProjectDocument $document, int $userId)
     {

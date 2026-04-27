@@ -22,7 +22,7 @@ class OrgRoleMiddleware
 
         $hasRole = false;
 
-   
+     
         $orgRoleMatch = OrgMembership::query()
             ->where('user_id', $userId)
             ->where('organization_id', $orgId)
@@ -35,6 +35,7 @@ class OrgRoleMiddleware
             $hasRole = true;
         }
 
+        
         if (!$hasRole && in_array('president', $roles, true)) {
             $hasRole = OrganizationSchoolYear::query()
                 ->where('organization_id', $orgId)
@@ -43,9 +44,8 @@ class OrgRoleMiddleware
                 ->exists();
         }
 
-   
+      
         if (!$hasRole && in_array('project_head', $roles, true)) {
-
             $project = $request->route('project');
 
             if ($project) {
@@ -58,8 +58,33 @@ class OrgRoleMiddleware
             }
         }
 
+    
+        if (!$hasRole && in_array('draftee', $roles, true)) {
+            $project = $request->route('project');
+
+            if ($project) {
+                $hasRole = ProjectAssignment::query()
+                    ->where('project_id', $project->id)
+                    ->where('user_id', $userId)
+                    ->where('assignment_role', 'draftee')
+                    ->whereNull('archived_at')
+                    ->exists();
+            }
+        }
+
+        // FINAL CHECK
         if (!$hasRole) {
-            abort(403, 'You do not have permission to access this section.');
+            $project = $request->route('project');
+
+            if ($project) {
+                return redirect()
+                    ->route('org.projects.documents.hub', $project)
+                    ->with('error', 'You do not have permission to access this section.');
+            }
+
+            return redirect()
+                ->route('org.projects.index')
+                ->with('error', 'You do not have permission to access this section.');
         }
 
         return $next($request);
