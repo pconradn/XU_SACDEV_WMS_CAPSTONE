@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Org;
 use App\Http\Controllers\Controller;
 use App\Models\OrgMembership;
 use App\Support\AccountProvisioner;
+use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -159,7 +160,6 @@ class ApproverAssignmentController extends Controller
                             'role' => $role,
                             'new_user_id' => $user->id,
                             'new_officer_name' => $entry->full_name,
-                            'previous_user_id' => $previous?->user_id,
                         ]
                     ]
                 );
