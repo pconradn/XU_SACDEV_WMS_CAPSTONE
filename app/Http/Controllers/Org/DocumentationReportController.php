@@ -134,11 +134,25 @@ class DocumentationReportController extends BaseProjectDocumentController
             ->where('code', 'DOCUMENTATION_REPORT')
             ->firstOrFail();
 
+        $user = auth()->user();
+
+        $isProjectHead = $this->isProjectHead($project, $user->id);
+        $isDraftee = $this->isDraftee($project, $user->id);
+
+        $action = $request->input('action', 'draft');
+
+        if ($action === 'submit' && $isDraftee) {
+            return back()->withErrors([
+                'action' => 'Only project head can submit this document.'
+            ])->withInput();
+        }
+
         $request->merge([
             'proposed_budget' => str_replace(',', '', $request->proposed_budget),
             'actual_budget' => str_replace(',', '', $request->actual_budget),
             'balance' => str_replace(',', '', $request->balance),
         ]);
+
         try {
             $data = $this->validateRequest($request);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -156,6 +170,10 @@ class DocumentationReportController extends BaseProjectDocumentController
         [$data, $clean] = $this->normalizeData($data);
 
         $document = $this->getOrCreateDocument($project, 'DOCUMENTATION_REPORT');
+
+        if ($response = $this->checkConflict($request, $document)) {
+            return $response;
+        }
 
         DB::transaction(function () use ($project, $formType, $data, $clean, $request) {
 

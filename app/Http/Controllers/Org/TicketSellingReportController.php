@@ -86,6 +86,19 @@ class TicketSellingReportController extends BaseProjectDocumentController
 
         ]);
 
+        $user = auth()->user();
+
+        $isProjectHead = $this->isProjectHead($project, $user->id);
+        $isDraftee = $this->isDraftee($project, $user->id);
+
+        $action = $request->input('action', 'draft');
+
+        if ($action === 'submit' && $isDraftee) {
+            return back()->withErrors([
+                'action' => 'Only project head can submit this document.'
+            ])->withInput();
+        }
+
         if ($validator->fails()) {
 
             $this->getOrCreateDocument($project, 'TICKET_SELLING_REPORT');
@@ -98,6 +111,10 @@ class TicketSellingReportController extends BaseProjectDocumentController
 
 
         $document = $this->getOrCreateDocument($project, 'TICKET_SELLING_REPORT');
+
+        if ($response = $this->checkConflict($request, $document)) {
+            return $response;
+        }
 
         if ($document->isLocked() && !$document->edit_mode) {
             abort(403, 'This document is already approved and cannot be edited.');

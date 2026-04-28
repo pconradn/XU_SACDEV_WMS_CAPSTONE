@@ -1,5 +1,14 @@
 
 @php
+
+    $isDraftee = \App\Models\ProjectAssignment::where('project_id', $project->id)
+        ->where('user_id', auth()->id())
+        ->where('assignment_role', 'draftee')
+        ->whereNull('archived_at')
+        ->exists();
+
+    $canEditRole = $isProjectHead || $isDraftee;
+
     $status = $document->status ?? 'draft';
 
     $isDraft = $status === 'draft';
@@ -79,7 +88,13 @@
         <div class="text-xs text-slate-600">
 
             @if($isDraft)
-                Draft mode. You can save or submit this document.
+                @if($isProjectHead)
+                    Draft mode. You can save or submit this document.
+                @elseif($isDraftee)
+                    Draft mode. You can edit and save changes. Only the project head can submit.
+                @else
+                    Draft mode.
+                @endif
 
             @elseif($isSubmitted)
                 This document is currently under review.
@@ -106,7 +121,9 @@
             @include('components.project-document.help._trigger')
 
             {{-- PROJECT HEAD --}}
+
             @include('components.project-document.actions._project_head')
+
 
             {{-- APPROVER --}}
             @include('components.project-document.actions._approver')

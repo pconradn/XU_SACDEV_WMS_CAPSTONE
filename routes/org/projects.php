@@ -107,7 +107,7 @@ Route::prefix('projects/{project}')
                      ->name('create');
 
                     Route::post('/', [$controller, $storeMethod])
-                        ->middleware('project.role:project_head')
+                        ->middleware('project.role:project_head,draftee')
                         ->name('store');
 
                     Route::post('approve', [$controller, $approveMethod])
@@ -329,7 +329,7 @@ Route::prefix('projects/{project}')
 
                         Route::post('{document}', [ActivityNoticeController::class, 'storePostponement'])
                             ->middleware([
-                                'project.role:project_head,draftee',
+                                'project.role:project_head, draftee',
                                 'document.type:POSTPONEMENT_NOTICE',
                             ])->name('store');
 

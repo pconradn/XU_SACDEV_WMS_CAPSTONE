@@ -92,16 +92,34 @@ abstract class BaseProjectDocumentController extends Controller
             ->first();
     }
 
+    protected function checkConflict(Request $request, ProjectDocument $document)
+    {
+        if (!$request->has('last_updated_at')) {
+            return null;
+        }
 
+        if ($request->input('last_updated_at') != $document->updated_at) {
+            return back()
+                ->withErrors([
+                    'conflict' => 'Someone edited this document while you were editing. Please reload.'
+                ])
+                ->withInput();
+        }
 
+        return null;
+    }
+    
     protected function computeReadOnly(?ProjectDocument $document, bool $isProjectHead): bool
     {
         if (!$document) {
             return false;
         }
 
+        $userId = auth()->id();
+        $isDraftee = $this->isDraftee($document->project, $userId);
+
         if ($document->status === 'draft') {
-            return !$isProjectHead;
+            return !($isProjectHead || $isDraftee);
         }
 
         if (in_array($document->status, ['submitted','approved'])) {

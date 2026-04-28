@@ -41,7 +41,7 @@
         </div>
 
         <span class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-            Project Proposal
+            Project and Budget Proposal
         </span>
 
         <h1 class="text-base md:text-lg font-semibold text-slate-900">

@@ -77,6 +77,20 @@ class LiquidationReportController extends BaseProjectDocumentController
 
         $validator = \Validator::make($request->all(), $this->rules());
 
+
+        $user = auth()->user();
+
+        $isProjectHead = $this->isProjectHead($project, $user->id);
+        $isDraftee = $this->isDraftee($project, $user->id);
+
+        $action = $request->input('action', 'draft');
+
+        if ($action === 'submit' && $isDraftee) {
+            return back()->withErrors([
+                'action' => 'Only project head can submit this document.'
+            ])->withInput();
+        }
+
         if ($validator->fails()) {
 
             $this->getOrCreateDocument($project, 'LIQUIDATION_REPORT');
@@ -92,6 +106,10 @@ class LiquidationReportController extends BaseProjectDocumentController
         [$data, $clean] = $this->normalizeData($data);
 
         $document = $this->getOrCreateDocument($project, 'LIQUIDATION_REPORT');
+
+        if ($response = $this->checkConflict($request, $document)) {
+            return $response;
+        }
 
         DB::transaction(function () use ($project, $formType, $data, $clean) {
 

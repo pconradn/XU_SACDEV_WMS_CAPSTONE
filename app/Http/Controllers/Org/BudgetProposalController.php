@@ -72,7 +72,16 @@ class BudgetProposalController extends BaseProjectDocumentController
 
     public function store(Request $request, Project $project)
     {
+        $user = auth()->user();
+
+        $isProjectHead = $this->isProjectHead($project, $user->id);
+        $isDraftee = $this->isDraftee($project, $user->id);
+
         $document = $this->getOrCreateDocument($project, 'budget_proposal');
+
+        if ($response = $this->checkConflict($request, $document)) {
+            return $response;
+        }
 
         $request->merge([
             'counterpart_amount_per_pax' => $this->cleanNumber($request->counterpart_amount_per_pax),
@@ -85,6 +94,11 @@ class BudgetProposalController extends BaseProjectDocumentController
 
         $action = $request->input('action', 'draft');
         //dd($request);
+        if ($action === 'submit' && $isDraftee) {
+            return back()->withErrors([
+                'action' => 'Only project head can submit this document.'
+            ])->withInput();
+        }
 
         if ($action === 'submit') {
 
@@ -96,6 +110,8 @@ class BudgetProposalController extends BaseProjectDocumentController
             ]);
 
         }
+
+
 
 
         if ($document->isLocked() && !$document->edit_mode) {

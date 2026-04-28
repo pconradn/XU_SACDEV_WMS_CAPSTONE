@@ -303,11 +303,23 @@ class ProjectProposalController extends BaseProjectDocumentController
 
     public function store(Request $request, Project $project)
     {
+
+        $user = auth()->user();
+
+        $isProjectHead = $this->isProjectHead($project, $user->id);
+        $isDraftee = $this->isDraftee($project, $user->id);    
+
         $formType = FormType::query()
             ->where('code', 'project_proposal')
             ->firstOrFail();
 
         $action = $request->input('action', 'draft');
+
+        if ($action === 'submit' && $isDraftee) {
+            return back()->withErrors([
+                'action' => 'Only project head can submit this document.'
+            ])->withInput();
+        }
 
         $rules = $action === 'submit'
             ? $this->rules()        
@@ -323,6 +335,10 @@ class ProjectProposalController extends BaseProjectDocumentController
             [$data, $clean] = $this->normalizeData($data);
 
             $document = $this->getOrCreateDocument($project, 'PROJECT_PROPOSAL');
+
+            if ($response = $this->checkConflict($request, $document)) {
+                return $response;
+            }
 
             DB::transaction(function () use ($project, $formType, $data, $clean, &$document) {
 

@@ -7,10 +7,15 @@ $docStatus = $document->status ?? 'draft';
 
 $isProjectHead = $isProjectHead ?? false;
 
-$isEditable = $isProjectHead && (
-    in_array($docStatus, ['draft','submitted','returned'])
-    || ($docStatus === 'approved_by_sacdev' && $document->edit_mode)
-);
+$isDraftee = \App\Models\ProjectAssignment::where('project_id', $project->id)
+    ->where('user_id', auth()->id())
+    ->where('assignment_role', 'draftee')
+    ->whereNull('archived_at')
+    ->exists();
+
+$canEditRole = $isProjectHead || $isDraftee;
+
+$isEditable = $canEditRole && ($docStatus === 'draft');
 
 if (in_array($docStatus, ['approved','approved_by_sacdev'])) {
     $isEditable = false;
@@ -39,6 +44,7 @@ $currentApprover = $document?->signatures
       action="{{ route('org.projects.documents.selling-activity-report.store', $project) }}">
 
 @csrf
+<input type="hidden" name="last_updated_at" value="{{ $document->updated_at }}">
 <input type="hidden" name="action" id="formAction" value="draft">
 
 @if($isReadOnly)

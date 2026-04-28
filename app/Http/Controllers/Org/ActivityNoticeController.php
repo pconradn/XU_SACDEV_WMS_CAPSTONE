@@ -192,6 +192,19 @@ class ActivityNoticeController extends BaseProjectDocumentController
             return back()->with('error','This notice can no longer be modified.');
         }
 
+        $user = auth()->user();
+
+        $isProjectHead = $this->isProjectHead($project, $user->id);
+        $isDraftee = $this->isDraftee($project, $user->id);
+
+        $action = $request->input('action', 'draft');
+
+        if ($action === 'submit' && $isDraftee) {
+            return back()->withErrors([
+                'action' => 'Only project head can submit this document.'
+            ])->withInput();
+        }
+
         $data = $request->validate([
             'reason' => 'nullable|string|max:2000',
             'new_date' => 'required|date',
@@ -199,6 +212,10 @@ class ActivityNoticeController extends BaseProjectDocumentController
             'new_end_time'   => ['required','regex:/^\d{2}:\d{2}(:\d{2})?$/'],
             'venue' => 'required|string|max:255'
         ]);
+
+        if ($response = $this->checkConflict($request, $document)) {
+            return $response;
+        }
 
         DB::transaction(function() use ($data,$document,$request,$project) {
 
@@ -251,9 +268,26 @@ class ActivityNoticeController extends BaseProjectDocumentController
             return back()->with('error','This notice can no longer be modified.');
         }
 
+        $user = auth()->user();
+
+        $isProjectHead = $this->isProjectHead($project, $user->id);
+        $isDraftee = $this->isDraftee($project, $user->id);
+
+        $action = $request->input('action', 'draft');
+
+        if ($action === 'submit' && $isDraftee) {
+            return back()->withErrors([
+                'action' => 'Only project head can submit this document.'
+            ])->withInput();
+        }
+
         $data = $request->validate([
             'reason' => 'required|string|max:2000'
         ]);
+
+        if ($response = $this->checkConflict($request, $document)) {
+            return $response;
+        }
 
         DB::transaction(function() use ($data,$document,$request,$project) {
 

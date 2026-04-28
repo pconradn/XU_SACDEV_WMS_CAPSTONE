@@ -7,10 +7,15 @@
 
     $isProjectHead = $isProjectHead ?? false;
 
-    $isEditable = $isProjectHead && (
-        in_array($status, ['draft','submitted','returned'])
-        || ($status === 'approved_by_sacdev' && $document->edit_mode)
-    );
+    $isDraftee = \App\Models\ProjectAssignment::where('project_id', $project->id)
+        ->where('user_id', auth()->id())
+        ->where('assignment_role', 'draftee')
+        ->whereNull('archived_at')
+        ->exists();
+
+    $canEditRole = $isProjectHead || $isDraftee;
+
+    $isEditable = $canEditRole && ($status === 'draft');
 
     if ($status === 'approved') {
         $isEditable = false;
@@ -49,6 +54,8 @@
       enctype="multipart/form-data">
 
 @csrf
+<input type="hidden" name="last_updated_at" value="{{ $document->updated_at }}">
+<input type="hidden" name="action" id="formAction" value="draft">
 
 @if($isReadOnly)
 <fieldset disabled class="space-y-6">
