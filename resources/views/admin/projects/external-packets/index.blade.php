@@ -1,4 +1,55 @@
 <x-app-layout>
+
+<div class="bg-slate-50 pt-6">
+    <div class="max-w-6xl mx-auto px-4">
+        <nav class="text-xs text-slate-500">
+            <ol class="flex flex-wrap items-center gap-1.5">
+
+                <li>
+                    <a href="{{ route('admin.orgs_by_sy.index') }}"
+                       class="font-medium text-slate-600 hover:text-slate-900 transition">
+                        Organizations by School Year
+                    </a>
+                </li>
+
+                <li class="text-slate-300">/</li>
+
+                <li>
+                    <a href="{{ route('admin.orgs_by_sy.show', [$project->organization_id, $project->school_year_id]) }}"
+                       class="font-medium text-slate-600 hover:text-slate-900 transition">
+                        {{ $project->organization?->acronym ?: $project->organization?->name }}
+                    </a>
+                </li>
+
+                <li class="text-slate-300">/</li>
+
+                <li>
+                    <a href="{{ route('admin.org.projects.index', [$project->organization_id, $project->school_year_id]) }}"
+                       class="font-medium text-slate-600 hover:text-slate-900 transition">
+                        Projects
+                    </a>
+                </li>
+
+                <li class="text-slate-300">/</li>
+
+                <li>
+                    <a href="{{ route('admin.projects.documents.hub', $project) }}"
+                       class="font-medium text-slate-600 hover:text-slate-900 transition">
+                        Document Hub
+                    </a>
+                </li>
+
+                <li class="text-slate-300">/</li>
+
+                <li class="font-medium text-indigo-700">
+                    External Packets
+                </li>
+
+            </ol>
+        </nav>
+    </div>
+</div>
+
 <div class="max-w-6xl mx-auto px-4 py-6 space-y-6">
 
     {{-- HEADER --}}

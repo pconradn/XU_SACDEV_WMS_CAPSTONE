@@ -1,6 +1,8 @@
 <x-app-layout>
 
     <div class="max-w-6xl mx-auto space-y-6">
+
+
         
 
         @php
@@ -31,6 +33,13 @@
                 ->sortBy('id')
                 ->first();
         @endphp
+
+
+
+
+
+
+
 
         {{-- ================= STATUS CARD ================= --}}
         <div class="border border-slate-300 {{ $style }} px-4 py-3 text-sm mb-6">

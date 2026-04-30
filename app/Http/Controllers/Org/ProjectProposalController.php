@@ -307,7 +307,13 @@ class ProjectProposalController extends BaseProjectDocumentController
         $user = auth()->user();
 
         $isProjectHead = $this->isProjectHead($project, $user->id);
-        $isDraftee = $this->isDraftee($project, $user->id);    
+        $isDraftee = $this->isDraftee($project, $user->id);   
+        
+        if (!$this->isProjectHead($project, $user->id)) {
+            return back()->withErrors([
+                'action' => 'Only the project head can submit this document.'
+            ]);
+        }
 
         $formType = FormType::query()
             ->where('code', 'project_proposal')
@@ -315,9 +321,9 @@ class ProjectProposalController extends BaseProjectDocumentController
 
         $action = $request->input('action', 'draft');
 
-        if ($action === 'submit' && $isDraftee) {
+        if ($action === 'submit' && !$isProjectHead) {
             return back()->withErrors([
-                'action' => 'Only project head can submit this document.'
+                'action' => 'Only the project head can submit this document.'
             ])->withInput();
         }
 

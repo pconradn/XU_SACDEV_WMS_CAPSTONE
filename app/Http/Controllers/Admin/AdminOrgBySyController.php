@@ -84,10 +84,8 @@ class AdminOrgBySyController extends Controller
                 ->with('error', 'Select a school year first.');
         }
 
-
         $activeSy = $this->activeSy();
         $selectedSy = SchoolYear::find($syId);
-
 
         $orgSy = OrganizationSchoolYear::query()
             ->with(['president'])
@@ -100,6 +98,32 @@ class AdminOrgBySyController extends Controller
                 ->with('error', 'This organization has no registration record for the selected school year.');
         }
 
+        $membersCount = \App\Models\OrgMembership::query()
+            ->where('organization_id', $organization->id)
+            ->where('school_year_id', $syId)
+            ->whereNull('archived_at')
+            ->count();
+
+        $officersCount = \App\Models\OrgMembership::query()
+            ->where('organization_id', $organization->id)
+            ->where('school_year_id', $syId)
+            ->whereNull('archived_at')
+            ->whereNotNull('role')
+            ->whereNotIn('role', ['member'])
+            ->count();
+
+        $projectsCount = \App\Models\Project::query()
+            ->where('organization_id', $organization->id)
+            ->where('school_year_id', $syId)
+            ->count();
+
+        $moderator = \App\Models\OrgMembership::query()
+            ->with('user')
+            ->where('organization_id', $organization->id)
+            ->where('school_year_id', $syId)
+            ->where('role', 'moderator')
+            ->whereNull('archived_at')
+            ->first();
 
         $routes = [
             'rereg' => route('admin.rereg.hub', $organization->id),
@@ -116,10 +140,10 @@ class AdminOrgBySyController extends Controller
 
             'projects' => route('admin.org.projects.index', [
                 $organization->id,
-                $syId
+                $syId,
             ]),
-        ];
 
+        ];
 
         $orgInfo = [
             'name' => $organization->name,
@@ -143,34 +167,27 @@ class AdminOrgBySyController extends Controller
             'archived_at' => $organization->archived_at,
         ];
 
-
         $orgMeta = [
             'president_name' => optional($orgSy->president)->name,
-
-            'moderator_name' => optional(
-                \App\Models\OrgMembership::query()
-                    ->with('officerEntry')
-                    ->where('organization_id', $organization->id)
-                    ->where('school_year_id', $syId)
-                    ->where('role', 'moderator')
-                    ->whereNull('archived_at')
-                    ->first()
-            )?->user?->name,
+            'moderator_name' => optional($moderator?->user)->name,
 
             'isActiveSy' => $activeSy && $selectedSy
-                ? (int)$activeSy->id === (int)$selectedSy->id
+                ? (int) $activeSy->id === (int) $selectedSy->id
                 : false,
         ];
 
-
         return view('admin.orgs_by_sy.show', [
             'organization' => $organization,
-            'orgInfo' => $orgInfo,   
-            'orgMeta' => $orgMeta,    
+            'orgInfo' => $orgInfo,
+            'orgMeta' => $orgMeta,
             'orgSy' => $orgSy,
             'selectedSy' => $selectedSy,
             'activeSy' => $activeSy,
             'routes' => $routes,
+
+            'membersCount' => $membersCount,
+            'officersCount' => $officersCount,
+            'projectsCount' => $projectsCount,
         ]);
     }
 

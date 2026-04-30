@@ -35,13 +35,23 @@ $routeBase = $document?->formType
     : null;
 @endphp
 
+@php
+    $shouldShowMainReturnHub = !$isAdmin && !(
+        !$isProjectHead &&
+        $document?->status === 'submitted' &&
+        ($isSignatory ?? false)
+    );
+@endphp
+
 <div class="flex flex-wrap gap-2 justify-end">
 
     {{-- ================= RETURN TO HUB (ALWAYS VISIBLE) ================= --}}
-    <a href="{{ route('org.projects.documents.hub', $project->id) }}"
-       class="px-4 py-2 text-xs font-medium border border-slate-300 bg-white hover:bg-slate-50 rounded-lg">
-        Return to Hub
-    </a>
+    @if($shouldShowMainReturnHub)
+        <a href="{{ route('org.projects.documents.hub', $project->id) }}"
+        class="px-4 py-2 text-xs font-medium border border-slate-300 bg-white hover:bg-slate-50 rounded-lg">
+            Return to Hub
+        </a>
+    @endif
 
     @if($isProjectHead || $isDraftee)
 

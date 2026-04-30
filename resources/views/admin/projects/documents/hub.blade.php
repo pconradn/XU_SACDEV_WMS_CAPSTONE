@@ -1,5 +1,44 @@
 <x-app-layout>
 
+<div class=" pt-6 mb-6">
+    <div class="max-w-7xl mx-auto px-4">
+        <nav class="text-xs text-slate-500">
+            <ol class="flex flex-wrap items-center gap-1.5">
+                <li>
+                    <a href="{{ route('admin.orgs_by_sy.index') }}"
+                       class="font-medium text-slate-600 hover:text-slate-900 transition">
+                        Organizations by School Year
+                    </a>
+                </li>
+
+                <li class="text-slate-300">/</li>
+
+                <li>
+                    <a href="{{ route('admin.orgs_by_sy.show', [$project->organization_id, $project->school_year_id]) }}"
+                       class="font-medium text-slate-600 hover:text-slate-900 transition">
+                        {{ $project->organization?->acronym ?: $project->organization?->name }}
+                    </a>
+                </li>
+
+                <li class="text-slate-300">/</li>
+
+                <li>
+                    <a href="{{ route('admin.org.projects.index', [$project->organization_id, $project->school_year_id]) }}"
+                       class="font-medium text-slate-600 hover:text-slate-900 transition">
+                        Projects
+                    </a>
+                </li>
+
+                <li class="text-slate-300">/</li>
+
+                <li class="font-medium text-indigo-700 truncate max-w-[220px]">
+                    {{ $project->title }}
+                </li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
 @include('admin.projects.documents.partials._hub-header')
 
 <div class="bg-slate-50 py-6">

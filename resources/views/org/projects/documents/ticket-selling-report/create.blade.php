@@ -13,13 +13,13 @@
         ->whereNull('archived_at')
         ->exists();
 
-    $canEditRole = $isProjectHead || $isDraftee;
-
-    $isEditable = $canEditRole && ($status === 'draft');
-
-    if (in_array($status, ['approved','approved_by_sacdev'])) {
-        $isEditable = false;
-    }
+    $isEditable = (
+        ($isProjectHead && (
+            in_array($status, ['draft', 'submitted', 'returned'])
+            || ($status === 'approved_by_sacdev' && $document->edit_mode)
+        ))
+        || ($isDraftee && $status === 'draft')
+    );
 
     $isReadOnly = !$isEditable;
 
@@ -40,6 +40,95 @@
 @endphp
 
 
+@php
+    $isAdminDocumentPage = auth()->user()?->system_role === 'sacdev_admin';
+
+    $documentTitle = $document->formType?->name
+        ?? $document->formType?->code
+        ?? 'Document';
+@endphp
+
+<div class="bg-slate-50 pt-6">
+    <div class="max-w-7xl mx-auto px-4">
+        <nav class="text-xs text-slate-500">
+            <ol class="flex flex-wrap items-center gap-1.5">
+
+                @if($isAdminDocumentPage)
+
+                    <li>
+                        <a href="{{ route('admin.orgs_by_sy.index') }}"
+                           class="font-medium text-slate-600 hover:text-slate-900 transition">
+                            Organizations by School Year
+                        </a>
+                    </li>
+
+                    <li class="text-slate-300">/</li>
+
+                    <li>
+                        <a href="{{ route('admin.orgs_by_sy.show', [$project->organization_id, $project->school_year_id]) }}"
+                           class="font-medium text-slate-600 hover:text-slate-900 transition">
+                            {{ $project->organization?->acronym ?: $project->organization?->name }}
+                        </a>
+                    </li>
+
+                    <li class="text-slate-300">/</li>
+
+                    <li>
+                        <a href="{{ route('admin.org.projects.index', [$project->organization_id, $project->school_year_id]) }}"
+                           class="font-medium text-slate-600 hover:text-slate-900 transition">
+                            Projects
+                        </a>
+                    </li>
+
+                    <li class="text-slate-300">/</li>
+
+                    <li>
+                        <a href="{{ route('admin.projects.documents.hub', $project) }}"
+                           class="font-medium text-slate-600 hover:text-slate-900 transition">
+                            Document Hub
+                        </a>
+                    </li>
+
+                @else
+
+                    <li>
+                        <a href="{{ route('org.organization-info.show') }}"
+                           class="font-medium text-slate-600 hover:text-slate-900 transition">
+                            Organization
+                        </a>
+                    </li>
+
+                    <li class="text-slate-300">/</li>
+
+                    <li>
+                        <a href="{{ route('org.projects.index') }}"
+                           class="font-medium text-slate-600 hover:text-slate-900 transition">
+                            Projects
+                        </a>
+                    </li>
+
+                    <li class="text-slate-300">/</li>
+
+                    <li>
+                        <a href="{{ route('org.projects.documents.hub', $project) }}"
+                           class="font-medium text-slate-600 hover:text-slate-900 transition">
+                            Document Hub
+                        </a>
+                    </li>
+
+                @endif
+
+                <li class="text-slate-300">/</li>
+
+                <li class="font-medium text-indigo-700 truncate max-w-[220px]">
+                    {{ $documentTitle }}
+                </li>
+
+            </ol>
+        </nav>
+    </div>
+</div>
+
 {{-- ================= STATUS CARD ================= --}}
 @include('components.document.status-bar', ['document' => $document])
 
@@ -54,7 +143,7 @@
     action="{{ route('org.projects.documents.ticket-selling-report.store', $project) }}"
 >
 @csrf
-<input type="hidden" name="last_updated_at" value="{{ $document->updated_at }}">
+<input type="hidden" name="last_updated_at" value="{{ $document?->updated_at }}">
 <input type="hidden" name="action" id="formAction" value="draft">
 
 
