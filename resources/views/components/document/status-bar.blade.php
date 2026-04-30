@@ -9,34 +9,42 @@
         'draft' => [
             'label' => 'Draft',
             'badge' => 'bg-slate-100 text-slate-700 border-slate-200',
+            'icon' => 'file-pen-line',
         ],
         'submitted' => [
             'label' => 'Submitted',
             'badge' => 'bg-blue-100 text-blue-700 border-blue-200',
+            'icon' => 'send',
         ],
         'returned' => [
             'label' => 'Returned',
             'badge' => 'bg-rose-100 text-rose-700 border-rose-200',
+            'icon' => 'file-warning',
         ],
         'approved' => [
             'label' => 'Approved',
             'badge' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
+            'icon' => 'check-circle-2',
         ],
         'approved_by_sacdev' => [
             'label' => 'Approved by SACDEV',
             'badge' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
+            'icon' => 'check-circle-2',
         ],
         'submitted_to_sacdev' => [
             'label' => 'Submitted to SACDEV',
             'badge' => 'bg-indigo-100 text-indigo-700 border-indigo-200',
+            'icon' => 'send',
         ],
         'forwarded_to_sacdev' => [
             'label' => 'Forwarded to SACDEV',
             'badge' => 'bg-violet-100 text-violet-700 border-violet-200',
+            'icon' => 'forward',
         ],
         default => [
             'label' => ucwords(str_replace('_', ' ', $status)),
             'badge' => 'bg-slate-100 text-slate-700 border-slate-200',
+            'icon' => 'circle-dot',
         ],
     };
 
@@ -53,6 +61,7 @@
                     'label' => 'Saved as Draft',
                     'dot'   => 'bg-slate-400',
                     'pill'  => 'bg-slate-100 text-slate-700 border-slate-200',
+                    'icon'  => 'file-pen-line',
                 ],
 
                 'submitted',
@@ -64,6 +73,7 @@
                     'label' => 'Submitted',
                     'dot'   => 'bg-blue-500',
                     'pill'  => 'bg-blue-100 text-blue-700 border-blue-200',
+                    'icon'  => 'send',
                 ],
 
                 'forwarded_to_sacdev',
@@ -71,6 +81,7 @@
                     'label' => 'Forwarded to SACDEV',
                     'dot'   => 'bg-indigo-500',
                     'pill'  => 'bg-indigo-100 text-indigo-700 border-indigo-200',
+                    'icon'  => 'forward',
                 ],
 
                 'returned',
@@ -81,6 +92,7 @@
                     'label' => 'Returned',
                     'dot'   => 'bg-rose-500',
                     'pill'  => 'bg-rose-100 text-rose-700 border-rose-200',
+                    'icon'  => 'file-warning',
                 ],
 
                 'approved',
@@ -91,6 +103,7 @@
                     'label' => 'Approved',
                     'dot'   => 'bg-emerald-500',
                     'pill'  => 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                    'icon'  => 'check-circle-2',
                 ],
 
                 'approval_reverted',
@@ -99,18 +112,21 @@
                     'label' => 'Approval Reverted',
                     'dot'   => 'bg-amber-500',
                     'pill'  => 'bg-amber-100 text-amber-700 border-amber-200',
+                    'icon'  => 'undo-2',
                 ],
 
                 'edit_requested' => [
                     'label' => 'Edit Requested',
                     'dot'   => 'bg-yellow-500',
                     'pill'  => 'bg-yellow-100 text-yellow-700 border-yellow-200',
+                    'icon'  => 'file-pen-line',
                 ],
 
                 'edit_granted' => [
                     'label' => 'Edit Granted',
                     'dot'   => 'bg-cyan-500',
                     'pill'  => 'bg-cyan-100 text-cyan-700 border-cyan-200',
+                    'icon'  => 'unlock',
                 ],
 
                 'resubmitted',
@@ -119,6 +135,7 @@
                     'label' => 'Resubmitted',
                     'dot'   => 'bg-sky-500',
                     'pill'  => 'bg-sky-100 text-sky-700 border-sky-200',
+                    'icon'  => 'refresh-cw',
                 ],
 
                 'cancelled',
@@ -126,12 +143,14 @@
                     'label' => 'Cancelled',
                     'dot'   => 'bg-slate-500',
                     'pill'  => 'bg-slate-100 text-slate-700 border-slate-200',
+                    'icon'  => 'ban',
                 ],
 
                 default => [
                     'label' => ucwords(str_replace('_', ' ', (string) $action)),
                     'dot'   => 'bg-slate-400',
                     'pill'  => 'bg-slate-100 text-slate-700 border-slate-200',
+                    'icon'  => 'circle-dot',
                 ],
             };
         }
@@ -142,217 +161,242 @@
     x-data="{ openTimeline: false, openRemarks: false }"
     class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden"
 >
-    {{-- BAR --}}
-    <div class="px-4 py-3 md:px-5 md:py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        {{-- LEFT --}}
+    <div class="px-4 py-3 md:px-5 md:py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between bg-gradient-to-r from-slate-50 to-white">
+
         <div class="flex items-center gap-2 flex-wrap">
 
             @if($hasRemarks)
                 <button
                     type="button"
                     @click="openRemarks = true"
-                    class="inline-flex items-center gap-2 rounded-lg
-                        bg-amber-100 text-amber-800 border border-amber-200
-                        px-3 py-1.5 text-xs font-semibold
-                        hover:bg-amber-200 transition"
+                    class="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
                 >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M12 9v4m0 4h.01M10.29 3.86l-7.5 13A1 1 0 003.66 18h16.68a1 1 0 00.87-1.5l-7.5-13a1 1 0 00-1.74 0z"/>
-                    </svg>
-                    <span>Remarks</span>
+                    <i data-lucide="message-square-warning" class="w-4 h-4"></i>
+                    Remarks Available
                 </button>
             @endif
 
             <button
                 type="button"
                 @click="openTimeline = true"
-                class="inline-flex items-center gap-2 rounded-lg
-                    border border-slate-300 bg-white
-                    px-3 py-1.5 text-xs font-medium text-slate-700
-                    hover:bg-slate-50 hover:border-slate-400
-                    transition"
+                class="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100"
             >
-                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M8 7V3m8 4V3m-9 8h10m-11 8h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                </svg>
-                <span>View Timeline</span>
+                <i data-lucide="history" class="w-4 h-4"></i>
+                View Timeline
+                @if($timelines->count())
+                    <span class="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">
+                        {{ $timelines->count() }}
+                    </span>
+                @endif
             </button>
         </div>
 
-        {{-- RIGHT --}}
         <div class="flex items-center gap-2 flex-wrap md:justify-end">
-            <span class="text-xs font-medium text-slate-500">Status</span>
-            <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold {{ $statusConfig['badge'] }}">
+            <span class="text-xs font-medium text-slate-500">
+                Current Status
+            </span>
+
+            <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold {{ $statusConfig['badge'] }}">
+                <i data-lucide="{{ $statusConfig['icon'] }}" class="w-3.5 h-3.5"></i>
                 {{ $statusConfig['label'] }}
             </span>
         </div>
     </div>
 
-    {{-- ========================= --}}
-    {{-- REMARKS MODAL --}}
-    {{-- ========================= --}}
     <div
         x-show="openRemarks"
         x-cloak
         x-transition.opacity
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
-        {{-- BACKDROP --}}
-        <div class="absolute inset-0 bg-slate-900/50" @click="openRemarks = false"></div>
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="openRemarks = false"></div>
 
-        {{-- MODAL --}}
-        <div class="relative w-full max-w-2xl rounded-2xl bg-white border border-slate-200 shadow-xl overflow-hidden">
-            {{-- HEADER --}}
-            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-amber-50">
+        <div class="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+
+            <div class="flex items-start justify-between gap-4 border-b border-amber-200 bg-gradient-to-r from-amber-50 to-white px-5 py-4">
                 <div>
-                    <h3 class="text-sm font-semibold text-slate-900">
+                    <div class="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                        <i data-lucide="message-square-warning" class="w-4 h-4 text-amber-600"></i>
                         Latest Remarks
-                    </h3>
-                    <p class="text-xs text-slate-500 mt-0.5">
-                        Most recent remarks saved on this document
+                    </div>
+
+                    <p class="mt-1 text-xs text-slate-500">
+                        Most recent remarks saved on this document.
                     </p>
                 </div>
 
                 <button
                     type="button"
                     @click="openRemarks = false"
-                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-white/80 transition"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
                 >
-                    ✕
+                    <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
 
-            {{-- CONTENT --}}
-            <div class="p-5 h-[45vh] overflow-y-auto pr-2 scroll-smooth">
+            <div class="max-h-[60vh] overflow-y-auto p-5">
                 @if($hasRemarks)
                     <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="inline-flex items-center rounded-full border border-amber-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-700">
-                                Document Remarks
-                            </span>
+                        <div class="mb-2 inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+                            <i data-lucide="message-square-text" class="w-3 h-3"></i>
+                            Document Remarks
                         </div>
 
-                        <div class="prose prose-sm max-w-none text-slate-700">
+                        <div class="whitespace-pre-line break-words text-sm leading-6 text-slate-700">
                             {!! $documentRemarks !!}
                         </div>
                     </div>
                 @else
-                    <div class="h-full flex items-center justify-center text-center text-sm text-slate-400">
-                        No remarks available.
+                    <div class="py-12 text-center">
+                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-400">
+                            <i data-lucide="message-square-off" class="w-6 h-6"></i>
+                        </div>
+
+                        <div class="mt-3 text-sm font-semibold text-slate-800">
+                            No remarks available
+                        </div>
+
+                        <div class="mt-1 text-xs text-slate-500">
+                            Remarks will appear here once saved.
+                        </div>
                     </div>
                 @endif
             </div>
         </div>
     </div>
 
-    {{-- ========================= --}}
-    {{-- TIMELINE MODAL --}}
-    {{-- ========================= --}}
     <div
         x-show="openTimeline"
         x-cloak
         x-transition.opacity
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
-        {{-- BACKDROP --}}
-        <div class="absolute inset-0 bg-slate-900/50" @click="openTimeline = false"></div>
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="openTimeline = false"></div>
 
-        {{-- MODAL --}}
-        <div class="relative w-full max-w-3xl rounded-2xl bg-white border border-slate-200 shadow-xl overflow-hidden">
-            {{-- HEADER --}}
-            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+        <div class="relative w-full max-w-3xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+
+            <div class="flex items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white px-5 py-4">
                 <div>
-                    <h3 class="text-lg font-semibold text-slate-900">
+                    <div class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+                        <i data-lucide="history" class="w-5 h-5 text-indigo-600"></i>
                         Submission Timeline
-                    </h3>
-                    <p class="text-xs text-slate-500 mt-0.5">
-                        Activity history for this document
+                    </div>
+
+                    <p class="mt-1 text-xs text-slate-500">
+                        Activity history, status changes, and remarks for this document.
                     </p>
                 </div>
 
                 <button
                     type="button"
                     @click="openTimeline = false"
-                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
                 >
-                    ✕
+                    <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
 
-            {{-- CONTENT --}}
-            <div class="p-5 h-[65vh] overflow-y-auto pr-2 scroll-smooth">
-                @if($timelines->count())
-                    <div class="relative">
-                        {{-- VERTICAL LINE --}}
-                        <div class="absolute left-3 top-0 bottom-0 w-px bg-slate-200"></div>
+            <div class="max-h-[70vh] overflow-y-auto p-5">
 
-                        <div class="space-y-6">
+                @if($timelines->count())
+
+                    <div class="relative">
+                        <div class="absolute left-4 top-2 bottom-2 w-px bg-slate-200"></div>
+
+                        <div class="space-y-5">
                             @foreach($timelines as $t)
                                 @php
                                     $config = timelineActionConfig($t->action);
                                     $timelineHasRemarks = filled(trim(strip_tags((string) $t->remarks)));
                                 @endphp
 
-                                <div class="relative pl-10">
-                                    {{-- DOT --}}
-                                    <div class="absolute left-1.5 top-1 w-4 h-4 rounded-full border-2 border-white shadow {{ $config['dot'] }}"></div>
+                                <div class="relative pl-11">
 
-                                    {{-- TOP --}}
-                                    <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                                        <div class="min-w-0">
-                                            <div class="flex items-center gap-2 flex-wrap">
-                                                <div class="text-sm font-semibold text-slate-800">
-                                                    {{ $config['label'] }}
-                                                </div>
-
-                                                <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold {{ $config['pill'] }}">
-                                                    {{ $config['label'] }}
-                                                </span>
-                                            </div>
-
-                                            <div class="text-xs text-slate-500 mt-1">
-                                                {{ $t->user->name ?? 'System' }}
-                                                •
-                                                {{ $t->created_at?->format('M d, Y h:i A') }}
-                                            </div>
-                                        </div>
+                                    <div class="absolute left-0 top-0.5 flex h-8 w-8 items-center justify-center rounded-full border-4 border-white shadow-sm {{ $config['dot'] }}">
+                                        <i data-lucide="{{ $config['icon'] }}" class="w-3.5 h-3.5 text-white"></i>
                                     </div>
 
-                                    {{-- STATUS CHANGE --}}
-                                    @if(!empty($t->old_status) || !empty($t->new_status))
-                                        <div class="mt-2">
-                                            <span class="inline-flex items-center gap-2 rounded-lg bg-slate-50 border border-slate-200 px-2.5 py-1 text-xs text-slate-600">
-                                                <span>{{ $t->old_status ?: '—' }}</span>
-                                                <span>→</span>
-                                                <span>{{ $t->new_status ?: '—' }}</span>
-                                            </span>
-                                        </div>
-                                    @endif
+                                    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
 
-                                    {{-- REMARKS INSIDE TIMELINE --}}
-                                    @if($timelineHasRemarks)
-                                        <div class="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                                            <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
-                                                Remarks
+                                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                            <div class="min-w-0">
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold {{ $config['pill'] }}">
+                                                        {{ $config['label'] }}
+                                                    </span>
+
+                                                    @if($timelineHasRemarks)
+                                                        <span class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                                                            <i data-lucide="message-square-text" class="w-3 h-3"></i>
+                                                            With remarks
+                                                        </span>
+                                                    @endif
+                                                </div>
+
+                                                <div class="mt-2 text-xs text-slate-500">
+                                                    {{ $t->user->name ?? 'System' }}
+                                                </div>
                                             </div>
-                                            <div class="prose prose-sm max-w-none text-slate-700">
-                                                {!! $t->remarks !!}
+
+                                            <div class="shrink-0 text-left sm:text-right">
+                                                <div class="text-[11px] font-medium text-slate-500">
+                                                    {{ $t->created_at?->format('M d, Y') }}
+                                                </div>
+
+                                                <div class="mt-0.5 text-[10px] text-slate-400">
+                                                    {{ $t->created_at?->format('h:i A') }}
+                                                </div>
                                             </div>
                                         </div>
-                                    @endif
+
+                                        @if(!empty($t->old_status) || !empty($t->new_status))
+                                            <div class="mt-3">
+                                                <div class="inline-flex flex-wrap items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700">
+                                                    <span>{{ $t->old_status ? ucwords(str_replace('_', ' ', $t->old_status)) : '—' }}</span>
+                                                    <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                                    <span>{{ $t->new_status ? ucwords(str_replace('_', ' ', $t->new_status)) : '—' }}</span>
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        @if($timelineHasRemarks)
+                                            <div class="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                                <div class="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                                    <i data-lucide="message-square-text" class="w-3 h-3"></i>
+                                                    Remarks
+                                                </div>
+
+                                                <div class="whitespace-pre-line break-words text-sm leading-6 text-slate-700">
+                                                    {!! $t->remarks !!}
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                    </div>
+
                                 </div>
                             @endforeach
                         </div>
                     </div>
+
                 @else
-                    <div class="h-full flex items-center justify-center text-center text-sm text-slate-400">
-                        No timeline records available.
+
+                    <div class="py-12 text-center">
+                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-400">
+                            <i data-lucide="history" class="w-6 h-6"></i>
+                        </div>
+
+                        <div class="mt-3 text-sm font-semibold text-slate-800">
+                            No timeline records available
+                        </div>
+
+                        <div class="mt-1 text-xs text-slate-500">
+                            Activity history will appear here once this document moves through the workflow.
+                        </div>
                     </div>
+
                 @endif
+
             </div>
         </div>
     </div>

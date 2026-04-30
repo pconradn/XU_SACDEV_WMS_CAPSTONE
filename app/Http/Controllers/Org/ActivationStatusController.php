@@ -8,9 +8,6 @@ use App\Models\Project;
 use App\Models\ProjectAssignment;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-
-//CONTROLLER TO VIEW ACTIVATION STATUS OF ACCOUNT (if password is changed)
 
 class ActivationStatusController extends Controller
 {
@@ -19,32 +16,35 @@ class ActivationStatusController extends Controller
         $orgId = (int) $request->session()->get('active_org_id');
         $syId  = (int) $request->session()->get('encode_sy_id');
 
-        
         $roleMemberships = OrgMembership::query()
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
             ->whereNull('archived_at')
-            ->whereIn('role', ['treasurer', 'moderator'])
+            ->whereIn('role', [
+                'treasurer',
+                'finance_officer',
+                'moderator',
+            ])
             ->get();
 
-      
         $projects = Project::query()
             ->where('organization_id', $orgId)
             ->where('school_year_id', $syId)
             ->orderBy('title')
             ->get();
 
-      
-        $projectHeads = ProjectAssignment::query()
+        $projectAssignments = ProjectAssignment::query()
             ->whereIn('project_id', $projects->pluck('id'))
-            ->where('assignment_role', 'project_head')
+            ->whereIn('assignment_role', [
+                'project_head',
+                'draftee',
+            ])
             ->whereNull('archived_at')
             ->get();
 
-    
         $userIds = collect()
             ->merge($roleMemberships->pluck('user_id'))
-            ->merge($projectHeads->pluck('user_id'))
+            ->merge($projectAssignments->pluck('user_id'))
             ->unique()
             ->values();
 
@@ -53,12 +53,23 @@ class ActivationStatusController extends Controller
             ->get()
             ->keyBy('id');
 
-        $roleRows = $roleMemberships->map(function ($m) use ($users) {
+        $roleLabels = [
+            'treasurer' => 'Treasurer',
+            'finance_officer' => 'Finance Officer',
+            'moderator' => 'Moderator',
+        ];
+
+        $assignmentLabels = [
+            'project_head' => 'Project Head',
+            'draftee' => 'Draftee',
+        ];
+
+        $roleRows = $roleMemberships->map(function ($m) use ($users, $roleLabels) {
             $u = $users->get($m->user_id);
 
             return [
                 'type' => 'Org Role',
-                'label' => ucfirst($m->role),
+                'label' => $roleLabels[$m->role] ?? ucfirst(str_replace('_', ' ', $m->role)),
                 'name' => $u?->name ?? 'Unknown',
                 'email' => $u?->email ?? '',
                 'activated' => (bool) ($u?->password_changed_at),
@@ -66,12 +77,12 @@ class ActivationStatusController extends Controller
             ];
         });
 
-        $projectRows = $projectHeads->map(function ($pa) use ($users, $projects) {
+        $projectRows = $projectAssignments->map(function ($pa) use ($users, $projects, $assignmentLabels) {
             $u = $users->get($pa->user_id);
             $project = $projects->firstWhere('id', $pa->project_id);
 
             return [
-                'type' => 'Project Head',
+                'type' => $assignmentLabels[$pa->assignment_role] ?? ucfirst(str_replace('_', ' ', $pa->assignment_role)),
                 'label' => $project?->title ?? 'Unknown Project',
                 'name' => $u?->name ?? 'Unknown',
                 'email' => $u?->email ?? '',

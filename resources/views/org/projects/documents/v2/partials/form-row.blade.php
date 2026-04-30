@@ -23,7 +23,7 @@
         'pre_implementation' => ['icon' => 'file-text', 'color' => 'text-blue-600', 'label' => 'Pre Implementation'],
         'off_campus' => ['icon' => 'map-pin', 'color' => 'text-purple-600', 'label' => 'Off Campus'],
         'other' => ['icon' => 'layers', 'color' => 'text-slate-500', 'label' => 'Other'],
-        'post_implementation' => ['icon' => 'check-circle', 'color' => 'text-emerald-600', 'label' => 'Post Implementation'],
+        'post_implementation' => ['icon' => 'clipboard-check', 'color' => 'text-purple-600', 'label' => 'Post Implementation'],
         'notice' => ['icon' => 'alert-triangle', 'color' => 'text-amber-600', 'label' => 'Notice'],
     ];
 
