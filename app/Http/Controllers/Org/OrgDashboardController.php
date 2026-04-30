@@ -60,8 +60,13 @@ class OrgDashboardController extends Controller
             $selectedSyId
         );
 
-        $pendingTasks = $data['tasks'];
-        $pendingCount = $data['count'];
+        
+
+        $pendingTasks = $this->filterPostImplementationTasks($data['tasks']);
+
+     
+
+        $pendingCount = $pendingTasks->count();
         $roles = $data['roles'];
 
 
@@ -198,10 +203,21 @@ class OrgDashboardController extends Controller
             $selectedSyId
         );
 
-        $pendingTasks = $data['tasks'];
-        $pendingCount = $data['count'];
-        $pendingApprovalCount = $data['approval_count'];
-        $projectHeadPendingCount = $data['project_head_count'];
+        $pendingTasks = $this->filterPostImplementationTasks($data['tasks']);
+
+
+        $pendingCount = $pendingTasks->count();
+
+        $pendingApprovalCount = $pendingTasks
+            ->where('category', 'approval')
+            ->count();
+
+        $projectHeadPendingCount = $pendingTasks
+            ->where('category', '!=', 'rereg')
+            ->where('category', '!=', 'approval')
+            ->count();
+
+
 
         return view('portals.org-dashboard', [
             'activeSy' => $activeSy,
@@ -250,4 +266,80 @@ class OrgDashboardController extends Controller
 
         return redirect()->route('org.home');
     }
+
+    private function filterPostImplementationTasks($pendingTasks)
+    {
+    return collect($pendingTasks)->filter(function ($task) {
+        $project = $task->project ?? null;
+        $document = $task->document ?? null;
+
+        if (!$project) {
+            return true;
+        }
+
+        $project->loadMissing('documents.formType');
+
+        if ($document) {
+            $document->loadMissing('formType');
+        }
+
+        $taskFormTypeId = $task->form_type_id
+            ?? $task->formType?->id
+            ?? $document?->form_type_id
+            ?? null;
+
+        $taskFormTypeCode = $task->formType?->code
+            ?? $document?->formType?->code
+            ?? null;
+
+        $taskFormName = $task->formType?->name
+            ?? $task->form_name
+            ?? $document?->formType?->name
+            ?? null;
+
+        $matchingDocument = $project->documents
+            ?->first(function ($doc) use ($taskFormTypeId, $taskFormTypeCode, $taskFormName) {
+                if (!$doc->formType) {
+                    return false;
+                }
+
+                if ($taskFormTypeId && (int) $doc->form_type_id === (int) $taskFormTypeId) {
+                    return true;
+                }
+
+                if ($taskFormTypeCode && $doc->formType->code === $taskFormTypeCode) {
+                    return true;
+                }
+
+                if ($taskFormName && $doc->formType->name === $taskFormName) {
+                    return true;
+                }
+
+                return false;
+            });
+
+        $formPhase = $task->formType->phase
+            ?? $document?->formType?->phase
+            ?? $matchingDocument?->formType?->phase
+            ?? null;
+
+
+
+        if ($formPhase !== 'post_implementation') {
+            return true;
+        }
+
+        $projectProposal = $project->documents
+            ?->first(function ($doc) {
+                return (int) $doc->is_active === 1
+                    && $doc->formType?->code === 'PROJECT_PROPOSAL';
+            });
+
+            
+
+        return $projectProposal?->status === 'approved_by_sacdev';
+    })->values();
+    }
+
+
 }

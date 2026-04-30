@@ -93,33 +93,36 @@ class OrgUserTaskService
 
 
 
+
+
                 if (
-                    $project->requires_clearance == 1 &&
-                    in_array($project->clearance_status, ['required', 'rejected'])
+                    (int) $project->requires_clearance === 1 &&
+                    (
+                        empty($project->clearance_file_path)
+                        || $project->clearance_status === 'rejected'
+                    )
                 ) {
                     $projectHeadTasks->push((object)[
-                        'category'   => 'project_head',
-                        'state'      => $project->clearance_status === 'rejected' ? 'revision' : 'required',
-                        'phase'      => 'off-campus',
-                        'form_name'  => 'Off-Campus Clearance',
-                        'project'    => $project,
-                        'status'     => $project->clearance_status,
+                        'category'     => 'project_head',
+                        'state'        => $project->clearance_status === 'rejected' ? 'revision' : 'required',
+                        'phase'        => 'off-campus',
+                        'form_name'    => 'Off-Campus Clearance',
+                        'project'      => $project,
+                        'status'       => $project->clearance_status,
                         'form_type_id' => null,
-                        'form_code'  => 'OFF_CAMPUS_CLEARANCE',
+                        'form_code'    => 'OFF_CAMPUS_CLEARANCE',
                     ]);
                 }
 
                 foreach ($requiredForms as $req) {
                     $doc = $this->findDocument($project, $req);
 
-                    if (!$doc || $doc->status !== 'approved_by_sacdev') {
+                    $status = $doc?->status ?? 'not_started';
 
-                        $status = $doc?->status ?? 'not_started';
-                        $type = $status === 'returned' ? 'revision' : 'required';
-
+                    if (!$doc || $status === 'draft') {
                         $projectHeadTasks->push((object)[
                             'category' => 'project_head',
-                            'state' => $type,
+                            'state' => 'required',
                             'phase' => $req->phase ?? 'other',
                             'form_name' => $req->name ?? $req->code,
                             'project' => $project,
