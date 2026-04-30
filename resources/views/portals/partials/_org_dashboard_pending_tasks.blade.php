@@ -1,188 +1,534 @@
-<div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                @php
+                    $currentUser = auth()->user();
 
-@php
-    $reregTasks = $pendingTasks->where('category', 'rereg');
-    $projectTasks = $pendingTasks->where('category', '!=', 'rereg')->groupBy(fn($t) => $t->project->id ?? 'none');
+                    if ($currentUser) {
+                        $currentUser->loadMissing('profile');
+                    }
 
-    $actorLabel = 'Project Head';
+                    $profile = $currentUser?->profile;
 
-    if ($roles->contains('treasurer')) $actorLabel = 'Treasurer';
-    elseif ($roles->contains('moderator')) $actorLabel = 'Moderator';
-    elseif ($roles->contains('finance_officer')) $actorLabel = 'Finance Officer';
-    elseif ($roles->contains('president')) $actorLabel = 'President';
-@endphp
+                    $isCurrentUserProfileComplete =
+                        $profile
+                        && filled($profile->first_name)
+                        && filled($profile->last_name)
+                        && filled($profile->birthday)
+                        && filled($profile->sex)
+                        && filled($profile->mobile_number)
+                        && filled($profile->email)
+                        && filled($profile->home_address)
+                        && filled($profile->city_address);
+                @endphp                
+                @php
+                    $pendingTasks = collect($pendingTasks ?? []);
+                    $roles = collect($roles ?? []);
 
-    {{-- HEADER --}}
-    <div class="px-5 py-4 border-b flex items-center justify-between bg-slate-50 rounded-t-2xl">
-        <div class="flex items-center gap-2">
-            <i data-lucide="list-checks" class="w-4 h-4 text-slate-500"></i>
+                    $pendingTasks = $pendingTasks->filter(function ($task) {
+                        $project = $task->project ?? null;
 
-            <h3 class="text-sm font-semibold text-slate-900">
-                Pending Tasks
-            </h3>
+                        if (!$project) {
+                            return true;
+                        }
 
-            @if(($pendingCount ?? 0) > 0)
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 font-semibold">
-                    {{ $pendingCount }}
-                </span>
-            @endif
-        </div>
+                        $project->loadMissing('documents.formType');
 
-        <span class="text-xs text-slate-400">
-            {{ ($pendingCount ?? 0) > 0 ? 'Needs attention' : 'All clear' }}
-        </span>
-    </div>
+                        $documents = collect($project->documents ?? []);
 
-    <div class="max-h-[420px] overflow-y-auto divide-y">
+                        $projectProposal = $documents->first(function ($doc) {
+                            return (int) ($doc->is_active ?? 0) === 1
+                                && $doc->formType?->code === 'PROJECT_PROPOSAL';
+                        });
 
-        {{-- ================= REREG ================= --}}
-        @if($reregTasks->count())
+                        $proposalApproved = $projectProposal?->status === 'approved_by_sacdev';
 
-        <div class="px-5 py-3 bg-gradient-to-r from-amber-50 to-white border-b border-amber-200">
-            <div class="flex items-center gap-2 text-xs font-semibold text-amber-700">
-                <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-500"></i>
-                Re-registration Required
-            </div>
-        </div>
+                        $taskFormTypeId = $task->form_type_id
+                            ?? $task->formType?->id
+                            ?? null;
 
-        @foreach($reregTasks as $task)
-        <div class="px-5 py-3 flex items-center justify-between hover:bg-amber-50 transition">
+                        $taskFormName = $task->form_name
+                            ?? $task->formType?->name
+                            ?? null;
 
-            <div class="flex items-center gap-3">
+                        $formType = null;
 
-                <i data-lucide="alert-circle" class="w-4 h-4 text-amber-500"></i>
+                        if ($taskFormTypeId) {
+                            $formType = \App\Models\FormType::query()
+                                ->find($taskFormTypeId);
+                        }
 
-                <div>
-                    <p class="text-sm font-semibold text-slate-900">
-                        {{ $task->form_name }}
-                    </p>
+                        if (!$formType && $taskFormName) {
+                            $formType = \App\Models\FormType::query()
+                                ->where('name', $taskFormName)
+                                ->first();
+                        }
 
-                    <div class="text-[11px] text-amber-700 font-medium">
-                        Action required
-                    </div>
-                </div>
+                        $phase = $task->formType->phase
+                            ?? $formType?->phase
+                            ?? null;
 
-            </div>
+                        if ($phase === 'post_implementation' && !$proposalApproved) {
+                            return false;
+                        }
 
-            <a href="{{ $task->link }}"
-            class="text-[11px] px-3 py-1.5 rounded-md bg-amber-600 text-white hover:bg-amber-700 font-semibold">
-                Open
-            </a>
+                        return true;
+                    })->values();
 
-        </div>
-        @endforeach
+                    $pendingCount = $pendingTasks->count();
 
-        @endif
+                    $reregTasks = $pendingTasks->where('category', 'rereg')->values();
+
+                    $clearanceTasks = $pendingTasks
+                        ->filter(fn($task) =>
+                            ($task->form_code ?? null) === 'OFF_CAMPUS_CLEARANCE'
+                            || ($task->form_name ?? null) === 'Off-Campus Clearance'
+                        )
+                        ->values();
+
+                    $approvalTasks = $pendingTasks
+                        ->where('category', 'approval')
+                        ->values();
+
+                    $revisionTasks = $pendingTasks
+                        ->filter(fn($task) =>
+                            ($task->state ?? null) === 'revision'
+                            && ($task->form_code ?? null) !== 'OFF_CAMPUS_CLEARANCE'
+                            && ($task->form_name ?? null) !== 'Off-Campus Clearance'
+                        )
+                        ->values();
+
+                    $projectTasks = $pendingTasks
+                        ->where('category', '!=', 'rereg')
+                        ->reject(fn($task) =>
+                            ($task->form_code ?? null) === 'OFF_CAMPUS_CLEARANCE'
+                            || ($task->form_name ?? null) === 'Off-Campus Clearance'
+                        )
+                        ->groupBy(fn($task) => $task->project->id ?? 'none');
+
+                    $actorLabel = 'Project Head';
+
+                    if ($roles->contains('treasurer')) {
+                        $actorLabel = 'Treasurer';
+                    } elseif ($roles->contains('moderator')) {
+                        $actorLabel = 'Moderator';
+                    } elseif ($roles->contains('finance_officer')) {
+                        $actorLabel = 'Finance Officer';
+                    } elseif ($roles->contains('president')) {
+                        $actorLabel = 'President';
+                    }
+
+                    $isPresident = $roles->contains('president');
+
+                    $hasTasks = ($pendingCount ?? 0) > 0
+                        || !$isCurrentUserProfileComplete
+                        || ($isPresident && ($projectsWithoutHeadCount ?? 0) > 0);
+                @endphp
 
 
-        {{-- ================= PROJECT GROUPS ================= --}}
-        @foreach($projectTasks as $projectId => $tasks)
+                <div class="lg:col-span-2 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
 
-            @php $project = $tasks->first()->project ?? null; @endphp
+                    <div class="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white px-5 py-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <div class="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                                    <i data-lucide="circle-alert" class="w-4 h-4 text-indigo-600"></i>
+                                    What needs your attention?
+                                </div>
 
-            <div class="px-5 py-3 bg-slate-50 border-t border-b">
-                <div class="flex items-center justify-between">
+                                <div class="mt-1 text-xs text-slate-500">
+                                    Tasks are grouped by workflow area so you can quickly see what needs action.
+                                </div>
+                            </div>
 
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="folder" class="w-4 h-4 text-slate-500"></i>
-
-                        <span class="text-xs font-semibold text-slate-700">
-                            {{ $project->title ?? 'General Tasks' }}
-                        </span>
-                    </div>
-
-                    <span class="text-[10px] text-slate-400">
-                        {{ $tasks->count() }} task{{ $tasks->count() > 1 ? 's' : '' }}
-                    </span>
-
-                </div>
-            </div>
-
-            @foreach($tasks as $task)
-
-            @php
-                $isApproval = $task->category === 'approval';
-                $isRevision = ($task->state ?? null) === 'revision';
-
-                $color = $isApproval
-                    ? 'rose'
-                    : ($isRevision ? 'amber' : 'emerald');
-            @endphp
-
-            <div class="px-5 py-3 flex items-center justify-between hover:bg-slate-50 transition">
-
-                {{-- LEFT --}}
-                <div class="flex items-center gap-3">
-
-                    <div class="
-                        w-2 h-2 rounded-full
-                        {{ $color === 'rose' ? 'bg-rose-500' :
-                           ($color === 'amber' ? 'bg-amber-500' : 'bg-emerald-500') }}
-                    "></div>
-
-                    <div>
-                        <p class="text-sm font-medium text-slate-900">
-                            {{ $task->formType->name ?? $task->form_name }}
-                        </p>
-
-                        <div class="flex items-center gap-2 text-[11px] text-slate-500">
-
-                            @if($isApproval)
-                                <span class="text-rose-600 font-semibold">Awaiting approval</span>
-                            @elseif($isRevision)
-                                <span class="text-amber-600 font-semibold">Needs revision</span>
+                            @if(($pendingCount ?? 0) > 0)
+                                <span class="shrink-0 inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700">
+                                    <i data-lucide="bell" class="w-3 h-3"></i>
+                                    {{ $pendingCount }} pending
+                                </span>
                             @else
-                                <span class="text-emerald-600 font-semibold">
-                                    Action required ({{ $actorLabel }})
+                                <span class="shrink-0 inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                                    <i data-lucide="check-circle-2" class="w-3 h-3"></i>
+                                    All clear
                                 </span>
                             @endif
-
                         </div>
                     </div>
 
+                    <div class="p-5 space-y-4">
+
+                        @if($reregTasks->count())
+                            <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                                <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                    <div class="flex items-start gap-3 min-w-0">
+                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                                            <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+                                        </div>
+
+                                        <div class="min-w-0">
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <div class="text-sm font-semibold text-slate-900">
+                                                    {{ $reregTasks->count() }} re-registration {{ $reregTasks->count() > 1 ? 'requirements' : 'requirement' }} need action
+                                                </div>
+
+                                                <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                                    Organization Setup
+                                                </span>
+                                            </div>
+
+                                            <p class="mt-1 text-xs leading-5 text-slate-600">
+                                                Complete these setup requirements before the organization can fully proceed with project workflows.
+                                            </p>
+
+                                            <div class="mt-3 flex flex-wrap gap-2">
+                                                @foreach($reregTasks as $task)
+                                                    <a href="{{ $task->link }}"
+                                                    class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-amber-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-50">
+                                                        <i data-lucide="file-check-2" class="w-3 h-3 shrink-0"></i>
+                                                        <span class="truncate">
+                                                            {{ $task->form_name }}
+                                                        </span>
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <a href="{{ route('org.rereg.index') }}"
+                                    class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700 sm:w-auto">
+                                        Open Setup
+                                        <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
+
+
+                        @if($clearanceTasks->count())
+                            <div class="rounded-2xl border border-cyan-200 bg-cyan-50 p-4">
+                                <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                    <div class="flex items-start gap-3 min-w-0">
+                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-100 text-cyan-700">
+                                            <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                                        </div>
+
+                                        <div class="min-w-0">
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <div class="text-sm font-semibold text-slate-900">
+                                                    {{ $clearanceTasks->count() }} clearance {{ $clearanceTasks->count() > 1 ? 'requirements' : 'requirement' }} need action
+                                                </div>
+
+                                                <span class="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-700">
+                                                    Off-Campus Clearance
+                                                </span>
+                                            </div>
+
+                                            <p class="mt-1 text-xs leading-5 text-slate-600">
+                                                These projects require off-campus clearance before the workflow can fully proceed.
+                                            </p>
+
+                                            <div class="mt-3 flex flex-wrap gap-2">
+                                                @foreach($clearanceTasks->take(10) as $task)
+                                                    <a href="{{ $task->project ? route('org.projects.documents.hub', $task->project) : route('org.projects.index') }}"
+                                                    class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-cyan-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-cyan-700 transition hover:bg-cyan-50">
+                                                        <i data-lucide="shield-alert" class="w-3 h-3 shrink-0"></i>
+
+                                                        <span class="truncate">
+                                                            {{ $task->project->title ?? 'Off-Campus Clearance' }}
+                                                        </span>
+
+                                                        <span class="hidden sm:inline text-[10px] opacity-75">
+                                                            {{ ucfirst(str_replace('_', ' ', $task->status ?? 'not_started')) }}
+                                                        </span>
+                                                    </a>
+                                                @endforeach
+
+                                                @if($clearanceTasks->count() > 10)
+                                                    <span class="inline-flex items-center rounded-full border border-cyan-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-cyan-700">
+                                                        + {{ $clearanceTasks->count() - 10 }} more
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <a href="{{ $clearanceTasks->first()->project ? route('org.projects.documents.hub', $clearanceTasks->first()->project) : route('org.projects.index') }}"
+                                    class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-cyan-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-cyan-700 sm:w-auto">
+                                        Open Hub
+                                        <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
+
+
+                        @if($approvalTasks->count())
+                            <div class="rounded-2xl border border-indigo-200 bg-indigo-50 p-4">
+                                <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                    <div class="flex items-start gap-3 min-w-0">
+                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+                                            <i data-lucide="file-check-2" class="w-5 h-5"></i>
+                                        </div>
+
+                                        <div class="min-w-0">
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <div class="text-sm font-semibold text-slate-900">
+                                                    {{ $approvalTasks->count() }} {{ $approvalTasks->count() > 1 ? 'documents' : 'document' }} pending your review
+                                                </div>
+
+                                                <span class="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700">
+                                                    {{ $actorLabel }}
+                                                </span>
+                                            </div>
+
+                                            <p class="mt-1 text-xs leading-5 text-slate-600">
+                                                These documents are waiting for your approval, review, or signature.
+                                            </p>
+
+                                            <div class="mt-3 flex flex-wrap gap-2">
+                                                @foreach($approvalTasks->take(10) as $task)
+                                                    <a href="{{ $task->link }}"
+                                                    class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-indigo-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-50">
+                                                        <i data-lucide="file-signature" class="w-3 h-3 shrink-0"></i>
+                                                        <span class="truncate">
+                                                            {{ $task->formType->name ?? $task->form_name }}
+                                                        </span>
+                                                    </a>
+                                                @endforeach
+
+                                                @if($approvalTasks->count() > 10)
+                                                    <span class="inline-flex items-center rounded-full border border-indigo-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-indigo-700">
+                                                        + {{ $approvalTasks->count() - 10 }} more
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <a href="{{ route('org.projects.documents.hub', $approvalTasks->first()->project) }}"
+                                    class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 sm:w-auto">
+                                        Review
+                                        <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($revisionTasks->count())
+                            <div class="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                                <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                    <div class="flex items-start gap-3 min-w-0">
+                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
+                                            <i data-lucide="file-warning" class="w-5 h-5"></i>
+                                        </div>
+
+                                        <div class="min-w-0">
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <div class="text-sm font-semibold text-slate-900">
+                                                    {{ $revisionTasks->count() }} {{ $revisionTasks->count() > 1 ? 'documents' : 'document' }} need revision
+                                                </div>
+
+                                                <span class="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700">
+                                                    Returned
+                                                </span>
+                                            </div>
+
+                                            <p class="mt-1 text-xs leading-5 text-slate-600">
+                                                These items were returned and need corrections before they can continue in the workflow.
+                                            </p>
+
+                                            <div class="mt-3 flex flex-wrap gap-2">
+                                                @foreach($revisionTasks->take(10) as $task)
+                                                    <a href="{{ $task->link }}"
+                                                    class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-50">
+                                                        <i data-lucide="file-pen-line" class="w-3 h-3 shrink-0"></i>
+                                                        <span class="truncate">
+                                                            {{ $task->formType->name ?? $task->form_name }}
+                                                        </span>
+                                                    </a>
+                                                @endforeach
+
+                                                @if($revisionTasks->count() > 10)
+                                                    <span class="inline-flex items-center rounded-full border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-rose-700">
+                                                        + {{ $revisionTasks->count() - 10 }} more
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <a href="{{ route('org.projects.documents.hub', $revisionTasks->first()->project) }}"
+                                    class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 sm:w-auto">
+                                        Fix
+                                        <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
+
+                        @foreach($projectTasks as $projectId => $tasks)
+
+                            @php
+                                $project = $tasks->first()->project ?? null;
+
+                                $normalTasks = $tasks
+                                    ->reject(fn($task) => $task->category === 'approval')
+                                    ->reject(fn($task) => ($task->state ?? null) === 'revision')
+                                    ->values();
+                            @endphp
+
+                            @if($normalTasks->count())
+                                <div class="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                                    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                        <div class="flex items-start gap-3 min-w-0">
+                                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                                                <i data-lucide="folder-kanban" class="w-5 h-5"></i>
+                                            </div>
+
+                                            <div class="min-w-0">
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    <div class="text-sm font-semibold text-slate-900">
+                                                        {{ $normalTasks->count() }} {{ $normalTasks->count() > 1 ? 'documents' : 'document' }} need action
+                                                    </div>
+
+                                                    <span class="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
+                                                        {{ $project->title ?? 'General Project Tasks' }}
+                                                    </span>
+                                                </div>
+
+                                                <p class="mt-1 text-xs leading-5 text-slate-600">
+                                                    These project requirements need to be opened, prepared, submitted, or continued.
+                                                </p>
+
+                                                <div class="mt-3 flex flex-wrap gap-2">
+                                                    @foreach($normalTasks->take(10) as $task)
+                                                        <a href="{{ $task->link }}"
+                                                        class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-50">
+                                                            <i data-lucide="file-text" class="w-3 h-3 shrink-0"></i>
+                                                            <span class="truncate">
+                                                                {{ $task->formType->name ?? $task->form_name }}
+                                                            </span>
+                                                        </a>
+                                                    @endforeach
+
+                                                    @if($normalTasks->count() > 10)
+                                                        <span class="inline-flex items-center rounded-full border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-blue-700">
+                                                            + {{ $normalTasks->count() - 10 }} more
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <a href="{{ $project ? route('org.projects.documents.hub', $project) : route('org.projects.index') }}"
+                                        class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 sm:w-auto">
+                                            Open
+                                            <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            @endif
+
+                        @endforeach
+
+                        @if($isPresident && (($projectsWithoutHeadCount ?? 0) > 0))
+                            <div class="rounded-2xl border border-violet-200 bg-violet-50 p-4">
+                                <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                    <div class="flex items-start gap-3 min-w-0">
+                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                                            <i data-lucide="user-plus" class="w-5 h-5"></i>
+                                        </div>
+
+                                        <div>
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <div class="text-sm font-semibold text-slate-900">
+                                                    {{ $projectsWithoutHeadCount }} {{ $projectsWithoutHeadCount > 1 ? 'projects' : 'project' }} need project heads
+                                                </div>
+
+                                                <span class="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700">
+                                                    President Task
+                                                </span>
+                                            </div>
+
+                                            <p class="mt-1 text-xs leading-5 text-slate-600">
+                                                Assign project heads so members can prepare project documents and continue the workflow.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <a href="{{ route('org.assign-project-heads.index') }}"
+                                    class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-violet-700 sm:w-auto">
+                                        Assign Heads
+                                        <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if(!$isCurrentUserProfileComplete)
+                            <div class="rounded-2xl border border-orange-200 bg-orange-50 p-4">
+                                <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                    <div class="flex items-start gap-3 min-w-0">
+                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-700">
+                                            <i data-lucide="user-round-cog" class="w-5 h-5"></i>
+                                        </div>
+
+                                        <div class="min-w-0">
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <div class="text-sm font-semibold text-slate-900">
+                                                    Complete your user profile
+                                                </div>
+
+                                                <span class="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
+                                                    Profile Requirement
+                                                </span>
+                                            </div>
+
+                                            <p class="mt-1 text-xs leading-5 text-slate-600">
+                                                Some organization workflows depend on your personal profile details. Complete your profile to avoid delays in approvals and submissions.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <a href="{{ route('org.profile.edit') }}"
+                                    class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-orange-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-orange-700 sm:w-auto">
+                                        Open Profile
+                                        <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
+
+                        @unless($hasTasks)
+                            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                                        <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                                    </div>
+
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-900">
+                                            No urgent workflow actions right now
+                                        </div>
+
+                                        <p class="mt-1 text-xs leading-5 text-slate-600">
+                                            You are all caught up. You can still review your organization profile or check the projects module.
+                                        </p>
+
+                                        <div class="mt-3 flex flex-wrap gap-2">
+                                            <a href="{{ route('org.organization-info.show') }}"
+                                            class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700">
+                                                Open Organization
+                                                <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                            </a>
+
+                                            <a href="{{ route('org.projects.index') }}"
+                                            class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50">
+                                                Open Projects
+                                                <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endunless
+
+                    </div>
                 </div>
-
-                {{-- ACTION --}}
-                <a href="{{ $task->link }}"
-                   class="text-[11px] px-3 py-1.5 rounded-md font-semibold text-white
-                   {{ $color === 'rose' ? 'bg-rose-600 hover:bg-rose-700' :
-                      ($color === 'amber' ? 'bg-amber-600 hover:bg-amber-700' :
-                      'bg-emerald-600 hover:bg-emerald-700') }}">
-                    
-                    @if($isApproval)
-                        Review
-                    @elseif($isRevision)
-                        Fix
-                    @else
-                        Open
-                    @endif
-
-                </a>
-
-            </div>
-
-            @endforeach
-
-        @endforeach
-
-
-        {{-- EMPTY --}}
-        @if($pendingTasks->count() === 0)
-        <div class="px-5 py-10 text-center">
-
-            <i data-lucide="check-circle" class="w-6 h-6 text-emerald-400 mx-auto mb-2"></i>
-
-            <div class="text-sm font-semibold text-slate-700">
-                You're all caught up
-            </div>
-
-            <div class="text-xs text-slate-500">
-                No pending tasks.
-            </div>
-
-        </div>
-        @endif
-
-    </div>
-
-</div>
