@@ -1,5 +1,7 @@
 <div class="w-full rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-white shadow-sm">
-
+@php
+    $canPrintCombinedProposal = $proposalDoc && $proposalDoc->status === 'approved_by_sacdev';
+@endphp
     <div class="p-4 space-y-4">
 
         {{-- HEADER --}}
@@ -87,29 +89,29 @@
 
 
             {{-- PRINT ACTIONS --}}
-            <div class="flex gap-2">
+            @if($canPrintCombinedProposal)
+                <div class="flex gap-2">
 
-                @if($combined['proposal_print_url'])
-                <a href="{{ $combined['proposal_print_url'] }}"
-                   target="_blank"
-                   class="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-medium text-slate-700
-                          hover:bg-slate-50 transition">
-                    <i data-lucide="printer" class="h-3 w-3"></i>
-                    Proposal
-                </a>
-                @endif
+                    @if($combined['proposal_print_url'])
+                        <a href="{{ $combined['proposal_print_url'] }}"
+                        target="_blank"
+                        class="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-medium text-slate-700 hover:bg-slate-50 transition">
+                            <i data-lucide="printer" class="h-3 w-3"></i>
+                            Proposal
+                        </a>
+                    @endif
 
-                @if($combined['budget_print_url'])
-                <a href="{{ $combined['budget_print_url'] }}"
-                   target="_blank"
-                   class="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-medium text-slate-700
-                          hover:bg-slate-50 transition">
-                    <i data-lucide="printer" class="h-3 w-3"></i>
-                    Budget
-                </a>
-                @endif
+                    @if($combined['budget_print_url'])
+                        <a href="{{ $combined['budget_print_url'] }}"
+                        target="_blank"
+                        class="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-medium text-slate-700 hover:bg-slate-50 transition">
+                            <i data-lucide="printer" class="h-3 w-3"></i>
+                            Budget
+                        </a>
+                    @endif
 
-            </div>
+                </div>
+            @endif
 
 
             {{-- PACKETS --}}

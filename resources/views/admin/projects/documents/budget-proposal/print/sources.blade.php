@@ -39,7 +39,7 @@
             </td>
 
             <td style="border:1px dotted #1f6fb2; text-align:right;">
-                {{ number_format($budget->counterpart_amount_per_pax ?? 0, 2) }}
+                ₱ {{ number_format($budget->counterpart_amount_per_pax ?? 0, 2) }}
             </td>
 
             <td style="border:1px dotted #1f6fb2; text-align:center;">
@@ -47,7 +47,7 @@
             </td>
 
             <td style="border:1px dotted #1f6fb2; text-align:right;">
-                {{ number_format($budget->counterpart_total ?? 0, 2) }}
+                ₱ {{ number_format($budget->counterpart_total ?? 0, 2) }}
             </td>
         </tr>
 
@@ -61,7 +61,7 @@
             <td style="border:1px dotted #1f6fb2;"></td>
 
             <td style="border:1px dotted #1f6fb2; text-align:right;">
-                {{ number_format($budget->pta_amount ?? 0, 2) }}
+                ₱ {{ number_format($budget->pta_amount ?? 0, 2) }}
             </td>
         </tr>
 
@@ -78,7 +78,7 @@
             <td style="border:1px dotted #1f6fb2;"></td>
 
             <td style="border:1px dotted #1f6fb2; text-align:right;">
-                {{ number_format($budget->raised_funds ?? 0, 2) }}
+                ₱ {{ number_format($budget->raised_funds ?? 0, 2) }}
             </td>
         </tr>
 
@@ -95,7 +95,7 @@
             <td style="border:1px solid #1f6fb2;"></td>
 
             <td style="border:1px solid #1f6fb2; text-align:right;">
-                {{ number_format($orgTotal, 2) }}
+                ₱ {{ number_format($orgTotal, 2) }}
             </td>
         </tr>
 

@@ -53,18 +53,18 @@ $sections = [
         <td style="border:1px dotted #1f6fb2;">
             {{ $item->particulars ?? '' }}
         </td>
-        <td style="border:1px dotted #1f6fb2; text-align:right;">
-            {{ $item ? number_format($item->price_per_unit, 2) : '' }}
-        </td>
-        <td style="border:1px dotted #1f6fb2; text-align:right;">
-            {{ $item ? number_format($item->amount, 2) : '' }}
-        </td>
+    <td style="border:1px dotted #1f6fb2; text-align:right;">
+        {{ $item ? '₱ ' . number_format($item->price_per_unit, 2) : '' }}
+    </td>
 
+    <td style="border:1px dotted #1f6fb2; text-align:right;">
+        {{ $item ? '₱ ' . number_format($item->amount, 2) : '' }}
+    </td>
         {{-- SUBTOTAL COLUMN --}}
         @if($i === 0)
         <td rowspan="{{ $rowCount }}"
             style="border:1px solid #1f6fb2; text-align:right; vertical-align:middle; font-weight:bold;">
-            {{ number_format($subtotal, 2) }}
+            ₱ {{ number_format($subtotal, 2) }}
         </td>
         @endif
     </tr>
@@ -79,7 +79,7 @@ $sections = [
             Grand Total:
         </td>
         <td style="padding:5px; text-align:right;">
-            {{ number_format($budget->total_expenses, 2) }}
+            ₱ {{ number_format($budget->total_expenses, 2) }}
         </td>
     </tr>
 
