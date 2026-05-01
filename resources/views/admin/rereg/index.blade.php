@@ -18,7 +18,7 @@
                     {{-- LEFT --}}
                     <div>
                         <h1 class="text-xl md:text-2xl font-semibold text-slate-900 flex items-center gap-2">
-                            <i data-lucide="building-2" class="w-5 h-5 text-slate-400"></i>
+                            <i data-lucide="clipboard-list" class="w-5 h-5 text-slate-400"></i>
                             Select Organization
                         </h1>
                         <p class="mt-1 text-xs text-slate-500 max-w-xl">

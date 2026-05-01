@@ -87,10 +87,10 @@ class NotificationController extends Controller
             ->take(5)
             ->get();
 
-        return view('partials.notifications', compact(
-            'unreadCount',
-            'recentNotifications'
-        ));
+        return response()->json([
+            'unread_count' => $unreadCount,
+            'html' => view('partials.notifications', compact('recentNotifications'))->render(),
+        ]);
     }
 
 

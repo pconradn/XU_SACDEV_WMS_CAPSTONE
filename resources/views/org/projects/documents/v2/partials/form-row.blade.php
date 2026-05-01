@@ -20,31 +20,59 @@
     $phase = $form['phase'] ?? 'other';
 
     $phaseMap = [
-        'pre_implementation' => ['icon' => 'file-text', 'color' => 'text-blue-600', 'label' => 'Pre Implementation'],
-        'off_campus' => ['icon' => 'map-pin', 'color' => 'text-purple-600', 'label' => 'Off Campus'],
-        'other' => ['icon' => 'layers', 'color' => 'text-slate-500', 'label' => 'Other'],
-        'post_implementation' => ['icon' => 'clipboard-check', 'color' => 'text-purple-600', 'label' => 'Post Implementation'],
-        'notice' => ['icon' => 'alert-triangle', 'color' => 'text-amber-600', 'label' => 'Notice'],
+        'pre_implementation' => [
+            'icon' => 'file-text',
+            'color' => 'text-blue-600',
+            'label' => 'Pre Implementation',
+        ],
+        'off_campus' => [
+            'icon' => 'map-pin',
+            'color' => 'text-purple-600',
+            'label' => 'Off Campus',
+        ],
+        'other' => [
+            'icon' => 'layers',
+            'color' => 'text-slate-500',
+            'label' => 'Other',
+        ],
+        'post_implementation' => [
+            'icon' => 'clipboard-check',
+            'color' => 'text-emerald-600',
+            'label' => 'Post Implementation',
+        ],
+        'notice' => [
+            'icon' => 'alert-triangle',
+            'color' => 'text-amber-600',
+            'label' => 'Notice',
+        ],
     ];
 
     $phaseStyle = $phaseMap[$phase] ?? $phaseMap['other'];
 
+    $pendingSignature = $orderedSignatures->first(fn($sig) => ($sig->status ?? null) !== 'signed');
+
+    $isCurrentApprover = $pendingSignature
+        && (int) ($pendingSignature->user_id ?? 0) === (int) auth()->id();
+
+    $pendingApprover = $isCurrentApprover
+        ? 'You'
+        : ($form['waiting_for']
+            ?? ($pendingSignature ? ucfirst(str_replace('_', ' ', $pendingSignature->role)) : null));
+
     $needsAttention =
+        $isCurrentApprover ||
         str_contains($statusLabel, 'returned') ||
         str_contains($statusLabel, 'pending') ||
         str_contains($statusLabel, 'action');
-
-    $pendingSignature = $orderedSignatures->first(fn($sig) => ($sig->status ?? null) !== 'signed');
-
-    $pendingApprover = $form['waiting_for']
-        ?? ($pendingSignature ? ucfirst(str_replace('_', ' ', $pendingSignature->role)) : null);
 
     $signedCount = $orderedSignatures->where('status', 'signed')->count();
     $totalSignatures = $orderedSignatures->count();
 
     $rowTone = 'slate';
 
-    if (str_contains($statusLabel, 'approved') || str_contains($statusLabel, 'completed')) {
+    if ($isCurrentApprover) {
+        $rowTone = 'amber';
+    } elseif (str_contains($statusLabel, 'approved') || str_contains($statusLabel, 'completed')) {
         $rowTone = 'emerald';
     } elseif (str_contains($statusLabel, 'pending') || str_contains($statusLabel, 'review')) {
         $rowTone = 'blue';
@@ -53,6 +81,7 @@
     }
 
     $toneStyles = [
+        'amber' => 'border-amber-300 bg-gradient-to-b from-amber-50 to-white ring-1 ring-amber-200',
         'emerald' => 'border-emerald-200 bg-gradient-to-b from-emerald-50/70 to-white',
         'blue' => 'border-blue-200 bg-gradient-to-b from-blue-50/70 to-white',
         'rose' => 'border-rose-200 bg-gradient-to-b from-rose-50/70 to-white',
@@ -60,29 +89,37 @@
     ];
 
     $rowClass = $toneStyles[$rowTone];
+
+    $isNotice = in_array($form['code'] ?? '', [
+        'POSTPONEMENT_NOTICE',
+        'CANCELLATION_NOTICE',
+    ]);
 @endphp
 
 <div class="w-full">
     <div class="rounded-2xl border shadow-sm transition hover:shadow-md {{ $rowClass }}">
-        <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-3">
+        <div class="grid grid-cols-1 gap-4 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
 
-            {{-- LEFT --}}
-            <div class="min-w-0 space-y-1">
+            <div class="min-w-0 space-y-1.5">
 
-                {{-- TITLE + ICON BADGES --}}
                 <div class="flex items-center gap-2 flex-wrap">
 
                     <div class="text-sm font-semibold text-slate-900 truncate">
                         {{ $form['name'] }}
                     </div>
 
-                    {{-- PHASE ICON BADGE --}}
+                    @if($isCurrentApprover)
+                        <span class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                            <i data-lucide="user-check" class="w-3 h-3"></i>
+                            Your Review
+                        </span>
+                    @endif
+
                     <span title="{{ $phaseStyle['label'] }}"
-                          class="inline-flex items-center justify-center w-5 h-5 rounded-md bg-slate-100 border border-slate-200">
+                          class="inline-flex items-center justify-center w-5 h-5 rounded-md bg-white border border-slate-200">
                         <i data-lucide="{{ $phaseStyle['icon'] }}" class="w-3.5 h-3.5 {{ $phaseStyle['color'] }}"></i>
                     </span>
 
-                    {{-- REQUIRED ICON --}}
                     @if($form['is_required'] ?? false)
                         <span title="Required for completion"
                               class="inline-flex items-center justify-center w-5 h-5 rounded-md bg-amber-50 border border-amber-200">
@@ -90,17 +127,16 @@
                         </span>
                     @endif
 
-                    {{-- ACTION REQUIRED --}}
                     @if($needsAttention)
-                        <span title="Needs your action"
-                              class="inline-flex items-center justify-center w-5 h-5 rounded-md bg-rose-50 border border-rose-200">
-                            <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-rose-600"></i>
+                        <span title="{{ $isCurrentApprover ? 'Waiting for your review' : 'Needs attention' }}"
+                              class="inline-flex items-center justify-center w-5 h-5 rounded-md {{ $isCurrentApprover ? 'bg-amber-100 border border-amber-200' : 'bg-rose-50 border border-rose-200' }}">
+                            <i data-lucide="{{ $isCurrentApprover ? 'circle-alert' : 'alert-circle' }}"
+                               class="w-3.5 h-3.5 {{ $isCurrentApprover ? 'text-amber-700' : 'text-rose-600' }}"></i>
                         </span>
                     @endif
 
                 </div>
 
-                {{-- META --}}
                 <div class="flex items-center flex-wrap gap-2 text-[11px] text-slate-500">
 
                     <span class="font-medium text-slate-700">
@@ -111,7 +147,7 @@
                         <span>•</span>
                         <span>
                             Waiting:
-                            <span class="font-medium text-slate-800">
+                            <span class="font-medium {{ $isCurrentApprover ? 'text-amber-800' : 'text-slate-800' }}">
                                 {{ $pendingApprover }}
                             </span>
                         </span>
@@ -126,16 +162,22 @@
 
                 </div>
 
-                {{-- SIGNATURE PROGRESS --}}
                 @if($totalSignatures > 0)
                     <div class="flex items-center gap-2 pt-1">
 
                         <div class="flex items-center gap-1">
                             @foreach($orderedSignatures as $sig)
-                                <div class="w-2 h-2 rounded-full
-                                    {{ $sig->status === 'signed'
-                                        ? 'bg-emerald-500'
-                                        : 'bg-slate-300' }}">
+                                @php
+                                    $isPendingSig = $pendingSignature && (int) $pendingSignature->id === (int) $sig->id;
+                                @endphp
+
+                                <div title="{{ ucfirst(str_replace('_', ' ', $sig->role)) }}"
+                                     class="w-2 h-2 rounded-full
+                                        {{ $sig->status === 'signed'
+                                            ? 'bg-emerald-500'
+                                            : ($isPendingSig && $isCurrentApprover
+                                                ? 'bg-amber-500'
+                                                : 'bg-slate-300') }}">
                                 </div>
                             @endforeach
                         </div>
@@ -149,8 +191,7 @@
 
             </div>
 
-            {{-- ACTIONS --}}
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2 sm:justify-end">
 
                 @if($form['can_create'])
                     <a href="{{ $form['create_url'] }}"
@@ -161,8 +202,11 @@
 
                 @if($form['can_review'])
                     <a href="{{ $form['view_url'] }}"
-                       class="px-3 py-1.5 text-[11px] font-semibold rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition">
-                        Review
+                       class="px-3 py-1.5 text-[11px] font-semibold rounded-xl border transition
+                              {{ $isCurrentApprover
+                                    ? 'border-amber-300 bg-amber-500 text-white hover:bg-amber-600'
+                                    : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}">
+                        {{ $isCurrentApprover ? 'Review Now' : 'Review' }}
                     </a>
                 @endif
 
@@ -173,13 +217,6 @@
                     </a>
                 @endif
 
-                @php
-                    $isNotice = in_array($form['code'] ?? '', [
-                        'POSTPONEMENT_NOTICE',
-                        'CANCELLATION_NOTICE'
-                    ]);
-                @endphp
-
                 @if($isNotice && $doc && $doc->status === 'draft')
                     <form method="POST"
                           action="{{ route('org.projects.documents.notices.archive', [$project, $doc]) }}"
@@ -188,7 +225,7 @@
                         @method('DELETE')
 
                         <button type="submit"
-                            class="px-3 py-1.5 text-[11px] font-semibold rounded-xl border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition">
+                                class="px-3 py-1.5 text-[11px] font-semibold rounded-xl border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition">
                             Cancel
                         </button>
                     </form>

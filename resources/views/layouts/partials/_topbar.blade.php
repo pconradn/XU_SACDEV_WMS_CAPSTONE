@@ -157,15 +157,34 @@
                     <div id="notif-wrapper"
                         x-data="{
                             open: false,
+
                             load() {
                                 fetch('{{ route('notifications.partial') }}')
-                                    .then(res => res.text())
-                                    .then(html => {
-                                        let wrapper = document.getElementById('notif-wrapper')
-                                        if (wrapper) {
-                                            wrapper.innerHTML = html
+                                    .then(res => res.json())
+                                    .then(data => {
+                                        const count = document.getElementById('notif-count')
+                                        const unreadText = document.getElementById('notif-unread-text')
+                                        const list = document.getElementById('notif-list')
+
+                                        if (count) {
+                                            count.textContent = data.unread_count > 99 ? '99+' : data.unread_count
+
+                                            if (data.unread_count > 0) {
+                                                count.classList.remove('hidden')
+                                            } else {
+                                                count.classList.add('hidden')
+                                            }
+                                        }
+
+                                        if (unreadText) {
+                                            unreadText.textContent = data.unread_count + ' unread'
+                                        }
+
+                                        if (list) {
+                                            list.innerHTML = data.html
                                         }
                                     })
+                                    .catch(() => {})
                             }
                         }"
                         x-init="load(); setInterval(() => load(), 10000)"
@@ -201,7 +220,7 @@
                     <div class="flex items-center justify-between border-b border-slate-800 px-4 py-3">
                         <div>
                             <p class="text-xs font-semibold text-white">Notifications</p>
-                            <p class="text-xs text-slate-400">
+                            <p id="notif-unread-text" class="text-xs text-slate-400">
                                 {{ $unreadCount }} unread
                             </p>
                         </div>
