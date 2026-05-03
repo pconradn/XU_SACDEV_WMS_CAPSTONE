@@ -236,37 +236,51 @@ class AdminProjectDocumentController extends Controller
 
             $doc = $form['document'];
 
-            $isRequired = in_array($form['code'], $requiredFormCodes);
-            $isSubmitted = $doc !== null;
-            $isApproved = $doc && $doc->status === 'approved_by_sacdev';
+            $isRequired = in_array($form['code'], $requiredFormCodes, true);
 
-            $isActionRequired = $form['is_pending_for_me'];
+            $status = $doc?->status;
 
+            $isStarted = $doc !== null;
 
-            if ($isActionRequired || ($doc && $doc->status === 'returned')) {
+            $isDraft = $status === 'draft';
+
+            $isReturned = in_array($status, [
+                'returned',
+                'returned_by_moderator',
+                'returned_by_sacdev',
+            ], true);
+
+            $isSubmitted = in_array($status, [
+                'submitted',
+                'submitted_to_moderator',
+                'submitted_to_sacdev',
+                'forwarded_to_sacdev',
+            ], true);
+
+            $isApproved = $status === 'approved_by_sacdev';
+
+            $isActionRequired = $form['is_pending_for_me'] || $isReturned;
+
+            if ($isActionRequired) {
                 $documentsGrouped['action_required']->push($form);
                 continue;
             }
 
-    
             if ($isApproved) {
                 $documentsGrouped['approved']->push($form);
                 continue;
             }
 
-        
-            if ($isRequired && !$isSubmitted) {
+            if ($isRequired && !$isStarted) {
                 $documentsGrouped['required']->push($form);
                 continue;
             }
 
-         
             if (!$isRequired && $isSubmitted) {
                 $documentsGrouped['submitted_optional']->push($form);
                 continue;
             }
 
-          
             $documentsGrouped['others']->push($form);
         }
 
@@ -520,7 +534,7 @@ class AdminProjectDocumentController extends Controller
         $assignment->user->notify(new ReregActionNotification([
             'title' => 'Project Completed',
             'message' => 'Your project "' . $project->title . '" has been marked as completed by SACDEV.',
-            'route' => route('org.projects.documents.hub', $project),
+            'route' => route('org.projects.documents.hub', $project, false),
             'meta' => [
                 'project_id' => $project->id,
                 'type' => 'project_completed'
@@ -1355,16 +1369,19 @@ class AdminProjectDocumentController extends Controller
         }
 
         InAppNotifier::notifyOnce($assignment->user, [
-            'title' => 'Project Document Update',
-            'message' => $message,
-            'route' => $this->resolveOrgDocumentRoute($document),
-            'dedupe_key' => 'doc_'.$document->id.'_status_update',
-            'meta' => [
+            'title'        => 'Project Document Update',
+            'message'      => $message,
+            'org_id'       => $project->organization_id,
+            'target_sy_id' => $project->school_year_id,
+            'route'        => $this->resolveOrgDocumentRoute($document),
+            'dedupe_key'   => 'doc_'.$document->id.'_status_update',
+            'meta'         => [
                 'document_id' => $document->id,
                 'form_type'   => $document->formType->code,
-                'project_id'  => $project->id
-            ]
+                'project_id'  => $project->id,
+            ],
         ]);
+        
     }
 
     public function retract(Project $project, $formCode)
@@ -1532,7 +1549,7 @@ class AdminProjectDocumentController extends Controller
 
         $routeName = $map[$document->formType->code] ?? 'org.projects.documents.hub';
 
-        return route($routeName, $document->project);
+        return route($routeName, $document->project, false);
     }
 
 

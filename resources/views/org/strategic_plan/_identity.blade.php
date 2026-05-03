@@ -233,7 +233,7 @@
     <div class="sticky bottom-0 bg-gradient-to-r from-white to-slate-50 border-t border-slate-200 px-5 py-4 flex justify-between items-center">
 
         <div class="text-[11px] text-slate-400">
-            Changes are saved only when submitted
+            Changes are saved only when Save Profile is clicked.
         </div>
 
         <button type="submit"

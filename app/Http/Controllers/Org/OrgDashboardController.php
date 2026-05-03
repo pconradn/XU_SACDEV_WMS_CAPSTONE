@@ -45,6 +45,13 @@ class OrgDashboardController extends Controller
         $currentMembership = $memberships->firstWhere('organization_id', $currentOrgId)
             ?? $memberships->first();
 
+        if ($currentMembership) {
+            $request->session()->put('active_org_id', $currentMembership->organization_id);
+        } else {
+            $request->session()->forget('active_org_id');
+        }
+
+
         $currentOrg = $currentMembership?->organization;
 
         $roles = $currentOrg
@@ -69,11 +76,35 @@ class OrgDashboardController extends Controller
         $pendingCount = $pendingTasks->count();
         $roles = $data['roles'];
 
+        $pendingApprovalCount = $pendingTasks
+            ->where('category', 'approval')
+            ->count();
+
+        $projectHeadPendingCount = $pendingTasks
+            ->where('category', '!=', 'rereg')
+            ->where('category', '!=', 'approval')
+            ->count();
+
+        $projectsWithoutHeadCount = 0;
+
+        if ($currentOrg) {
+            $projectsWithoutHeadCount = Project::query()
+                ->where('organization_id', $currentOrg->id)
+                ->where('school_year_id', $selectedSyId)
+                ->whereDoesntHave('assignments', function ($q) {
+                    $q->whereNull('archived_at')
+                        ->where('assignment_role', 'project_head');
+                })
+                ->count();
+        }
 
         return view('portals.partials._org_dashboard_pending_tasks', compact(
             'pendingTasks',
             'pendingCount',
-            'roles'
+            'roles',
+            'projectsWithoutHeadCount',
+            'projectHeadPendingCount',
+            'pendingApprovalCount',
         ));
     }
 

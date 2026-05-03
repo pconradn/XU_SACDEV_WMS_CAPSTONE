@@ -76,9 +76,23 @@
     </div>
 
     {{-- ================= B3 ================= --}}
-    @php $f = $forms['b3']; @endphp
-    <div class="group rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-5 shadow-sm transition hover:border-slate-300 hover:bg-slate-50/80">
+    @php
+        $f = $forms['b3'];
 
+        $b3Status = $f['submission']->status ?? $f['status'] ?? null;
+
+        $b3Returned = in_array($b3Status, [
+            'returned',
+            'returned_by_moderator',
+            'returned_by_sacdev',
+        ], true);
+    @endphp
+
+    <div class="group rounded-2xl border p-5 shadow-sm transition
+        {{ $b3Returned
+            ? 'border-rose-200 bg-gradient-to-b from-rose-50 to-white hover:border-rose-300 hover:bg-rose-50/80'
+            : 'border-slate-200 bg-gradient-to-b from-slate-50 to-white hover:border-slate-300 hover:bg-slate-50/80'
+        }}">
         <div class="flex h-full flex-col justify-between gap-4 sm:flex-row sm:items-start">
 
             <div class="min-w-0 flex-1 space-y-4">

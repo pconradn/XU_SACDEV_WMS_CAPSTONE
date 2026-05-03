@@ -18,6 +18,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Support\Audit;
+use Illuminate\Support\Facades\Validator;
 
 class BudgetProposalController extends BaseProjectDocumentController
 {
@@ -100,16 +101,7 @@ class BudgetProposalController extends BaseProjectDocumentController
             ])->withInput();
         }
 
-        if ($action === 'submit') {
 
-            $request->validate([
-                'counterpart_amount_per_pax' => ['required','numeric','min:0'],
-                'counterpart_pax'            => ['required','numeric','min:0'],
-                'pta_amount'                 => ['nullable','numeric','min:0'],
-                'raised_funds'               => ['nullable','numeric','min:0'],
-            ]);
-
-        }
 
 
 
@@ -120,14 +112,11 @@ class BudgetProposalController extends BaseProjectDocumentController
 
         DB::transaction(function () use ($request, $document) {
 
-
             $budget = $this->storeBudgetMeta($request, $document);
 
             $this->storeBudgetItems($request, $budget);
 
             $this->recalculateBudgetTotals($budget);
-             //dd($budget->fresh());
-    
 
             if (!$document->edit_mode) {
                 $this->resetApprovalsAfterEdit($document);
@@ -140,6 +129,21 @@ class BudgetProposalController extends BaseProjectDocumentController
         }
 
         if ($action === 'submit') {
+            $validator = Validator::make($request->all(), [
+                'counterpart_amount_per_pax' => ['required', 'numeric', 'min:0'],
+                'counterpart_pax'            => ['required', 'numeric', 'min:0'],
+                'pta_amount'                 => ['nullable', 'numeric', 'min:0'],
+                'raised_funds'               => ['nullable', 'numeric', 'min:0'],
+            ]);
+
+            if ($validator->fails()) {
+                return redirect()
+                    ->route('org.projects.documents.budget-proposal.create', $project)
+                    ->withErrors($validator)
+                    ->withInput()
+                    ->with('warning', 'Budget proposal was saved as draft, but some required fields must be completed before submission.');
+            }
+
             return $this->submit($project);
         }
 

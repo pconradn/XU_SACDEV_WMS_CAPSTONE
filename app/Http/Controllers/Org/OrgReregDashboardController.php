@@ -390,7 +390,8 @@ class OrgReregDashboardController extends Controller
 
             // returned
             'returned',
-            'returned_by_moderator' => [
+            'returned_by_moderator',
+            'returned_by_sacdev' => [
                 'text' => 'Returned',
                 'dot'  => 'bg-rose-500',
             ],

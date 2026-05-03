@@ -116,8 +116,8 @@
 
                     {{-- ACTION BUTTONS --}}
                     <div class="flex flex-wrap gap-2 xl:justify-end">
-                        @include('partials.timeline_remarks._timeline_button')
-                        @include('partials.timeline_remarks._remarks_button', [
+                        @include('admin.strategic_plans.partials._timeline')
+                        @include('org.strategic_plan.partials._remarks', [
                             'submission' => $submission
                         ])
                     </div>

@@ -17,6 +17,12 @@
     $doc = $form['document'] ?? null;
 
     $statusLabel = strtolower($form['status_label'] ?? '');
+
+    $hasReturnRemarks = $doc && filled($doc->remarks ?? null);
+
+    $isReturned = str_contains($statusLabel, 'returned')
+        || str_contains($statusLabel, 'rejected')
+        || $hasReturnRemarks;
     $phase = $form['phase'] ?? 'other';
 
     $phaseMap = [
@@ -61,7 +67,7 @@
 
     $needsAttention =
         $isCurrentApprover ||
-        str_contains($statusLabel, 'returned') ||
+        $isReturned ||
         str_contains($statusLabel, 'pending') ||
         str_contains($statusLabel, 'action');
 
@@ -76,7 +82,7 @@
         $rowTone = 'emerald';
     } elseif (str_contains($statusLabel, 'pending') || str_contains($statusLabel, 'review')) {
         $rowTone = 'blue';
-    } elseif (str_contains($statusLabel, 'returned') || str_contains($statusLabel, 'rejected')) {
+    } elseif ($isReturned) {
         $rowTone = 'rose';
     }
 
@@ -132,6 +138,12 @@
                               class="inline-flex items-center justify-center w-5 h-5 rounded-md {{ $isCurrentApprover ? 'bg-amber-100 border border-amber-200' : 'bg-rose-50 border border-rose-200' }}">
                             <i data-lucide="{{ $isCurrentApprover ? 'circle-alert' : 'alert-circle' }}"
                                class="w-3.5 h-3.5 {{ $isCurrentApprover ? 'text-amber-700' : 'text-rose-600' }}"></i>
+                        </span>
+                    @endif
+                    @if($isReturned)
+                        <span class="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
+                            <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                            Returned
                         </span>
                     @endif
 

@@ -663,6 +663,8 @@ class StrategicPlanController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
+
+
             if ($resp = $this->assertNotApproved($submission)) {
                 return $resp;
             }
@@ -677,17 +679,19 @@ class StrategicPlanController extends Controller
 
                 $file = $request->file('logo');
 
+                $oldLogoPath = $submission->logo_path;
+
                 $filename = 'logo.' . $file->getClientOriginalExtension();
+
+                if ($oldLogoPath && Storage::disk('public')->exists($oldLogoPath)) {
+                    Storage::disk('public')->delete($oldLogoPath);
+                }
 
                 $path = $file->storeAs(
                     "strategic-plans/{$orgId}/{$targetSyId}",
                     $filename,
                     'public'
                 );
-
-                if ($submission->logo_path && Storage::disk('public')->exists($submission->logo_path)) {
-                    Storage::disk('public')->delete($submission->logo_path);
-                }
 
                 $submission->logo_path = $path;
                 $submission->logo_original_name = $file->getClientOriginalName();
@@ -702,6 +706,8 @@ class StrategicPlanController extends Controller
                 'vision'      => $validated['vision'],
                 'submitted_by_user_id' => $submission->submitted_by_user_id ?: $userId,
             ]);
+
+
 
             if ($wasReset) {
                 return back()->with('warning', 'Changes saved. Submission has been reset to draft and requires resubmission.');

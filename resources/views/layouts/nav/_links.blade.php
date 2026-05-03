@@ -187,16 +187,19 @@ if ($user && $activeOrgId && $syId) {
         );
     }
 
-    $orgRole = OrgMembership::query()
+    $orgRoles = OrgMembership::query()
         ->where('user_id', $user->id)
+        ->where('organization_id', $activeOrgId)
         ->where('school_year_id', $syId)
         ->whereNull('archived_at')
-        ->value('role');
+        ->pluck('role')
+        ->unique()
+        ->values();
 
-    $isPresident = ($orgRole === 'president');
-    $isModerator = ($orgRole === 'moderator');
-    $isTreasurer = ($orgRole === 'treasurer');
-    $isFinance_Officer = ($orgRole === 'finance_officer');
+    $isPresident = $orgRoles->contains('president');
+    $isModerator = $orgRoles->contains('moderator');
+    $isTreasurer = $orgRoles->contains('treasurer');
+    $isFinance_Officer = $orgRoles->contains('finance_officer');
 
     $isProjectHead = ProjectAssignment::query()
         ->where('user_id', $user->id)
@@ -217,15 +220,17 @@ if ($user && $activeOrgId && $syId) {
     }
 
 
-
- 
-    if ($isModerator && !$orgSyExists) {
-
+    if (($isPresident || $isModerator) && !$orgSyExists) {
         $rereg = [];
-        $ops = [];
 
         if (Route::has('org.rereg.index')) {
-            $rereg[] = $item('Re-Registration Hub', route('org.rereg.index'), ['org.rereg.*']);
+            $rereg[] = $item(
+                'Re-Registration Hub',
+                route('org.rereg.index'),
+                ['org.rereg.*'],
+                null,
+                'clipboard'
+            );
         }
 
         if ($rereg) {
@@ -235,19 +240,12 @@ if ($user && $activeOrgId && $syId) {
                 'icon' => 'clipboard'
             ];
         }
-
     }
+ 
+
     if ($isPresident){
 
-        $rereg = [];           
         $ops = [];
-
-        if(!$orgSyExists){
-            if (Route::has('org.rereg.index')) {
-                $rereg[] = $item('Re-Registration Hub', route('org.rereg.index'), ['org.rereg.*']);
-            }
-        }
-
 
         if (Route::has('org.projects.index')) {
             $ops[] = $item('Manage Projects', route('org.projects.index'), ['org.projects.*']);
@@ -268,13 +266,7 @@ if ($user && $activeOrgId && $syId) {
 
 
 
-        if ($rereg) {
-            $groups[] = [
-                'title' => 'Re-Registration',
-                'links' => $rereg,
-                'icon' => 'clipboard'
-            ];
-        }
+
 
         if ($ops) {
             $groups[] = [

@@ -132,12 +132,14 @@ class ProjectController extends Controller
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'category' => ['required', 'in:org_dev,student_services,community_involvement'],
         ]);
 
         Project::create([
             'organization_id' => $orgId,
             'school_year_id' => $syId,
-            ...$data,
+            'title' => $data['title'],
+            'category' => $data['category'],
         ]);
 
         return redirect()->route('org.projects.index')
@@ -157,16 +159,23 @@ class ProjectController extends Controller
     {
         ['orgId' => $orgId, 'syId' => $syId] = $this->ctx($request);
 
-        abort_unless($project->organization_id === $orgId && $project->school_year_id === $syId, 404);
+        abort_unless(
+            $project->organization_id === $orgId &&
+            $project->school_year_id === $syId,
+            404
+        );
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'category' => ['nullable', 'string', 'max:255'],
         ]);
+
+        $data['category'] = $data['category'] ?? null;
 
         $project->update($data);
 
         return redirect()->route('org.projects.index')
-            ->with('status', 'Project updated.');
+            ->with('success', 'Project updated.');
     }
 
     public function destroy(Request $request, Project $project)

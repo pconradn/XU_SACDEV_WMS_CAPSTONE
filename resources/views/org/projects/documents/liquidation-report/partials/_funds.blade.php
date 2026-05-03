@@ -311,19 +311,48 @@
 </div>
 
 <script>
+    
 document.querySelectorAll('[data-money]').forEach(input => {
 
+    const clean = (value) => {
+        return value
+            .replace(/,/g, '')
+            .replace(/[^\d.]/g, '')
+            .replace(/(\..*)\./g, '$1');
+    };
+
     const format = (value) => {
-        if (!value) return '';
-        value = value.replace(/,/g, '');
-        if (isNaN(value)) return '';
-        return Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        value = clean(value);
+
+        if (value === '' || value === '.') {
+            return '';
+        }
+
+        const number = Number(value);
+
+        if (Number.isNaN(number)) {
+            return '';
+        }
+
+        return number.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
     };
 
     input.addEventListener('input', e => {
-        let raw = e.target.value.replace(/,/g, '');
-        if (isNaN(raw)) return;
-        e.target.value = format(raw);
+        const cursor = e.target.selectionStart;
+        const oldLength = e.target.value.length;
+
+        let value = clean(e.target.value);
+
+        e.target.value = value;
+
+        const newLength = e.target.value.length;
+        const diff = newLength - oldLength;
+
+        const newCursor = Math.max(0, cursor + diff);
+        e.target.setSelectionRange(newCursor, newCursor);
     });
 
     input.addEventListener('blur', e => {
@@ -331,4 +360,6 @@ document.querySelectorAll('[data-money]').forEach(input => {
     });
 
 });
+
+
 </script>

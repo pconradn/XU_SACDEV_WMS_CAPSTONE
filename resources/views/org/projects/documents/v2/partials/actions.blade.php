@@ -99,6 +99,25 @@
 
         </a>
 
+        <a href="https://drive.google.com/drive/folders/1nUv9Bz1_yQeukGjF4-W7Nr3r_Td328T9?usp=sharing"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center justify-between px-4 py-3 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-white hover:from-blue-100 hover:to-white transition shadow-sm">
+
+                <div class="flex items-center gap-2">
+                    <i data-lucide="folder-open" class="w-4 h-4 text-blue-600"></i>
+
+                    <span class="text-xs font-semibold text-slate-800">
+                        SACDEV Library
+                    </span>
+                </div>
+
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                    Open
+                </span>
+
+            </a>
+
         @if($isProjectHead || $isPresident)
         <a href="{{ route('org.projects.assign-draftees.edit', $project) }}"
         class="flex items-center justify-between px-4 py-3 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-white hover:from-indigo-100 hover:to-white transition shadow-sm">

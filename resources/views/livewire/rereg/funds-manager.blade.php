@@ -108,9 +108,16 @@
                                 inputmode="decimal"
                                 wire:model.live="fixedFundAmounts.{{ $src['type'] }}"
 
+                                x-init="
+                                    let n = parseFloat($el.value.replace(/,/g, ''));
+                                    if (!isNaN(n)) {
+                                        $el.value = n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                    }
+                                "
+
                                 @input="$el.value = $el.value.replace(/[^0-9.]/g, '')"
                                 @blur="
-                                    let n = parseFloat($el.value);
+                                    let n = parseFloat($el.value.replace(/,/g, ''));
                                     if (!isNaN(n)) {
                                         $el.value = n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                                     }
@@ -190,10 +197,17 @@
                                         type="text"
                                         inputmode="decimal"
                                         wire:model.live="otherSources.{{ $index }}.amount"
-                                 
+
+                                        x-init="
+                                            let n = parseFloat($el.value.replace(/,/g, ''));
+                                            if (!isNaN(n)) {
+                                                $el.value = n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                            }
+                                        "
+
                                         @input="$el.value = $el.value.replace(/[^0-9.]/g, '')"
                                         @blur="
-                                            let n = parseFloat($el.value);
+                                            let n = parseFloat($el.value.replace(/,/g, ''));
                                             if (!isNaN(n)) {
                                                 $el.value = n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                                             }

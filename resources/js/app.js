@@ -1,15 +1,8 @@
 import './bootstrap'
 
-import Alpine from 'alpinejs'
-import collapse from '@alpinejs/collapse'
-
 import 'preline'
 
 import { createIcons, icons } from 'lucide'
-
-Alpine.plugin(collapse)
-
-window.Alpine = Alpine
 
 window.lucide = {
     createIcons,
@@ -25,5 +18,3 @@ window.renderLucideIcons = function () {
 document.addEventListener('DOMContentLoaded', () => {
     window.renderLucideIcons()
 })
-
-Alpine.start()

@@ -32,6 +32,7 @@ class RequirePresidentActiveSy
             ->whereNull('archived_at')
             ->where('role', 'president')
             ->exists();
+ 
 
         if (!$isPresident) {
             abort(403, 'Only the President of the ACTIVE school year can access this.');

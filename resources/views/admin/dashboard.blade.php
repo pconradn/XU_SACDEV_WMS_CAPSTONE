@@ -251,9 +251,9 @@
                             "
                             class="p-4"
                         >
-                            <div x-ref="container">
-                                @include('admin.dashboard._project-approvals')
-                            </div>
+                        <div x-ref="container" class="max-h-[500px] overflow-y-auto pr-2">
+                            @include('admin.dashboard._project-approvals')
+                        </div>
                         </div>
                     </div>
 
@@ -287,7 +287,9 @@
                             </div>
 
                             <div class="p-4">
-                                @include('admin.dashboard._pending-cases')
+                                <div class="max-h-[500px] overflow-y-auto pr-2">
+                                    @include('admin.dashboard._pending-cases')
+                                </div>
                             </div>
                         </div>
                     @endif

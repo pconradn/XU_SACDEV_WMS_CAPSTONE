@@ -169,9 +169,12 @@ class DocumentationReportController extends BaseProjectDocumentController
 
         [$data, $clean] = $this->normalizeData($data);
 
-        $document = $this->getOrCreateDocument($project, 'DOCUMENTATION_REPORT');
+        $existingDocument = $this->getDocument($project, 'DOCUMENTATION_REPORT');
 
-        if ($response = $this->checkConflict($request, $document)) {
+        $document = $existingDocument
+            ?: $this->getOrCreateDocument($project, 'DOCUMENTATION_REPORT');
+
+        if ($existingDocument && $response = $this->checkConflict($request, $document)) {
             return $response;
         }
 

@@ -209,13 +209,31 @@
                                     && is_null($a->archived_at)
                                 )?->user?->name;
 
-                            $docs = $p->documents->where('is_active', 1);
-                            $approvedDocs = $docs->where('status', 'approved_by_sacdev')->count();
-                            $totalDocs = $docs->count();
+                                $resolver = app(\App\Services\ProjectFormRequirementResolver::class);
 
-                            $progressPercent = $totalDocs > 0
-                                ? round(($approvedDocs / $totalDocs) * 100)
-                                : 0;
+                                $p->loadMissing('documents.formType');
+
+                                $docs = $p->documents
+                                    ->filter(fn($doc) => (int) ($doc->is_active ?? 0) === 1)
+                                    ->values();
+
+                                $documentsByType = $docs->groupBy('form_type_id');
+
+                                $requiredFormTypes = collect($resolver->resolve($p))
+                                    ->filter()
+                                    ->values();
+
+                                $totalDocs = $requiredFormTypes->count();
+
+                                $approvedDocs = $requiredFormTypes->filter(function ($formType) use ($documentsByType) {
+                                    $doc = $documentsByType->get($formType->id)?->first();
+
+                                    return $doc && $doc->status === 'approved_by_sacdev';
+                                })->count();
+
+                                $progressPercent = $totalDocs > 0
+                                    ? round(($approvedDocs / $totalDocs) * 100)
+                                    : 0;
 
                             $proposalDoc = $p->documents
                                 ->first(fn($d) =>
@@ -330,7 +348,7 @@
 
                                         <div class="flex items-center justify-between text-[11px]">
                                             <span class="font-medium text-slate-600">
-                                                {{ $approvedDocs }} / {{ $totalDocs }} approved
+                                                {{ $approvedDocs }} / {{ $totalDocs }} required approved
                                             </span>
 
                                             <span class="font-semibold text-indigo-700">

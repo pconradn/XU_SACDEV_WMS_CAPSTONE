@@ -66,6 +66,16 @@
                 </p>
             </div>
 
+            @if($isPresident)
+                <button
+                    type="button"
+                    @click="openCreateModal = true"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-700">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    Add Project
+                </button>
+            @endif
+
         </div>
 
         {{-- ================= INSTRUCTIONS ================= --}}
@@ -289,6 +299,33 @@
                                                         <div class="font-semibold text-slate-900 break-words">
                                                             {{ $p->title }}
                                                         </div>
+
+                                                        @php
+                                                            $categoryMap = [
+                                                                'org_dev' => [
+                                                                    'label' => 'Organization Development',
+                                                                    'class' => 'border-amber-200 bg-amber-50 text-amber-700',
+                                                                ],
+                                                                'student_services' => [
+                                                                    'label' => 'Student Services',
+                                                                    'class' => 'border-blue-200 bg-blue-50 text-blue-700',
+                                                                ],
+                                                                'community_involvement' => [
+                                                                    'label' => 'Community Involvement',
+                                                                    'class' => 'border-emerald-200 bg-emerald-50 text-emerald-700',
+                                                                ],
+                                                            ];
+
+                                                            $category = $categoryMap[$p->category ?? ''] ?? null;
+                                                        @endphp
+
+                                                        @if($category)
+                                                            <div class="mt-1">
+                                                                <span class="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold {{ $category['class'] }}">
+                                                                    {{ $category['label'] }}
+                                                                </span>
+                                                            </div>
+                                                        @endif
 
                                                         <div class="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-slate-500">
                                                             <span class="inline-flex items-center gap-1">

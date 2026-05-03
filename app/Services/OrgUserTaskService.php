@@ -261,7 +261,7 @@ class OrgUserTaskService
                 ]);
             }
 
-            if ($isPresident && (!$officers || in_array($officers->status, ['draft', 'returned']))) {
+            if ($isPresident && (!$officers || in_array($officers->status, ['draft', 'returned_by_sacdev']))) {
                 $reregTasks->push((object)[
                     'category' => 'rereg',
                     'state' => 'required',

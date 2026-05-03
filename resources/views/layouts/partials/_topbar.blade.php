@@ -243,6 +243,8 @@
                                     <div class="mt-0.5 h-2.5 w-2.5 rounded-full {{ is_null($notification->read_at) ? 'bg-blue-400' : 'bg-slate-600' }}"></div>
 
                                     <div class="min-w-0 flex-1">
+                                       
+                  
                                         <p class="text-xs font-medium text-slate-100">
                                             {{ data_get($notification->data, 'title', 'Notification') }}
                                         </p>

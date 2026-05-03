@@ -539,14 +539,14 @@ class ProjectProposalController extends BaseProjectDocumentController
             'has_guest_speakers' => ['nullable', 'boolean'],
 
             'objectives' => ['required', 'array'],
-            'objectives.*' => ['required', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'objectives.*' => ['required', 'string',],
 
             'success_indicators' => ['required', 'array'],
-            'success_indicators.*' => ['required', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'success_indicators.*' => ['required', 'string',],
 
             'partners' => ['nullable', 'array'],
-            'partners.*' => ['nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
-            'roles.*' => ['nullable', 'string','regex:/^[\pL\pN\s\.\-\,\(\)\'\"\/]+$/u'],
+            'partners.*' => ['nullable', 'string',],
+            'roles.*' => ['nullable', 'string',],
 
             'guests' => ['nullable', 'array'],
             'guests.*.full_name' => ['nullable', 'string','regex:/^[\pL\s\.\-\,\(\)\'\"]+$/u'],

@@ -132,13 +132,58 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const el = document.getElementById('balance');
         if (el) el.value = formatMoney(balance);
-    }
 
-    function calculateAll() {
+        return balance;
+        }
+
+        function calculateReturns() {
+        const finance = cleanNumber(document.querySelector('input[name="finance_amount"]')?.value);
+        const fundraising = cleanNumber(document.querySelector('input[name="fund_raising_amount"]')?.value);
+        const sacdev = cleanNumber(document.querySelector('input[name="sacdev_amount"]')?.value);
+        const pta = cleanNumber(document.querySelector('input[name="pta_amount"]')?.value);
+
+        const clusterA = finance + fundraising + sacdev;
+        const clusterB = pta;
+
+        const totalFunds = clusterA + clusterB;
+        const balance = cleanNumber(document.getElementById('balance')?.value);
+
+        const clusterAInput = document.getElementById('clusterAReturn');
+        const clusterBInput = document.getElementById('clusterBReturn');
+        const warning = document.getElementById('returnWarning');
+
+        if (!clusterAInput || !clusterBInput) return;
+
+        if (totalFunds <= 0 || balance <= 0) {
+            clusterAInput.value = formatMoney(0);
+            clusterBInput.value = formatMoney(0);
+
+            if (warning && totalFunds <= 0) {
+                warning.classList.remove('hidden');
+            } else if (warning) {
+                warning.classList.add('hidden');
+            }
+
+            return;
+        }
+
+        let clusterAReturn = (clusterA / totalFunds) * balance;
+        let clusterBReturn = balance - clusterAReturn;
+
+        clusterAInput.value = formatMoney(clusterAReturn);
+        clusterBInput.value = formatMoney(clusterBReturn);
+
+        if (warning) {
+            warning.classList.add('hidden');
+        }
+        }
+
+        function calculateAll() {
         calculateExpenses();
         calculateAdvanced();
         calculateBalance();
-    }
+        calculateReturns();
+        }
 
     function renderReceipts() {
         if (!receiptList) return;

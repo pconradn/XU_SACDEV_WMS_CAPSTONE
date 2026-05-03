@@ -109,16 +109,44 @@ body{
     text-align:center;
 }
 
+.print-bar{
+    max-width:800px;
+    margin:0 auto 16px auto;
+    display:flex;
+    justify-content:flex-end;
+}
+
+.print-button{
+    border:1px solid #2f6fb3;
+    background:#2f6fb3;
+    color:#fff;
+    padding:8px 14px;
+    font-size:12px;
+    font-weight:bold;
+    cursor:pointer;
+    border-radius:4px;
+}
+
 @media print{
     *{
         -webkit-print-color-adjust:exact !important;
         print-color-adjust:exact !important;
+    }
+
+    .print-bar{
+        display:none !important;
     }
 }
 </style>
 </head>
 
 <body>
+
+<div class="print-bar">
+    <button type="button" onclick="window.print()" class="print-button">
+        Print Clearance
+    </button>
+</div>
 
 <div class="page">
 

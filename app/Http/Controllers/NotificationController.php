@@ -51,27 +51,57 @@ class NotificationController extends Controller
 
         $data = $notification->data;
 
-        if (!empty($data['org_id']) && !empty($data['target_sy_id'])) {
+        $orgId = data_get($data, 'org_id');
 
-            $allowed = \App\Models\OrgMembership::where('user_id', auth()->id())
-                ->where('organization_id', $data['org_id'])
-                ->where('school_year_id', $data['target_sy_id'])
+        $syId = data_get($data, 'target_sy_id')
+            ?? data_get($data, 'school_year_id')
+            ?? data_get($data, 'target_school_year_id')
+            ?? data_get($data, 'sy_id');
+
+        if (!empty($orgId) && !empty($syId)) {
+            $orgId = (int) $orgId;
+            $syId = (int) $syId;
+
+            $hasMembership = \App\Models\OrgMembership::query()
+                ->where('user_id', auth()->id())
+                ->where('organization_id', $orgId)
+                ->where('school_year_id', $syId)
                 ->whereNull('archived_at')
                 ->exists();
 
-            if (!$allowed) {
+            $hasProjectAssignment = \App\Models\ProjectAssignment::query()
+                ->where('user_id', auth()->id())
+                ->whereNull('archived_at')
+                ->whereHas('project', function ($q) use ($orgId, $syId) {
+                    $q->where('organization_id', $orgId)
+                        ->where('school_year_id', $syId);
+                })
+                ->exists();
+
+            if (!$hasMembership && !$hasProjectAssignment) {
                 abort(403);
             }
 
             session([
-                'active_org_id' => $data['org_id'],
-                'encode_sy_id' => $data['target_sy_id'],
+                'active_org_id' => $orgId,
+                'encode_sy_id' => $syId,
             ]);
+
+            session()->save();
         }
 
         $notification->markAsRead();
 
-        return redirect($data['route'] ?? route('dashboard'));
+        $route = $data['route'] ?? route('dashboard', absolute: false);
+
+        if (is_string($route) && preg_match('/^https?:\/\//i', $route)) {
+            $path = parse_url($route, PHP_URL_PATH) ?: route('dashboard', absolute: false);
+            $query = parse_url($route, PHP_URL_QUERY);
+
+            $route = $query ? $path . '?' . $query : $path;
+        }
+
+        return redirect($route);
     }
 
 

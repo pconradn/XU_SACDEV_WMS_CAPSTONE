@@ -44,6 +44,7 @@ class ProjectHeadAssignmentController extends Controller
             ->get()
             ->pluck('officerEntry')
             ->filter()
+            ->unique('id')
             ->sortBy('full_name')
             ->values();
 

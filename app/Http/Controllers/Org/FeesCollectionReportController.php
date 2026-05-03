@@ -132,8 +132,12 @@ class FeesCollectionReportController extends BaseProjectDocumentController
         }
 
 
-        $document = $this->getOrCreateDocument($project, 'FEES_COLLECTION_REPORT');
-        if ($response = $this->checkConflict($request, $document)) {
+        $existingDocument = $this->getDocument($project, 'FEES_COLLECTION_REPORT');
+
+        $document = $existingDocument
+            ?: $this->getOrCreateDocument($project, 'FEES_COLLECTION_REPORT');
+
+        if ($existingDocument && $response = $this->checkConflict($request, $document)) {
             return $response;
         }
 

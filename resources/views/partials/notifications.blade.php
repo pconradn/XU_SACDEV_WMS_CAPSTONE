@@ -5,6 +5,29 @@
             <div class="mt-0.5 h-2.5 w-2.5 rounded-full {{ is_null($notification->read_at) ? 'bg-blue-400' : 'bg-slate-600' }}"></div>
 
             <div class="min-w-0 flex-1">
+
+@if(config('app.debug'))
+    <div class="mt-1 flex flex-wrap gap-1.5 text-[10px]">
+        <span class="rounded bg-slate-800 px-1.5 py-0.5 text-slate-400">
+            org_id: {{ data_get($notification->data, 'org_id', 'null') }}
+        </span>
+
+        <span class="rounded bg-slate-800 px-1.5 py-0.5 text-slate-400">
+            target_sy_id: {{ data_get($notification->data, 'target_sy_id', 'null') }}
+        </span>
+
+        <span class="rounded bg-slate-800 px-1.5 py-0.5 text-slate-400">
+            school_year_id: {{ data_get($notification->data, 'school_year_id', 'null') }}
+        </span>
+    </div>
+@endif
+
+
+
+
+
+
+
                 <p class="text-xs font-medium text-slate-100">
                     {{ data_get($notification->data, 'title', 'Notification') }}
                 </p>

@@ -159,6 +159,10 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-5">
 
+
+
+
+
             {{-- MEMBERS --}}
             <a href="{{ route('org.organization-members.index') }}"
                class="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
@@ -218,6 +222,39 @@
                     <i data-lucide="arrow-right" class="w-3 h-3"></i>
                 </div>
             </a>
+
+
+
+            {{-- RE-REGISTRATION SUBMISSIONS --}}
+            <a href="{{ route('org.rereg.index') }}"
+            class="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-md">
+
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                        <i data-lucide="file-stack" class="w-5 h-5"></i>
+                    </div>
+
+                    <div class="rounded-full bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700">
+                        Records
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <div class="text-sm font-semibold text-slate-900">
+                        Re-registration Submissions
+                    </div>
+
+                    <div class="mt-1 text-xs leading-5 text-slate-500">
+                        Open submitted re-registration requirements such as the Strategic Plan, Officers List, Moderator Profile, and Constitution.
+                    </div>
+                </div>
+
+                <div class="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
+                    Open Submissions
+                    <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                </div>
+            </a>
+
 
             @if($isPresident)
 

@@ -21,7 +21,34 @@
                 Upload a compiled <span class="font-semibold text-slate-800">PDF file</span> containing photos of the project.
                 Each photo should include a short caption or description explaining the activity shown.
             </div>
+            {{-- TEMPLATE LINK --}}
+            <div class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-start gap-3">
+                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-blue-600 border border-blue-200">
+                            <i data-lucide="file-text" class="w-4 h-4"></i>
+                        </div>
 
+                        <div>
+                            <div class="text-xs font-semibold text-slate-900">
+                                Photo Documentation Template
+                            </div>
+
+                            <p class="mt-1 text-xs leading-5 text-slate-600">
+                                Use this template to compile project photos with captions before exporting the final file as PDF.
+                            </p>
+                        </div>
+                    </div>
+
+                    <a href="https://docs.google.com/document/d/1QZO2QomR_uP9mWqNGEGxmwLuN-lu2CGN/edit?usp=sharing&ouid=106088503696899498438&rtpof=true&sd=true"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:w-auto">
+                        Open Template
+                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                    </a>
+                </div>
+            </div>
 
             {{-- FILE INPUT --}}
             <div>

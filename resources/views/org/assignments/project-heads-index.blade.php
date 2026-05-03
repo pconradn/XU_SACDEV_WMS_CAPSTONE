@@ -1,6 +1,9 @@
 <x-app-layout>
 
-    <div x-data="{ openApproverModal: false }">
+    <div x-data="{ 
+        openApproverModal: false,
+        projectSearch: ''
+    }">
 
     <div class="mx-auto max-w-7xl px-4 py-6 space-y-6">
 
@@ -85,17 +88,37 @@
 
                 <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                     <div class="px-5 py-4 border-b border-slate-100">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="list-todo" class="w-4 h-4 text-slate-500"></i>
-                            <h2 class="text-sm font-semibold text-slate-800">
-                                Project Assignment List
-                            </h2>
-                        </div>
-                        <p class="mt-1 text-xs text-slate-500">
-                            Review each project below and assign or update its designated project head.
-                        </p>
-                    </div>
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="list-todo" class="w-4 h-4 text-slate-500"></i>
+                                    <h2 class="text-sm font-semibold text-slate-800">
+                                        Project Assignment List
+                                    </h2>
+                                </div>
 
+                                <p class="mt-1 text-xs text-slate-500">
+                                    Review each project below and assign or update its designated project head.
+                                </p>
+                            </div>
+
+                            <div class="w-full sm:max-w-xs">
+                                <div class="relative">
+                                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                                    </div>
+
+                                    <input
+                                        type="text"
+                                        x-model.debounce.150ms="projectSearch"
+                                        placeholder="Search projects..."
+                                        class="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="max-h-[720px] overflow-y-auto">
                     @forelse($projects as $p)
                         @php
                             $assignment = $p->assignments
@@ -108,7 +131,11 @@
                             $assignedHead = $user;
                         @endphp
 
-                        <div class="px-5 py-4 border-b last:border-b-0 border-slate-100 hover:bg-slate-50/70 transition">
+                        <div
+                            x-show="'{{ strtolower(addslashes($p->title)) }}'.includes(projectSearch.toLowerCase())"
+                            x-cloak
+                            class="px-5 py-4 border-b last:border-b-0 border-slate-100 hover:bg-slate-50/70 transition"
+                        >
                             <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
                                 {{-- PROJECT INFO --}}
@@ -457,6 +484,7 @@
                             </p>
                         </div>
                     @endforelse
+                    </div>
                 </div>
             </div>
 

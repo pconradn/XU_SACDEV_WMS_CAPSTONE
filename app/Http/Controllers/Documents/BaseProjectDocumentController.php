@@ -163,19 +163,21 @@ abstract class BaseProjectDocumentController extends Controller
         
 
         InAppNotifier::notifyOnce($signature->user, [
-            'title' => 'Document awaiting review',
-            'message' => $document->formType->name .
+            'title'        => 'Document awaiting review',
+            'message'      => $document->formType->name .
                 ' for project "' . $document->project->title . '" requires your approval.',
 
-            'route' => $this->resolveOrgDocumentRoute($document),
+            'org_id'       => $document->project->organization_id,
+            'target_sy_id' => $document->project->school_year_id,
 
-            'dedupe_key' => 'doc_'.$document->id.'_approval_queue',
+            'route'        => $this->resolveOrgDocumentRoute($document),
+            'dedupe_key'   => 'doc_'.$document->id.'_approval_queue',
 
-            'meta' => [
+            'meta'         => [
                 'document_id' => $document->id,
                 'form_type'   => $document->formType->code,
-                'project_id'  => $document->project->id
-            ]
+                'project_id'  => $document->project->id,
+            ],
         ]);
     }
 
@@ -207,18 +209,17 @@ abstract class BaseProjectDocumentController extends Controller
         }
 
         InAppNotifier::notifyOnce($assignment->user, [
-            'title' => 'Project Document Update',
-            'message' => $message,
-
-            'route' => $this->resolveOrgDocumentRoute($document),
-
-            'dedupe_key' => 'doc_'.$document->id.'_status_update',
-
-            'meta' => [
+            'title'        => 'Project Document Update',
+            'message'      => $message,
+            'org_id'       => $project->organization_id,
+            'target_sy_id' => $project->school_year_id,
+            'route'        => $this->resolveOrgDocumentRoute($document),
+            'dedupe_key'   => 'doc_'.$document->id.'_status_update',
+            'meta'         => [
                 'document_id' => $document->id,
                 'form_type'   => $document->formType->code,
-                'project_id'  => $project->id
-            ]
+                'project_id'  => $project->id,
+            ],
         ]);
 
 

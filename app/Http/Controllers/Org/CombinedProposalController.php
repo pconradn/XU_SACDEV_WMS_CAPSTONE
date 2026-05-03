@@ -50,19 +50,20 @@ class CombinedProposalController extends Controller
         $request->merge([
             'from_combined' => true,
         ]);
-        $proposalResponse = $this->proposalController->store($request, $project);
-
-        if ($proposalResponse instanceof \Illuminate\Http\RedirectResponse) {
-            if ($proposalResponse->getSession()->has('errors')) {
-                return $proposalResponse;
-            }
-        }
 
         $budgetResponse = $this->budgetController->store($request, $project);
 
         if ($budgetResponse instanceof \Illuminate\Http\RedirectResponse) {
             if ($budgetResponse->getSession()->has('errors')) {
                 return $budgetResponse;
+            }
+        }
+
+        $proposalResponse = $this->proposalController->store($request, $project);
+
+        if ($proposalResponse instanceof \Illuminate\Http\RedirectResponse) {
+            if ($proposalResponse->getSession()->has('errors')) {
+                return $proposalResponse;
             }
         }
 

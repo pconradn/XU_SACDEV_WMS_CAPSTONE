@@ -41,7 +41,7 @@ class RequireActiveSYAccess
         if ($hasAnyAssignment) {
             return $next($request);
         }
-
+       
         return response()->view('blocked.no-access', [], 403);
     }
 }

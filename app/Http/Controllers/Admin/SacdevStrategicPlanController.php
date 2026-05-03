@@ -290,6 +290,9 @@ class SacdevStrategicPlanController extends Controller
 
                     $project = new Project();
 
+                    $project->category = $planProject->category;
+                    $project->target_date = $planProject->target_date;
+                    $project->budget = $planProject->budget;
                     $project->organization_id = $orgId;
                     $project->school_year_id = $syId;
 
