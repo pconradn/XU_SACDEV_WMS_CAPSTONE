@@ -1,5 +1,8 @@
 
-<div x-data="{ editing: @entangle('editing').live }">
+<div x-data="{ 
+    editing: @entangle('editing').live,
+    confirmingSave: @entangle('confirmingSave').live
+}">
 
 <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 shadow-sm overflow-hidden">
 @php
@@ -305,8 +308,11 @@
 
 </div>
 
-@if($confirmingSave)
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+<div
+    x-show="confirmingSave"
+    x-cloak
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+>
 
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
 
@@ -326,8 +332,12 @@
             </button>
 
             <button
+                type="button"
+                @click="confirmingSave = false"
                 wire:click="saveConfirmed"
-                class="px-3 py-1.5 text-xs rounded-lg bg-amber-500 text-white">
+                wire:loading.attr="disabled"
+                wire:target="saveConfirmed"
+                class="px-3 py-1.5 text-xs rounded-lg bg-amber-500 text-white disabled:opacity-50">
                 Yes, Save
             </button>
         </div>
@@ -335,7 +345,7 @@
     </div>
 
 </div>
-@endif
+
 
 </div>
 

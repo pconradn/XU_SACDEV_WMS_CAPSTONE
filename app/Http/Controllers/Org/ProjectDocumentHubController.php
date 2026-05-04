@@ -472,30 +472,37 @@ class ProjectDocumentHubController extends Controller
             })
             ->values();
                         
-        $documentsMapped = $allFormsFlat->map(function ($form) use ($user, $isProjectHead) {
+            $documentsMapped = $allFormsFlat->map(function ($form) use ($user, $isProjectHead) {
 
-            $doc = $form['document'] ?? null;
-            $status = $doc?->status;
+                $doc = $form['document'] ?? null;
+                $status = strtolower((string) ($doc?->status ?? ''));
+                $statusLabel = strtolower((string) ($form['status_label'] ?? ''));
 
-            $isActionRequired = false;
+                $hasReturnRemarks = $doc && filled($doc->remarks ?? null);
 
-            // ================= PROJECT HEAD =================
-            if ($isProjectHead) {
-                if (in_array($status, ['returned'])) {
+                $isReturned =
+                    str_contains($status, 'returned') ||
+                    str_contains($status, 'rejected') ||
+                    str_contains($statusLabel, 'returned') ||
+                    str_contains($statusLabel, 'rejected') ||
+                    $hasReturnRemarks;
+
+                $isActionRequired = false;
+
+                if ($isProjectHead && $isReturned) {
                     $isActionRequired = true;
                 }
-            }
 
-            // ================= APPROVER =================
-            if (!empty($form['is_waiting_for_me'])) {
-                $isActionRequired = true;
-            }
+                if (!empty($form['is_waiting_for_me'])) {
+                    $isActionRequired = true;
+                }
 
-            return array_merge($form, [
-                'is_action_required' => $isActionRequired,
-                'status_raw' => $status,
-            ]);
-        });
+                return array_merge($form, [
+                    'is_action_required' => $isActionRequired,
+                    'is_returned' => $isReturned,
+                    'status_raw' => $status,
+                ]);
+            });
 
 
 

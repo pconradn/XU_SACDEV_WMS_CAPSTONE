@@ -201,21 +201,24 @@ class StrategicPlanController extends Controller
                 empty($submission->mission) ||
                 empty($submission->vision)
             ) {
-                return redirect()
-                    ->route('org.rereg.b1.edit')
-                    ->with('error', 'Complete organization profile before submitting.');
+            return redirect()
+                ->route('org.rereg.b1.edit')
+                ->with('error', 'Complete organization profile before submitting.')
+                ->with('strategic_plan_step', 1);
             }
 
             if ($submission->projects()->count() === 0) {
-                return redirect()
-                    ->route('org.rereg.b1.edit')
-                    ->with('error', 'Add at least one project before submitting.');
+            return redirect()
+                ->route('org.rereg.b1.edit')
+                ->with('error', 'Add at least one project before submitting.')
+                ->with('strategic_plan_step', 2);
             }
 
             if ($submission->fundSources()->whereNotNull('amount')->count() === 0) {
-                return redirect()
-                    ->route('org.rereg.b1.edit')
-                    ->with('error', 'Add at least one fund source with value before submitting.');
+            return redirect()
+                ->route('org.rereg.b1.edit')
+                ->with('error', 'Add at least one fund source with value before submitting.')
+                ->with('strategic_plan_step', 3);
             }
 
             $oldStatus = $submission->getOriginal('status');
@@ -304,14 +307,17 @@ class StrategicPlanController extends Controller
             ->with('status', 'Please select the target school year from the Re-Registration dashboard.');
     }
 
+    private function backToStep(int $step, string $type, string $message): RedirectResponse
+    {
+        $previousUrl = url()->previous();
 
+        $previousUrl = strtok($previousUrl, '#');
 
-
-
-
-
-
-
+        return redirect()
+            ->to($previousUrl . '#strategic-plan-stepper')
+            ->with($type, $message)
+            ->with('strategic_plan_step', $step);
+    }
 
     //partials editing =======================
 
@@ -353,10 +359,10 @@ class StrategicPlanController extends Controller
             $project->delete();
 
             if ($wasReset) {
-                return back()->with('warning', 'Changes saved. Submission has been reset to draft and requires resubmission.');
+                return $this->backToStep(2, 'warning', 'Changes saved. Submission has been reset to draft and requires resubmission.');
             }
 
-            return back()->with('success', 'Project deleted.');
+            return $this->backToStep(2, 'success', 'Project deleted.');
         });
     }
 
@@ -405,7 +411,7 @@ class StrategicPlanController extends Controller
             $hasChanges = $this->hasProjectChanges($project, $validated);
 
             if (! $hasChanges) {
-                return back()->with('info', 'No changes detected.');
+                return $this->backToStep(2, 'info', 'No changes detected.');
             }
 
             $wasReset = $this->handleEditTransition($submission);
@@ -448,10 +454,10 @@ class StrategicPlanController extends Controller
             }
 
             if ($wasReset) {
-                return back()->with('warning', 'Changes saved. Submission has been reset to draft and requires resubmission.');
+                return $this->backToStep(2, 'warning', 'Changes saved. Submission has been reset to draft and requires resubmission.');
             }
 
-            return back()->with('success', 'Project updated.');
+            return $this->backToStep(2, 'success', 'Project updated.');
         });
     }
 
@@ -531,10 +537,10 @@ class StrategicPlanController extends Controller
             }
 
             if ($wasReset) {
-                return back()->with('warning', 'Changes saved. Submission has been reset to draft and requires resubmission.');
+                return $this->backToStep(2, 'warning', 'Changes saved. Submission has been reset to draft and requires resubmission.');
             }
 
-            return back()->with('success', 'Project added.');
+            return $this->backToStep(2, 'success', 'Project added.');
         });
     }
 
@@ -560,11 +566,11 @@ class StrategicPlanController extends Controller
         ]);
 
         if ($orgId <= 0) {
-            return back()->with('error', 'No organization selected.');
+            return $this->backToStep(3, 'error', 'No organization selected.');
         }
 
         if ($targetSyId <= 0) {
-            return back()->with('error', 'No school year selected.');
+            return $this->backToStep(3, 'error', 'No school year selected.');
         }
 
         if ($resp = $this->assertMembership($request, $orgId, $targetSyId)) {
@@ -590,7 +596,7 @@ class StrategicPlanController extends Controller
             $incoming = $validated['fund_sources'] ?? [];
 
             if (! $this->hasFundSourceChanges($submission, $incoming)) {
-                return back()->with('info', 'No changes detected.');
+                return $this->backToStep(3, 'info', 'No changes detected.');
             }
 
             $wasReset = $this->handleEditTransition($submission);
@@ -613,10 +619,10 @@ class StrategicPlanController extends Controller
             }
 
             if ($wasReset) {
-                return back()->with('warning', 'Changes saved. Submission has been reset to draft and requires resubmission.');
+                return $this->backToStep(3, 'warning', 'Changes saved. Submission has been reset to draft and requires resubmission.');
             }
 
-            return back()->with('success', 'Fund sources saved.');
+            return $this->backToStep(3, 'success', 'Fund sources saved.');
         });
     }
 
@@ -670,7 +676,7 @@ class StrategicPlanController extends Controller
             }
 
             if (! $this->hasProfileChanges($submission, $validated, $request)) {
-                return back()->with('info', 'No changes detected.');
+                return $this->backToStep(1, 'info', 'No changes detected.');
             }
 
             $wasReset = $this->handleEditTransition($submission);
@@ -710,10 +716,10 @@ class StrategicPlanController extends Controller
 
 
             if ($wasReset) {
-                return back()->with('warning', 'Changes saved. Submission has been reset to draft and requires resubmission.');
+                return $this->backToStep(1, 'warning', 'Changes saved. Submission has been reset to draft and requires resubmission.');
             }
 
-            return back()->with('success', 'Saved successfully.');
+            return $this->backToStep(1, 'success', 'Saved successfully.');
         });
     }
 

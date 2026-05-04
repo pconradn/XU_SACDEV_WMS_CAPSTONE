@@ -9,14 +9,14 @@
     class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden"
 >
 
-dkauhdiouahsdojoawijdosdmaw
+
 
     <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
             <div>
                 <h2 class="text-sm font-semibold text-slate-900">Strategic Plan Projects</h2>
-                <p class="text-xs text-slate-500 mt-1">ssAdd and manage projects</p>
+                <p class="text-xs text-slate-500 mt-1">Add and manage projects</p>
             </div>
 
             <div class="flex items-center gap-2">

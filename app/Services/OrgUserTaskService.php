@@ -115,20 +115,34 @@ class OrgUserTaskService
                 }
 
                 foreach ($requiredForms as $req) {
+
+                    $phase = $req->phase ?? 'other';
+
+                    if (
+                        $phase === 'post_implementation' &&
+                        $project->implementation_start_date &&
+                        now()->startOfDay()->lt(\Carbon\Carbon::parse($project->implementation_start_date)->startOfDay())
+                    ) {
+                        continue;
+                    }
+
                     $doc = $this->findDocument($project, $req);
 
                     $status = $doc?->status ?? 'not_started';
 
                     if (!$doc || $status === 'draft') {
+                        $hasReturnRemarks = $doc && filled($doc->remarks ?? null);
+
                         $projectHeadTasks->push((object)[
                             'category' => 'project_head',
-                            'state' => 'required',
+                            'state' => $hasReturnRemarks ? 'revision' : 'required',
                             'phase' => $req->phase ?? 'other',
                             'form_name' => $req->name ?? $req->code,
                             'project' => $project,
                             'status' => $status,
                             'form_type_id' => $req->id,
                             'form_code' => $req->code,
+                            'remarks' => $doc?->remarks,
                         ]);
                     }
                 }

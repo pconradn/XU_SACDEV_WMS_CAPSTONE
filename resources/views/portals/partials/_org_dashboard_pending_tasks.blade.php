@@ -138,6 +138,7 @@
 
                                 <div class="mt-1 text-xs text-slate-500">
                                     Tasks are grouped by workflow area so you can quickly see what needs action.
+                                    Some post-implementation requirements may appear after the project implementation date.
                                 </div>
                             </div>
 
@@ -345,7 +346,7 @@
                                             </div>
 
                                             <p class="mt-1 text-xs leading-5 text-slate-600">
-                                                These items were returned and need corrections before they can continue in the workflow.
+                                                These documents were returned with remarks. Review the feedback, apply the required corrections, and resubmit them to continue the workflow.
                                             </p>
 
                                             <div class="mt-3 flex flex-wrap gap-2">

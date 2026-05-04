@@ -75,8 +75,9 @@ class FundsManager extends Component
             }
         }
 
-        session()->flash('success', 'Funds saved.');
-        return redirect()->to(request()->header('Referer'));
+        $this->confirmingSave = false;
+
+        return $this->redirectToStep(3, 'success', 'Funds saved.');
     }
 
 
@@ -238,8 +239,21 @@ class FundsManager extends Component
             }
         }
 
-        session()->flash('success', 'Funds saved.');
-        return redirect()->to(request()->header('Referer'));
+        $this->confirmingSave = false;
+
+        return $this->redirectToStep(3, 'success', 'Funds saved.');
+    }
+
+    private function redirectToStep(int $step, string $type, string $message)
+    {
+        $previousUrl = request()->header('Referer') ?: route('org.rereg.b1.edit');
+
+        $previousUrl = strtok($previousUrl, '#');
+
+        return redirect()
+            ->to($previousUrl . '#strategic-plan-stepper')
+            ->with($type, $message)
+            ->with('strategic_plan_step', $step);
     }
 
 }
