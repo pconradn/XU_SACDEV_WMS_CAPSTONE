@@ -22,11 +22,13 @@
         x-transition.opacity
         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-6">
 
-        <div
-            @click.outside="updatesOpen = false"
-            x-transition.scale
-            class="w-full max-w-3xl max-h-[85vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+<div
+    x-show="updatesOpen"
+    x-transition.scale
+    @click.outside="updatesOpen = false"
+    class="w-full max-w-3xl max-h-[85vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
 
+    
             {{-- MODAL HEADER --}}
             <div class="flex items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-r from-blue-50 via-white to-slate-50 px-5 py-4">
 
